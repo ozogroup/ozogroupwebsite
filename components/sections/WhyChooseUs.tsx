@@ -1,19 +1,19 @@
 const features = [
   {
-    title: "Advanced Treatment",
-    desc: "Modern, clinical-grade procedures designed for Indian skin types.",
+    title: "Advanced Treatments",
+    desc: "Modern, clinical-grade procedures designed for Indian skin types with Korean and Japanese protocols.",
   },
   {
     title: "Visible Results",
-    desc: "Proven outcomes you can see and feel — backed by trained experts.",
+    desc: "Proven outcomes you can see and feel — backed by trained skincare experts.",
   },
   {
-    title: "Safe Process",
-    desc: "Strict hygiene, certified products, and doctor-supervised care.",
+    title: "Doctor-Supervised",
+    desc: "Strict hygiene, certified products, and doctor-supervised care for your safety.",
   },
   {
     title: "Trusted Service",
-    desc: "Hundreds of happy clients with personalised follow-up support.",
+    desc: "Hundreds of happy clients with personalized follow-up support and guidance.",
   },
 ];
 
@@ -25,7 +25,7 @@ const Icon = ({ i }: { i: number }) => {
     "M20 6L9 17l-5-5",
   ];
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d={paths[i % paths.length]} />
     </svg>
   );
@@ -33,25 +33,35 @@ const Icon = ({ i }: { i: number }) => {
 
 export default function WhyChooseUs() {
   return (
-    <section id="about" className="section bg-brand-surface">
+    <section id="about" className="section bg-gradient-to-b from-white to-brand-surface/50">
       <div className="container-x">
-        <div className="max-w-2xl">
-          <span className="eyebrow">Why Choose Us</span>
-          <h2 className="mt-3">A premium experience, built around your skin</h2>
-          <p className="mt-4">
-            We blend advanced clinical care with the warmth of personal
-            consultation — so you feel confident at every step.
+        <div className="max-w-3xl text-center mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+              Why Choose Us
+            </span>
+          </div>
+          <h2 className="mt-6">
+            A Premium Experience, Built Around{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+              Your Skin
+            </span>
+          </h2>
+          <p className="mt-4 text-base text-brand-muted max-w-2xl mx-auto leading-relaxed">
+            We blend advanced clinical care with the warmth of personal consultation — 
+            so you feel confident at every step of your skincare journey.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f, i) => (
-            <div key={f.title} className="card">
-              <div className="h-11 w-11 rounded-xl bg-brand-accent/10 text-brand-accent flex items-center justify-center">
+            <div key={f.title} className="card hover:-translate-y-1 transition-transform duration-300" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
                 <Icon i={i} />
               </div>
-              <h3 className="mt-5 text-lg">{f.title}</h3>
-              <p className="mt-2 text-sm">{f.desc}</p>
+              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{f.title}</h3>
+              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>

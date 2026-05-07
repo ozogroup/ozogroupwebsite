@@ -25,11 +25,10 @@ export const site = {
   },
   nav: [
     { label: "Home", href: "/" },
-    { label: "Treatments", href: "#treatments" },
-    { label: "About", href: "#about" },
-    { label: "Referral", href: "#referrals" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Contact", href: "#contact" },
+    { label: "Treatments", href: "/treatments" },
+    { label: "About", href: "/about" },
+    { label: "Membership", href: "/referral" },
+    { label: "Contact", href: "/contact" },
   ],
 };
 
@@ -58,80 +57,156 @@ export const trustBadges: TrustBadge[] = [
 
 export const treatments: Treatment[] = [
   {
-    slug: "korean-glass-treatment",
+    slug: "korean-glass-skin",
     title: "Korean Glass Treatment",
     price: 25000,
     priceLabel: "₹25,000",
     unit: "per session",
-    tagline: "Deep Hydration & Glass-Like Glow",
+    tagline: "Premium Clinical Glow Experience",
+    subtitle: "Premium Clinical Glow Experience",
     description:
-      "Experience the legendary Korean glass skin protocol — deep hydration, pore refinement, and luminous translucency for that signature mirror-like finish.",
+      "Advanced Korean-inspired skincare treatment experience designed to deliver luminous glass skin results through premium protocols and guided sessions.",
     overview:
-      "Our Korean Glass Treatment is inspired by the iconic K-Beauty regimen that has taken the world by storm. This multi-step clinical protocol hydrates from within, refines pores, and locks in a luminous, dewy finish — creating the signature 'glass skin' effect that reflects light like a mirror.",
+      "Inspired by the iconic Korean K-Beauty protocol, this premium clinical treatment is organized through beauty events, skin camps, and city-based treatment campaigns. This multi-step treatment hydrates from within, refines pores, and locks in a luminous, mirror-like dewy finish — the signature 'glass skin' look loved worldwide.",
     benefits: [
-      "Deep hydration & glow",
-      "Smooth & refined skin texture",
-      "Anti-aging collagen support",
-      "Even skin tone & brightness",
-      "Instant fresh luminous finish",
-      "Korean skincare protocols",
-      "Pore minimization",
-      "Enhanced skin elasticity",
+      "Deep hydration glow",
+      "Smooth radiant skin",
+      "Glass skin finish",
+      "Brightening support",
+      "Skin texture refinement",
+      "Luxury clinical care",
     ],
     process: [
       {
-        step: "Double Cleanse",
-        detail: "Oil-based followed by water-based cleanse to remove all impurities.",
+        step: "Event Registration",
+        detail: "Register for upcoming glass skin treatment events in your city.",
       },
       {
-        step: "Gentle Exfoliation",
-        detail: "Removes dead skin cells for deeper product penetration.",
+        step: "Expert Consultation",
+        detail: "One-on-one consultation with Korean skincare specialists.",
       },
       {
-        step: "Hydration Infusion",
-        detail: "Layered hyaluronic acid and peptide serums for deep plumping.",
+        step: "Premium Treatment",
+        detail: "Multi-step clinical protocol with premium Korean-import products.",
       },
       {
-        step: "Glass Skin Mask",
-        detail: "Signature translucent mask for radiant bounce and clarity.",
+        step: "Glass Skin Results",
+        detail: "Experience instant luminous dewy finish and visible transformation.",
       },
       {
-        step: "Lock-in Finish",
-        detail: "Sealing emulsion, eye care, and SPF for lasting glass effect.",
+        step: "Aftercare Support",
+        detail: "Post-treatment guidance and home-care recommendations.",
       },
     ],
     whoFor: [
-      "Dry or dehydrated skin",
-      "Dull, tired-looking complexion",
-      "Uneven skin texture",
-      "Anyone seeking K-Beauty dewy glow",
-      "Fine lines and early aging",
+      "Dry, dull, or tired-looking skin",
+      "Anyone wanting that K-Beauty dewy glow",
+      "Pre-event glow boost",
+      "Mature skin needing hydration & bounce",
     ],
     safety:
-      "Doctor-supervised with Korean-import grade, dermatologically certified products. Hypoallergenic and patch-tested for all skin types.",
+      "Doctor-supervised, hypoallergenic, and patch-tested. All Korean-import grade products are dermatologically certified. Organized in premium clinical settings.",
     faqs: [
       {
-        q: "How long does the glass skin effect last?",
-        a: "The immediate dewy glow lasts 7–10 days. With 3–5 recommended sessions, you can maintain the effect for months with proper home care.",
+        q: "How do I book this treatment?",
+        a: "This treatment is organized through city-based campaigns and beauty events. Register your interest and we'll notify you when sessions are available in your city.",
       },
       {
-        q: "Is this suitable for oily skin?",
-        a: "Yes, the protocol is balanced and customizable. Oily skin types often see excellent pore-refining results.",
+        q: "Which cities currently offer this treatment?",
+        a: "We organize glass skin treatment campaigns in major cities. Check our website or WhatsApp for upcoming events in your area.",
       },
       {
-        q: "What makes this different from a regular facial?",
-        a: "This is a clinical-grade multi-step protocol using specialized Korean serums, masks, and infusion techniques used in licensed dermatology clinics.",
+        q: "How long do results last?",
+        a: "The instant dewy finish lasts ~7–10 days. With recommended sessions and proper aftercare, you can sustain the effect for longer.",
       },
     ],
     duration: "75–90 min",
-    sessions: "Recommended 3–5 sessions",
-    badge: "Signature",
+    sessions: "Event-based sessions",
+    badge: "Premium",
     icon: "sparkle",
-    tone: "accent",
+    tone: "primary",
     image:
       "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
     imageAlt:
       "Korean Glass Skin treatment — luminous dewy radiant skin with glass-like finish",
+    treatmentType: "camp",
+    note: "Clinic and campaign-based premium experience.",
+  },
+  {
+    slug: "skin-lightening",
+    title: "Skin Lightening Treatment",
+    price: 18000,
+    priceLabel: "₹18,000",
+    unit: "one-time",
+    tagline: "Premium Home Treatment Program",
+    subtitle: "Premium Home Treatment Program",
+    description:
+      "Professional skin brightening and pigmentation care program designed for visible glow improvement from the comfort of your home.",
+    overview:
+      "Our Skin Lightening Treatment is a comprehensive home-based skincare program that delivers professional-grade brightening results through a premium treatment kit delivered directly to your home. This clinically formulated protocol targets melanin clusters, post-acne marks, and dull patches — restoring an even, radiant complexion with safe, dermat-approved actives.",
+    benefits: [
+      "Reduces pigmentation & dark spots",
+      "Improves uneven skin tone",
+      "Enhances natural glow",
+      "Safe for Indian skin types",
+      "Guided skincare support",
+      "Long-lasting visible radiance",
+    ],
+    process: [
+      {
+        step: "Kit Delivery",
+        detail: "Premium home care kit delivered to your doorstep with all required products.",
+      },
+      {
+        step: "Video Consultation",
+        detail: "Expert video consultation to guide you through the treatment protocol.",
+      },
+      {
+        step: "Daily Routine",
+        detail: "Follow the guided skincare routine with premium clinical-grade actives.",
+      },
+      {
+        step: "Progress Tracking",
+        detail: "Weekly check-ins to monitor progress and adjust protocol as needed.",
+      },
+      {
+        step: "Ongoing Support",
+        detail: "Continuous online/offline consultation support throughout the program.",
+      },
+    ],
+    whoFor: [
+      "Uneven skin tone & dullness",
+      "Post-acne marks & pigmentation",
+      "Tan, sun damage, or dark patches",
+      "Anyone seeking a brighter, balanced complexion",
+    ],
+    safety:
+      "Doctor-supervised, patch-tested, and tailored for Indian skin. Uses certified clinical-grade products with zero harsh bleaching agents. Premium home care kit delivered with detailed instructions.",
+    faqs: [
+      {
+        q: "What is included in the home treatment kit?",
+        a: "The kit includes all premium clinical-grade products needed for the complete treatment program, along with detailed instructions and access to video consultations.",
+      },
+      {
+        q: "How long does the program last?",
+        a: "The standard program is designed for 4-6 weeks, with visible improvements typically seen within the first 2 weeks.",
+      },
+      {
+        q: "Is there any downtime?",
+        a: "No downtime. This is a gentle home-based treatment designed for daily use without disrupting your routine.",
+      },
+    ],
+    duration: "4–6 weeks",
+    sessions: "Complete home program",
+    badge: "Home Program",
+    icon: "droplet",
+    tone: "accent",
+    image:
+      "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+    imageAlt:
+      "Premium skincare home treatment kit with clinical-grade products",
+    treatmentType: "home-kit",
+    note: "Includes premium home care kit delivery.",
   },
   {
     slug: "basic-skin-treatment",
@@ -145,14 +220,11 @@ export const treatments: Treatment[] = [
     overview:
       "The Basic Skin Treatment is designed as the cornerstone of any skincare routine. This fundamental protocol deeply cleanses pores, replenishes essential nutrients, and strengthens your skin's natural barrier — establishing the perfect base for lasting skin health and radiance.",
     benefits: [
-      "Deep pore cleansing",
-      "Skin barrier strengthening",
-      "Essential nutrient replenishment",
-      "Improved skin texture",
-      "Natural glow restoration",
-      "Prevention of future concerns",
-      "Balanced hydration",
-      "Soothing and calming",
+      "Cleansing",
+      "Hydration",
+      "Skin refresh",
+      "Glow maintenance",
+      "Beginner-friendly skincare support",
     ],
     process: [
       {
@@ -221,14 +293,11 @@ export const treatments: Treatment[] = [
     overview:
       "Rooted in the Japanese tradition of meticulous skincare, this treatment focuses on purification, refinement, and harmony. Using time-honored techniques combined with modern clinical science, it delivers porcelain-smooth skin with exceptional clarity and a refined, elegant finish.",
     benefits: [
-      "Refined pore appearance",
-      "Smooth porcelain texture",
-      "Enhanced skin clarity",
-      "Gentle yet effective purification",
-      "Balanced skin tone",
-      "Anti-inflammatory soothing",
-      "Improved skin resilience",
-      "Natural luminosity",
+      "Minimalist skin ritual",
+      "Texture refinement",
+      "Calm skin",
+      "Natural radiance",
+      "Balanced hydration",
     ],
     process: [
       {
@@ -297,14 +366,12 @@ export const treatments: Treatment[] = [
     overview:
       "The Advanced Skin Treatment represents the pinnacle of our clinical expertise. This intensive protocol combines high-potency actives, cutting-edge delivery systems, and doctor-supervised precision to address complex skin concerns including deep pigmentation, advanced aging, and significant texture irregularities.",
     benefits: [
-      "Powerful anti-aging support",
-      "Intensive skin repair",
-      "Deep pigmentation control",
-      "Advanced glow enhancement",
-      "Collagen synthesis boost",
-      "Skin barrier strengthening",
-      "Visible transformation",
-      "Long-term results",
+      "Anti-aging",
+      "Skin repair",
+      "Deep hydration",
+      "Pigmentation control",
+      "Collagen boost",
+      "Barrier strengthening",
     ],
     process: [
       {

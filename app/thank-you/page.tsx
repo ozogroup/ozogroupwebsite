@@ -16,7 +16,7 @@ export default function ThankYouPage() {
           </svg>
         </div>
         <span className="eyebrow mt-6 justify-center">Booking Received</span>
-        <h1 className="mt-3">Thank you — we've got your request.</h1>
+        <h1 className="mt-3">Thank you. Our team will contact you shortly.</h1>
         <p className="mt-4 max-w-lg mx-auto">
           Our team will call or WhatsApp you shortly on{" "}
           <span className="font-semibold text-brand-ink">{site.phone}</span> to

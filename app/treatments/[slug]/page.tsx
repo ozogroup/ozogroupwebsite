@@ -247,7 +247,7 @@ export default function TreatmentDetail({ params }: Params) {
         </div>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ SECTION */}
       <section className="section">
         <div className="container-x grid gap-12 lg:gap-16 lg:grid-cols-12">
           <div className="lg:col-span-4">
@@ -285,6 +285,129 @@ export default function TreatmentDetail({ params }: Params) {
           </div>
         </div>
       </section>
+
+      {/* Future-ready Campaign Info */}
+      {t.treatmentType === "camp" && (
+        <section className="section bg-gradient-to-b from-white to-brand-surface/50">
+          <div className="container-x">
+            <div className="max-w-3xl text-center mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                  Upcoming Events
+                </span>
+              </div>
+              <h2 className="mt-6">Campaign & Event Schedule</h2>
+              <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+                Register your interest for upcoming glass skin treatment campaigns in your city.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {[
+                {
+                  city: "Mumbai",
+                  date: "Coming Soon",
+                  slots: "Limited",
+                  status: "Registration Open",
+                },
+                {
+                  city: "Delhi",
+                  date: "Coming Soon",
+                  slots: "Limited",
+                  status: "Registration Open",
+                },
+                {
+                  city: "Bangalore",
+                  date: "Coming Soon",
+                  slots: "Limited",
+                  status: "Registration Open",
+                },
+              ].map((event, i) => (
+                <div
+                  key={event.city}
+                  className="card hover:-translate-y-1 transition-transform duration-300"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-brand-ink">{event.city}</h3>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-xs font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                      {event.status}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-brand-muted">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      {event.date}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-brand-muted">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      {event.slots} slots
+                    </div>
+                  </div>
+                  <button className="mt-6 w-full btn-secondary justify-center text-sm">
+                    Register Interest
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Home Kit Delivery Info */}
+      {t.treatmentType === "home-kit" && (
+        <section className="section bg-gradient-to-b from-white to-brand-surface/50">
+          <div className="container-x">
+            <div className="max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                  Home Delivery
+                </span>
+              </div>
+              <h2 className="mt-6">Premium Home Treatment Kit</h2>
+              <p className="mt-4 text-lg text-brand-muted leading-relaxed">
+                Your complete treatment kit is delivered directly to your doorstep with all 
+                premium clinical-grade products needed for the program.
+              </p>
+
+              <div className="mt-8 grid gap-4">
+                {[
+                  "Premium clinical-grade products",
+                  "Detailed treatment instructions",
+                  "Video consultation access",
+                  "Weekly progress tracking",
+                  "Ongoing support via WhatsApp",
+                ].map((item, i) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-brand-border/60"
+                  >
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </span>
+                    <span className="text-sm font-medium text-brand-ink">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* FINAL CTA */}
       <section className="section pt-0">

@@ -1,0 +1,134 @@
+import Link from "next/link";
+
+export default function MembershipPreview() {
+  return (
+    <section className="section bg-gradient-to-b from-white to-brand-surface/50">
+      <div className="container-x">
+        <div className="max-w-3xl text-center mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+              Premium Partner Program
+            </span>
+          </div>
+          <h2 className="mt-6">
+            Become a{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+              Premium Referral Partner
+            </span>
+          </h2>
+          <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+            Experience premium skincare while unlocking an optional earning opportunity 
+            through treatment referrals and partner rewards.
+          </p>
+        </div>
+
+        <div className="mt-12 max-w-4xl mx-auto">
+          <div className="rounded-3xl bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-8 md:p-12 shadow-premium">
+            <div className="grid gap-8 md:grid-cols-2 items-center">
+              <div>
+                <p className="text-sm font-semibold tracking-[0.18em] uppercase text-white/80 mb-2">
+                  Premium Partner Program
+                </p>
+                <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                  Earn ₹500 minimum on every successful direct referral
+                </h3>
+                <p className="text-base text-white/90 leading-relaxed mb-6">
+                  Start small and grow unlimited earning potential by sharing trusted skincare 
+                  experiences with your network.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link
+                    href="/membership"
+                    className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-6 py-3 text-sm font-semibold hover:bg-brand-surface transition-colors"
+                  >
+                    Book Membership Now
+                  </Link>
+                  <Link
+                    href="/referral"
+                    className="inline-flex items-center justify-center rounded-full border border-white/40 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10 transition-colors"
+                  >
+                    Explore Benefits
+                  </Link>
+                </div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <p className="text-sm font-semibold text-white/80 mb-4">
+                  Membership Price
+                </p>
+                <p className="text-4xl font-bold mb-2">₹1,199</p>
+                <p className="text-sm text-white/70 mb-6">one-time payment</p>
+                <div className="space-y-3">
+                  {[
+                    "Premium referral access",
+                    "Real-time reward tracking",
+                    "Transparent payout structure",
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-3 text-sm text-white/90">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      </span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {[
+            {
+              icon: "dashboard",
+              title: "Premium Referral Access",
+              desc: "Access your referral dashboard with real-time earnings tracking",
+            },
+            {
+              icon: "earnings",
+              title: "Multi-level Rewards",
+              desc: "Earn commissions from direct and network referrals",
+            },
+            {
+              icon: "unlimited",
+              title: "Unlimited Potential",
+              desc: "No cap on referrals — earn as much as you want",
+            },
+          ].map((item, i) => (
+            <div
+              key={item.title}
+              className="card hover:-translate-y-1 transition-transform duration-300"
+              style={{ animationDelay: `${i * 0.1}s` }}
+            >
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {item.icon === "dashboard" && (
+                    <>
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M3 9h18" />
+                      <path d="M9 21V9" />
+                    </>
+                  )}
+                  {item.icon === "earnings" && (
+                    <>
+                      <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                    </>
+                  )}
+                  {item.icon === "unlimited" && (
+                    <>
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </>
+                  )}
+                </svg>
+              </div>
+              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{item.title}</h3>
+              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

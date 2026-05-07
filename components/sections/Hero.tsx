@@ -3,13 +3,13 @@ import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1400&q=80";
+  "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80";
 
 const heroPoints = [
   "Advanced Skin Treatments",
   "Doctor-Supervised Protocols",
   "Premium Clinical Care",
-  "Visible Results Guaranteed",
+  "Visible Results",
 ];
 
 export default function Hero() {
@@ -46,9 +46,7 @@ export default function Hero() {
           </h1>
           
           <p className="mt-6 text-lg md:text-xl text-brand-muted max-w-xl leading-relaxed">
-            Experience the art of premium skincare with clinically designed protocols 
-            that deliver visible, lasting results. Doctor-supervised treatments 
-            inspired by Korean and Japanese beauty traditions.
+            Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.
           </p>
 
           {/* Premium trust points */}

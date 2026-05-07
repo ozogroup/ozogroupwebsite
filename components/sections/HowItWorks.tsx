@@ -9,7 +9,7 @@ const steps = [
   {
     n: "02",
     title: "Free Consultation",
-    desc: "Our skin experts assess your concerns and craft a personalised plan.",
+    desc: "Our skin experts assess your concerns and craft a personalized plan.",
   },
   {
     n: "03",
@@ -25,38 +25,49 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="section bg-brand-surface">
+    <section id="how-it-works" className="section">
       <div className="container-x">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-          <div className="max-w-2xl">
-            <span className="eyebrow">How It Works</span>
-            <h2 className="mt-3">Booking your treatment is simple</h2>
-            <p className="mt-3">
-              From online booking to post-treatment care — we keep every step
-              smooth, transparent, and premium.
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                How It Works
+              </span>
+            </div>
+            <h2 className="mt-6">
+              Booking Your Treatment Is{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+                Simple
+              </span>
+            </h2>
+            <p className="mt-4 text-base text-brand-muted leading-relaxed">
+              From online booking to post-treatment care — we keep every step 
+              smooth, transparent, and premium for your convenience.
             </p>
           </div>
-          <BookNowButton className="self-start md:self-auto">
+          <BookNowButton className="self-start md:self-auto shadow-soft hover:shadow-card transition-shadow">
             Book Consultation
           </BookNowButton>
         </div>
 
-        <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
             <li
               key={s.n}
-              className="relative card group hover:-translate-y-0.5 transition-transform"
+              className="relative card group hover:-translate-y-1 transition-transform duration-300"
+              style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold tracking-[0.22em] text-brand-accent">
                   STEP {s.n}
                 </span>
-                <span className="h-8 w-8 rounded-full bg-brand-accent/10 text-brand-accent flex items-center justify-center text-sm font-semibold">
+                <span className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center text-sm font-bold">
                   {i + 1}
                 </span>
               </div>
-              <h3 className="mt-4 text-lg">{s.title}</h3>
-              <p className="mt-2 text-sm">{s.desc}</p>
+              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{s.title}</h3>
+              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{s.desc}</p>
             </li>
           ))}
         </ol>

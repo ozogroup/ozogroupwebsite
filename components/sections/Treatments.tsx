@@ -5,115 +5,113 @@ import { treatments } from "@/lib/site";
 
 export default function Treatments() {
   return (
-    <section id="treatments" className="section bg-gradient-to-b from-brand-surface/50 to-white">
+    <section className="section">
       <div className="container-x">
         <div className="max-w-3xl text-center mx-auto">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
               Premium Treatments
             </span>
-          </span>
-          <h2 className="mt-6">
-            Clinically Designed for{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-              Visible Transformation
-            </span>
-          </h2>
-          <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto">
-            Every treatment at IA Skin Care is tailored to your unique skin type and goals — 
-            backed by safe, doctor-supervised protocols and premium clinical-grade products.
+          </div>
+          <h2 className="mt-6">Advanced Skincare Solutions</h2>
+          <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+            Choose between premium home treatment programs or exclusive clinical experiences 
+            designed for visible, lasting results.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-8 lg:gap-10 md:grid-cols-2">
-          {treatments.map((t, index) => (
-            <article
-              key={t.slug}
-              className="group relative flex flex-col overflow-hidden rounded-[32px] border border-brand-border/60 bg-white shadow-soft hover:shadow-premium hover:-translate-y-1 transition-all duration-500 animate-fadeUp"
-              style={{ animationDelay: `${index * 0.1}s` }}
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {treatments.map((treatment, i) => (
+            <div
+              key={treatment.slug}
+              className="card hover:-translate-y-1 transition-transform duration-300 flex flex-col"
+              style={{ animationDelay: `${i * 0.1}s` }}
             >
-              {/* Visual with premium styling */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-brand-surface to-white">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-surface to-white">
                 <Image
-                  src={t.image}
-                  alt={t.imageAlt}
+                  src={treatment.image}
+                  alt={treatment.imageAlt}
                   fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {/* Premium gradient overlay */}
-                <div
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-brand-ink/20 via-transparent to-transparent"
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  className="object-cover"
                 />
                 <div
                   aria-hidden
-                  className="absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-transparent to-brand-accent/10"
+                  className="absolute inset-0 bg-gradient-to-tr from-brand-primary/20 via-transparent to-brand-accent/10"
                 />
-                {t.badge && (
-                  <span className="absolute top-5 left-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-brand-border/50 shadow-glass">
-                    {t.badge}
+                {treatment.badge && (
+                  <span className="absolute top-4 left-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white bg-brand-primary/95 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-glass">
+                    {treatment.badge}
                   </span>
                 )}
-                <span className="absolute top-5 right-5 text-[11px] font-semibold text-brand-ink bg-white/95 backdrop-blur-md px-3 py-2 rounded-full border border-brand-border/50 shadow-glass">
-                  {t.duration}
-                </span>
               </div>
 
-              {/* Premium content styling */}
-              <div className="flex-1 flex flex-col p-7 md:p-8">
-                <p className="text-xs uppercase tracking-[0.18em] text-brand-accent font-semibold">
-                  {t.tagline}
+              <div className="mt-6 flex-1 flex flex-col">
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent mb-2">
+                  {treatment.tagline}
                 </p>
-                <h3 className="mt-3 text-2xl md:text-[26px] text-brand-ink leading-tight">
-                  {t.title}
+                <h3 className="text-xl font-semibold text-brand-ink mb-3">
+                  {treatment.title}
                 </h3>
-                <p className="mt-3 text-base text-brand-muted leading-relaxed">{t.description}</p>
+                <p className="text-sm text-brand-muted leading-relaxed mb-6 flex-1">
+                  {treatment.description}
+                </p>
 
-                <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {t.benefits.slice(0, 6).map((b) => (
-                    <li
-                      key={b}
-                      className="flex items-start gap-2.5 text-sm text-brand-ink/90"
-                    >
-                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <div className="mb-4 space-y-2">
+                  {treatment.benefits.slice(0, 4).map((benefit) => (
+                    <div key={benefit} className="flex items-center gap-2 text-sm text-brand-ink/90">
+                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent">
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       </span>
-                      {b}
-                    </li>
+                      {benefit}
+                    </div>
                   ))}
-                </ul>
+                </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-brand-border/80 pt-6">
-                  <div>
-                    <p className="text-3xl md:text-4xl font-semibold text-brand-primary leading-none">
-                      {t.priceLabel}
+                <div className="pt-4 border-t border-brand-border/60">
+                  <div className="flex items-baseline justify-between mb-2">
+                    <p className="text-2xl font-bold text-brand-primary">
+                      {treatment.priceLabel}
                     </p>
-                    <p className="text-sm text-brand-muted mt-1.5">
-                      {t.unit} · {t.sessions}
+                    <span className="text-sm text-brand-muted">
+                      {treatment.unit}
+                    </span>
+                  </div>
+                  {treatment.note && (
+                    <p className="text-xs text-brand-muted mb-4">
+                      {treatment.note}
                     </p>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {treatment.treatmentType === "home-kit" ? (
+                      <Link
+                        href={`/treatments/${treatment.slug}`}
+                        className="btn-primary justify-center text-sm"
+                      >
+                        Book Home Program
+                      </Link>
+                    ) : (
+                      <a
+                        href="#consultation"
+                        className="btn-primary justify-center text-sm"
+                      >
+                        Book Consultation
+                      </a>
+                    )}
+                    <Link
+                      href={`/treatments/${treatment.slug}`}
+                      className="btn-secondary justify-center text-sm"
+                    >
+                      View Details
+                    </Link>
                   </div>
                 </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <BookNowButton
-                    treatmentSlug={t.slug}
-                    className="w-full justify-center shadow-soft hover:shadow-card transition-shadow"
-                  >
-                    Book Now
-                  </BookNowButton>
-                  <Link
-                    href={`/treatments/${t.slug}`}
-                    className="btn-secondary w-full justify-center"
-                  >
-                    View Details
-                  </Link>
-                </div>
               </div>
-            </article>
+            </div>
           ))}
         </div>
 

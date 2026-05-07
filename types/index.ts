@@ -5,6 +5,7 @@ export type Treatment = {
   priceLabel: string;
   unit: string;
   tagline: string;
+  subtitle?: string;
   description: string;
   overview: string;
   benefits: string[];
@@ -19,6 +20,8 @@ export type Treatment = {
   tone: "primary" | "accent" | "light" | "primaryDark";
   image: string;
   imageAlt: string;
+  treatmentType?: "home-kit" | "clinic" | "camp";
+  note?: string;
 };
 
 export type ReferralLevel = {
