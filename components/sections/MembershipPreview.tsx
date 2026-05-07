@@ -27,13 +27,13 @@ export default function MembershipPreview() {
           <div className="rounded-3xl bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-8 md:p-12 shadow-premium">
             <div className="grid gap-8 md:grid-cols-2 items-center">
               <div>
-                <p className="text-sm font-semibold tracking-[0.18em] uppercase text-white/80 mb-2">
+                <p className="text-sm font-semibold tracking-[0.18em] uppercase text-white mb-2">
                   Premium Partner Program
                 </p>
-                <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                <h3 className="text-3xl md:text-4xl font-bold mb-4 text-white">
                   Earn ₹500 minimum on every successful direct referral
                 </h3>
-                <p className="text-base text-white/90 leading-relaxed mb-6">
+                <p className="text-base text-white leading-relaxed mb-6">
                   Start small and grow unlimited earning potential by sharing trusted skincare 
                   experiences with your network.
                 </p>
@@ -53,18 +53,18 @@ export default function MembershipPreview() {
                 </div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <p className="text-sm font-semibold text-white/80 mb-4">
+                <p className="text-sm font-semibold text-white mb-4">
                   Membership Price
                 </p>
-                <p className="text-4xl font-bold mb-2">₹1,199</p>
-                <p className="text-sm text-white/70 mb-6">one-time payment</p>
+                <p className="text-4xl md:text-5xl font-extrabold mb-2 text-white">₹1,199/-</p>
+                <p className="text-sm text-white mb-6">One-time membership</p>
                 <div className="space-y-3">
                   {[
                     "Premium referral access",
                     "Real-time reward tracking",
                     "Transparent payout structure",
                   ].map((item) => (
-                    <div key={item} className="flex items-center gap-3 text-sm text-white/90">
+                    <div key={item} className="flex items-center gap-3 text-sm text-white">
                       <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5" />
@@ -73,6 +73,14 @@ export default function MembershipPreview() {
                       {item}
                     </div>
                   ))}
+                </div>
+                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/30">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                  <span className="text-xs font-semibold text-white">
+                    Earn starts from ₹500 per direct referral
+                  </span>
                 </div>
               </div>
             </div>
