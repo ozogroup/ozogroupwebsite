@@ -309,10 +309,23 @@ export default function BookingModal() {
           color: #0B2030;
           outline: none;
           transition: all 0.2s ease;
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+        }
+        select.premium-input {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230B2030'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 16px center;
+          background-size: 16px;
+          padding-right: 44px;
         }
         .premium-input:focus {
           border-color: #1BA3C6;
           box-shadow: 0 0 0 4px rgba(27, 163, 198, 0.12);
+        }
+        select.premium-input:focus {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231BA3C6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
         }
         .premium-input::placeholder {
           color: transparent;
@@ -321,6 +334,11 @@ export default function BookingModal() {
         .premium-input:focus + label {
           transform: translateY(-28px) scale(0.85);
           color: #1BA3C6;
+        }
+        .premium-input option {
+          background: #fff;
+          color: #0B2030;
+          padding: 12px 16px;
         }
       `}</style>
     </div>

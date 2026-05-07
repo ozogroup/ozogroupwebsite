@@ -102,12 +102,12 @@ export default function Header() {
 
       {/* Mobile drawer (right sidebar) */}
       <div
-        className={`lg:hidden fixed inset-0 z-40 transition duration-300 ${
+        className={`lg:hidden fixed inset-0 z-[60] transition duration-300 ${
           open ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
         <div
-          className={`absolute inset-0 bg-brand-ink/50 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setOpen(false)}
