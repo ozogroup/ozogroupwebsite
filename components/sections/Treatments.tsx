@@ -92,7 +92,7 @@ export default function Treatments() {
                         href={`/treatments/${treatment.slug}`}
                         className="btn-primary justify-center text-sm"
                       >
-                        Book Home Program
+                        Book Home Kit Program
                       </Link>
                     ) : (
                       <a

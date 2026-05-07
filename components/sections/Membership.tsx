@@ -19,19 +19,18 @@ export default function Membership() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-                Optional Partnership
+                Premium Partner Program
               </span>
             </div>
             <h2 className="mt-6">
-              Become a{" "}
+              Become Our{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
                 Premium Referral Partner
               </span>
             </h2>
             <p className="mt-4 text-base text-brand-muted max-w-lg leading-relaxed">
-              Transform your experience into rewards. Our optional partnership program 
-              lets you earn while sharing premium skincare treatments with others — 
-              completely voluntary. All treatments remain accessible to everyone.
+              Experience premium skincare while unlocking an optional earning opportunity 
+              through treatment referrals and partner rewards.
             </p>
 
             <ul className="mt-8 grid sm:grid-cols-2 gap-4">
@@ -61,34 +60,33 @@ export default function Membership() {
             />
             
             <div className="relative">
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-white/80">
-                Partnership Investment
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-white">
+                Membership Price
               </p>
               <p className="mt-3 flex items-baseline gap-2">
-                <span className="text-5xl md:text-6xl font-semibold tracking-tight">
-                  ₹{site.membershipFee.toLocaleString("en-IN")}
+                <span className="text-5xl md:text-6xl font-semibold tracking-tight text-white">
+                  ₹1,199
                 </span>
-                <span className="text-sm text-white/70 font-medium">/ one-time</span>
+                <span className="text-sm text-white/90 font-medium">one-time</span>
               </p>
-              <p className="mt-4 text-sm text-white/90 leading-relaxed">
-                Start your referral journey with unlimited earning potential across 
-                4 commission levels plus exclusive milestone bonuses.
+              <p className="mt-4 text-sm text-white leading-relaxed">
+                Earn ₹500 minimum on every successful direct referral.
+              </p>
+              <p className="mt-2 text-sm text-white/80 leading-relaxed">
+                Start with ₹500 per successful referral and grow your income with unlimited referral opportunities.
               </p>
             </div>
             
             <div className="mt-auto pt-8 grid gap-3 relative">
               <Link
-                href="#activate-membership"
+                href="/membership"
                 className="inline-flex justify-center items-center gap-2 rounded-full bg-white text-brand-primary px-6 py-3.5 text-sm font-semibold hover:bg-brand-surface transition-all shadow-soft hover:shadow-card"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-                Start Your Journey
+                Book Your Membership Now
               </Link>
               <Link
-                href="#referrals"
-                className="inline-flex justify-center rounded-full border border-white/30 text-white px-6 py-3.5 text-sm font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
+                href="/referral"
+                className="inline-flex justify-center rounded-full border border-white/40 text-white px-6 py-3.5 text-sm font-medium hover:bg-white/10 transition-all backdrop-blur-sm"
               >
                 Explore Rewards
               </Link>

@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { site } from "@/lib/site";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 export default function MembershipPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -31,7 +29,6 @@ export default function MembershipPage() {
   if (submitted) {
     return (
       <>
-        <Header />
         <main className="min-h-screen flex items-center justify-center section">
           <div className="container-x">
             <div className="max-w-2xl mx-auto text-center">
@@ -103,16 +100,13 @@ export default function MembershipPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </>
     );
   }
 
   return (
     <>
-      <Header />
-      <main>
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden
@@ -302,8 +296,6 @@ export default function MembershipPage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
     </>
   );
 }

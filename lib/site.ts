@@ -65,7 +65,7 @@ export const treatments: Treatment[] = [
     tagline: "Premium Clinical Glow Experience",
     subtitle: "Premium Clinical Glow Experience",
     description:
-      "Advanced Korean-inspired skincare treatment experience designed to deliver luminous glass skin results through premium protocols and guided sessions.",
+      "Korean-inspired clinical glow treatment delivered through guided city campaigns, treatment sessions, and premium skincare protocols.",
     overview:
       "Inspired by the iconic Korean K-Beauty protocol, this premium clinical treatment is organized through beauty events, skin camps, and city-based treatment campaigns. This multi-step treatment hydrates from within, refines pores, and locks in a luminous, mirror-like dewy finish — the signature 'glass skin' look loved worldwide.",
     benefits: [
@@ -138,10 +138,10 @@ export const treatments: Treatment[] = [
     price: 18000,
     priceLabel: "₹18,000",
     unit: "one-time",
-    tagline: "Premium Home Treatment Program",
-    subtitle: "Premium Home Treatment Program",
+    tagline: "Home Kit Treatment Program",
+    subtitle: "Home Kit Treatment Program",
     description:
-      "Professional skin brightening and pigmentation care program designed for visible glow improvement from the comfort of your home.",
+      "Professional skin brightening and pigmentation care program with a premium home-care kit delivered to your doorstep.",
     overview:
       "Our Skin Lightening Treatment is a comprehensive home-based skincare program that delivers professional-grade brightening results through a premium treatment kit delivered directly to your home. This clinically formulated protocol targets melanin clusters, post-acne marks, and dull patches — restoring an even, radiant complexion with safe, dermat-approved actives.",
     benefits: [
@@ -206,7 +206,7 @@ export const treatments: Treatment[] = [
     imageAlt:
       "Premium skincare home treatment kit with clinical-grade products",
     treatmentType: "home-kit",
-    note: "Includes premium home care kit delivery.",
+    note: "Includes premium home-care kit delivery.",
   },
   {
     slug: "basic-skin-treatment",

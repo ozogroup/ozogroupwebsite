@@ -1,8 +1,6 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "About OZO Skin Care · Premium Luxury Skincare",
@@ -15,9 +13,7 @@ const ABOUT_IMAGE =
 export default function AboutPage() {
   return (
     <>
-      <Header />
-      <main>
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden
@@ -157,7 +153,7 @@ export default function AboutPage() {
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="#treatments"
+                  href="/treatments"
                   className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-8 py-4 text-sm font-semibold hover:bg-brand-surface transition-colors"
                 >
                   Explore Treatments
@@ -172,8 +168,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
     </>
   );
 }

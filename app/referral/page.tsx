@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { site, referralLevels, salesBonuses } from "@/lib/site";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Premium Referral Partner Program · OZO Skin Care",
@@ -12,9 +10,7 @@ export const metadata: Metadata = {
 export default function ReferralPage() {
   return (
     <>
-      <Header />
-      <main>
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden
@@ -241,8 +237,6 @@ export default function ReferralPage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
     </>
   );
 }

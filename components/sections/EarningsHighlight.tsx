@@ -44,7 +44,7 @@ export default function EarningsHighlight() {
                   {bonus.bonus}
                 </p>
                 <p className="mt-2 text-white/90 font-medium">
-                  {bonus.bookings} successful referrals
+                  {bonus.bookings} confirmed referrals
                 </p>
               </div>
             </div>

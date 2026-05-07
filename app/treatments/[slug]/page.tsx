@@ -71,9 +71,20 @@ export default function TreatmentDetail({ params }: Params) {
             </div>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <BookNowButton treatmentSlug={t.slug} className="justify-center shadow-soft hover:shadow-card transition-shadow">
-                Book Now
-              </BookNowButton>
+              {t.treatmentType === "home-kit" ? (
+                <BookNowButton treatmentSlug={t.slug} className="justify-center shadow-soft hover:shadow-card transition-shadow">
+                  Book Home Kit Program
+                </BookNowButton>
+              ) : (
+                <a
+                  href={site.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary justify-center shadow-soft hover:shadow-card transition-shadow"
+                >
+                  Book Consultation
+                </a>
+              )}
               <a
                 href={site.whatsapp}
                 target="_blank"
@@ -218,7 +229,18 @@ export default function TreatmentDetail({ params }: Params) {
               Not sure if it's right for you? Our experts will help during your free consultation.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <BookNowButton treatmentSlug={t.slug}>Book Consultation</BookNowButton>
+              {t.treatmentType === "home-kit" ? (
+                <BookNowButton treatmentSlug={t.slug}>Book Home Kit Program</BookNowButton>
+              ) : (
+                <a
+                  href={site.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  Book Consultation
+                </a>
+              )}
               <a
                 href={site.whatsapp}
                 target="_blank"
