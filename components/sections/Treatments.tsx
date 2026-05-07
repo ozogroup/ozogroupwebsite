@@ -5,26 +5,36 @@ import { treatments } from "@/lib/site";
 
 export default function Treatments() {
   return (
-    <section id="treatments" className="section">
+    <section id="treatments" className="section bg-gradient-to-b from-brand-surface/50 to-white">
       <div className="container-x">
-        <div className="max-w-2xl">
-          <span className="eyebrow">Signature Treatments</span>
-          <h2 className="mt-3">Clinically designed for visible results</h2>
-          <p className="mt-4">
-            Every treatment at IA Skin Care is tailored to your skin type and
-            goals — backed by safe, doctor-supervised protocols and premium
-            clinical-grade products.
+        <div className="max-w-3xl text-center mx-auto">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+              Premium Treatments
+            </span>
+          </span>
+          <h2 className="mt-6">
+            Clinically Designed for{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+              Visible Transformation
+            </span>
+          </h2>
+          <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto">
+            Every treatment at IA Skin Care is tailored to your unique skin type and goals — 
+            backed by safe, doctor-supervised protocols and premium clinical-grade products.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {treatments.map((t) => (
+        <div className="mt-12 grid gap-8 lg:gap-10 md:grid-cols-2">
+          {treatments.map((t, index) => (
             <article
               key={t.slug}
-              className="group relative flex flex-col overflow-hidden rounded-3xl border border-brand-border bg-white shadow-soft hover:shadow-card hover:-translate-y-0.5 transition"
+              className="group relative flex flex-col overflow-hidden rounded-[32px] border border-brand-border/60 bg-white shadow-soft hover:shadow-premium hover:-translate-y-1 transition-all duration-500 animate-fadeUp"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              {/* Visual — real image */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-surface">
+              {/* Visual with premium styling */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-brand-surface to-white">
                 <Image
                   src={t.image}
                   alt={t.imageAlt}
@@ -32,38 +42,42 @@ export default function Treatments() {
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                {/* Subtle bottom gradient for legibility of badges */}
+                {/* Premium gradient overlay */}
                 <div
                   aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-brand-ink/25 via-transparent to-transparent"
+                  className="absolute inset-0 bg-gradient-to-t from-brand-ink/20 via-transparent to-transparent"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-transparent to-brand-accent/10"
                 />
                 {t.badge && (
-                  <span className="absolute top-4 left-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent bg-white/95 backdrop-blur px-3 py-1.5 rounded-full border border-brand-border shadow-soft">
+                  <span className="absolute top-5 left-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-brand-border/50 shadow-glass">
                     {t.badge}
                   </span>
                 )}
-                <span className="absolute top-4 right-4 text-[10px] font-semibold text-brand-ink bg-white/95 backdrop-blur px-2.5 py-1 rounded-full border border-brand-border shadow-soft">
+                <span className="absolute top-5 right-5 text-[11px] font-semibold text-brand-ink bg-white/95 backdrop-blur-md px-3 py-2 rounded-full border border-brand-border/50 shadow-glass">
                   {t.duration}
                 </span>
               </div>
 
-              {/* Content */}
-              <div className="flex-1 flex flex-col p-6 md:p-7">
-                <p className="text-xs uppercase tracking-[0.16em] text-brand-accent font-semibold">
+              {/* Premium content styling */}
+              <div className="flex-1 flex flex-col p-7 md:p-8">
+                <p className="text-xs uppercase tracking-[0.18em] text-brand-accent font-semibold">
                   {t.tagline}
                 </p>
-                <h3 className="mt-2 text-xl md:text-2xl text-brand-ink">
+                <h3 className="mt-3 text-2xl md:text-[26px] text-brand-ink leading-tight">
                   {t.title}
                 </h3>
-                <p className="mt-2 text-sm md:text-[15px]">{t.description}</p>
+                <p className="mt-3 text-base text-brand-muted leading-relaxed">{t.description}</p>
 
-                <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {t.benefits.map((b) => (
+                <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {t.benefits.slice(0, 6).map((b) => (
                     <li
                       key={b}
-                      className="flex items-start gap-2 text-sm text-brand-ink/85"
+                      className="flex items-start gap-2.5 text-sm text-brand-ink/90"
                     >
-                      <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-accent/10 text-brand-accent">
+                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
@@ -73,21 +87,21 @@ export default function Treatments() {
                   ))}
                 </ul>
 
-                <div className="mt-5 flex items-center justify-between border-t border-brand-border pt-5">
+                <div className="mt-6 flex items-center justify-between border-t border-brand-border/80 pt-6">
                   <div>
-                    <p className="text-2xl md:text-3xl font-semibold text-brand-primary leading-none">
+                    <p className="text-3xl md:text-4xl font-semibold text-brand-primary leading-none">
                       {t.priceLabel}
                     </p>
-                    <p className="text-xs text-brand-muted mt-1">
+                    <p className="text-sm text-brand-muted mt-1.5">
                       {t.unit} · {t.sessions}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-3">
                   <BookNowButton
                     treatmentSlug={t.slug}
-                    className="w-full justify-center"
+                    className="w-full justify-center shadow-soft hover:shadow-card transition-shadow"
                   >
                     Book Now
                   </BookNowButton>
@@ -103,12 +117,14 @@ export default function Treatments() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-brand-muted">
-          Unsure which treatment is right for you?{" "}
-          <BookNowButton variant="ghost" className="!px-1 !py-0 align-baseline">
-            Get a free consultation →
+        <div className="mt-12 text-center">
+          <p className="text-base text-brand-muted mb-4">
+            Unsure which treatment is right for your skin?
+          </p>
+          <BookNowButton className="justify-center">
+            Get Free Consultation
           </BookNowButton>
-        </p>
+        </div>
       </div>
     </section>
   );

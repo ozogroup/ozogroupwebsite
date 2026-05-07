@@ -58,152 +58,308 @@ export const trustBadges: TrustBadge[] = [
 
 export const treatments: Treatment[] = [
   {
-    slug: "skin-lightening",
-    title: "Skin Lightening Treatment",
-    price: 18000,
-    priceLabel: "₹18,000",
-    unit: "per session",
-    tagline: "Brighter, even-toned skin",
-    description:
-      "Improves uneven skin tone, dullness, and pigmentation for a brighter, more balanced look.",
-    overview:
-      "Our Skin Lightening Treatment is a clinically formulated protocol that targets melanin clusters, post-acne marks, and dull patches — restoring an even, radiant complexion with safe, dermat-approved actives.",
-    benefits: [
-      "Reduces pigmentation & dark spots",
-      "Evens out skin tone",
-      "Restores natural radiance",
-      "Safe for Indian skin types",
-      "Improves overall skin clarity",
-      "Long-lasting visible glow",
-    ],
-    process: [
-      {
-        step: "Skin Assessment",
-        detail: "Expert evaluation of your skin type, concerns, and goals.",
-      },
-      {
-        step: "Deep Cleanse & Prep",
-        detail: "Gentle pore cleansing and pH balancing for product absorption.",
-      },
-      {
-        step: "Brightening Actives",
-        detail:
-          "Application of clinical-grade vitamin C, niacinamide, and pigment-correctors.",
-      },
-      {
-        step: "Targeted Mask",
-        detail: "Cooling brightening mask infused with antioxidant complex.",
-      },
-      {
-        step: "SPF & Aftercare",
-        detail: "Broad-spectrum SPF + a personalised home-care plan.",
-      },
-    ],
-    whoFor: [
-      "Uneven skin tone & dullness",
-      "Post-acne marks & pigmentation",
-      "Tan, sun damage, or dark patches",
-      "Anyone seeking a brighter, balanced complexion",
-    ],
-    safety:
-      "Doctor-supervised, patch-tested, and tailored for Indian skin. Uses certified clinical-grade products with zero harsh bleaching agents.",
-    faqs: [
-      {
-        q: "How many sessions will I need?",
-        a: "Most clients see visible results in 2 sessions; 4–6 sessions deliver the best long-term outcome. Your therapist will recommend the right plan after consultation.",
-      },
-      {
-        q: "Is there any downtime?",
-        a: "No downtime. You may experience mild redness for an hour, after which you can resume your routine immediately.",
-      },
-      {
-        q: "Is it safe for sensitive skin?",
-        a: "Yes — protocols are adjusted to your skin type. We always do a patch test before the first session.",
-      },
-    ],
-    duration: "60–75 min",
-    sessions: "Recommended 4–6 sessions",
-    badge: "Most Popular",
-    icon: "droplet",
-    tone: "accent",
-    image:
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
-    imageAlt:
-      "Premium skincare treatment — bright, radiant, even-toned skin",
-  },
-  {
-    slug: "korean-glass-skin",
-    title: "Korean Glass Skin Treatment",
+    slug: "korean-glass-treatment",
+    title: "Korean Glass Treatment",
     price: 25000,
     priceLabel: "₹25,000",
     unit: "per session",
-    tagline: "Smooth, radiant, glass-like glow",
+    tagline: "Deep Hydration & Glass-Like Glow",
     description:
-      "A premium glow-focused treatment for smooth, radiant, glass-like skin.",
+      "Experience the legendary Korean glass skin protocol — deep hydration, pore refinement, and luminous translucency for that signature mirror-like finish.",
     overview:
-      "Inspired by the iconic Korean K-Beauty protocol, this multi-step treatment hydrates from within, refines pores, and locks in a luminous, mirror-like dewy finish — the signature 'glass skin' look loved worldwide.",
+      "Our Korean Glass Treatment is inspired by the iconic K-Beauty regimen that has taken the world by storm. This multi-step clinical protocol hydrates from within, refines pores, and locks in a luminous, dewy finish — creating the signature 'glass skin' effect that reflects light like a mirror.",
     benefits: [
-      "Deep hydration & plumping",
-      "Refines pores & texture",
-      "Locks in a dewy finish",
-      "Boosts skin elasticity",
-      "Smooths fine lines",
-      "Korean multi-step protocol",
+      "Deep hydration & glow",
+      "Smooth & refined skin texture",
+      "Anti-aging collagen support",
+      "Even skin tone & brightness",
+      "Instant fresh luminous finish",
+      "Korean skincare protocols",
+      "Pore minimization",
+      "Enhanced skin elasticity",
     ],
     process: [
       {
         step: "Double Cleanse",
-        detail: "Oil-based + water-based cleanse to fully clarify the skin.",
+        detail: "Oil-based followed by water-based cleanse to remove all impurities.",
       },
       {
         step: "Gentle Exfoliation",
-        detail: "Removes dead cells for next-step actives to penetrate deeply.",
+        detail: "Removes dead skin cells for deeper product penetration.",
       },
       {
         step: "Hydration Infusion",
-        detail:
-          "Layered hyaluronic acid + peptide serums for instant plumping.",
+        detail: "Layered hyaluronic acid and peptide serums for deep plumping.",
       },
       {
         step: "Glass Skin Mask",
-        detail: "Signature glow mask for radiant translucency and bounce.",
+        detail: "Signature translucent mask for radiant bounce and clarity.",
       },
       {
-        step: "Lock-in & Finish",
-        detail: "Sealing emulsion, eye care, and SPF for the final glass finish.",
+        step: "Lock-in Finish",
+        detail: "Sealing emulsion, eye care, and SPF for lasting glass effect.",
       },
     ],
     whoFor: [
-      "Dry, dull, or tired-looking skin",
-      "Anyone wanting that K-Beauty dewy glow",
-      "Pre-event glow boost",
-      "Mature skin needing hydration & bounce",
+      "Dry or dehydrated skin",
+      "Dull, tired-looking complexion",
+      "Uneven skin texture",
+      "Anyone seeking K-Beauty dewy glow",
+      "Fine lines and early aging",
     ],
     safety:
-      "Doctor-supervised, hypoallergenic, and patch-tested. All Korean-import grade products are dermatologically certified.",
+      "Doctor-supervised with Korean-import grade, dermatologically certified products. Hypoallergenic and patch-tested for all skin types.",
     faqs: [
       {
-        q: "How long does the glow last?",
-        a: "The instant dewy finish lasts ~7–10 days. With recommended 3–5 sessions, you can sustain the effect for months.",
+        q: "How long does the glass skin effect last?",
+        a: "The immediate dewy glow lasts 7–10 days. With 3–5 recommended sessions, you can maintain the effect for months with proper home care.",
       },
       {
-        q: "Is this just a facial?",
-        a: "No — it's a multi-step clinical protocol with serums, masks, and infusions used in licensed Korean dermatology clinics.",
+        q: "Is this suitable for oily skin?",
+        a: "Yes, the protocol is balanced and customizable. Oily skin types often see excellent pore-refining results.",
       },
       {
-        q: "Will it work on oily skin?",
-        a: "Absolutely. The protocol is balanced and tailored — oily skin types often see the best refining results.",
+        q: "What makes this different from a regular facial?",
+        a: "This is a clinical-grade multi-step protocol using specialized Korean serums, masks, and infusion techniques used in licensed dermatology clinics.",
       },
     ],
     duration: "75–90 min",
     sessions: "Recommended 3–5 sessions",
-    badge: "Premium",
+    badge: "Signature",
     icon: "sparkle",
-    tone: "primary",
+    tone: "accent",
     image:
       "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
     imageAlt:
-      "Korean Glass Skin treatment — luminous dewy radiant skin",
+      "Korean Glass Skin treatment — luminous dewy radiant skin with glass-like finish",
+  },
+  {
+    slug: "basic-skin-treatment",
+    title: "Basic Skin Treatment",
+    price: 12000,
+    priceLabel: "₹12,000",
+    unit: "per session",
+    tagline: "Essential Skin Health Foundation",
+    description:
+      "Build a strong foundation for healthy, glowing skin with our essential treatment that cleanses, nourishes, and protects.",
+    overview:
+      "The Basic Skin Treatment is designed as the cornerstone of any skincare routine. This fundamental protocol deeply cleanses pores, replenishes essential nutrients, and strengthens your skin's natural barrier — establishing the perfect base for lasting skin health and radiance.",
+    benefits: [
+      "Deep pore cleansing",
+      "Skin barrier strengthening",
+      "Essential nutrient replenishment",
+      "Improved skin texture",
+      "Natural glow restoration",
+      "Prevention of future concerns",
+      "Balanced hydration",
+      "Soothing and calming",
+    ],
+    process: [
+      {
+        step: "Skin Analysis",
+        detail: "Professional assessment of your skin type and condition.",
+      },
+      {
+        step: "Deep Cleansing",
+        detail: "Thorough pore cleansing to remove impurities and excess oil.",
+      },
+      {
+        step: "Exfoliation",
+        detail: "Gentle removal of dead skin cells for smoother texture.",
+      },
+      {
+        step: "Nourishing Mask",
+        detail: "Nutrient-rich mask to replenish and revitalize skin.",
+      },
+      {
+        step: "Protection",
+        detail: "Moisturizer and SPF to protect and maintain results.",
+      },
+    ],
+    whoFor: [
+      "Beginners to professional skincare",
+      "Maintenance between advanced treatments",
+      "General skin health improvement",
+      "Preventative skincare",
+      "All skin types",
+    ],
+    safety:
+      "Gentle yet effective protocol suitable for all skin types. Doctor-supervised with patch-tested, clinical-grade products.",
+    faqs: [
+      {
+        q: "Is this suitable for first-time skincare clients?",
+        a: "Absolutely. This is our foundational treatment, perfect for anyone new to professional skincare or building a routine.",
+      },
+      {
+        q: "How often should I get this treatment?",
+        a: "For maintenance, we recommend every 4–6 weeks. Your therapist will create a personalized schedule based on your skin needs.",
+      },
+      {
+        q: "Can I combine this with other treatments?",
+        a: "Yes, this treatment pairs well with more advanced protocols. Your skincare expert will recommend the best combination for your goals.",
+      },
+    ],
+    duration: "45–60 min",
+    sessions: "Recommended 4–6 sessions",
+    badge: "Essential",
+    icon: "droplet",
+    tone: "primary",
+    image:
+      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
+    imageAlt:
+      "Basic Skin Treatment — clean, healthy, glowing skin foundation",
+  },
+  {
+    slug: "japanese-skin-treatment",
+    title: "Japanese Skin Treatment",
+    price: 22000,
+    priceLabel: "₹22,000",
+    unit: "per session",
+    tagline: "Refined Purity & Timeless Beauty",
+    description:
+      "Embrace the Japanese philosophy of skin purification — gentle yet powerful techniques for refined, porcelain-like skin with lasting clarity.",
+    overview:
+      "Rooted in the Japanese tradition of meticulous skincare, this treatment focuses on purification, refinement, and harmony. Using time-honored techniques combined with modern clinical science, it delivers porcelain-smooth skin with exceptional clarity and a refined, elegant finish.",
+    benefits: [
+      "Refined pore appearance",
+      "Smooth porcelain texture",
+      "Enhanced skin clarity",
+      "Gentle yet effective purification",
+      "Balanced skin tone",
+      "Anti-inflammatory soothing",
+      "Improved skin resilience",
+      "Natural luminosity",
+    ],
+    process: [
+      {
+        step: "Ritual Cleanse",
+        detail: "Traditional Japanese cleansing technique for deep purification.",
+      },
+      {
+        step: "Refining Exfoliation",
+        detail: "Gentle enzyme exfoliation for smooth, refined texture.",
+      },
+      {
+        step: "Essence Infusion",
+        detail: "Lightweight essence layers for deep hydration and balance.",
+      },
+      {
+        step: "Clay Mask",
+        detail: "Purifying clay mask to detoxify and refine pores.",
+      },
+      {
+        step: "Harmony Finish",
+        detail: "Balancing moisturizer and protective SPF for lasting clarity.",
+      },
+    ],
+    whoFor: [
+      "Enlarged or visible pores",
+      "Rough or uneven texture",
+      "Oily or combination skin",
+      "Those seeking refined elegance",
+      "Sensitive or reactive skin",
+    ],
+    safety:
+      "Doctor-supervised with gentle, purifying ingredients. All products are dermatologically tested and suitable for sensitive skin types.",
+    faqs: [
+      {
+        q: "How is this different from the Korean Glass Treatment?",
+        a: "While Korean Glass focuses on dewy hydration, Japanese treatment emphasizes purification, pore refinement, and achieving a smooth, porcelain-like finish.",
+      },
+      {
+        q: "Is this suitable for sensitive skin?",
+        a: "Yes, the Japanese approach is known for being gentle yet effective. We customize the intensity based on your skin sensitivity.",
+      },
+      {
+        q: "When will I see results?",
+        a: "Immediate refinement is visible after one session. For lasting porcelain-smooth skin, we recommend 4–6 sessions spaced 2–3 weeks apart.",
+      },
+    ],
+    duration: "60–75 min",
+    sessions: "Recommended 4–6 sessions",
+    badge: "Refined",
+    icon: "sparkle",
+    tone: "light",
+    image:
+      "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
+    imageAlt:
+      "Japanese Skin Treatment — refined porcelain-smooth skin with clarity",
+  },
+  {
+    slug: "advanced-skin-treatment",
+    title: "Advanced Skin Treatment",
+    price: 35000,
+    priceLabel: "₹35,000",
+    unit: "per session",
+    tagline: "Clinical-Grade Skin Transformation",
+    description:
+      "Target complex skin concerns with our most powerful clinical protocol — advanced actives, intensive repair, and visible transformation.",
+    overview:
+      "The Advanced Skin Treatment represents the pinnacle of our clinical expertise. This intensive protocol combines high-potency actives, cutting-edge delivery systems, and doctor-supervised precision to address complex skin concerns including deep pigmentation, advanced aging, and significant texture irregularities.",
+    benefits: [
+      "Powerful anti-aging support",
+      "Intensive skin repair",
+      "Deep pigmentation control",
+      "Advanced glow enhancement",
+      "Collagen synthesis boost",
+      "Skin barrier strengthening",
+      "Visible transformation",
+      "Long-term results",
+    ],
+    process: [
+      {
+        step: "Advanced Assessment",
+        detail: "Comprehensive skin analysis with imaging technology.",
+      },
+      {
+        step: "Professional Peel",
+        detail: "Clinical-grade peel for deep exfoliation and renewal.",
+      },
+      {
+        step: "Active Infusion",
+        detail: "High-potency serums with advanced delivery systems.",
+      },
+      {
+        step: "Intensive Mask",
+        detail: "Professional-grade treatment mask for targeted repair.",
+      },
+      {
+        step: "Barrier Restoration",
+        detail: "Barrier-repair complex and protective aftercare protocol.",
+      },
+    ],
+    whoFor: [
+      "Deep or stubborn pigmentation",
+      "Advanced signs of aging",
+      "Severe texture irregularities",
+      "Significant skin damage",
+      "Those seeking dramatic results",
+    ],
+    safety:
+      "Doctor-supervised with clinical-grade, high-potency actives. Requires pre-treatment assessment and strict aftercare compliance. Not suitable for pregnant or nursing clients.",
+    faqs: [
+      {
+        q: "Is there downtime after this treatment?",
+        a: "Yes, expect 3–5 days of mild redness and peeling as skin renews. This is normal and part of the transformation process.",
+      },
+      {
+        q: "How many sessions are needed?",
+        a: "Most clients see significant improvement in 2–3 sessions. A full course of 4–6 sessions is recommended for complete transformation.",
+      },
+      {
+        q: "Am I a candidate for this treatment?",
+        a: "A pre-treatment consultation is required. Our doctor will assess your skin, medical history, and goals to determine suitability.",
+      },
+    ],
+    duration: "90–120 min",
+    sessions: "Recommended 4–6 sessions",
+    badge: "Advanced",
+    icon: "award",
+    tone: "primaryDark",
+    image:
+      "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1400&q=80",
+    imageAlt:
+      "Advanced Skin Treatment — clinical-grade skin transformation with visible results",
   },
 ];
 

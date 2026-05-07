@@ -71,7 +71,6 @@ export default function BookingModal() {
     if (!form.time) return setError("Please pick a preferred time.");
 
     setSubmitting(true);
-    // TODO: Replace with real API / Supabase insert + Razorpay/Cashfree integration
     await new Promise((r) => setTimeout(r, 700));
 
     try {
@@ -102,68 +101,73 @@ export default function BookingModal() {
       <button
         aria-label="Close booking form"
         onClick={close}
-        className="absolute inset-0 bg-brand-ink/50 backdrop-blur-sm animate-fadeUp"
+        className="absolute inset-0 bg-brand-ink/60 backdrop-blur-sm animate-fadeUp"
       />
       <div
-        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-t-3xl sm:rounded-3xl shadow-card animate-fadeUp"
+        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-t-[32px] sm:rounded-[32px] shadow-premium animate-scaleIn"
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-brand-border px-5 sm:px-7 py-4 flex items-center justify-between gap-4">
+        {/* Premium Header */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-brand-border/60 px-6 sm:px-8 py-5 flex items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] font-semibold text-brand-accent">
-              Secure Booking
-            </p>
-            <h3 id="booking-title" className="mt-0.5 text-lg sm:text-xl font-semibold text-brand-ink">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
+              <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-brand-accent">
+                Secure Booking
+              </p>
+            </div>
+            <h3 id="booking-title" className="mt-2 text-xl sm:text-2xl font-semibold text-brand-ink">
               Book Your Consultation
             </h3>
           </div>
           <button
             aria-label="Close"
             onClick={close}
-            className="h-9 w-9 rounded-full border border-brand-border text-brand-ink hover:bg-brand-surface"
+            className="h-10 w-10 rounded-full border border-brand-border/60 text-brand-ink hover:bg-brand-surface flex items-center justify-center transition-colors"
           >
-            ✕
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 sm:px-7 py-6 grid gap-5">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Full Name *">
+        <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-6 sm:py-8 grid gap-6">
+          <div className="grid sm:grid-cols-2 gap-5">
+            <FloatingLabel label="Full Name" required>
               <input
                 type="text"
                 value={form.fullName}
                 onChange={update("fullName")}
-                placeholder="Your name"
-                className="input"
+                placeholder=" "
+                className="premium-input"
                 autoComplete="name"
               />
-            </Field>
-            <Field label="Mobile Number *">
+            </FloatingLabel>
+            <FloatingLabel label="Mobile Number" required>
               <input
                 type="tel"
                 value={form.mobile}
                 onChange={update("mobile")}
-                placeholder="+91 9XXXXXXXXX"
-                className="input"
+                placeholder=" "
+                className="premium-input"
                 autoComplete="tel"
               />
-            </Field>
+            </FloatingLabel>
           </div>
 
-          <Field label="Email (optional)">
+          <FloatingLabel label="Email Address">
             <input
               type="email"
               value={form.email}
               onChange={update("email")}
-              placeholder="you@example.com"
-              className="input"
+              placeholder=" "
+              className="premium-input"
               autoComplete="email"
             />
-          </Field>
+          </FloatingLabel>
 
-          <Field label="Select Treatment *">
-            <select value={form.treatment} onChange={update("treatment")} className="input">
-              <option value="">Choose a treatment…</option>
+          <FloatingLabel label="Select Treatment" required>
+            <select value={form.treatment} onChange={update("treatment")} className="premium-input">
+              <option value="">Choose a treatment</option>
               {treatments.map((t) => (
                 <option key={t.slug} value={t.slug}>
                   {t.title} — {t.priceLabel}
@@ -171,21 +175,21 @@ export default function BookingModal() {
               ))}
               <option value="general-consultation">General Consultation</option>
             </select>
-          </Field>
+          </FloatingLabel>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Preferred Date *">
+          <div className="grid sm:grid-cols-2 gap-5">
+            <FloatingLabel label="Preferred Date" required>
               <input
                 type="date"
                 min={today}
                 value={form.date}
                 onChange={update("date")}
-                className="input"
+                className="premium-input"
               />
-            </Field>
-            <Field label="Preferred Time *">
-              <select value={form.time} onChange={update("time")} className="input">
-                <option value="">Select time…</option>
+            </FloatingLabel>
+            <FloatingLabel label="Preferred Time" required>
+              <select value={form.time} onChange={update("time")} className="premium-input">
+                <option value="">Select time</option>
                 {[
                   "10:00 AM",
                   "11:30 AM",
@@ -199,67 +203,71 @@ export default function BookingModal() {
                   </option>
                 ))}
               </select>
-            </Field>
+            </FloatingLabel>
           </div>
 
-          <Field label="Referral Code (optional)">
+          <FloatingLabel label="Referral Code">
             <input
               type="text"
               value={form.referralCode}
               onChange={update("referralCode")}
-              placeholder="Enter if you have one"
-              className="input uppercase"
+              placeholder=" "
+              className="premium-input uppercase"
             />
-          </Field>
+          </FloatingLabel>
 
-          <Field label="Message (optional)">
+          <FloatingLabel label="Your Message">
             <textarea
               value={form.message}
               onChange={update("message")}
               rows={3}
-              placeholder="Tell us about your skin concerns…"
-              className="input resize-none"
+              placeholder="Tell us about your skin concerns..."
+              className="premium-input resize-none"
             />
-          </Field>
+          </FloatingLabel>
 
-          {/* Price summary */}
+          {/* Premium Price Summary */}
           {selected && (
-            <div className="rounded-2xl bg-brand-surface border border-brand-border p-4 flex items-center justify-between">
+            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-5 flex items-center justify-between shadow-soft">
               <div>
-                <p className="text-xs text-brand-muted">Estimated amount</p>
-                <p className="text-lg font-semibold text-brand-ink">
+                <p className="text-xs uppercase tracking-[0.16em] font-semibold text-brand-muted mb-1">
+                  Estimated Amount
+                </p>
+                <p className="text-2xl font-bold text-brand-primary">
                   {selected.priceLabel}{" "}
-                  <span className="text-xs font-normal text-brand-muted">
+                  <span className="text-sm font-normal text-brand-muted">
                     {selected.unit}
                   </span>
                 </p>
               </div>
-              <span className="text-[11px] font-medium text-brand-accent bg-brand-accent/10 px-3 py-1.5 rounded-full">
+              <span className="text-xs font-semibold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 px-4 py-2 rounded-full">
                 Payment link sent after confirmation
               </span>
             </div>
           )}
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-start gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
               {error}
-            </p>
+            </div>
           )}
 
-          <p className="text-xs text-brand-muted">
-            By submitting, you agree to be contacted on WhatsApp/phone to
-            confirm your slot. Need help? Call our customer care at{" "}
+          <p className="text-sm text-brand-muted leading-relaxed">
+            By submitting, you agree to be contacted on WhatsApp/phone to confirm your slot. 
+            Need help? Call our customer care at{" "}
             <a
               href={`tel:${site.phoneRaw}`}
-              className="font-semibold text-brand-ink hover:text-brand-accent"
+              className="font-semibold text-brand-ink hover:text-brand-accent transition-colors"
             >
               {site.phone}
             </a>
-            . Online payment via Razorpay / Cashfree —{" "}
-            <span className="font-medium text-brand-ink">coming soon.</span>
           </p>
 
-          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-1">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 sm:justify-end pt-2">
             <button
               type="button"
               onClick={close}
@@ -270,19 +278,19 @@ export default function BookingModal() {
             <button
               type="submit"
               disabled={submitting}
-              className="btn-primary justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary justify-center disabled:opacity-60 disabled:cursor-not-allowed shadow-soft hover:shadow-card transition-shadow"
             >
-              {submitting ? "Submitting…" : "Confirm Booking"}
+              {submitting ? "Submitting..." : "Confirm Booking"}
             </button>
           </div>
 
-          <p className="text-center text-xs text-brand-muted pt-1">
+          <p className="text-center text-sm text-brand-muted pt-2">
             Prefer chat?{" "}
             <a
               href={site.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-brand-accent font-medium hover:underline"
+              className="text-brand-accent font-semibold hover:underline"
             >
               Book on WhatsApp →
             </a>
@@ -291,39 +299,50 @@ export default function BookingModal() {
       </div>
 
       <style jsx>{`
-        .input {
+        .premium-input {
           width: 100%;
-          border-radius: 12px;
-          border: 1px solid #E3EDF2;
+          border-radius: 16px;
+          border: 2px solid #E3EDF2;
           background: #fff;
-          padding: 12px 14px;
-          font-size: 14px;
+          padding: 16px 18px;
+          font-size: 15px;
           color: #0B2030;
           outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s;
+          transition: all 0.2s ease;
         }
-        .input:focus {
+        .premium-input:focus {
           border-color: #1BA3C6;
-          box-shadow: 0 0 0 4px rgba(27, 163, 198, 0.15);
+          box-shadow: 0 0 0 4px rgba(27, 163, 198, 0.12);
+        }
+        .premium-input::placeholder {
+          color: transparent;
+        }
+        .premium-input:not(:placeholder-shown) + label,
+        .premium-input:focus + label {
+          transform: translateY(-28px) scale(0.85);
+          color: #1BA3C6;
         }
       `}</style>
     </div>
   );
 }
 
-function Field({
+function FloatingLabel({
   label,
   children,
+  required = false,
 }: {
   label: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="block text-[13px] font-medium text-brand-ink mb-1.5">
-        {label}
-      </span>
+    <label className="relative block">
       {children}
+      <span className="absolute left-4 top-4 text-sm text-brand-muted transition-all duration-200 pointer-events-none origin-[0]">
+        {label}
+        {required && <span className="text-brand-accent ml-1">*</span>}
+      </span>
     </label>
   );
 }

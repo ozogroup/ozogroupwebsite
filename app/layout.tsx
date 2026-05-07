@@ -13,16 +13,19 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "IA Skin Care | Professional Skincare That Works · OZO Group",
+  title: "OZO Skin Care | Luxury Korean & Japanese Skincare Treatments",
   description:
-    "IA Skin Care is the premium skincare division of OZO Group. Advanced clinical treatments — Skin Lightening, Korean Glass Skin & more. Glow Better. Earn Smarter.",
+    "Experience premium skincare treatments at OZO Skin Care. Korean Glass Skin, Japanese purification, and advanced clinical protocols for visible transformation. Doctor-supervised luxury skincare.",
   keywords: [
-    "IA Skin Care",
-    "OZO Group",
-    "skin lightening",
-    "Korean glass skin",
-    "skincare clinic",
-    "skin treatment India",
+    "OZO Skin Care",
+    "Korean Glass Skin",
+    "Japanese Skincare",
+    "Advanced Skin Treatment",
+    "Luxury Skincare Clinic",
+    "Skin Treatment India",
+    "Premium Skincare",
+    "Clinical Dermatology",
+    "Glass Skin Treatment",
   ],
   authors: [{ name: "The Gujarati Designer", url: "https://www.thegujaratidesigner.in" }],
   icons: {
@@ -30,9 +33,9 @@ export const metadata: Metadata = {
     apple: "/logos/ozo-group-logo.png",
   },
   openGraph: {
-    title: "IA Skin Care · OZO Group",
+    title: "OZO Skin Care · Premium Luxury Skincare",
     description:
-      "Professional skincare treatments by IA Skin Care, a premium division of OZO Group.",
+      "Transform your skin with luxury Korean and Japanese skincare treatments. Doctor-supervised clinical protocols for visible, lasting results.",
     type: "website",
   },
 };

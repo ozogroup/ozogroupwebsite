@@ -15,8 +15,8 @@ export type Treatment = {
   duration: string;
   sessions: string;
   badge?: string;
-  icon: "sparkle" | "droplet" | "leaf";
-  tone: "primary" | "accent" | "light";
+  icon: "sparkle" | "droplet" | "leaf" | "award";
+  tone: "primary" | "accent" | "light" | "primaryDark";
   image: string;
   imageAlt: string;
 };
