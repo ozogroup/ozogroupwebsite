@@ -60,20 +60,32 @@ export default function Membership() {
             />
             
             <div className="relative">
-              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-white">
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold text-white/90">
                 Membership Price
               </p>
-              <p className="mt-3 flex items-baseline gap-2">
-                <span className="text-5xl md:text-6xl font-semibold tracking-tight text-white">
-                  ₹1,199
+              
+              <div className="mt-4 space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/30 backdrop-blur-sm">
+                  <span className="text-5xl md:text-6xl font-bold text-white tracking-tight">
+                    ₹1,199/-
+                  </span>
+                </div>
+                <p className="text-sm text-white/90 font-medium">
+                  one-time membership
+                </p>
+              </div>
+
+              <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                <span className="text-sm font-semibold text-white">
+                  Minimum ₹500 earning per referral
                 </span>
-                <span className="text-sm text-white/90 font-medium">one-time</span>
-              </p>
-              <p className="mt-4 text-sm text-white leading-relaxed">
-                Earn ₹500 minimum on every successful direct referral.
-              </p>
-              <p className="mt-2 text-sm text-white/80 leading-relaxed">
-                Start with ₹500 per successful referral and grow your income with unlimited referral opportunities.
+              </div>
+
+              <p className="mt-4 text-sm text-white/90 leading-relaxed">
+                Start earning from your very first referral with unlimited potential.
               </p>
             </div>
             
