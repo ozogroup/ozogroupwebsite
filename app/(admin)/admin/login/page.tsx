@@ -17,47 +17,40 @@ async function handleLogin(formData: FormData) {
     redirect("/admin/login?error=Email and password are required");
   }
 
-  try {
-    console.log("[ADMIN LOGIN] Getting Supabase server client");
-    const supabase = getSupabaseServerClient();
-    console.log("[ADMIN LOGIN] Supabase client initialized");
+  console.log("[ADMIN LOGIN] Getting Supabase server client");
+  const supabase = getSupabaseServerClient();
+  console.log("[ADMIN LOGIN] Supabase client initialized");
 
-    console.log("[ADMIN LOGIN] Attempting Supabase auth with signInWithPassword");
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  console.log("[ADMIN LOGIN] Attempting Supabase auth with signInWithPassword");
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (error) {
-      console.error("[ADMIN LOGIN] Supabase auth error:", error);
-      console.error("[ADMIN LOGIN] Error name:", error.name);
-      console.error("[ADMIN LOGIN] Error message:", error.message);
-      console.error("[ADMIN LOGIN] Error status:", error.status);
-      redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
-    }
-
-    console.log("[ADMIN LOGIN] Auth successful, data:", data);
-    
-    // Verify user exists
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.log("[ADMIN LOGIN] No user after auth");
-      redirect("/admin/login?error=Authentication failed");
-    }
-
-    console.log("[ADMIN LOGIN] User authenticated:", user.id);
-    console.log("[ADMIN LOGIN] User email:", user.email);
-    console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
-    
-    // Direct redirect to dashboard - no profile check for now
-    redirect("/admin/dashboard");
-  } catch (error) {
-    console.error("[ADMIN LOGIN] Unexpected error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[ADMIN LOGIN] Error message:", errorMessage);
-    redirect(`/admin/login?error=${encodeURIComponent(errorMessage)}`);
+  if (error) {
+    console.error("[ADMIN LOGIN] Supabase auth error:", error);
+    console.error("[ADMIN LOGIN] Error name:", error.name);
+    console.error("[ADMIN LOGIN] Error message:", error.message);
+    console.error("[ADMIN LOGIN] Error status:", error.status);
+    redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
+
+  console.log("[ADMIN LOGIN] Auth successful, data:", data);
+  
+  // Verify user exists
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.log("[ADMIN LOGIN] No user after auth");
+    redirect("/admin/login?error=Authentication failed");
+  }
+
+  console.log("[ADMIN LOGIN] User authenticated:", user.id);
+  console.log("[ADMIN LOGIN] User email:", user.email);
+  console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
+  
+  // Direct redirect to dashboard - no profile check for now
+  redirect("/admin/dashboard");
 }
 
 export default function AdminLoginPage({
