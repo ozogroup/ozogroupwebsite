@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 export default function AdminPage() {
-  redirect("/admin/login");
+  return <div>Admin root working</div>;
 }
