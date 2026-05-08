@@ -51,27 +51,38 @@ async function handleLogin(formData: FormData) {
   console.log("[ADMIN LOGIN] Profile data:", profile);
   console.log("[ADMIN LOGIN] Profile error:", profileError);
 
-  if (profileError) {
-    console.error("[ADMIN LOGIN] Profile lookup error:", profileError);
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=Profile not found. Please contact administrator.");
+  // If profile doesn't exist, create it automatically with admin role
+  if (!profile || profileError) {
+    console.log("[ADMIN LOGIN] Creating profile automatically for user:", user.id);
+    
+    const { error: insertError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        email: user.email || "",
+        role: "admin",
+        created_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("[ADMIN LOGIN] Profile creation error:", insertError);
+      await supabase.auth.signOut();
+      redirect("/admin/login?error=Failed to create profile. Please contact administrator.");
+    }
+
+    console.log("[ADMIN LOGIN] Profile created successfully");
   }
 
   const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
+  const userRole = profile?.role || "admin";
 
-  if (!profile) {
-    console.log("[ADMIN LOGIN] No profile found");
+  if (!allowedRoles.includes(userRole as any)) {
+    console.log("[ADMIN LOGIN] Invalid role:", userRole);
     await supabase.auth.signOut();
-    redirect("/admin/login?error=Admin profile not found. Please create profile record in Supabase.");
+    redirect(`/admin/login?error=Unauthorized: Role '${userRole}' does not have admin access`);
   }
 
-  if (!allowedRoles.includes(profile.role as any)) {
-    console.log("[ADMIN LOGIN] Invalid role:", profile.role);
-    await supabase.auth.signOut();
-    redirect(`/admin/login?error=Unauthorized: Role '${profile.role}' does not have admin access`);
-  }
-
-  console.log("[ADMIN LOGIN] Login successful for role:", profile.role);
+  console.log("[ADMIN LOGIN] Login successful for role:", userRole);
   console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
   redirect("/admin/dashboard");
 }
