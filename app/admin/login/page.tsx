@@ -1,6 +1,8 @@
 import { adminLogin } from "@/lib/auth/actions";
 import Logo from "@/components/Logo";
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminLoginPage({
   searchParams,
 }: {
