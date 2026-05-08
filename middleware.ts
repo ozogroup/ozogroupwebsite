@@ -87,31 +87,10 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Get user profile to check role
-    console.log("[MIDDLEWARE] Fetching profile for user:", session.user.id);
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", session.user.id)
-      .single();
-
-    console.log("[MIDDLEWARE] Profile data:", profile);
-    console.log("[MIDDLEWARE] Profile error:", profileError);
-
-    // If profile doesn't exist or role is not admin/staff/super_admin
-    if (!profile) {
-      console.log("[MIDDLEWARE] No profile found, redirecting to unauthorized");
-      const redirectUrl = new URL("/unauthorized", req.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    if (!["super_admin", "admin", "staff", "content_manager"].includes(profile.role as any)) {
-      console.log("[MIDDLEWARE] Invalid role:", profile.role, ", redirecting to unauthorized");
-      const redirectUrl = new URL("/unauthorized", req.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    console.log("[MIDDLEWARE] Access granted for role:", profile.role);
+    // TEMPORARY: Allow any authenticated user to access admin
+    // Profile/role checks disabled for development
+    console.log("[MIDDLEWARE] Session exists, allowing access to admin");
+    return res;
   }
 
   // Partner routes protection

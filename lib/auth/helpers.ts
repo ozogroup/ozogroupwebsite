@@ -66,18 +66,25 @@ export async function requireAuth() {
 
 /**
  * Require profile - redirect if no profile exists
+ * TEMPORARY: Disabled for development - returns user instead
  */
 export async function requireProfile() {
-  console.log("[AUTH] Checking profile");
-  const profile = await getCurrentProfile();
+  console.log("[AUTH] Checking profile (TEMPORARY: disabled)");
+  const user = await getCurrentUser();
 
-  console.log("[AUTH] Profile:", profile);
-  if (!profile) {
-    console.log("[AUTH] No profile, redirecting to /login");
+  if (!user) {
+    console.log("[AUTH] No user, redirecting to /login");
     redirect("/login");
   }
 
-  return profile;
+  // TEMPORARY: Return a mock profile object instead of checking database
+  // This allows any authenticated user to access admin routes
+  return {
+    id: user.id,
+    email: user.email || "",
+    role: "admin",
+    created_at: new Date().toISOString(),
+  } as Profile;
 }
 
 /**

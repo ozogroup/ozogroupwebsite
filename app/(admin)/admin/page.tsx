@@ -11,17 +11,7 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
-
-  if (!profile || !allowedRoles.includes(profile.role as any)) {
-    redirect("/unauthorized");
-  }
-
+  // TEMPORARY: Allow any authenticated user to access admin
+  // Profile/role checks disabled for development
   redirect("/admin/dashboard");
 }
