@@ -1,5 +1,7 @@
 import { requireAdmin } from "@/lib/auth/helpers";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   // Protect this page - only accessible by authenticated admins
   await requireAdmin();
