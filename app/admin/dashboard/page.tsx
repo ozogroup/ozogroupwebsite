@@ -1,4 +1,9 @@
-export default function AdminDashboardPage() {
+import { requireAdmin } from "@/lib/auth/helpers";
+
+export default async function AdminDashboardPage() {
+  // Protect this page - only accessible by authenticated admins
+  await requireAdmin();
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
