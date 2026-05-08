@@ -24,7 +24,7 @@ ALTER TABLE profiles
 
 -- Add membership_status to profiles (for partner membership tracking)
 ALTER TABLE profiles 
-  ADD COLUMN IF NOT EXISTS membership_status membership_status DEFAULT 'pending';
+  ADD COLUMN IF NOT EXISTS membership_status membership_status DEFAULT 'pending_payment';
 
 -- Add city to profiles (for location tracking)
 ALTER TABLE profiles 
