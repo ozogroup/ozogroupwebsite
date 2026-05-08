@@ -87,7 +87,7 @@ export default function MembershipPreview() {
           </div>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-8 md:mt-12 flex md:grid gap-3 md:gap-6 md:grid-cols-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
           {[
             {
               icon: "dashboard",
@@ -107,10 +107,10 @@ export default function MembershipPreview() {
           ].map((item, i) => (
             <div
               key={item.title}
-              className="card hover:-translate-y-1 transition-transform duration-300"
+              className="min-w-[80%] md:min-w-0 snap-center bg-white border border-brand-border rounded-2xl p-4 md:p-6 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   {item.icon === "dashboard" && (
                     <>
@@ -131,8 +131,8 @@ export default function MembershipPreview() {
                   )}
                 </svg>
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{item.title}</h3>
-              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{item.desc}</p>
+              <h3 className="mt-3 md:mt-5 text-sm md:text-lg font-semibold text-brand-ink leading-tight">{item.title}</h3>
+              <p className="mt-1.5 md:mt-2 text-xs md:text-sm text-brand-muted leading-relaxed line-clamp-2">{item.desc}</p>
             </div>
           ))}
         </div>

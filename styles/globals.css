@@ -67,7 +67,16 @@ body {
 
   /* Section */
   .section {
-    @apply py-16 md:py-24;
+    @apply py-10 md:py-24;
+  }
+
+  /* Hide scrollbar but keep scrollable */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Eyebrow label */

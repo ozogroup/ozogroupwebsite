@@ -96,7 +96,7 @@ export default function BookingModal() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="booking-title"
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-6"
+      className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-0 sm:p-6"
     >
       <button
         aria-label="Close booking form"

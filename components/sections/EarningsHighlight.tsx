@@ -22,11 +22,11 @@ export default function EarningsHighlight() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-8 md:mt-12 grid gap-3 md:gap-6 grid-cols-3">
           {salesBonuses.map((bonus, i) => (
             <div
               key={bonus.bookings}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-primary to-brand-accent text-white p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
+              className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-brand-primary to-brand-accent text-white p-4 md:p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div
@@ -34,16 +34,16 @@ export default function EarningsHighlight() {
                 className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"
               />
               <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-white text-xs font-semibold">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <div className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-white/20 text-white text-[10px] md:text-xs font-semibold">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="md:w-[14px] md:h-[14px]">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   Bonus
                 </div>
-                <p className="mt-6 text-5xl md:text-6xl font-bold text-white">
+                <p className="mt-3 md:mt-6 text-2xl md:text-5xl lg:text-6xl font-bold text-white leading-none">
                   {bonus.bonus}
                 </p>
-                <p className="mt-2 text-white/90 font-medium">
+                <p className="mt-1.5 md:mt-2 text-[10px] md:text-base text-white/90 font-medium leading-tight">
                   {bonus.bookings} confirmed referrals
                 </p>
               </div>

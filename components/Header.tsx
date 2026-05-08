@@ -19,10 +19,21 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (open) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+      return () => {
+        const top = document.body.style.top;
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, parseInt(top || "0") * -1);
+      };
+    }
   }, [open]);
 
   return (
@@ -102,18 +113,19 @@ export default function Header() {
 
       {/* Mobile drawer (right sidebar) */}
       <div
-        className={`lg:hidden fixed inset-0 z-[60] transition duration-300 ${
+        className={`lg:hidden fixed inset-0 z-[9999] transition duration-300 ${
           open ? "pointer-events-auto" : "pointer-events-none"
         }`}
+        style={{ position: "fixed" }}
       >
         <div
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-premium border-l border-brand-border/60 transition-transform duration-300 ${
+          className={`fixed right-0 top-0 bottom-0 h-full w-[85vw] max-w-[340px] bg-white shadow-premium border-l border-brand-border/60 transition-transform duration-300 flex flex-col ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -129,7 +141,7 @@ export default function Header() {
               </svg>
             </button>
           </div>
-          <nav className="flex flex-col p-6 gap-2">
+          <nav className="flex flex-col p-6 gap-2 overflow-y-auto flex-1">
             {site.nav.map((item) => (
               <Link
                 key={item.href}

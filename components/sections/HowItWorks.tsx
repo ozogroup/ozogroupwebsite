@@ -51,23 +51,23 @@ export default function HowItWorks() {
           </BookNowButton>
         </div>
 
-        <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-8 md:mt-12 grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
             <li
               key={s.n}
-              className="relative card group hover:-translate-y-1 transition-transform duration-300"
+              className="relative bg-white border border-brand-border rounded-2xl p-4 md:p-6 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold tracking-[0.22em] text-brand-accent">
+                <span className="text-[10px] md:text-xs font-semibold tracking-[0.18em] md:tracking-[0.22em] text-brand-accent">
                   STEP {s.n}
                 </span>
-                <span className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center text-sm font-bold">
+                <span className="h-7 w-7 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center text-xs md:text-sm font-bold">
                   {i + 1}
                 </span>
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{s.title}</h3>
-              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{s.desc}</p>
+              <h3 className="mt-3 md:mt-5 text-sm md:text-lg font-semibold text-brand-ink leading-tight">{s.title}</h3>
+              <p className="mt-1.5 md:mt-2 text-xs md:text-sm text-brand-muted leading-relaxed line-clamp-3">{s.desc}</p>
             </li>
           ))}
         </ol>

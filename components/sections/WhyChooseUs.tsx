@@ -54,14 +54,14 @@ export default function WhyChooseUs() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 md:mt-12 grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
           {features.map((f, i) => (
-            <div key={f.title} className="card hover:-translate-y-1 transition-transform duration-300" style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
+            <div key={f.title} className="bg-white border border-brand-border rounded-2xl p-4 md:p-6 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300" style={{ animationDelay: `${i * 0.1}s` }}>
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br from-brand-accent/15 to-brand-light/15 text-brand-accent flex items-center justify-center">
                 <Icon i={i} />
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-brand-ink">{f.title}</h3>
-              <p className="mt-2 text-sm text-brand-muted leading-relaxed">{f.desc}</p>
+              <h3 className="mt-3 md:mt-5 text-sm md:text-lg font-semibold text-brand-ink leading-tight">{f.title}</h3>
+              <p className="mt-1.5 md:mt-2 text-xs md:text-sm text-brand-muted leading-relaxed line-clamp-3">{f.desc}</p>
             </div>
           ))}
         </div>
