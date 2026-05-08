@@ -7,20 +7,36 @@ export default async function AdminDashboardPage() {
   await requireAdmin();
   const supabase = getSupabaseServerClient();
 
-  // Fetch dashboard stats (placeholder - will be replaced with real queries)
-  const stats = {
-    totalTreatments: 0,
-    totalBookings: 0,
-    pendingBookings: 0,
-    totalMemberships: 0,
-    pendingMemberships: 0,
-    activePartners: 0,
-    totalPartners: 0,
-    pendingPayouts: 0,
-    totalCommission: 0,
-    paidCommission: 0,
-    totalRevenue: 0,
-  };
+  // Fetch real dashboard stats from Supabase
+  const [
+    { count: totalTreatments },
+    { count: activeTreatments },
+    { count: totalBookings },
+    { count: pendingBookings },
+    { count: totalMemberships },
+    { count: pendingMemberships },
+    { count: totalPartners },
+    { count: activePartners },
+    { count: pendingPayouts },
+    { data: commissionsData },
+    { data: recentBookings },
+    { data: recentMemberships },
+  ] = await Promise.all([
+    supabase.from("treatments" as any).select("*", { count: "exact", head: true }),
+    supabase.from("treatments" as any).select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("bookings" as any).select("*", { count: "exact", head: true }),
+    supabase.from("bookings" as any).select("*", { count: "exact", head: true }).eq("status", "new"),
+    supabase.from("membership_requests" as any).select("*", { count: "exact", head: true }),
+    supabase.from("membership_requests" as any).select("*", { count: "exact", head: true }).eq("membership_status", "pending"),
+    supabase.from("partners" as any).select("*", { count: "exact", head: true }),
+    supabase.from("partners" as any).select("*", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("payouts" as any).select("*", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("commissions" as any).select("commission_amount").eq("status", "paid"),
+    supabase.from("bookings" as any).select("*").order("created_at", { ascending: false }).limit(5),
+    supabase.from("membership_requests" as any).select("*").order("created_at", { ascending: false }).limit(5),
+  ]);
+
+  const totalCommission = commissionsData?.reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0) || 0;
 
   return (
     <div className="space-y-8">
@@ -42,9 +58,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">💆</span>
             </div>
-            <span className="text-sm text-slate-600 font-medium">Treatments</span>
+            <span className="text-sm text-slate-600 font-medium">{activeTreatments} active</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">{stats.totalTreatments}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">{totalTreatments}</h3>
           <p className="text-sm text-slate-600">Total Treatments</p>
         </div>
 
@@ -54,9 +70,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">📅</span>
             </div>
-            <span className="text-sm text-green-600 font-medium">+{stats.pendingBookings} pending</span>
+            <span className="text-sm text-green-600 font-medium">{pendingBookings} pending</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">{stats.totalBookings}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">{totalBookings}</h3>
           <p className="text-sm text-slate-600">Total Bookings</p>
         </div>
 
@@ -66,9 +82,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">👥</span>
             </div>
-            <span className="text-sm text-purple-600 font-medium">+{stats.pendingMemberships} pending</span>
+            <span className="text-sm text-purple-600 font-medium">{pendingMemberships} pending</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">{stats.totalMemberships}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">{totalMemberships}</h3>
           <p className="text-sm text-slate-600">Total Memberships</p>
         </div>
 
@@ -78,9 +94,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">🤝</span>
             </div>
-            <span className="text-sm text-orange-600 font-medium">{stats.activePartners} active</span>
+            <span className="text-sm text-orange-600 font-medium">{activePartners} active</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">{stats.totalPartners}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">{totalPartners}</h3>
           <p className="text-sm text-slate-600">Total Partners</p>
         </div>
 
@@ -90,9 +106,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">💸</span>
             </div>
-            <span className="text-sm text-red-600 font-medium">{stats.pendingPayouts} pending</span>
+            <span className="text-sm text-red-600 font-medium">{pendingPayouts} pending</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">₹0</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">{pendingPayouts}</h3>
           <p className="text-sm text-slate-600">Pending Payouts</p>
         </div>
 
@@ -102,9 +118,9 @@ export default async function AdminDashboardPage() {
             <div className="w-12 h-12 bg-brand-accent/10 rounded-lg flex items-center justify-center">
               <span className="text-2xl">💰</span>
             </div>
-            <span className="text-sm text-green-600 font-medium">₹{stats.paidCommission} paid</span>
+            <span className="text-sm text-green-600 font-medium">Paid</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">₹{stats.totalCommission}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">₹{totalCommission.toLocaleString()}</h3>
           <p className="text-sm text-slate-600">Total Commission</p>
         </div>
 
@@ -116,7 +132,7 @@ export default async function AdminDashboardPage() {
             </div>
             <span className="text-sm text-emerald-600 font-medium">This month</span>
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-1">₹{stats.totalRevenue}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 mb-1">₹0</h3>
           <p className="text-sm text-slate-600">Total Revenue</p>
         </div>
       </div>
@@ -176,9 +192,23 @@ export default async function AdminDashboardPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Bookings</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-center py-8 text-slate-500">
-              <p className="text-sm">No recent bookings</p>
-            </div>
+            {recentBookings && recentBookings.length > 0 ? (
+              recentBookings.map((booking: any) => (
+                <div key={booking.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{booking.name}</p>
+                    <p className="text-xs text-slate-600">{booking.treatment_name || 'Treatment'}</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                    {booking.status}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center py-8 text-slate-500">
+                <p className="text-sm">No recent bookings</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -186,9 +216,23 @@ export default async function AdminDashboardPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Membership Requests</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-center py-8 text-slate-500">
-              <p className="text-sm">No recent membership requests</p>
-            </div>
+            {recentMemberships && recentMemberships.length > 0 ? (
+              recentMemberships.map((membership: any) => (
+                <div key={membership.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{membership.full_name}</p>
+                    <p className="text-xs text-slate-600">{membership.city}</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">
+                    {membership.membership_status}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center py-8 text-slate-500">
+                <p className="text-sm">No recent membership requests</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -28,11 +28,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Mobile sidebar overlay */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Mobile sidebar overlay - solid dark overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[9998] lg:hidden"
+          className="fixed inset-0 bg-black/60 z-[9998] lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -46,7 +46,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Page content */}
-        <main className="p-6 lg:p-8">{children}</main>
+        <main className="p-6 lg:p-8 min-h-screen">{children}</main>
       </div>
     </div>
   );

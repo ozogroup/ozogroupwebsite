@@ -12,15 +12,17 @@ interface SidebarProps {
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: "📊" },
-  { name: "Treatments", href: "/admin/treatments", icon: "💆" },
+  { name: "Website Content", href: "/admin/content", icon: "📝" },
+  { name: "Treatments / Services", href: "/admin/treatments", icon: "💆" },
   { name: "Bookings", href: "/admin/bookings", icon: "📅" },
-  { name: "Memberships", href: "/admin/memberships", icon: "👥" },
-  { name: "Partners", href: "/admin/partners", icon: "🤝" },
-  { name: "Referrals", href: "/admin/referrals", icon: "🔗" },
+  { name: "Membership Requests", href: "/admin/memberships", icon: "👥" },
+  { name: "Referral Partners", href: "/admin/partners", icon: "🤝" },
   { name: "Commissions", href: "/admin/commissions", icon: "💰" },
-  { name: "Payouts", href: "/admin/payouts", icon: "💸" },
-  { name: "Payments", href: "/admin/payments", icon: "💳" },
-  { name: "Content", href: "/admin/content", icon: "📝" },
+  { name: "Payouts", href: "/admin/payouts", icon: "�" },
+  { name: "Testimonials", href: "/admin/testimonials", icon: "⭐" },
+  { name: "FAQs", href: "/admin/faqs", icon: "❓" },
+  { name: "Contact Settings", href: "/admin/contact", icon: "�" },
+  { name: "Media Library", href: "/admin/media", icon: "�️" },
   { name: "Settings", href: "/admin/settings", icon: "⚙️" },
 ];
 

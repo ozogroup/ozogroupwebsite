@@ -6,7 +6,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 export async function getTreatments() {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
-    .from("treatments")
+    .from("treatments" as any)
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -21,7 +21,7 @@ export async function getTreatments() {
 export async function getTreatmentById(id: string) {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
-    .from("treatments")
+    .from("treatments" as any)
     .select("*")
     .eq("id", id)
     .single();
@@ -53,7 +53,7 @@ export async function createTreatment(formData: FormData) {
   const requiresSlots = formData.get("requires_slots") === "true";
   const availableCities = formData.get("available_cities") as string;
 
-  const { data, error } = await supabase.from("treatments").insert({
+  const { data, error } = await supabase.from("treatments" as any).insert({
     title,
     slug,
     type: type as "home_kit" | "clinic" | "campaign",
@@ -99,7 +99,7 @@ export async function updateTreatment(formData: FormData) {
   const availableCities = formData.get("available_cities") as string;
 
   const { data, error } = await supabase
-    .from("treatments")
+    .from("treatments" as any)
     .update({
       title,
       slug,
@@ -133,7 +133,7 @@ export async function deleteTreatment(id: string) {
 
   const supabase = getSupabaseServerClient();
 
-  const { error } = await supabase.from("treatments").delete().eq("id", id);
+  const { error } = await supabase.from("treatments" as any).delete().eq("id", id);
 
   if (error) {
     console.error("Error deleting treatment:", error);
@@ -150,7 +150,7 @@ export async function toggleTreatmentActive(id: string, active: boolean) {
   const supabase = getSupabaseServerClient();
 
   const { error } = await supabase
-    .from("treatments")
+    .from("treatments" as any)
     .update({ active })
     .eq("id", id);
 
