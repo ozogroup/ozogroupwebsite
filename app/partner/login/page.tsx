@@ -4,14 +4,14 @@ import Logo from "@/components/Logo";
 
 export const dynamic = 'force-dynamic';
 
-async function handleLogin(formData: FormData) {
+async function handlePartnerLogin(formData: FormData) {
   "use server";
   
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    redirect("/admin/login?error=Email and password are required");
+    redirect("/partner/login?error=Email and password are required");
   }
 
   const supabase = getSupabaseServerClient();
@@ -22,14 +22,14 @@ async function handleLogin(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+    redirect(`/partner/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Verify user has allowed admin role
+  // Verify user has partner role
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/admin/login?error=Authentication failed");
+    redirect("/partner/login?error=Authentication failed");
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -41,25 +41,18 @@ async function handleLogin(formData: FormData) {
   if (profileError) {
     console.error("Profile lookup error:", profileError);
     await supabase.auth.signOut();
-    redirect("/admin/login?error=Profile not found. Please contact administrator.");
+    redirect("/partner/login?error=Profile not found. Please contact administrator.");
   }
 
-  const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
-
-  if (!profile) {
+  if (!profile || profile.role !== "partner") {
     await supabase.auth.signOut();
-    redirect("/admin/login?error=Admin profile not found. Please create profile record in Supabase.");
+    redirect("/partner/login?error=Unauthorized: Partner access only");
   }
 
-  if (!allowedRoles.includes(profile.role as any)) {
-    await supabase.auth.signOut();
-    redirect(`/admin/login?error=Unauthorized: Role '${profile.role}' does not have admin access`);
-  }
-
-  redirect("/admin/dashboard");
+  redirect("/partner/dashboard");
 }
 
-export default function AdminLoginPage({
+export default function PartnerLoginPage({
   searchParams,
 }: {
   searchParams: { error?: string };
@@ -77,10 +70,10 @@ export default function AdminLoginPage({
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Admin Panel
+              Partner Portal
             </h1>
             <p className="text-slate-600">
-              Secure access for authorized staff
+              Login to your partner dashboard
             </p>
           </div>
 
@@ -92,7 +85,7 @@ export default function AdminLoginPage({
           )}
 
           {/* Form */}
-          <form action={handleLogin} className="space-y-6">
+          <form action={handlePartnerLogin} className="space-y-6">
             {/* Email */}
             <div>
               <label
@@ -108,7 +101,7 @@ export default function AdminLoginPage({
                 autoComplete="email"
                 required
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all"
-                placeholder="admin@ozo.com"
+                placeholder="partner@ozo.com"
               />
             </div>
 
@@ -136,7 +129,7 @@ export default function AdminLoginPage({
               type="submit"
               className="w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all"
             >
-              Sign In
+              Login
             </button>
           </form>
 

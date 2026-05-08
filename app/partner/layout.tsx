@@ -1,14 +1,19 @@
-import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import PartnerShell from "@/components/partner/PartnerShell";
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
+export default async function PartnerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const supabase = getSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/admin/login");
+    redirect("/partner/login");
   }
 
   const { data: profile } = await supabase
@@ -17,11 +22,9 @@ export default async function AdminPage() {
     .eq("id", user.id)
     .single();
 
-  const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
-
-  if (!profile || !allowedRoles.includes(profile.role as any)) {
+  if (!profile || profile.role !== "partner") {
     redirect("/unauthorized");
   }
 
-  redirect("/admin/dashboard");
+  return <PartnerShell>{children}</PartnerShell>;
 }

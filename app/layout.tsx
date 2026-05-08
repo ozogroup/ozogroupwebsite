@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { BookingProvider } from "@/components/booking/BookingContext";
+import { headers } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,14 +52,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = headers();
+  const pathname = headersList.get("x-pathname") || "/";
+  const isAdminOrPartner = pathname.startsWith("/admin") || pathname.startsWith("/partner");
+
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans bg-white text-brand-ink antialiased">
         <BookingProvider>
-          <Header />
-          <main className="min-h-[60vh]">{children}</main>
-          <Footer />
-          <WhatsAppFloat />
+          {!isAdminOrPartner && <Header />}
+          <main className={isAdminOrPartner ? "min-h-screen" : "min-h-[60vh]"}>{children}</main>
+          {!isAdminOrPartner && <Footer />}
+          {!isAdminOrPartner && <WhatsAppFloat />}
         </BookingProvider>
       </body>
     </html>
