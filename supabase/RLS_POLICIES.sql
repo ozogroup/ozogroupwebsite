@@ -165,17 +165,6 @@ CREATE POLICY "partners_read_own"
 ON partners FOR SELECT
 USING (auth.uid() = id);
 
-CREATE POLICY "partners_update_own_limited"
-ON partners FOR UPDATE
-USING (
-  auth.uid() = id AND
-  -- Partners can only update: city, address, pin_code
-  -- Cannot update: wallet_balance, total_earnings, sponsor_id, status, kyc fields
-  (OLD.city IS DISTINCT FROM NEW.city OR
-   OLD.address IS DISTINCT FROM NEW.address OR
-   OLD.pin_code IS DISTINCT FROM NEW.pin_code)
-);
-
 CREATE POLICY "partners_admin_read_all"
 ON partners FOR SELECT
 USING (
@@ -196,6 +185,7 @@ USING (
   -- Admin can change status, wallet (with caution)
   true
 );
+
 
 CREATE POLICY "partners_super_admin_full"
 ON partners FOR ALL
@@ -866,7 +856,7 @@ WITH CHECK (true); -- Controlled at application level
 -- ============================================================================
 
 -- Public: No access
-- Users: Read own OTP logs
+-- Users: Read own OTP logs
 -- Admin/Staff: Read all
 
 CREATE POLICY "otp_logs_no_public_access"
@@ -1041,9 +1031,9 @@ USING (
 -- ============================================================================
 
 -- Public: No access
-- Users: Read own notifications
-- Admin/Staff: Read own notifications
-- System: Can create notifications
+-- Users: Read own notifications
+-- Admin/Staff: Read own notifications
+-- System: Can create notifications
 
 CREATE POLICY "notifications_no_public_access"
 ON notifications FOR SELECT
