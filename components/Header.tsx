@@ -20,30 +20,24 @@ export default function Header() {
 
   useEffect(() => {
     if (open) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
-      return () => {
-        const top = document.body.style.top;
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, parseInt(top || "0") * -1);
-      };
+    } else {
+      document.body.style.overflow = "";
     }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   return (
-    <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        scrolled
-          ? "bg-white/90 backdrop-blur-md border-b border-brand-border/60 shadow-soft"
-          : "bg-white/70 backdrop-blur-sm border-b border-transparent"
-      }`}
-    >
+    <>
+      <header
+        className={`sticky top-0 z-40 w-full transition-all duration-300 ${
+          scrolled
+            ? "bg-white/90 backdrop-blur-md border-b border-brand-border/60 shadow-soft"
+            : "bg-white/70 backdrop-blur-sm border-b border-transparent"
+        }`}
+      >
       <div className="container-x flex h-16 md:h-20 items-center justify-between gap-4">
         <Logo />
 
@@ -110,13 +104,13 @@ export default function Header() {
           </button>
         </div>
       </div>
+      </header>
 
-      {/* Mobile drawer (right sidebar) */}
+      {/* Mobile drawer (right sidebar) — rendered outside header to avoid backdrop-filter containing block */}
       <div
         className={`lg:hidden fixed inset-0 z-[9999] transition duration-300 ${
           open ? "pointer-events-auto" : "pointer-events-none"
         }`}
-        style={{ position: "fixed" }}
       >
         <div
           className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
@@ -182,6 +176,6 @@ export default function Header() {
           </nav>
         </aside>
       </div>
-    </header>
+    </>
   );
 }
