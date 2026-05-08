@@ -17,21 +17,26 @@ async function handleLogin(formData: FormData) {
     redirect("/admin/login?error=Email and password are required");
   }
 
-  const supabase = getSupabaseServerClient();
-
   try {
-    console.log("[ADMIN LOGIN] Attempting Supabase auth");
+    console.log("[ADMIN LOGIN] Getting Supabase server client");
+    const supabase = getSupabaseServerClient();
+    console.log("[ADMIN LOGIN] Supabase client initialized");
+
+    console.log("[ADMIN LOGIN] Attempting Supabase auth with signInWithPassword");
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      console.log("[ADMIN LOGIN] Auth error:", error.message);
+      console.error("[ADMIN LOGIN] Supabase auth error:", error);
+      console.error("[ADMIN LOGIN] Error name:", error.name);
+      console.error("[ADMIN LOGIN] Error message:", error.message);
+      console.error("[ADMIN LOGIN] Error status:", error.status);
       redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
     }
 
-    console.log("[ADMIN LOGIN] Auth successful");
+    console.log("[ADMIN LOGIN] Auth successful, data:", data);
     
     // Verify user exists
     const { data: { user } } = await supabase.auth.getUser();
@@ -42,13 +47,16 @@ async function handleLogin(formData: FormData) {
     }
 
     console.log("[ADMIN LOGIN] User authenticated:", user.id);
+    console.log("[ADMIN LOGIN] User email:", user.email);
     console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
     
     // Direct redirect to dashboard - no profile check for now
     redirect("/admin/dashboard");
   } catch (error) {
     console.error("[ADMIN LOGIN] Unexpected error:", error);
-    redirect("/admin/login?error=Login failed. Please try again.");
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[ADMIN LOGIN] Error message:", errorMessage);
+    redirect(`/admin/login?error=${encodeURIComponent(errorMessage)}`);
   }
 }
 
