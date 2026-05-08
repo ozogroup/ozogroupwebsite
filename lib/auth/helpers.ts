@@ -52,9 +52,12 @@ export async function getCurrentProfile(): Promise<Profile | null> {
  * Require authentication - redirect to login if not authenticated
  */
 export async function requireAuth() {
+  console.log("[AUTH] Checking authentication");
   const user = await getCurrentUser();
-  
+
+  console.log("[AUTH] User:", user);
   if (!user) {
+    console.log("[AUTH] No user, redirecting to /login");
     redirect("/login");
   }
 
@@ -65,9 +68,12 @@ export async function requireAuth() {
  * Require profile - redirect if no profile exists
  */
 export async function requireProfile() {
+  console.log("[AUTH] Checking profile");
   const profile = await getCurrentProfile();
-  
+
+  console.log("[AUTH] Profile:", profile);
   if (!profile) {
+    console.log("[AUTH] No profile, redirecting to /login");
     redirect("/login");
   }
 
@@ -78,9 +84,12 @@ export async function requireProfile() {
  * Require specific role - redirect if user doesn't have required role
  */
 export async function requireRole(allowedRoles: UserRole[]) {
+  console.log("[AUTH] Checking role, allowed roles:", allowedRoles);
   const profile = await requireProfile();
-  
+
+  console.log("[AUTH] User role:", profile.role);
   if (!allowedRoles.includes(profile.role as UserRole)) {
+    console.log("[AUTH] Role not in allowed list, redirecting to /unauthorized");
     redirect("/unauthorized");
   }
 

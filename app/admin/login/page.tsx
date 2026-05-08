@@ -6,31 +6,41 @@ export const dynamic = 'force-dynamic';
 
 async function handleLogin(formData: FormData) {
   "use server";
-  
+
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
+  console.log("[ADMIN LOGIN] Login attempt for email:", email);
+
   if (!email || !password) {
+    console.log("[ADMIN LOGIN] Missing email or password");
     redirect("/admin/login?error=Email and password are required");
   }
 
   const supabase = getSupabaseServerClient();
 
+  console.log("[ADMIN LOGIN] Attempting Supabase auth");
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
+    console.log("[ADMIN LOGIN] Auth error:", error.message);
     redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
+
+  console.log("[ADMIN LOGIN] Auth successful, data:", data);
 
   // Verify user has allowed admin role
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
+    console.log("[ADMIN LOGIN] No user after auth");
     redirect("/admin/login?error=Authentication failed");
   }
+
+  console.log("[ADMIN LOGIN] User ID:", user.id);
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -38,8 +48,11 @@ async function handleLogin(formData: FormData) {
     .eq("id", user.id)
     .single();
 
+  console.log("[ADMIN LOGIN] Profile data:", profile);
+  console.log("[ADMIN LOGIN] Profile error:", profileError);
+
   if (profileError) {
-    console.error("Profile lookup error:", profileError);
+    console.error("[ADMIN LOGIN] Profile lookup error:", profileError);
     await supabase.auth.signOut();
     redirect("/admin/login?error=Profile not found. Please contact administrator.");
   }
@@ -47,15 +60,19 @@ async function handleLogin(formData: FormData) {
   const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
 
   if (!profile) {
+    console.log("[ADMIN LOGIN] No profile found");
     await supabase.auth.signOut();
     redirect("/admin/login?error=Admin profile not found. Please create profile record in Supabase.");
   }
 
   if (!allowedRoles.includes(profile.role as any)) {
+    console.log("[ADMIN LOGIN] Invalid role:", profile.role);
     await supabase.auth.signOut();
     redirect(`/admin/login?error=Unauthorized: Role '${profile.role}' does not have admin access`);
   }
 
+  console.log("[ADMIN LOGIN] Login successful for role:", profile.role);
+  console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
   redirect("/admin/dashboard");
 }
 
