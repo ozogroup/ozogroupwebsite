@@ -19,72 +19,37 @@ async function handleLogin(formData: FormData) {
 
   const supabase = getSupabaseServerClient();
 
-  console.log("[ADMIN LOGIN] Attempting Supabase auth");
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    console.log("[ADMIN LOGIN] Attempting Supabase auth");
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    console.log("[ADMIN LOGIN] Auth error:", error.message);
-    redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
-  }
-
-  console.log("[ADMIN LOGIN] Auth successful, data:", data);
-
-  // Verify user has allowed admin role
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    console.log("[ADMIN LOGIN] No user after auth");
-    redirect("/admin/login?error=Authentication failed");
-  }
-
-  console.log("[ADMIN LOGIN] User ID:", user.id);
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  console.log("[ADMIN LOGIN] Profile data:", profile);
-  console.log("[ADMIN LOGIN] Profile error:", profileError);
-
-  // If profile doesn't exist, create it automatically with admin role
-  if (!profile || profileError) {
-    console.log("[ADMIN LOGIN] Creating profile automatically for user:", user.id);
-    
-    const { error: insertError } = await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        email: user.email || "",
-        role: "admin",
-        created_at: new Date().toISOString(),
-      });
-
-    if (insertError) {
-      console.error("[ADMIN LOGIN] Profile creation error:", insertError);
-      await supabase.auth.signOut();
-      redirect("/admin/login?error=Failed to create profile. Please contact administrator.");
+    if (error) {
+      console.log("[ADMIN LOGIN] Auth error:", error.message);
+      redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
     }
 
-    console.log("[ADMIN LOGIN] Profile created successfully");
+    console.log("[ADMIN LOGIN] Auth successful");
+    
+    // Verify user exists
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.log("[ADMIN LOGIN] No user after auth");
+      redirect("/admin/login?error=Authentication failed");
+    }
+
+    console.log("[ADMIN LOGIN] User authenticated:", user.id);
+    console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
+    
+    // Direct redirect to dashboard - no profile check for now
+    redirect("/admin/dashboard");
+  } catch (error) {
+    console.error("[ADMIN LOGIN] Unexpected error:", error);
+    redirect("/admin/login?error=Login failed. Please try again.");
   }
-
-  const allowedRoles = ["super_admin", "admin", "staff", "content_manager"];
-  const userRole = profile?.role || "admin";
-
-  if (!allowedRoles.includes(userRole as any)) {
-    console.log("[ADMIN LOGIN] Invalid role:", userRole);
-    await supabase.auth.signOut();
-    redirect(`/admin/login?error=Unauthorized: Role '${userRole}' does not have admin access`);
-  }
-
-  console.log("[ADMIN LOGIN] Login successful for role:", userRole);
-  console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
-  redirect("/admin/dashboard");
 }
 
 export default function AdminLoginPage({
