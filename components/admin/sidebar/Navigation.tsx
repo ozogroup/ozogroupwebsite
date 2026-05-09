@@ -6,25 +6,17 @@ import { useState } from "react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: "📊", section: "main" },
-  { name: "Website CMS", href: "/admin/content", icon: "📝", section: "content" },
   { name: "Treatments", href: "/admin/treatments", icon: "💆", section: "content" },
-  { name: "Bookings", href: "/admin/bookings", icon: "📅", section: "operations" },
-  { name: "Partners", href: "/admin/partners", icon: "🤝", section: "referral" },
-  { name: "Referrals", href: "/admin/referrals", icon: "🔗", section: "referral" },
-  { name: "Commissions", href: "/admin/commissions", icon: "💰", section: "referral" },
-  { name: "Payouts", href: "/admin/payouts", icon: "💸", section: "referral" },
-  { name: "Media Library", href: "/admin/media", icon: "🖼️", section: "content" },
   { name: "Testimonials", href: "/admin/testimonials", icon: "⭐", section: "content" },
   { name: "FAQs", href: "/admin/faqs", icon: "❓", section: "content" },
-  { name: "SEO Settings", href: "/admin/seo", icon: "🔍", section: "settings" },
-  { name: "Website Settings", href: "/admin/settings", icon: "⚙️", section: "settings" },
+  { name: "Website Content", href: "/admin/content", icon: "📝", section: "content" },
+  { name: "Contact Settings", href: "/admin/contact", icon: "�", section: "settings" },
+  { name: "System Health", href: "/admin/system-health", icon: "🏥", section: "settings" },
 ];
 
 const sectionLabels: Record<string, string> = {
   main: "Overview",
-  content: "Content",
-  operations: "Operations",
-  referral: "Referral System",
+  content: "Content Management",
   settings: "Settings",
 };
 

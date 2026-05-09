@@ -1,23 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, toggleTestimonialActive } from "@/lib/actions/testimonials";
-import ImageUpload from "@/components/admin/ImageUpload";
-import BackButton from "@/components/admin/BackButton";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+type Testimonial = {
+  id: string;
+  name: string;
+  role: string;
+  message: string;
+  rating: number;
+  image: string;
+  active: boolean;
+};
 
 export default function AdminTestimonialsPage() {
-  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingTestimonial, setEditingTestimonial] = useState<any>(null);
+  const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     role: "",
     message: "",
     rating: 5,
     image: "",
+    active: true,
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     loadTestimonials();
@@ -25,111 +37,166 @@ export default function AdminTestimonialsPage() {
 
   async function loadTestimonials() {
     setLoading(true);
-    const data = await getTestimonials();
-    setTestimonials(data);
+    const { data, error } = await (supabase as any).from("testimonials").select("*");
+    if (error) {
+      console.error("Error loading testimonials:", error);
+      setTestimonials([]);
+    } else if (data && Array.isArray(data)) {
+      setTestimonials(data as unknown as Testimonial[]);
+    } else {
+      setTestimonials([]);
+    }
     setLoading(false);
-  }
-
-  function handleAdd() {
-    setEditingTestimonial(null);
-    setFormData({ name: "", role: "", message: "", rating: 5, image: "" });
-    setShowModal(true);
-  }
-
-  function handleEdit(testimonial: any) {
-    setEditingTestimonial(testimonial);
-    setFormData({
-      name: testimonial.name,
-      role: testimonial.role,
-      message: testimonial.message,
-      rating: testimonial.rating,
-      image: testimonial.image,
-    });
-    setShowModal(true);
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError("");
+
     try {
+      const data = {
+        name: formData.name,
+        role: formData.role,
+        message: formData.message,
+        rating: formData.rating,
+        image: formData.image,
+        active: formData.active,
+      };
+
       if (editingTestimonial) {
-        await updateTestimonial(editingTestimonial.id, formData);
+        const { error } = await (supabase as any).from("testimonials").update(data).eq("id", editingTestimonial.id);
+        if (error) throw error;
       } else {
-        await createTestimonial(formData);
+        const { error } = await (supabase as any).from("testimonials").insert(data);
+        if (error) throw error;
       }
-      await loadTestimonials();
+
       setShowModal(false);
-    } catch (error) {
-      console.error("Error saving testimonial:", error);
+      setEditingTestimonial(null);
+      resetForm();
+      loadTestimonials();
+    } catch (err: any) {
+      setError(err.message || "Failed to save testimonial");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this testimonial?")) return;
-    try {
-      await deleteTestimonial(id);
-      await loadTestimonials();
-    } catch (error) {
-      console.error("Error deleting testimonial:", error);
+    
+    const { error } = await (supabase as any).from("testimonials").delete().eq("id", id);
+    if (error) {
+      alert(error.message);
+    } else {
+      loadTestimonials();
     }
   }
 
-  async function handleToggleActive(id: string, isActive: boolean) {
-    try {
-      await toggleTestimonialActive(id, isActive);
-      await loadTestimonials();
-    } catch (error) {
-      console.error("Error toggling testimonial active:", error);
-    }
+  function handleEdit(testimonial: any) {
+    setEditingTestimonial(testimonial);
+    setFormData({
+      name: testimonial.name || "",
+      role: testimonial.role || "",
+      message: testimonial.message || "",
+      rating: testimonial.rating || 5,
+      image: testimonial.image || "",
+      active: testimonial.active ?? true,
+    });
+    setShowModal(true);
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
-      </div>
-    );
+  function resetForm() {
+    setFormData({
+      name: "",
+      role: "",
+      message: "",
+      rating: 5,
+      image: "",
+      active: true,
+    });
+  }
+
+  function handleAdd() {
+    resetForm();
+    setEditingTestimonial(null);
+    setShowModal(true);
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-brand-ink">Testimonials</h1>
-          <p className="text-sm text-brand-muted">Manage customer testimonials</p>
+          <h1 className="text-2xl font-bold text-brand-ink">Testimonials</h1>
+          <p className="text-brand-muted">Manage customer testimonials</p>
         </div>
         <button
           onClick={handleAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
+          className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Add Testimonial
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-brand-surface/50 border-b border-brand-border">
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-slate-50 border-b border-brand-border">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Customer</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Rating</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Message</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-brand-border">
+            {loading ? (
               <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Customer</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Role</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Rating</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Message</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
+                <td colSpan={6} className="px-4 py-12 text-center text-brand-muted">
+                  Loading...
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-brand-border">
-              {testimonials.map((testimonial) => (
-                <tr key={testimonial.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface/30 transition-colors">
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="font-medium text-brand-ink">{testimonial.name}</div>
+            ) : testimonials.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <span className="text-4xl">⭐</span>
+                    <p className="text-brand-ink font-medium">No testimonials found</p>
+                    <p className="text-sm text-brand-muted">Run SEED_DATA.sql or add your first testimonial</p>
+                    <button
+                      onClick={handleAdd}
+                      className="mt-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
+                    >
+                      Add Testimonial
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              testimonials.map((testimonial) => (
+                <tr key={testimonial.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {testimonial.image ? (
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-10 h-10 rounded-full object-cover border border-brand-border"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
+                          {testimonial.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="font-medium text-brand-ink">{testimonial.name}</span>
+                    </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{testimonial.role}</td>
-                  <td className="px-4 sm:px-6 py-4">
+                  <td className="px-4 py-3 text-sm text-brand-muted">{testimonial.role}</td>
+                  <td className="px-4 py-3">
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <span key={i} className={i < testimonial.rating ? "text-yellow-400" : "text-slate-200"}>
@@ -138,101 +205,109 @@ export default function AdminTestimonialsPage() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm max-w-xs truncate">{testimonial.message}</td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="flex gap-2">
+                  <td className="px-4 py-3 text-sm text-brand-muted max-w-xs truncate">{testimonial.message}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      testimonial.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}>
+                      {testimonial.active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleEdit(testimonial)}
-                        className="px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-colors"
+                        className="p-1 text-brand-muted hover:text-brand-accent rounded"
+                        title="Edit"
                       >
-                        Edit
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(testimonial.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1 text-brand-muted hover:text-red-600 rounded"
+                        title="Delete"
                       >
-                        Delete
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {testimonials.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <span className="text-4xl">⭐</span>
-                      <p className="text-brand-muted">No testimonials yet</p>
-                      <button
-                        onClick={handleAdd}
-                        className="text-sm text-brand-accent hover:underline"
-                      >
-                        Add your first testimonial
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-xl shadow-soft max-w-lg w-full p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg font-semibold text-brand-ink">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-brand-border flex items-center justify-between">
+              <h2 className="text-lg font-bold text-brand-ink">
                 {editingTestimonial ? "Edit Testimonial" : "Add Testimonial"}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
-                className="text-brand-muted hover:text-brand-ink transition-colors"
+                onClick={() => { setShowModal(false); setEditingTestimonial(null); }}
+                className="p-1 text-brand-muted hover:text-brand-ink"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSave} className="space-y-4">
+
+            <form onSubmit={handleSave} className="p-4 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Customer Name</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Customer Name *</label>
                 <input
                   type="text"
-                  required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  required
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   placeholder="e.g., Priya Sharma"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Role / Location</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Role / Location</label>
                 <input
                   type="text"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   placeholder="e.g., Customer from Ahmedabad"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Testimonial Message</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Testimonial Message *</label>
                 <textarea
-                  required
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all min-h-[100px] resize-none"
                   rows={4}
+                  required
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                   placeholder="Share their experience..."
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Rating</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Rating</label>
                 <select
                   value={formData.rating}
                   onChange={(e) => setFormData({ ...formData, rating: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                 >
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -241,26 +316,44 @@ export default function AdminTestimonialsPage() {
                   ))}
                 </select>
               </div>
-              <ImageUpload
-                value={formData.image}
-                onChange={(url) => setFormData({ ...formData, image: url })}
-                folder="testimonials"
-                label="Customer Photo (optional)"
-              />
-              <div className="flex gap-3 pt-4">
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Image URL</label>
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                    className="rounded border-brand-border"
+                  />
+                  <span className="text-sm text-brand-ink">Active</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-brand-border">
+                <button
+                  type="button"
+                  onClick={() => { setShowModal(false); setEditingTestimonial(null); }}
+                  className="px-4 py-2 border border-brand-border rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
+                  className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save Testimonial"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 border border-brand-border text-brand-ink text-sm font-medium rounded-lg hover:bg-brand-surface transition-colors"
-                >
-                  Cancel
+                  {saving ? "Saving..." : editingTestimonial ? "Update" : "Create"}
                 </button>
               </div>
             </form>

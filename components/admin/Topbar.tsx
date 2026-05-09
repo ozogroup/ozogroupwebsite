@@ -9,20 +9,12 @@ interface TopbarProps {
 
 const PAGE_TITLES: Record<string, string> = {
   "/admin/dashboard": "Dashboard",
-  "/admin/content": "Website CMS",
   "/admin/treatments": "Treatments",
-  "/admin/bookings": "Bookings",
-  "/admin/memberships": "Membership Requests",
-  "/admin/partners": "Partners",
-  "/admin/referrals": "Referrals",
-  "/admin/commissions": "Commissions",
-  "/admin/payouts": "Payouts",
   "/admin/testimonials": "Testimonials",
   "/admin/faqs": "FAQs",
+  "/admin/content": "Website Content",
   "/admin/contact": "Contact Settings",
-  "/admin/media": "Media Library",
-  "/admin/seo": "SEO Settings",
-  "/admin/settings": "Website Settings",
+  "/admin/system-health": "System Health",
 };
 
 export default function Topbar({ onMenuClick }: TopbarProps) {

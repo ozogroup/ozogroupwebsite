@@ -1,21 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getFaqs, createFaq, updateFaq, deleteFaq, toggleFaqActive } from "@/lib/actions/faqs";
-import BackButton from "@/components/admin/BackButton";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
+type FAQ = {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  display_order: number;
+  is_active: boolean;
+};
 
 export default function AdminFaqsPage() {
-  const [faqs, setFaqs] = useState<any[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingFaq, setEditingFaq] = useState<any>(null);
+  const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
     category: "",
     display_order: 0,
+    is_active: true,
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     loadFaqs();
@@ -23,225 +35,280 @@ export default function AdminFaqsPage() {
 
   async function loadFaqs() {
     setLoading(true);
-    const data = await getFaqs();
-    setFaqs(data);
+    const { data, error } = await (supabase as any).from("faqs").select("*");
+    if (error) {
+      console.error("Error loading FAQs:", error);
+      setFaqs([]);
+    } else if (data && Array.isArray(data)) {
+      setFaqs(data as unknown as FAQ[]);
+    } else {
+      setFaqs([]);
+    }
     setLoading(false);
-  }
-
-  function handleAdd() {
-    setEditingFaq(null);
-    setFormData({ question: "", answer: "", category: "", display_order: 0 });
-    setShowModal(true);
-  }
-
-  function handleEdit(faq: any) {
-    setEditingFaq(faq);
-    setFormData({
-      question: faq.question,
-      answer: faq.answer,
-      category: faq.category,
-      display_order: faq.display_order,
-    });
-    setShowModal(true);
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError("");
+
     try {
+      const data = {
+        question: formData.question,
+        answer: formData.answer,
+        category: formData.category,
+        display_order: formData.display_order,
+        is_active: formData.is_active,
+      };
+
       if (editingFaq) {
-        await updateFaq(editingFaq.id, formData);
+        const { error } = await (supabase as any).from("faqs").update(data).eq("id", editingFaq.id);
+        if (error) throw error;
       } else {
-        await createFaq(formData);
+        const { error } = await (supabase as any).from("faqs").insert(data);
+        if (error) throw error;
       }
-      await loadFaqs();
+
       setShowModal(false);
-    } catch (error) {
-      console.error("Error saving FAQ:", error);
+      setEditingFaq(null);
+      resetForm();
+      loadFaqs();
+    } catch (err: any) {
+      setError(err.message || "Failed to save FAQ");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
-    try {
-      await deleteFaq(id);
-      await loadFaqs();
-    } catch (error) {
-      console.error("Error deleting FAQ:", error);
+    
+    const { error } = await (supabase as any).from("faqs").delete().eq("id", id);
+    if (error) {
+      alert(error.message);
+    } else {
+      loadFaqs();
     }
   }
 
-  async function handleToggleActive(id: string, isActive: boolean) {
-    try {
-      await toggleFaqActive(id, isActive);
-      await loadFaqs();
-    } catch (error) {
-      console.error("Error toggling FAQ active:", error);
-    }
+  function handleEdit(faq: any) {
+    setEditingFaq(faq);
+    setFormData({
+      question: faq.question || "",
+      answer: faq.answer || "",
+      category: faq.category || "",
+      display_order: faq.display_order || 0,
+      is_active: faq.is_active ?? true,
+    });
+    setShowModal(true);
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
-      </div>
-    );
+  function resetForm() {
+    setFormData({
+      question: "",
+      answer: "",
+      category: "",
+      display_order: 0,
+      is_active: true,
+    });
+  }
+
+  function handleAdd() {
+    resetForm();
+    setEditingFaq(null);
+    setShowModal(true);
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-brand-ink">FAQs</h1>
-          <p className="text-sm text-brand-muted">Manage frequently asked questions</p>
+          <h1 className="text-2xl font-bold text-brand-ink">FAQs</h1>
+          <p className="text-brand-muted">Manage frequently asked questions</p>
         </div>
         <button
           onClick={handleAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
+          className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Add FAQ
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-brand-surface/50 border-b border-brand-border">
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-slate-50 border-b border-brand-border">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Question</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Category</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Order</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-brand-border">
+            {loading ? (
               <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Question</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Category</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Order</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Status</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
+                <td colSpan={5} className="px-4 py-12 text-center text-brand-muted">
+                  Loading...
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-brand-border">
-              {faqs.map((faq) => (
-                <tr key={faq.id} className="hover:bg-brand-surface/30 transition-colors">
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="font-medium text-brand-ink">{faq.question}</div>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{faq.category || "-"}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{faq.display_order}</td>
-                  <td className="px-4 sm:px-6 py-4">
+            ) : faqs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <span className="text-4xl">❓</span>
+                    <p className="text-brand-ink font-medium">No FAQs found</p>
+                    <p className="text-sm text-brand-muted">Run SEED_DATA.sql or add your first FAQ</p>
                     <button
-                      onClick={() => handleToggleActive(faq.id, !faq.is_active)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        faq.is_active
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
+                      onClick={handleAdd}
+                      className="mt-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
                     >
-                      {faq.is_active ? "Active" : "Inactive"}
+                      Add FAQ
                     </button>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              faqs.map((faq) => (
+                <tr key={faq.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-medium text-brand-ink">{faq.question}</td>
+                  <td className="px-4 py-3 text-sm text-brand-muted">{faq.category || "-"}</td>
+                  <td className="px-4 py-3 text-sm text-brand-muted">{faq.display_order}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      faq.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}>
+                      {faq.is_active ? "Active" : "Inactive"}
+                    </span>
                   </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="flex gap-2">
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleEdit(faq)}
-                        className="px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-colors"
+                        className="p-1 text-brand-muted hover:text-brand-accent rounded"
+                        title="Edit"
                       >
-                        Edit
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(faq.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1 text-brand-muted hover:text-red-600 rounded"
+                        title="Delete"
                       >
-                        Delete
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {faqs.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <span className="text-4xl">❓</span>
-                      <p className="text-brand-muted">No FAQs yet</p>
-                      <button
-                        onClick={handleAdd}
-                        className="text-sm text-brand-accent hover:underline"
-                      >
-                        Add your first FAQ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-2xl shadow-premium max-w-lg w-full p-4 sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto">
-            <BackButton label="Close" />
-            <h2 className="font-display text-lg sm:text-xl font-bold text-brand-ink mb-4 sm:mb-6">
-              {editingFaq ? "Edit FAQ" : "Add FAQ"}
-            </h2>
-            <form onSubmit={handleSave} className="space-y-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-brand-border flex items-center justify-between">
+              <h2 className="text-lg font-bold text-brand-ink">
+                {editingFaq ? "Edit FAQ" : "Add FAQ"}
+              </h2>
+              <button
+                onClick={() => { setShowModal(false); setEditingFaq(null); }}
+                className="p-1 text-brand-muted hover:text-brand-ink"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="p-4 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Question</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Question *</label>
                 <input
                   type="text"
-                  required
                   value={formData.question}
                   onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  required
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   placeholder="e.g., How do I book a consultation?"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Answer</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Answer *</label>
                 <textarea
-                  required
                   value={formData.answer}
                   onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all min-h-[100px] resize-none"
                   rows={4}
+                  required
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                   placeholder="Provide a clear and helpful answer..."
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Category (optional)</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Category</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   placeholder="e.g., General, Membership, Treatments"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-2">Display Order</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Display Order</label>
                 <input
                   type="number"
                   value={formData.display_order}
-                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   min={0}
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="rounded border-brand-border"
+                  />
+                  <span className="text-sm text-brand-ink">Active</span>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-brand-border">
+                <button
+                  type="button"
+                  onClick={() => { setShowModal(false); setEditingFaq(null); }}
+                  className="px-4 py-2 border border-brand-border rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
+                  className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save FAQ"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 border border-brand-border text-brand-ink text-sm font-medium rounded-lg hover:bg-brand-surface transition-colors"
-                >
-                  Cancel
+                  {saving ? "Saving..." : editingFaq ? "Update" : "Create"}
                 </button>
               </div>
             </form>
