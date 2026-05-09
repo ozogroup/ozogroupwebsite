@@ -6,11 +6,11 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 type Testimonial = {
   id: string;
   name: string;
-  role: string;
-  message: string;
+  city: string;
+  treatment: string;
+  quote: string;
   rating: number;
-  image: string;
-  active: boolean;
+  is_active: boolean;
 };
 
 export default function AdminTestimonialsPage() {
@@ -20,11 +20,11 @@ export default function AdminTestimonialsPage() {
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    role: "",
-    message: "",
+    city: "",
+    treatment: "",
+    quote: "",
     rating: 5,
-    image: "",
-    active: true,
+    is_active: true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -57,11 +57,11 @@ export default function AdminTestimonialsPage() {
     try {
       const data = {
         name: formData.name,
-        role: formData.role,
-        message: formData.message,
+        city: formData.city,
+        treatment: formData.treatment,
+        quote: formData.quote,
         rating: formData.rating,
-        image: formData.image,
-        active: formData.active,
+        is_active: formData.is_active,
       };
 
       if (editingTestimonial) {
@@ -98,11 +98,11 @@ export default function AdminTestimonialsPage() {
     setEditingTestimonial(testimonial);
     setFormData({
       name: testimonial.name || "",
-      role: testimonial.role || "",
-      message: testimonial.message || "",
+      city: testimonial.city || "",
+      treatment: testimonial.treatment || "",
+      quote: testimonial.quote || "",
       rating: testimonial.rating || 5,
-      image: testimonial.image || "",
-      active: testimonial.active ?? true,
+      is_active: testimonial.is_active ?? true,
     });
     setShowModal(true);
   }
@@ -110,11 +110,11 @@ export default function AdminTestimonialsPage() {
   function resetForm() {
     setFormData({
       name: "",
-      role: "",
-      message: "",
+      city: "",
+      treatment: "",
+      quote: "",
       rating: 5,
-      image: "",
-      active: true,
+      is_active: true,
     });
   }
 
@@ -146,9 +146,10 @@ export default function AdminTestimonialsPage() {
           <thead className="bg-slate-50 border-b border-brand-border">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Customer</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Role</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">City</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Treatment</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Rating</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Message</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Quote</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Status</th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink uppercase">Actions</th>
             </tr>
@@ -179,23 +180,9 @@ export default function AdminTestimonialsPage() {
             ) : (
               testimonials.map((testimonial) => (
                 <tr key={testimonial.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {testimonial.image ? (
-                        <img
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          className="w-10 h-10 rounded-full object-cover border border-brand-border"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                          {testimonial.name.charAt(0)}
-                        </div>
-                      )}
-                      <span className="font-medium text-brand-ink">{testimonial.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-brand-muted">{testimonial.role}</td>
+                  <td className="px-4 py-3 font-medium text-brand-ink">{testimonial.name}</td>
+                  <td className="px-4 py-3 text-sm text-brand-muted">{testimonial.city}</td>
+                  <td className="px-4 py-3 text-sm text-brand-muted">{testimonial.treatment}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -205,12 +192,12 @@ export default function AdminTestimonialsPage() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-brand-muted max-w-xs truncate">{testimonial.message}</td>
+                  <td className="px-4 py-3 text-sm text-brand-muted max-w-xs truncate">{testimonial.quote}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      testimonial.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      testimonial.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                     }`}>
-                      {testimonial.active ? "Active" : "Inactive"}
+                      {testimonial.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -280,21 +267,32 @@ export default function AdminTestimonialsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Role / Location</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">City</label>
                 <input
                   type="text"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="e.g., Customer from Ahmedabad"
+                  placeholder="e.g., Ahmedabad"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Testimonial Message *</label>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Treatment</label>
+                <input
+                  type="text"
+                  value={formData.treatment}
+                  onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="e.g., Korean Glass Skin"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Quote *</label>
                 <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  value={formData.quote}
+                  onChange={(e) => setFormData({ ...formData, quote: e.target.value })}
                   rows={4}
                   required
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
@@ -317,23 +315,12 @@ export default function AdminTestimonialsPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="https://..."
-                />
-              </div>
-
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className="rounded border-brand-border"
                   />
                   <span className="text-sm text-brand-ink">Active</span>

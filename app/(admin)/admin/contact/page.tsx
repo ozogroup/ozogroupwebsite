@@ -14,6 +14,10 @@ export default function AdminContactSettingsPage() {
     whatsapp: "",
     email: "",
     address: "",
+    business_hours: "",
+    facebook_url: "",
+    instagram_url: "",
+    youtube_url: "",
   });
 
   const supabase = getSupabaseBrowserClient();
@@ -38,6 +42,10 @@ export default function AdminContactSettingsPage() {
         whatsapp: settingsData.whatsapp || settingsData.whatsapp_number || settingsData.whatsapp_url || "",
         email: settingsData.email || "",
         address: settingsData.address || "",
+        business_hours: settingsData.business_hours || "",
+        facebook_url: settingsData.facebook_url || "",
+        instagram_url: settingsData.instagram_url || "",
+        youtube_url: settingsData.youtube_url || "",
       });
     }
     setLoading(false);
@@ -49,6 +57,10 @@ export default function AdminContactSettingsPage() {
       whatsapp: "+91 76986 17054",
       email: "contact@ia-skincare.com",
       address: "OZO Group, IA Skin Care Division, Ahmedabad, Gujarat",
+      business_hours: "Mon - Sat: 10 AM - 7 PM",
+      facebook_url: "",
+      instagram_url: "",
+      youtube_url: "",
     };
 
     const { data, error } = await (supabase as any).from("contact_settings").insert(defaultData).select().single();
@@ -74,6 +86,10 @@ export default function AdminContactSettingsPage() {
         whatsapp: formData.whatsapp,
         email: formData.email,
         address: formData.address,
+        business_hours: formData.business_hours,
+        facebook_url: formData.facebook_url,
+        instagram_url: formData.instagram_url,
+        youtube_url: formData.youtube_url,
       };
 
       if (settings) {
@@ -170,6 +186,56 @@ export default function AdminContactSettingsPage() {
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                   rows={3}
                   placeholder="123 Beauty Street, Mumbai, Maharashtra 400001"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-brand-ink mb-1">Business Hours</label>
+                <input
+                  type="text"
+                  value={formData.business_hours}
+                  onChange={(e) => setFormData({ ...formData, business_hours: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="Mon - Sat: 10 AM - 7 PM"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media */}
+          <div>
+            <h3 className="text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+              <span className="text-xl">🔗</span>
+              Social Media
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Facebook URL</label>
+                <input
+                  type="url"
+                  value={formData.facebook_url}
+                  onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="https://facebook.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Instagram URL</label>
+                <input
+                  type="url"
+                  value={formData.instagram_url}
+                  onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="https://instagram.com/..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">YouTube URL</label>
+                <input
+                  type="url"
+                  value={formData.youtube_url}
+                  onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="https://youtube.com/..."
                 />
               </div>
             </div>

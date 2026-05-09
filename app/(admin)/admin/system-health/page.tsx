@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import DirectSelectTest from "./DirectSelectTest";
 
 async function refreshHealth() {
   "use server";
@@ -117,45 +116,8 @@ export default async function SystemHealthPage() {
         </form>
       </div>
 
-      {/* Debug Info */}
-      <div className="bg-gray-900 text-gray-100 rounded-xl p-6 font-mono text-sm space-y-4">
-        <h2 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">DEBUG OUTPUT</h2>
-        
-        <div>
-          <p className="text-gray-400">Supabase URL (first 35 chars):</p>
-          <p className="text-green-400">{supabaseUrl.substring(0, 35)}</p>
-        </div>
-        
-        <div>
-          <p className="text-gray-400">Anon key exists:</p>
-          <p className={supabaseAnonKey ? "text-green-400" : "text-red-400"}>{supabaseAnonKey ? "true" : "false"}</p>
-        </div>
-        
-        <div>
-          <p className="text-gray-400">Logged-in user email:</p>
-          <p className="text-green-400">{user?.email || "none"}</p>
-        </div>
-
-        <div className="space-y-3 pt-4 border-t border-gray-700">
-          <h3 className="text-white font-semibold">Table Query Results:</h3>
-          {Object.entries(tableResults).map(([tableName, result]) => (
-            <div key={tableName} className="bg-gray-800 rounded p-3">
-              <p className="text-yellow-400 font-semibold">{tableName}:</p>
-              <p className="text-gray-300">Count: {result.count !== null ? result.count : "null"}</p>
-              {result.error.message && (
-                <>
-                  <p className="text-red-400">Error message: {result.error.message}</p>
-                  <p className="text-red-400">Error code: {result.error.code || "null"}</p>
-                  <p className="text-red-400">Error details: {result.error.details || "null"}</p>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Connection Status Card */}
-      <div className="bg-white rounded-xl border border-brand-border p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-center gap-4">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
             connectionStatus === "connected" 
@@ -179,7 +141,7 @@ export default async function SystemHealthPage() {
             )}
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-brand-ink">Supabase Connection</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Supabase Connection</h2>
             <p className={`text-sm ${
               connectionStatus === "connected" 
                 ? "text-green-600" 
@@ -198,11 +160,11 @@ export default async function SystemHealthPage() {
 
       {/* Data Counts */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-brand-border p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-brand-muted">Treatments</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.treatments.count ?? "null"}</p>
+              <p className="text-sm text-slate-600">Treatments</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.treatments.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,11 +177,11 @@ export default async function SystemHealthPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-brand-border p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-brand-muted">Testimonials</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.testimonials.count ?? "null"}</p>
+              <p className="text-sm text-slate-600">Testimonials</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.testimonials.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,11 +194,11 @@ export default async function SystemHealthPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-brand-border p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-brand-muted">FAQs</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.faqs.count ?? "null"}</p>
+              <p className="text-sm text-slate-600">FAQs</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.faqs.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,11 +211,11 @@ export default async function SystemHealthPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-brand-border p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-brand-muted">Website Content</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.site_content.count ?? "null"}</p>
+              <p className="text-sm text-slate-600">Website Content</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.site_content.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,11 +228,11 @@ export default async function SystemHealthPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-brand-border p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-brand-muted">Contact Settings</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.contact_settings.count ?? "null"}</p>
+              <p className="text-sm text-slate-600">Contact Settings</p>
+              <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.contact_settings.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,8 +258,48 @@ export default async function SystemHealthPage() {
         </div>
       )}
 
-      {/* Direct Select Test */}
-      <DirectSelectTest />
+      {/* Collapsible Debug Panel */}
+      <details className="bg-gray-900 rounded-xl border border-gray-700">
+        <summary className="px-6 py-4 cursor-pointer text-white font-medium flex items-center justify-between">
+          <span>🔧 Advanced Debug Information</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </summary>
+        <div className="px-6 pb-6 space-y-4 text-sm font-mono">
+          <div>
+            <p className="text-gray-400">Supabase URL (first 35 chars):</p>
+            <p className="text-green-400">{supabaseUrl.substring(0, 35)}</p>
+          </div>
+          
+          <div>
+            <p className="text-gray-400">Anon key exists:</p>
+            <p className={supabaseAnonKey ? "text-green-400" : "text-red-400"}>{supabaseAnonKey ? "true" : "false"}</p>
+          </div>
+          
+          <div>
+            <p className="text-gray-400">Logged-in user email:</p>
+            <p className="text-green-400">{user?.email || "none"}</p>
+          </div>
+
+          <div className="pt-4 border-t border-gray-700">
+            <h3 className="text-white font-semibold mb-3">Table Query Results:</h3>
+            {Object.entries(tableResults).map(([tableName, result]) => (
+              <div key={tableName} className="bg-gray-800 rounded p-3 mb-2">
+                <p className="text-yellow-400 font-semibold">{tableName}:</p>
+                <p className="text-gray-300">Count: {result.count !== null ? result.count : "null"}</p>
+                {result.error.message && (
+                  <>
+                    <p className="text-red-400">Error message: {result.error.message}</p>
+                    <p className="text-red-400">Error code: {result.error.code || "null"}</p>
+                    <p className="text-red-400">Error details: {result.error.details || "null"}</p>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>
     </div>
   );
 }
