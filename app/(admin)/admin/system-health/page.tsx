@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import DirectSelectTest from "./DirectSelectTest";
 
 async function refreshHealth() {
   "use server";
@@ -17,42 +18,78 @@ export default async function SystemHealthPage() {
     redirect("/admin/login");
   }
 
-  // Test Supabase connection and get counts
+  // Get Supabase config info
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+  // Test Supabase connection and get detailed counts
   let connectionStatus = "unknown";
   let connectionError = null;
   
-  const counts = {
-    treatments: 0,
-    testimonials: 0,
-    faqs: 0,
-    site_content: 0,
-    contact_settings: 0,
+  const tableResults: Record<string, { count: number | null; error: { message: string | null; code: string | null; details: string | null } }> = {
+    treatments: { count: null, error: { message: null, code: null, details: null } },
+    testimonials: { count: null, error: { message: null, code: null, details: null } },
+    faqs: { count: null, error: { message: null, code: null, details: null } },
+    site_content: { count: null, error: { message: null, code: null, details: null } },
+    contact_settings: { count: null, error: { message: null, code: null, details: null } },
   };
 
   try {
-    // Test connection by querying a simple table
-    const { error: connectionTestError } = await supabase.from("treatments").select("id").limit(1);
-    
-    if (connectionTestError) {
-      connectionStatus = "error";
-      connectionError = connectionTestError.message;
-    } else {
-      connectionStatus = "connected";
-      
-      // Get counts - use any() to bypass strict typing for tables not in types
-      const [treatmentsCount, testimonialsCount, faqsCount, siteContentCount, contactSettingsCount] = await Promise.all([
-        supabase.from("treatments").select("*", { count: "exact", head: true }),
-        (supabase as any).from("testimonials").select("*", { count: "exact", head: true }),
-        (supabase as any).from("faqs").select("*", { count: "exact", head: true }),
-        (supabase as any).from("site_content").select("*", { count: "exact", head: true }),
-        supabase.from("contact_settings").select("*", { count: "exact", head: true }),
-      ]);
+    // Get counts with exact error details for each table
+    const [treatmentsResult, testimonialsResult, faqsResult, siteContentResult, contactSettingsResult] = await Promise.all([
+      (supabase as any).from("treatments").select("*", { count: "exact", head: true }),
+      (supabase as any).from("testimonials").select("*", { count: "exact", head: true }),
+      (supabase as any).from("faqs").select("*", { count: "exact", head: true }),
+      (supabase as any).from("site_content").select("*", { count: "exact", head: true }),
+      (supabase as any).from("contact_settings").select("*", { count: "exact", head: true }),
+    ]);
 
-      counts.treatments = treatmentsCount.count || 0;
-      counts.testimonials = testimonialsCount.count || 0;
-      counts.faqs = faqsCount.count || 0;
-      counts.site_content = siteContentCount.count || 0;
-      counts.contact_settings = contactSettingsCount.count || 0;
+    tableResults.treatments = {
+      count: treatmentsResult.count,
+      error: {
+        message: treatmentsResult.error?.message || null,
+        code: treatmentsResult.error?.code || null,
+        details: treatmentsResult.error?.details || null,
+      }
+    };
+    tableResults.testimonials = {
+      count: testimonialsResult.count,
+      error: {
+        message: testimonialsResult.error?.message || null,
+        code: testimonialsResult.error?.code || null,
+        details: testimonialsResult.error?.details || null,
+      }
+    };
+    tableResults.faqs = {
+      count: faqsResult.count,
+      error: {
+        message: faqsResult.error?.message || null,
+        code: faqsResult.error?.code || null,
+        details: faqsResult.error?.details || null,
+      }
+    };
+    tableResults.site_content = {
+      count: siteContentResult.count,
+      error: {
+        message: siteContentResult.error?.message || null,
+        code: siteContentResult.error?.code || null,
+        details: siteContentResult.error?.details || null,
+      }
+    };
+    tableResults.contact_settings = {
+      count: contactSettingsResult.count,
+      error: {
+        message: contactSettingsResult.error?.message || null,
+        code: contactSettingsResult.error?.code || null,
+        details: contactSettingsResult.error?.details || null,
+      }
+    };
+
+    // Determine overall connection status
+    const hasAnySuccess = Object.values(tableResults).some(r => r.error.message === null);
+    connectionStatus = hasAnySuccess ? "connected" : "error";
+    if (!hasAnySuccess) {
+      connectionError = "All table queries failed";
     }
   } catch (error: any) {
     connectionStatus = "error";
@@ -78,6 +115,43 @@ export default async function SystemHealthPage() {
             Refresh
           </button>
         </form>
+      </div>
+
+      {/* Debug Info */}
+      <div className="bg-gray-900 text-gray-100 rounded-xl p-6 font-mono text-sm space-y-4">
+        <h2 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">DEBUG OUTPUT</h2>
+        
+        <div>
+          <p className="text-gray-400">Supabase URL (first 35 chars):</p>
+          <p className="text-green-400">{supabaseUrl.substring(0, 35)}</p>
+        </div>
+        
+        <div>
+          <p className="text-gray-400">Anon key exists:</p>
+          <p className={supabaseAnonKey ? "text-green-400" : "text-red-400"}>{supabaseAnonKey ? "true" : "false"}</p>
+        </div>
+        
+        <div>
+          <p className="text-gray-400">Logged-in user email:</p>
+          <p className="text-green-400">{user?.email || "none"}</p>
+        </div>
+
+        <div className="space-y-3 pt-4 border-t border-gray-700">
+          <h3 className="text-white font-semibold">Table Query Results:</h3>
+          {Object.entries(tableResults).map(([tableName, result]) => (
+            <div key={tableName} className="bg-gray-800 rounded p-3">
+              <p className="text-yellow-400 font-semibold">{tableName}:</p>
+              <p className="text-gray-300">Count: {result.count !== null ? result.count : "null"}</p>
+              {result.error.message && (
+                <>
+                  <p className="text-red-400">Error message: {result.error.message}</p>
+                  <p className="text-red-400">Error code: {result.error.code || "null"}</p>
+                  <p className="text-red-400">Error details: {result.error.details || "null"}</p>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Connection Status Card */}
@@ -128,7 +202,7 @@ export default async function SystemHealthPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-brand-muted">Treatments</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{counts.treatments}</p>
+              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.treatments.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,8 +210,8 @@ export default async function SystemHealthPage() {
               </svg>
             </div>
           </div>
-          <p className={`text-xs mt-3 ${counts.treatments > 0 ? "text-green-600" : "text-red-600"}`}>
-            {counts.treatments > 0 ? "Data present" : "No data - run seed SQL"}
+          <p className={`text-xs mt-3 ${(tableResults.treatments.count ?? 0) > 0 ? "text-green-600" : "text-red-600"}`}>
+            {(tableResults.treatments.count ?? 0) > 0 ? "Data present" : "No data - run seed SQL"}
           </p>
         </div>
 
@@ -145,7 +219,7 @@ export default async function SystemHealthPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-brand-muted">Testimonials</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{counts.testimonials}</p>
+              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.testimonials.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,8 +227,8 @@ export default async function SystemHealthPage() {
               </svg>
             </div>
           </div>
-          <p className={`text-xs mt-3 ${counts.testimonials > 0 ? "text-green-600" : "text-red-600"}`}>
-            {counts.testimonials > 0 ? "Data present" : "No data - run seed SQL"}
+          <p className={`text-xs mt-3 ${(tableResults.testimonials.count ?? 0) > 0 ? "text-green-600" : "text-red-600"}`}>
+            {(tableResults.testimonials.count ?? 0) > 0 ? "Data present" : "No data - run seed SQL"}
           </p>
         </div>
 
@@ -162,7 +236,7 @@ export default async function SystemHealthPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-brand-muted">FAQs</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{counts.faqs}</p>
+              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.faqs.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,8 +244,8 @@ export default async function SystemHealthPage() {
               </svg>
             </div>
           </div>
-          <p className={`text-xs mt-3 ${counts.faqs > 0 ? "text-green-600" : "text-red-600"}`}>
-            {counts.faqs > 0 ? "Data present" : "No data - run seed SQL"}
+          <p className={`text-xs mt-3 ${(tableResults.faqs.count ?? 0) > 0 ? "text-green-600" : "text-red-600"}`}>
+            {(tableResults.faqs.count ?? 0) > 0 ? "Data present" : "No data - run seed SQL"}
           </p>
         </div>
 
@@ -179,7 +253,7 @@ export default async function SystemHealthPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-brand-muted">Website Content</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{counts.site_content}</p>
+              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.site_content.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,8 +261,8 @@ export default async function SystemHealthPage() {
               </svg>
             </div>
           </div>
-          <p className={`text-xs mt-3 ${counts.site_content > 0 ? "text-green-600" : "text-red-600"}`}>
-            {counts.site_content > 0 ? "Data present" : "No data - run seed SQL"}
+          <p className={`text-xs mt-3 ${(tableResults.site_content.count ?? 0) > 0 ? "text-green-600" : "text-red-600"}`}>
+            {(tableResults.site_content.count ?? 0) > 0 ? "Data present" : "No data - run seed SQL"}
           </p>
         </div>
 
@@ -196,7 +270,7 @@ export default async function SystemHealthPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-brand-muted">Contact Settings</p>
-              <p className="text-3xl font-bold text-brand-ink mt-1">{counts.contact_settings}</p>
+              <p className="text-3xl font-bold text-brand-ink mt-1">{tableResults.contact_settings.count ?? "null"}</p>
             </div>
             <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,8 +278,8 @@ export default async function SystemHealthPage() {
               </svg>
             </div>
           </div>
-          <p className={`text-xs mt-3 ${counts.contact_settings > 0 ? "text-green-600" : "text-red-600"}`}>
-            {counts.contact_settings > 0 ? "Data present" : "No data - run seed SQL"}
+          <p className={`text-xs mt-3 ${(tableResults.contact_settings.count ?? 0) > 0 ? "text-green-600" : "text-red-600"}`}>
+            {(tableResults.contact_settings.count ?? 0) > 0 ? "Data present" : "No data - run seed SQL"}
           </p>
         </div>
       </div>
@@ -221,6 +295,9 @@ export default async function SystemHealthPage() {
           </ul>
         </div>
       )}
+
+      {/* Direct Select Test */}
+      <DirectSelectTest />
     </div>
   );
 }
