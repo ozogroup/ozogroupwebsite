@@ -1,6 +1,8 @@
-import { faqs } from "@/lib/site";
+import { getPublicFaqs } from "@/lib/data/public";
 
-export default function FAQ() {
+export default async function FAQ() {
+  const faqs = await getPublicFaqs();
+
   return (
     <section id="faq" className="section">
       <div className="container-x grid gap-12 lg:gap-16 lg:grid-cols-12">

@@ -59,26 +59,22 @@ export default function AdminLoginPage({
   searchParams: { error?: string };
 }) {
   return (
-    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-brand-surface via-white to-brand-light/10 flex items-center justify-center p-4">
-      {/* Decorative blurs */}
-      <div className="pointer-events-none absolute -top-40 -right-40 w-96 h-96 rounded-full bg-brand-accent/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-brand-primary/10 blur-3xl" />
-
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-8">
           <Logo showDivision={false} />
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-premium border border-brand-border p-8 md:p-10">
+        <div className="bg-white rounded-xl shadow-premium border border-brand-border p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="font-display text-2xl md:text-3xl font-bold text-brand-ink mb-2">
               Admin Login
             </h1>
             <p className="text-sm text-brand-muted">
-              Manage OZO / IA Skin Care website
+              OZO / IA Skin Care
             </p>
           </div>
 
@@ -96,7 +92,7 @@ export default function AdminLoginPage({
           <form action={handleLogin} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-brand-ink mb-2">
-                Email Address
+                Email
               </label>
               <input
                 id="email"
@@ -143,11 +139,6 @@ export default function AdminLoginPage({
               Back to website
             </a>
           </div>
-        </div>
-
-        {/* Copyright */}
-        <div className="text-center mt-6 text-xs text-brand-muted">
-          © {new Date().getFullYear()} OZO Group · IA Skin Care Division
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { testimonials } from "@/lib/site";
+import { getPublicTestimonials } from "@/lib/data/public";
 
 function Stars({ n }: { n: number }) {
   return (
@@ -12,7 +12,9 @@ function Stars({ n }: { n: number }) {
   );
 }
 
-export default function Testimonials() {
+export default async function Testimonials() {
+  const testimonials = await getPublicTestimonials();
+
   return (
     <section id="testimonials" className="section bg-gradient-to-b from-white to-brand-surface/50">
       <div className="container-x">

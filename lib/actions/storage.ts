@@ -52,3 +52,38 @@ export async function uploadImage(formData: FormData): Promise<{ url?: string; e
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
   return { url: data.publicUrl };
 }
+
+/**
+ * List all images in the media bucket
+ */
+export async function listImages() {
+  const supabase = getSupabaseServerClient();
+  
+  const { data, error } = await supabase.storage.from(BUCKET).list("", {
+    limit: 100,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+
+  if (error) {
+    console.error("Error listing images:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Delete an image from storage
+ */
+export async function deleteImage(path: string): Promise<{ error?: string }> {
+  const supabase = getSupabaseServerClient();
+  
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+
+  if (error) {
+    console.error("Error deleting image:", error);
+    return { error: error.message };
+  }
+
+  return {};
+}
