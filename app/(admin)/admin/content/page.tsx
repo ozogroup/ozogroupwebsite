@@ -100,12 +100,22 @@ export default function AdminContentPage() {
   const [loading, setLoading] = useState(true);
   const [editingSection, setEditingSection] = useState<SectionConfig | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [originalFormData, setOriginalFormData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadContent();
   }, []);
+
+  useEffect(() => {
+    if (editingSection) {
+      const hasChanges = JSON.stringify(formData) !== JSON.stringify(originalFormData);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [formData, originalFormData, editingSection]);
 
   async function loadContent() {
     setLoading(true);
@@ -122,10 +132,40 @@ export default function AdminContentPage() {
       formData[c.key_name] = c.value;
     });
     setFormData(formData);
+    setOriginalFormData(formData);
     setSaveSuccess(false);
+    setHasUnsavedChanges(false);
+    setValidationErrors({});
+  }
+
+  function validateForm() {
+    const errors: Record<string, string> = {};
+    editingSection?.fields.forEach((field) => {
+      const value = formData[field.key];
+      if (field.type !== "boolean" && (!value || value.trim() === "")) {
+        errors[field.key] = `${field.label} is required`;
+      }
+      if (field.type === "url" && value && !isValidUrl(value)) {
+        errors[field.key] = `Please enter a valid URL`;
+      }
+    });
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  function isValidUrl(string: string) {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   async function handleSave() {
+    if (!validateForm()) {
+      return;
+    }
     setSaving(true);
     try {
       const updates = Object.entries(formData).map(([key, value]) => {
@@ -134,13 +174,30 @@ export default function AdminContentPage() {
       });
       await updateSiteContentBulk(updates);
       await loadContent();
+      setOriginalFormData(formData);
       setSaveSuccess(true);
+      setHasUnsavedChanges(false);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving content:", error);
       alert("Failed to save content. Please try again.");
     }
     setSaving(false);
+  }
+
+  function handleCancel() {
+    if (hasUnsavedChanges) {
+      if (confirm("You have unsaved changes. Are you sure you want to cancel?")) {
+        setEditingSection(null);
+        setFormData({});
+        setHasUnsavedChanges(false);
+        setValidationErrors({});
+      }
+    } else {
+      setEditingSection(null);
+      setFormData({});
+      setValidationErrors({});
+    }
   }
 
   if (loading) {
@@ -181,7 +238,11 @@ export default function AdminContentPage() {
               <div key={field.key}>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   {field.label}
+                  {field.type !== "boolean" && <span className="text-red-500 ml-1">*</span>}
                 </label>
+                {validationErrors[field.key] && (
+                  <p className="text-red-600 text-sm mt-1">{validationErrors[field.key]}</p>
+                )}
                 {field.type === "image" ? (
                   <div className="space-y-2">
                     <ImageUpload
@@ -228,17 +289,27 @@ export default function AdminContentPage() {
           </div>
 
           <div className="p-6 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-            {saveSuccess && (
-              <div className="flex items-center gap-2 text-green-600">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-medium">Saved successfully!</span>
-              </div>
-            )}
-            <div className="flex gap-3 ml-auto">
+            <div className="flex items-center gap-4">
+              {hasUnsavedChanges && (
+                <span className="text-sm text-amber-600 font-medium flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Unsaved changes
+                </span>
+              )}
+              {saveSuccess && (
+                <div className="flex items-center gap-2 text-green-600">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">Saved successfully!</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
               <button
-                onClick={() => setEditingSection(null)}
+                onClick={handleCancel}
                 className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-white transition-colors font-medium"
               >
                 Cancel

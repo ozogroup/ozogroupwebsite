@@ -1,18 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { getPublicSiteContent, getPublicSystemSettings } from "@/lib/data/public";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80";
 
-const heroPoints = [
+const defaultHeroPoints = [
   "Advanced Skin Treatments",
   "Doctor-Supervised Protocols",
   "Premium Clinical Care",
   "Visible Results",
 ];
 
-export default function Hero() {
+export default async function Hero() {
+  const [siteContent, systemSettings] = await Promise.all([
+    getPublicSiteContent("home_hero"),
+    getPublicSystemSettings(),
+  ]);
+
+  const heroTitle = siteContent.hero_title || "Luxury Skin Treatments for";
+  const heroSubtitle = siteContent.hero_subtitle || "Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.";
+  const heroDescription = siteContent.hero_description || heroSubtitle;
+  const heroImage = siteContent.hero_image || HERO_IMAGE;
+  const primaryButtonText = siteContent.primary_button_text || "Book Free Consultation";
+  const primaryButtonLink = siteContent.primary_button_link || "/contact";
+  const secondaryButtonText = siteContent.secondary_button_text || "Explore Treatments";
+  const secondaryButtonLink = siteContent.secondary_button_link || "#treatments";
+  const heroPoints = systemSettings.heroPoints?.length > 0 ? systemSettings.heroPoints : defaultHeroPoints;
   return (
     <section className="relative overflow-hidden">
       {/* Premium background glow with Korean aesthetic */}
@@ -36,7 +51,7 @@ export default function Hero() {
           </div>
           
           <h1 className="mt-6 md:mt-8 leading-[1.1]">
-            Luxury Skin Treatments for{" "}
+            {heroTitle}{" "}
             <span className="relative inline-block">
               <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
                 Radiant Transformation
@@ -46,12 +61,12 @@ export default function Hero() {
           </h1>
           
           <p className="mt-6 text-lg md:text-xl text-brand-muted max-w-xl leading-relaxed">
-            Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.
+            {heroDescription}
           </p>
 
           {/* Premium trust points */}
           <ul className="mt-8 grid grid-cols-2 gap-4">
-            {heroPoints.map((p) => (
+            {heroPoints.map((p: string) => (
               <li key={p} className="flex items-center gap-3 text-sm text-brand-ink/90 font-medium">
                 <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-brand-accent to-brand-light text-white shadow-glow">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -65,10 +80,10 @@ export default function Hero() {
 
           <div className="mt-10 flex flex-col sm:flex-row gap-4">
             <BookNowButton className="justify-center shadow-soft hover:shadow-card transition-shadow">
-              Book Free Consultation
+              {primaryButtonText}
             </BookNowButton>
-            <Link href="#treatments" className="btn-secondary justify-center">
-              Explore Treatments
+            <Link href={secondaryButtonLink} className="btn-secondary justify-center">
+              {secondaryButtonText}
             </Link>
           </div>
 
@@ -109,7 +124,7 @@ export default function Hero() {
           <div className="relative mx-auto max-w-md lg:max-w-none">
             <div className="relative aspect-[4/5] w-full rounded-[32px] border border-brand-border/50 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
-                src={HERO_IMAGE}
+                src={heroImage}
                 alt="Premium skincare treatment at IA Skin Care clinic"
                 fill
                 sizes="(max-width: 1024px) 90vw, 600px"

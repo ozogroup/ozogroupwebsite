@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { getPublicSiteContent, getPublicSystemSettings } from "@/lib/data/public";
 
-const features = [
+const defaultFeatures = [
   "Premium referral dashboard access",
   "Real-time earnings tracking",
   "Multi-level commission structure",
@@ -9,7 +9,16 @@ const features = [
   "Transparent payout status",
 ];
 
-export default function Membership() {
+export default async function Membership() {
+  const [siteContent, systemSettings] = await Promise.all([
+    getPublicSiteContent("home_membership"),
+    getPublicSystemSettings(),
+  ]);
+
+  const membershipHeading = siteContent.membership_heading || "Become Our";
+  const membershipDescription = siteContent.membership_description || "Experience premium skincare while unlocking an optional earning opportunity through treatment referrals and partner rewards.";
+  const membershipPrice = systemSettings.membershipPrice || "1199";
+  const features = systemSettings.membershipFeatures?.length > 0 ? systemSettings.membershipFeatures : defaultFeatures;
   return (
     <section id="membership" className="section py-12 md:py-16">
       <div className="container-x">
@@ -23,18 +32,17 @@ export default function Membership() {
               </span>
             </div>
             <h2 className="mt-5 text-2xl md:text-3xl">
-              Become Our{" "}
+              {membershipHeading}{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
                 Premium Referral Partner
               </span>
             </h2>
             <p className="mt-3 text-sm md:text-base text-brand-muted max-w-md leading-relaxed">
-              Experience premium skincare while unlocking an optional earning opportunity 
-              through treatment referrals and partner rewards.
+              {membershipDescription}
             </p>
 
             <ul className="mt-6 grid sm:grid-cols-2 gap-3">
-              {features.map((f) => (
+              {features.map((f: string) => (
                 <li key={f} className="flex items-start gap-3 text-xs md:text-sm text-brand-ink/90">
                   <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent">
                     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -67,7 +75,7 @@ export default function Membership() {
               <div className="mt-3 space-y-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/30 backdrop-blur-sm">
                   <span className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                    ₹1,199/-
+                    ₹{membershipPrice}/-
                   </span>
                 </div>
                 <p className="text-xs text-white/90 font-medium">

@@ -2,32 +2,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { treatments, site } from "@/lib/site";
+import { getPublicTreatments, getPublicContactSettings } from "@/lib/data/public";
 import BookNowButton from "@/components/booking/BookNowButton";
 
 type Params = { params: { slug: string } };
 
-export function generateStaticParams() {
-  return treatments.map((t) => ({ slug: t.slug }));
-}
-
-export function generateMetadata({ params }: Params): Metadata {
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const treatments = await getPublicTreatments();
   const t = treatments.find((x) => x.slug === params.slug);
   if (!t) return { title: "Treatment not found · IA Skin Care" };
+  
   return {
-    title: `${t.title} · IA Skin Care`,
-    description: t.description,
+    title: (t as any).seo_title || `${t.title} · IA Skin Care`,
+    description: (t as any).seo_description || t.description,
+    keywords: (t as any).seo_keywords?.split(",") || [],
     openGraph: {
-      title: `${t.title} · IA Skin Care`,
-      description: t.description,
+      title: (t as any).seo_title || `${t.title} · IA Skin Care`,
+      description: (t as any).seo_description || t.description,
       images: [t.image],
     },
   };
 }
 
-export default function TreatmentDetail({ params }: Params) {
+export default async function TreatmentDetail({ params }: Params) {
+  const [treatments, contactSettings] = await Promise.all([
+    getPublicTreatments(),
+    getPublicContactSettings(),
+  ]);
+  
   const t = treatments.find((x) => x.slug === params.slug);
   if (!t) notFound();
+
+  const hasBeforeAfter = (t as any).before_image && (t as any).after_image;
+  const hasGallery = (t as any).gallery && (t as any).gallery.length > 0;
 
   return (
     <>
@@ -77,7 +84,7 @@ export default function TreatmentDetail({ params }: Params) {
                 </BookNowButton>
               ) : (
                 <a
-                  href={site.whatsapp}
+                  href={contactSettings.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary justify-center shadow-soft hover:shadow-card transition-shadow"
@@ -86,7 +93,7 @@ export default function TreatmentDetail({ params }: Params) {
                 </a>
               )}
               <a
-                href={site.whatsapp}
+                href={contactSettings.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary justify-center"
@@ -125,6 +132,87 @@ export default function TreatmentDetail({ params }: Params) {
         </div>
       </section>
 
+      {/* Before/After Slider */}
+      {hasBeforeAfter && (
+        <section className="section bg-brand-surface/50">
+          <div className="container-x">
+            <div className="max-w-3xl text-center mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                  Results
+                </span>
+              </div>
+              <h2 className="mt-6">Before & After</h2>
+              <p className="mt-4 text-base text-brand-muted">
+                See the visible transformation from our treatment protocol.
+              </p>
+            </div>
+
+            <div className="mt-12 grid md:grid-cols-2 gap-8">
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-premium">
+                <Image
+                  src={(t as any).before_image}
+                  alt="Before treatment"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                />
+                <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/70 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                  Before
+                </div>
+              </div>
+              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-premium">
+                <Image
+                  src={(t as any).after_image}
+                  alt="After treatment"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                />
+                <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-brand-accent text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                  After
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Gallery */}
+      {hasGallery && (
+        <section className="section">
+          <div className="container-x">
+            <div className="max-w-3xl text-center mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                  Gallery
+                </span>
+              </div>
+              <h2 className="mt-6">Treatment Gallery</h2>
+              <p className="mt-4 text-base text-brand-muted">
+                Browse through our treatment results and clinic atmosphere.
+              </p>
+            </div>
+
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(t as any).gallery.map((url: string, index: number) => (
+                <div key={index} className="relative aspect-square rounded-xl overflow-hidden shadow-soft hover:shadow-card transition-shadow">
+                  <Image
+                    src={url}
+                    alt={`Gallery image ${index + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* OVERVIEW + BENEFITS */}
       <section className="section bg-brand-surface/50">
         <div className="container-x grid gap-12 lg:gap-16 lg:grid-cols-12">
@@ -160,7 +248,7 @@ export default function TreatmentDetail({ params }: Params) {
             </div>
             <h3 className="mt-6 text-2xl">What You'll Experience</h3>
             <ul className="mt-6 grid sm:grid-cols-2 gap-4">
-              {t.benefits.map((b) => (
+              {t.benefits.map((b: string) => (
                 <li
                   key={b}
                   className="flex items-start gap-3 rounded-2xl bg-white border border-brand-border/60 p-5 shadow-soft hover:shadow-card transition-shadow"
@@ -194,7 +282,7 @@ export default function TreatmentDetail({ params }: Params) {
             </p>
           </div>
           <ol className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            {t.process.map((p, i) => (
+            {t.process.map((p: any, i: number) => (
               <li
                 key={p.step}
                 className="card hover:-translate-y-1 transition-transform duration-300"
@@ -233,7 +321,7 @@ export default function TreatmentDetail({ params }: Params) {
                 <BookNowButton treatmentSlug={t.slug}>Book Home Kit Program</BookNowButton>
               ) : (
                 <a
-                  href={site.whatsapp}
+                  href={contactSettings.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary"
@@ -242,7 +330,7 @@ export default function TreatmentDetail({ params }: Params) {
                 </a>
               )}
               <a
-                href={site.whatsapp}
+                href={contactSettings.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary"
@@ -252,7 +340,7 @@ export default function TreatmentDetail({ params }: Params) {
             </div>
           </div>
           <ul className="lg:col-span-7 grid sm:grid-cols-2 gap-4">
-            {t.whoFor.map((w) => (
+            {t.whoFor.map((w: string) => (
               <li
                 key={w}
                 className="flex items-start gap-3 rounded-2xl bg-white border border-brand-border/60 p-5 shadow-soft hover:shadow-card transition-shadow"
@@ -286,7 +374,7 @@ export default function TreatmentDetail({ params }: Params) {
           </div>
           <div className="lg:col-span-8">
             <div className="divide-y divide-brand-border/60 rounded-2xl border border-brand-border/60 bg-white shadow-soft overflow-hidden">
-              {t.faqs.map((f, i) => (
+              {t.faqs.map((f: any, i: number) => (
                 <details key={f.q} className="group" open={i === 0}>
                   <summary className="flex items-center justify-between gap-4 cursor-pointer px-6 md:px-7 py-5 md:py-6 list-none select-none hover:bg-brand-surface/50 transition-colors">
                     <span className="text-sm md:text-base font-semibold text-brand-ink">
@@ -465,7 +553,7 @@ export default function TreatmentDetail({ params }: Params) {
                   Book Now · {t.priceLabel}
                 </BookNowButton>
                 <a
-                  href={site.whatsapp}
+                  href={contactSettings.whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex justify-center rounded-full border border-white/40 text-white px-6 py-3.5 text-sm font-medium hover:bg-white/10 transition backdrop-blur-sm"
@@ -473,10 +561,10 @@ export default function TreatmentDetail({ params }: Params) {
                   Chat on WhatsApp
                 </a>
                 <a
-                  href={`tel:${site.phoneRaw}`}
+                  href={`tel:${contactSettings.phoneRaw}`}
                   className="text-center text-sm text-white/85 hover:text-white transition-colors"
                 >
-                  or call {site.phone}
+                  or call {contactSettings.phone}
                 </a>
               </div>
             </div>

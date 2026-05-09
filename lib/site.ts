@@ -131,6 +131,12 @@ export const treatments: Treatment[] = [
       "Korean Glass Skin treatment — luminous dewy radiant skin with glass-like finish",
     treatmentType: "camp",
     note: "Clinic and campaign-based premium experience.",
+    seo_title: undefined,
+    seo_description: undefined,
+    seo_keywords: undefined,
+    before_image: undefined,
+    after_image: undefined,
+    gallery: undefined,
   },
   {
     slug: "skin-lightening",
@@ -207,6 +213,12 @@ export const treatments: Treatment[] = [
       "Premium skincare home treatment kit with clinical-grade products",
     treatmentType: "home-kit",
     note: "Includes premium home-care kit delivery.",
+    seo_title: undefined,
+    seo_description: undefined,
+    seo_keywords: undefined,
+    before_image: undefined,
+    after_image: undefined,
+    gallery: undefined,
   },
   {
     slug: "basic-skin-treatment",
@@ -280,6 +292,12 @@ export const treatments: Treatment[] = [
       "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
     imageAlt:
       "Basic Skin Treatment — clean, healthy, glowing skin foundation",
+    seo_title: undefined,
+    seo_description: undefined,
+    seo_keywords: undefined,
+    before_image: undefined,
+    after_image: undefined,
+    gallery: undefined,
   },
   {
     slug: "japanese-skin-treatment",
@@ -353,6 +371,12 @@ export const treatments: Treatment[] = [
       "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
     imageAlt:
       "Japanese Skin Treatment — refined porcelain-smooth skin with clarity",
+    seo_title: undefined,
+    seo_description: undefined,
+    seo_keywords: undefined,
+    before_image: undefined,
+    after_image: undefined,
+    gallery: undefined,
   },
   {
     slug: "advanced-skin-treatment",
@@ -427,6 +451,12 @@ export const treatments: Treatment[] = [
       "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1400&q=80",
     imageAlt:
       "Advanced Skin Treatment — clinical-grade skin transformation with visible results",
+    seo_title: undefined,
+    seo_description: undefined,
+    seo_keywords: undefined,
+    before_image: undefined,
+    after_image: undefined,
+    gallery: undefined,
   },
 ];
 

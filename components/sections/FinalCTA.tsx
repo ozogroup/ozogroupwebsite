@@ -1,7 +1,8 @@
 import BookNowButton from "@/components/booking/BookNowButton";
-import { site } from "@/lib/site";
+import { getPublicContactSettings } from "@/lib/data/public";
 
-export default function FinalCTA() {
+export default async function FinalCTA() {
+  const contactSettings = await getPublicContactSettings();
   return (
     <section id="contact" className="section">
       <div className="container-x">
@@ -38,13 +39,13 @@ export default function FinalCTA() {
                 Book Consultation
               </BookNowButton>
               <a
-                href={`tel:${site.phoneRaw}`}
+                href={`tel:${contactSettings.phoneRaw}`}
                 className="inline-flex justify-center rounded-full border border-white/40 text-white px-5 py-3 text-sm font-medium hover:bg-white/10 transition"
               >
-                Call {site.phone}
+                Call {contactSettings.phone}
               </a>
               <a
-                href={site.whatsapp}
+                href={contactSettings.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-center text-sm text-white/80 hover:text-white"

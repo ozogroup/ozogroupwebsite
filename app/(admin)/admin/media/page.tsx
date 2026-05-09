@@ -16,6 +16,11 @@ export default function AdminMediaLibraryPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [folderFilter, setFolderFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showFolderInput, setShowFolderInput] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState("general");
 
   useEffect(() => {
     loadImages();
@@ -32,24 +37,96 @@ export default function AdminMediaLibraryPage() {
     setUploading(true);
     setError("");
     setUploadedUrl("");
+    setUploadProgress(0);
     
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("folder", folder);
       
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+      
       const result = await uploadImage(formData);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       if (result.url) {
         setUploadedUrl(result.url);
         await loadImages();
       } else {
         setError(result.error || "Upload failed");
+        setUploadProgress(0);
       }
     } catch (err: any) {
       setError(err.message || "Upload failed");
+      setUploadProgress(0);
     } finally {
       setUploading(false);
+      setTimeout(() => setUploadProgress(0), 1000);
     }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(f => f.type.startsWith('image/'));
+    
+    if (imageFile) {
+      handleUpload(imageFile, selectedFolder);
+    } else {
+      setError("Please drop an image file");
+    }
+  }
+
+  async function handleCreateFolder() {
+    if (!newFolderName.trim()) return;
+    
+    // Create folder by uploading a placeholder file
+    try {
+      const formData = new FormData();
+      const placeholderFile = new File([''], '.gitkeep', { type: 'text/plain' });
+      formData.append("file", placeholderFile);
+      formData.append("folder", newFolderName.trim());
+      
+      await uploadImage(formData);
+      setNewFolderName("");
+      setShowFolderInput(false);
+      await loadImages();
+    } catch (err: any) {
+      setError(err.message || "Failed to create folder");
+    }
+  }
+
+  function handleReplaceImage(image: any) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const folder = getFolderFromPath(image.name);
+        handleUpload(file, folder);
+        // Delete old image after upload
+        handleDelete(image.name, image.name);
+      }
+    };
+    input.click();
   }
 
   async function handleDelete(path: string, name: string) {
@@ -96,6 +173,15 @@ export default function AdminMediaLibraryPage() {
 
   function getImageSize(image: any): number {
     return image.metadata?.size || 0;
+  }
+
+  function getImageDimensions(image: any): string {
+    const width = image.metadata?.width || 0;
+    const height = image.metadata?.height || 0;
+    if (width && height) {
+      return `${width}x${height}`;
+    }
+    return 'Unknown';
   }
 
   function formatFileSize(bytes: number): string {
@@ -172,18 +258,100 @@ export default function AdminMediaLibraryPage() {
       </div>
 
       {/* Upload Section */}
-      <div id="upload-section" className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+      <div 
+        id="upload-section"
+        className={`bg-white rounded-xl shadow-lg border-2 transition-all ${
+          dragOver ? 'border-brand-accent bg-brand-accent/5' : 'border-slate-200'
+        } p-6`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
           <span className="text-xl">📤</span>
           Upload New Image
         </h2>
         
+        {/* Folder Selection & Creation */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Upload to Folder</label>
+          <div className="flex gap-2">
+            <select
+              value={selectedFolder}
+              onChange={(e) => setSelectedFolder(e.target.value)}
+              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+            >
+              {folders.filter(f => f !== "all").map(folder => (
+                <option key={folder} value={folder}>{folder}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowFolderInput(!showFolderInput)}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+            >
+              + New Folder
+            </button>
+          </div>
+          {showFolderInput && (
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Folder name..."
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+              />
+              <button
+                onClick={handleCreateFolder}
+                className="px-4 py-2 bg-brand-accent text-white rounded-lg hover:shadow-glow transition-all font-medium"
+              >
+                Create
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Drag-Drop Zone */}
+        <div
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+            dragOver 
+              ? 'border-brand-accent bg-brand-accent/10' 
+              : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+          }`}
+        >
+          <div className="space-y-4">
+            <div className="text-4xl">📁</div>
+            <div>
+              <p className="text-slate-900 font-medium">
+                {dragOver ? 'Drop image here' : 'Drag & drop an image here'}
+              </p>
+              <p className="text-slate-500 text-sm mt-1">or use the uploader below</p>
+            </div>
+          </div>
+        </div>
+
         <ImageUpload
           value=""
           onChange={(url: string) => setUploadedUrl(url)}
-          folder="general"
-          label="Select Image"
+          folder={selectedFolder}
+          label="Or select from your device"
         />
+
+        {/* Upload Progress */}
+        {uploading && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-slate-700">Uploading...</span>
+              <span className="text-sm text-slate-500">{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-brand-primary to-brand-accent h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {uploadedUrl && (
           <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
@@ -301,7 +469,7 @@ export default function AdminMediaLibraryPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <p className="text-white text-xs font-medium truncate">{image.name.split('/').pop()}</p>
-                      <p className="text-white/70 text-xs">{formatFileSize(getImageSize(image))}</p>
+                      <p className="text-white/70 text-xs">{formatFileSize(getImageSize(image))} • {getImageDimensions(image)}</p>
                     </div>
                   </div>
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -379,6 +547,12 @@ export default function AdminMediaLibraryPage() {
                   className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
                 >
                   Copy URL
+                </button>
+                <button
+                  onClick={() => handleReplaceImage(selectedImage)}
+                  className="px-4 py-2 bg-brand-accent text-white rounded-lg hover:shadow-glow transition-all font-medium"
+                >
+                  Replace
                 </button>
                 <button
                   onClick={() => {

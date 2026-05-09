@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { getPublicContactSettings } from "@/lib/data/public";
 
-export default function ContactCTA() {
+export default async function ContactCTA() {
+  const contactSettings = await getPublicContactSettings();
   return (
     <section id="contact" className="section">
       <div className="container-x">
@@ -15,11 +16,11 @@ export default function ContactCTA() {
             </p>
           </div>
           <div className="md:col-span-5 flex flex-col sm:flex-row md:flex-col gap-3 md:items-stretch">
-            <a href={`tel:${site.phoneRaw}`} className="btn-primary justify-center">
-              Call {site.phone}
+            <a href={`tel:${contactSettings.phoneRaw}`} className="btn-primary justify-center">
+              Call {contactSettings.phone}
             </a>
             <a
-              href={site.whatsapp}
+              href={contactSettings.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary justify-center"

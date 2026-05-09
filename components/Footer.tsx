@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import { getPublicContactSettings } from "@/lib/data/public";
 import { site } from "@/lib/site";
 
-export default function Footer() {
+export default async function Footer() {
+  const contactSettings = await getPublicContactSettings();
   return (
     <footer className="mt-20 bg-gradient-to-br from-brand-ink via-brand-primary to-brand-primaryDark text-white relative overflow-hidden">
       <div className="container-x py-16 md:py-24 grid gap-12 md:grid-cols-12 relative z-10">
@@ -15,7 +17,7 @@ export default function Footer() {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <a
-              href={site.whatsapp}
+              href={contactSettings.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent to-brand-light px-6 py-3.5 text-sm font-semibold hover:shadow-glow transition-all"
@@ -24,7 +26,7 @@ export default function Footer() {
               <span aria-hidden>→</span>
             </a>
             <a
-              href={site.instagram}
+              href={contactSettings.instagram}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Follow on Instagram"
@@ -59,14 +61,14 @@ export default function Footer() {
           <ul className="space-y-4 text-white/85 text-sm">
             <li>
               <span className="text-white/60">Customer Care:</span>{" "}
-              <a href={`tel:${site.phoneRaw}`} className="font-semibold text-white hover:text-brand-accent transition-colors">
-                {site.phone}
+              <a href={`tel:${contactSettings.phoneRaw}`} className="font-semibold text-white hover:text-brand-accent transition-colors">
+                {contactSettings.phone}
               </a>
             </li>
             <li>
               <span className="text-white/60">Instagram:</span>{" "}
               <a
-                href={site.instagram}
+                href={contactSettings.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-white hover:text-brand-accent transition-colors"

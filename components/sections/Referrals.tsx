@@ -1,7 +1,16 @@
 import Link from "next/link";
-import { referralLevels, salesBonuses, site } from "@/lib/site";
+import { getPublicSiteContent, getPublicCommissionSettings } from "@/lib/data/public";
 
-export default function Referrals() {
+export default async function Referrals() {
+  const [siteContent, commissionSettings] = await Promise.all([
+    getPublicSiteContent("home_referral"),
+    getPublicCommissionSettings(),
+  ]);
+
+  const referralHeading = siteContent.referral_heading || "Earn Unlimited";
+  const referralDescription = siteContent.referral_description || "Active partners can share premium IA Skin Care treatments and earn commission when referrals are confirmed. Completely optional — our treatments remain accessible to everyone.";
+  const referralLevels = commissionSettings.referralLevels;
+  const salesBonuses = commissionSettings.salesBonuses;
   return (
     <section id="referrals" className="section bg-gradient-to-b from-white to-brand-surface/30">
       <div className="container-x">
@@ -13,15 +22,13 @@ export default function Referrals() {
             </span>
           </span>
           <h2 className="mt-6">
-            Earn Unlimited{" "}
+            {referralHeading}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
               Referral Rewards
             </span>
           </h2>
           <p className="mt-4 text-base text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            Active partners can share premium IA Skin Care treatments and earn commission 
-            when referrals are confirmed. Completely optional — our treatments remain 
-            accessible to everyone.
+            {referralDescription}
           </p>
           <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand-accent/10 text-brand-accent px-5 py-2.5 text-xs font-semibold border border-brand-accent/20">
             <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
@@ -44,7 +51,7 @@ export default function Referrals() {
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                {referralLevels.map((l, index) => (
+                {referralLevels.map((l: any, index: number) => (
                   <div
                     key={l.level}
                     className="rounded-2xl bg-gradient-to-br from-brand-surface to-white border border-brand-border/80 p-5 hover:shadow-soft transition-shadow"
@@ -84,7 +91,7 @@ export default function Referrals() {
                 </p>
               </div>
               <ul className="mt-5 space-y-3 flex-1">
-                {salesBonuses.map((b, index) => (
+                {salesBonuses.map((b: any, index: number) => (
                   <li
                     key={b.bookings}
                     className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 hover:border-brand-accent/30 transition-all"

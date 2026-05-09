@@ -1,5 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { treatments as staticTreatments, testimonials as staticTestimonials, faqs as staticFaqs, site as staticSite } from "@/lib/site";
+import { treatments as staticTreatments, testimonials as staticTestimonials, faqs as staticFaqs, site as staticSite, referralLevels as staticReferralLevels, salesBonuses as staticSalesBonuses } from "@/lib/site";
 
 // ============================================================================
 // PUBLIC DATA FETCHING WITH FALLBACK
@@ -170,5 +170,82 @@ export async function getPublicContactSettings() {
   } catch (error) {
     console.error("Error fetching contact settings from Supabase:", error);
     return staticSite;
+  }
+}
+
+/**
+ * Fetch commission settings from Supabase with fallback to static data
+ */
+export async function getPublicCommissionSettings() {
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("commission_settings" as any)
+      .select("*")
+      .single();
+
+    if (error || !data) {
+      console.log("Using static commission data (fallback)");
+      return {
+        referralLevels: staticReferralLevels,
+        salesBonuses: staticSalesBonuses,
+      };
+    }
+
+    return {
+      referralLevels: (data as any).referral_levels || staticReferralLevels,
+      salesBonuses: (data as any).sales_bonuses || staticSalesBonuses,
+    };
+  } catch (error) {
+    console.error("Error fetching commission settings from Supabase:", error);
+    return {
+      referralLevels: staticReferralLevels,
+      salesBonuses: staticSalesBonuses,
+    };
+  }
+}
+
+/**
+ * Fetch system settings from Supabase
+ */
+export async function getPublicSystemSettings() {
+  try {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("system_settings" as any)
+      .select("*")
+      .single();
+
+    if (error || !data) {
+      return {
+        membershipPrice: "1199",
+        membershipFeatures: [
+          "Premium referral dashboard access",
+          "Real-time earnings tracking",
+          "Multi-level commission structure",
+          "Milestone bonus rewards",
+          "Transparent payout status",
+        ],
+        heroPoints: [
+          "Advanced Skin Treatments",
+          "Doctor-Supervised Protocols",
+          "Premium Clinical Care",
+          "Visible Results",
+        ],
+      };
+    }
+
+    return {
+      membershipPrice: (data as any).membership_price || "1199",
+      membershipFeatures: (data as any).membership_features || [],
+      heroPoints: (data as any).hero_points || [],
+    };
+  } catch (error) {
+    console.error("Error fetching system settings from Supabase:", error);
+    return {
+      membershipPrice: "1199",
+      membershipFeatures: [],
+      heroPoints: [],
+    };
   }
 }

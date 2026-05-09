@@ -355,15 +355,38 @@ function TreatmentFormModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
   const [imageUrl, setImageUrl] = useState(treatment?.image || "");
   const [beforeImageUrl, setBeforeImageUrl] = useState(treatment?.before_image || "");
   const [afterImageUrl, setAfterImageUrl] = useState(treatment?.after_image || "");
   const [galleryUrls, setGalleryUrls] = useState<string[]>(treatment?.gallery || []);
   const [galleryInput, setGalleryInput] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   async function handleSubmit(formData: FormData) {
+    const validationErrors = validateFormData(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setValidationErrors(validationErrors);
+      return;
+    }
+
     setLoading(true);
     setError("");
+    setSuccess(false);
 
     // Override image fields with state values (from upload)
     formData.set("image", imageUrl);
@@ -381,8 +404,59 @@ function TreatmentFormModal({
       setError(result.error);
       setLoading(false);
     } else {
+      setSuccess(true);
+      setHasUnsavedChanges(false);
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    }
+  }
+
+  function validateFormData(formData: FormData): Record<string, string> {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.get("title")?.toString().trim()) {
+      errors.title = "Treatment title is required";
+    }
+    if (!formData.get("slug")?.toString().trim()) {
+      errors.slug = "Slug is required";
+    }
+    if (!formData.get("type")?.toString().trim()) {
+      errors.type = "Type is required";
+    }
+    if (!formData.get("price")?.toString().trim()) {
+      errors.price = "Price is required";
+    }
+    
+    // Validate JSON fields
+    const jsonFields = ["benefits", "process", "safety", "available_cities"];
+    jsonFields.forEach((field) => {
+      const value = formData.get(field)?.toString();
+      if (value) {
+        try {
+          JSON.parse(value);
+        } catch {
+          errors[field] = `Invalid JSON format`;
+        }
+      }
+    });
+
+    return errors;
+  }
+
+  function handleCancel() {
+    if (hasUnsavedChanges) {
+      if (confirm("You have unsaved changes. Are you sure you want to cancel?")) {
+        onClose();
+      }
+    } else {
       onClose();
     }
+  }
+
+  function handleFieldChange() {
+    setHasUnsavedChanges(true);
+    setSuccess(false);
   }
 
   function addGalleryImage() {
@@ -398,18 +472,18 @@ function TreatmentFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-premium w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+      <div className="bg-white rounded-2xl shadow-premium w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-4 sm:p-6 border-b border-slate-200 bg-white z-10">
           <div className="flex items-center gap-4">
             <button
-              onClick={onClose}
+              onClick={handleCancel}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div>
+            <div className="flex-1">
               <h2 className="text-xl font-bold text-slate-900">
                 {treatment ? "Edit Treatment" : "Add Treatment"}
               </h2>
@@ -417,13 +491,56 @@ function TreatmentFormModal({
                 {treatment ? "Update treatment details" : "Create a new treatment"}
               </p>
             </div>
+            {hasUnsavedChanges && (
+              <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Unsaved
+              </span>
+            )}
           </div>
         </div>
 
-        <form action={handleSubmit} className="p-4 sm:p-6 space-y-6">
+        {/* Tab Navigation */}
+        <div className="border-b border-slate-200 bg-slate-50 px-6">
+          <nav className="flex gap-6">
+            {[
+              { id: "basic", label: "Basic Info" },
+              { id: "images", label: "Images" },
+              { id: "details", label: "Details" },
+              { id: "seo", label: "SEO" },
+              { id: "options", label: "Options" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? "border-brand-accent text-brand-accent"
+                    : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <form action={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-6">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm mb-6 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Saved successfully! Closing...
             </div>
           )}
 
@@ -431,376 +548,430 @@ function TreatmentFormModal({
             <input type="hidden" name="id" value={treatment.id} />
           )}
 
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Basic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Basic Info Tab */}
+          {activeTab === "basic" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Treatment Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    defaultValue={treatment?.title || ""}
+                    required
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="e.g., Anti-Aging Facial"
+                  />
+                  {validationErrors.title && (
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.title}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Slug *</label>
+                  <input
+                    type="text"
+                    name="slug"
+                    defaultValue={treatment?.slug || ""}
+                    required
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="e.g., anti-aging-facial"
+                  />
+                  {validationErrors.slug && (
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.slug}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                  <input
+                    type="text"
+                    name="category"
+                    defaultValue={treatment?.category || ""}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="e.g., Facials, Body Treatments"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Type *</label>
+                  <select
+                    name="type"
+                    defaultValue={treatment?.type || "home_kit"}
+                    required
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  >
+                    <option value="home_kit">Home Kit</option>
+                    <option value="clinic">Clinic</option>
+                    <option value="campaign">Campaign</option>
+                  </select>
+                  {validationErrors.type && (
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.type}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹) *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    defaultValue={treatment?.price || ""}
+                    required
+                    step="0.01"
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="0.00"
+                  />
+                  {validationErrors.price && (
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.price}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Display Order</label>
+                  <input
+                    type="number"
+                    name="display_order"
+                    defaultValue={treatment?.display_order || 0}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Treatment Title *
+                  Tagline
                 </label>
                 <input
                   type="text"
-                  name="title"
-                  defaultValue={treatment?.title || ""}
-                  required
+                  name="tagline"
+                  defaultValue={treatment?.tagline || ""}
+                  onChange={handleFieldChange}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="e.g., Anti-Aging Facial"
+                  placeholder="Short tagline"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Slug *</label>
-                <input
-                  type="text"
-                  name="slug"
-                  defaultValue={treatment?.slug || ""}
-                  required
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="e.g., anti-aging-facial"
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  defaultValue={treatment?.description || ""}
+                  rows={4}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
+                  placeholder="Treatment description"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <input
-                  type="text"
-                  name="category"
-                  defaultValue={treatment?.category || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="e.g., Facials, Body Treatments"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Type *</label>
-                <select
-                  name="type"
-                  defaultValue={treatment?.type || "home_kit"}
-                  required
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                >
-                  <option value="home_kit">Home Kit</option>
-                  <option value="clinic">Clinic</option>
-                  <option value="campaign">Campaign</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Price (₹) *</label>
-                <input
-                  type="number"
-                  name="price"
-                  defaultValue={treatment?.price || ""}
-                  required
-                  step="0.01"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Display Order</label>
-                <input
-                  type="number"
-                  name="display_order"
-                  defaultValue={treatment?.display_order || 0}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Tagline
-              </label>
-              <input
-                type="text"
-                name="tagline"
-                defaultValue={treatment?.tagline || ""}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                placeholder="Short tagline"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Description
-              </label>
-              <textarea
-                name="description"
-                defaultValue={treatment?.description || ""}
-                rows={4}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
-                placeholder="Treatment description"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Duration</label>
-                <input
-                  type="text"
-                  name="duration"
-                  defaultValue={treatment?.duration || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="e.g., 60 minutes"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Sessions</label>
-                <input
-                  type="text"
-                  name="sessions"
-                  defaultValue={treatment?.sessions || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="e.g., 1 session"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Images */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Images</h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Main Image</label>
-              <ImageUpload
-                value={imageUrl}
-                onChange={setImageUrl}
-                folder="treatments"
-                label="Upload Main Image"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Before Image (Optional)</label>
-                <ImageUpload
-                  value={beforeImageUrl}
-                  onChange={setBeforeImageUrl}
-                  folder="treatments"
-                  label="Upload Before Image"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">After Image (Optional)</label>
-                <ImageUpload
-                  value={afterImageUrl}
-                  onChange={setAfterImageUrl}
-                  folder="treatments"
-                  label="Upload After Image"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Gallery Images (Optional)</label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Duration</label>
                   <input
-                    type="url"
-                    value={galleryInput}
-                    onChange={(e) => setGalleryInput(e.target.value)}
-                    className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                    placeholder="Paste image URL..."
+                    type="text"
+                    name="duration"
+                    defaultValue={treatment?.duration || ""}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="e.g., 60 minutes"
                   />
-                  <button
-                    type="button"
-                    onClick={addGalleryImage}
-                    className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
-                  >
-                    Add
-                  </button>
                 </div>
-                {galleryUrls.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2 mt-2">
-                    {galleryUrls.map((url, index) => (
-                      <div key={index} className="relative group">
-                        <img src={url} alt={`Gallery ${index + 1}`} className="w-full h-20 object-cover rounded-lg border border-slate-200" />
-                        <button
-                          type="button"
-                          onClick={() => removeGalleryImage(index)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Sessions</label>
+                  <input
+                    type="text"
+                    name="sessions"
+                    defaultValue={treatment?.sessions || ""}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                    placeholder="e.g., 1 session"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Images Tab */}
+          {activeTab === "images" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Main Image</label>
+                <ImageUpload
+                  value={imageUrl}
+                  onChange={(url) => { setImageUrl(url); handleFieldChange(); }}
+                  folder="treatments"
+                  label="Upload Main Image"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Before Image (Optional)</label>
+                  <ImageUpload
+                    value={beforeImageUrl}
+                    onChange={(url) => { setBeforeImageUrl(url); handleFieldChange(); }}
+                    folder="treatments"
+                    label="Upload Before Image"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">After Image (Optional)</label>
+                  <ImageUpload
+                    value={afterImageUrl}
+                    onChange={(url) => { setAfterImageUrl(url); handleFieldChange(); }}
+                    folder="treatments"
+                    label="Upload After Image"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Gallery Images (Optional)</label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={galleryInput}
+                      onChange={(e) => { setGalleryInput(e.target.value); handleFieldChange(); }}
+                      className="flex-1 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                      placeholder="Paste image URL..."
+                    />
+                    <button
+                      type="button"
+                      onClick={addGalleryImage}
+                      className="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                    >
+                      Add
+                    </button>
                   </div>
+                  {galleryUrls.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {galleryUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img src={url} alt={`Gallery ${index + 1}`} className="w-full h-20 object-cover rounded-lg border border-slate-200" />
+                          <button
+                            type="button"
+                            onClick={() => { removeGalleryImage(index); handleFieldChange(); }}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Details Tab */}
+          {activeTab === "details" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Benefits (JSON array)
+                </label>
+                <textarea
+                  name="benefits"
+                  defaultValue={treatment?.benefits ? JSON.stringify(treatment.benefits) : "[]"}
+                  rows={3}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
+                  placeholder='["Benefit 1", "Benefit 2"]'
+                />
+                {validationErrors.benefits && (
+                  <p className="text-red-600 text-xs mt-1">{validationErrors.benefits}</p>
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* Details */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Treatment Details</h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Benefits (JSON array)
-              </label>
-              <textarea
-                name="benefits"
-                defaultValue={treatment?.benefits ? JSON.stringify(treatment.benefits) : "[]"}
-                rows={3}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
-                placeholder='["Benefit 1", "Benefit 2"]'
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Process (JSON array)
-              </label>
-              <textarea
-                name="process"
-                defaultValue={treatment?.process ? JSON.stringify(treatment.process) : "[]"}
-                rows={3}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
-                placeholder='["Step 1", "Step 2"]'
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Safety (JSON array)
-              </label>
-              <textarea
-                name="safety"
-                defaultValue={treatment?.safety ? JSON.stringify(treatment.safety) : "[]"}
-                rows={3}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
-                placeholder='["Safety note 1", "Safety note 2"]'
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Available Cities (JSON array)
-              </label>
-              <textarea
-                name="available_cities"
-                defaultValue={treatment?.available_cities ? JSON.stringify(treatment.available_cities) : "[]"}
-                rows={2}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
-                placeholder='["Mumbai", "Delhi"]'
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                CTA Text
-              </label>
-              <input
-                type="text"
-                name="cta_text"
-                defaultValue={treatment?.cta_text || "Book Now"}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                placeholder="e.g., Book Now"
-              />
-            </div>
-          </div>
-
-          {/* SEO */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">SEO Meta</h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">SEO Title</label>
-              <input
-                type="text"
-                name="seo_title"
-                defaultValue={treatment?.seo_title || ""}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                placeholder="SEO page title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">SEO Description</label>
-              <textarea
-                name="seo_description"
-                defaultValue={treatment?.seo_description || ""}
-                rows={2}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
-                placeholder="SEO meta description"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">SEO Keywords</label>
-              <input
-                type="text"
-                name="seo_keywords"
-                defaultValue={treatment?.seo_keywords || ""}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                placeholder="keyword1, keyword2, keyword3"
-              />
-            </div>
-          </div>
-
-          {/* Options */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Options</h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="active"
-                  defaultChecked={treatment?.active ?? true}
-                  className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Process (JSON array)
+                </label>
+                <textarea
+                  name="process"
+                  defaultValue={treatment?.process ? JSON.stringify(treatment.process) : "[]"}
+                  rows={3}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
+                  placeholder='["Step 1", "Step 2"]'
                 />
-                <span className="text-sm font-medium text-slate-700">Active</span>
-              </label>
+                {validationErrors.process && (
+                  <p className="text-red-600 text-xs mt-1">{validationErrors.process}</p>
+                )}
+              </div>
 
-              <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="featured"
-                  defaultChecked={treatment?.featured ?? false}
-                  className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Safety (JSON array)
+                </label>
+                <textarea
+                  name="safety"
+                  defaultValue={treatment?.safety ? JSON.stringify(treatment.safety) : "[]"}
+                  rows={3}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
+                  placeholder='["Safety note 1", "Safety note 2"]'
                 />
-                <span className="text-sm font-medium text-slate-700">Featured</span>
-              </label>
+                {validationErrors.safety && (
+                  <p className="text-red-600 text-xs mt-1">{validationErrors.safety}</p>
+                )}
+              </div>
 
-              <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="requires_slots"
-                  defaultChecked={treatment?.requires_slots ?? false}
-                  className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Available Cities (JSON array)
+                </label>
+                <textarea
+                  name="available_cities"
+                  defaultValue={treatment?.available_cities ? JSON.stringify(treatment.available_cities) : "[]"}
+                  rows={2}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none font-mono text-sm"
+                  placeholder='["Mumbai", "Delhi"]'
                 />
-                <span className="text-sm font-medium text-slate-700">Requires Slots</span>
-              </label>
+                {validationErrors.available_cities && (
+                  <p className="text-red-600 text-xs mt-1">{validationErrors.available_cities}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  CTA Text
+                </label>
+                <input
+                  type="text"
+                  name="cta_text"
+                  defaultValue={treatment?.cta_text || "Book Now"}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  placeholder="e.g., Book Now"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex gap-3 pt-4 border-t border-slate-200">
+          {/* SEO Tab */}
+          {activeTab === "seo" && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">SEO Title</label>
+                <input
+                  type="text"
+                  name="seo_title"
+                  defaultValue={treatment?.seo_title || ""}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  placeholder="SEO page title"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">SEO Description</label>
+                <textarea
+                  name="seo_description"
+                  defaultValue={treatment?.seo_description || ""}
+                  rows={2}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
+                  placeholder="SEO meta description"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">SEO Keywords</label>
+                <input
+                  type="text"
+                  name="seo_keywords"
+                  defaultValue={treatment?.seo_keywords || ""}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  placeholder="keyword1, keyword2, keyword3"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Options Tab */}
+          {activeTab === "options" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="active"
+                    defaultChecked={treatment?.active ?? true}
+                    onChange={handleFieldChange}
+                    className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Active</span>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="featured"
+                    defaultChecked={treatment?.featured ?? false}
+                    onChange={handleFieldChange}
+                    className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Featured</span>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="requires_slots"
+                    defaultChecked={treatment?.requires_slots ?? false}
+                    onChange={handleFieldChange}
+                    className="w-4 h-4 text-brand-accent rounded border-slate-300 focus:ring-brand-accent"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Requires Slots</span>
+                </label>
+              </div>
+            </div>
+          )}
+        </form>
+
+        {/* Sticky Save Bar */}
+        <div className="border-t border-slate-200 bg-white p-4 sm:p-6">
+          <div className="flex gap-3 justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               className="px-6 py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              form={undefined}
+              onClick={() => {
+                const form = document.querySelector('form[action]') as HTMLFormElement;
+                if (form) form.requestSubmit();
+              }}
+              disabled={loading || success}
+              className="px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Saving..." : treatment ? "Update Treatment" : "Create Treatment"}
+              {loading ? "Saving..." : success ? "Saved!" : treatment ? "Update Treatment" : "Create Treatment"}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

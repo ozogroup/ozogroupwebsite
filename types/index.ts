@@ -22,6 +22,12 @@ export type Treatment = {
   imageAlt: string;
   treatmentType?: "home-kit" | "clinic" | "camp";
   note?: string;
+  seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string;
+  before_image?: string;
+  after_image?: string;
+  gallery?: string[];
 };
 
 export type ReferralLevel = {

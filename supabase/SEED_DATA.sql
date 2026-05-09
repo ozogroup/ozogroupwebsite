@@ -14,7 +14,7 @@ DELETE FROM treatments;
 
 INSERT INTO treatments (
   title, slug, subtitle, description, overview, price, price_label, unit, 
-  tagline, treatment_type, image, image_alt, duration, sessions, 
+  tagline, type, image, image_alt, duration, sessions, 
   badge, icon, tone, active, featured, requires_slots, 
   benefits, process, who_for, safety, faqs, available_cities, 
   cta_text, created_at, updated_at
@@ -29,7 +29,7 @@ INSERT INTO treatments (
   '₹25,000',
   'per session',
   'Premium Clinical Glow Experience',
-  'campaign',
+  'clinic',
   'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
   'Korean Glass Skin treatment — luminous dewy radiant skin with glass-like finish',
   '75–90 min',
@@ -40,22 +40,22 @@ INSERT INTO treatments (
   true,
   true,
   true,
-  ARRAY['Deep hydration glow', 'Smooth radiant skin', 'Glass skin finish', 'Brightening support', 'Skin texture refinement', 'Luxury clinical care'],
-  ARRAY[
+  to_jsonb(ARRAY['Deep hydration glow', 'Smooth radiant skin', 'Glass skin finish', 'Brightening support', 'Skin texture refinement', 'Luxury clinical care']::text[]),
+  jsonb_build_array(
     jsonb_build_object('step', 'Event Registration', 'detail', 'Register for upcoming glass skin treatment events in your city.'),
     jsonb_build_object('step', 'Expert Consultation', 'detail', 'One-on-one consultation with Korean skincare specialists.'),
     jsonb_build_object('step', 'Premium Treatment', 'detail', 'Multi-step clinical protocol with premium Korean-import products.'),
     jsonb_build_object('step', 'Glass Skin Results', 'detail', 'Experience instant luminous dewy finish and visible transformation.'),
     jsonb_build_object('step', 'Aftercare Support', 'detail', 'Post-treatment guidance and home-care recommendations.')
-  ],
-  ARRAY['Dry, dull, or tired-looking skin', 'Anyone wanting that K-Beauty dewy glow', 'Pre-event glow boost', 'Mature skin needing hydration & bounce'],
+  ),
+  to_jsonb(ARRAY['Dry, dull, or tired-looking skin', 'Anyone wanting that K-Beauty dewy glow', 'Pre-event glow boost', 'Mature skin needing hydration & bounce']::text[]),
   'Doctor-supervised, hypoallergenic, and patch-tested. All Korean-import grade products are dermatologically certified. Organized in premium clinical settings.',
-  ARRAY[
+  jsonb_build_array(
     jsonb_build_object('q', 'How do I book this treatment?', 'a', 'This treatment is organized through city-based campaigns and beauty events. Register your interest and we''ll notify you when sessions are available in your city.'),
     jsonb_build_object('q', 'Which cities currently offer this treatment?', 'a', 'We organize glass skin treatment campaigns in major cities. Check our website or WhatsApp for upcoming events in your area.'),
     jsonb_build_object('q', 'How long do results last?', 'a', 'The instant dewy finish lasts ~7–10 days. With recommended sessions and proper aftercare, you can sustain the effect for longer.')
-  ],
-  ARRAY['Mumbai', 'Delhi', 'Bangalore', 'Ahmedabad'],
+  ),
+  to_jsonb(ARRAY['Mumbai', 'Delhi', 'Bangalore', 'Ahmedabad']::text[]),
   'Book Consultation',
   NOW(),
   NOW()
@@ -81,22 +81,22 @@ INSERT INTO treatments (
   true,
   true,
   false,
-  ARRAY['Reduces pigmentation & dark spots', 'Improves uneven skin tone', 'Enhances natural glow', 'Safe for Indian skin types', 'Guided skincare support', 'Long-lasting visible radiance'],
-  ARRAY[
+  to_jsonb(ARRAY['Reduces pigmentation & dark spots', 'Improves uneven skin tone', 'Enhances natural glow', 'Safe for Indian skin types', 'Guided skincare support', 'Long-lasting visible radiance']::text[]),
+  jsonb_build_array(
     jsonb_build_object('step', 'Kit Delivery', 'detail', 'Premium home care kit delivered to your doorstep with all required products.'),
     jsonb_build_object('step', 'Video Consultation', 'detail', 'Expert video consultation to guide you through the treatment protocol.'),
     jsonb_build_object('step', 'Daily Routine', 'detail', 'Follow the guided skincare routine with premium clinical-grade actives.'),
     jsonb_build_object('step', 'Progress Tracking', 'detail', 'Weekly check-ins to monitor progress and adjust protocol as needed.'),
     jsonb_build_object('step', 'Ongoing Support', 'detail', 'Continuous online/offline consultation support throughout the program.')
-  ],
-  ARRAY['Uneven skin tone & dullness', 'Post-acne marks & pigmentation', 'Tan, sun damage, or dark patches', 'Anyone seeking a brighter, balanced complexion'],
+  ),
+  to_jsonb(ARRAY['Uneven skin tone & dullness', 'Post-acne marks & pigmentation', 'Tan, sun damage, or dark patches', 'Anyone seeking a brighter, balanced complexion']::text[]),
   'Doctor-supervised, patch-tested, and tailored for Indian skin. Uses certified clinical-grade products with zero harsh bleaching agents. Premium home care kit delivered with detailed instructions.',
-  ARRAY[
+  jsonb_build_array(
     jsonb_build_object('q', 'What is included in the home treatment kit?', 'a', 'The kit includes all premium clinical-grade products needed for the complete treatment program, along with detailed instructions and access to video consultations.'),
     jsonb_build_object('q', 'How long does the program last?', 'a', 'The standard program is designed for 4-6 weeks, with visible improvements typically seen within the first 2 weeks.'),
     jsonb_build_object('q', 'Is there any downtime?', 'a', 'No downtime. This is a gentle home-based treatment designed for daily use without disrupting your routine.')
-  ],
-  ARRAY['All India'],
+  ),
+  to_jsonb(ARRAY['All India']::text[]),
   'Book Home Kit Program',
   NOW(),
   NOW()
@@ -122,22 +122,22 @@ INSERT INTO treatments (
   true,
   false,
   false,
-  ARRAY['Cleansing', 'Hydration', 'Skin refresh', 'Glow maintenance', 'Beginner-friendly skincare support'],
-  ARRAY[
+  to_jsonb(ARRAY['Cleansing', 'Hydration', 'Skin refresh', 'Glow maintenance', 'Beginner-friendly skincare support']::text[]),
+  jsonb_build_array(
     jsonb_build_object('step', 'Skin Analysis', 'detail', 'Professional assessment of your skin type and condition.'),
     jsonb_build_object('step', 'Deep Cleansing', 'detail', 'Thorough pore cleansing to remove impurities and excess oil.'),
     jsonb_build_object('step', 'Exfoliation', 'detail', 'Gentle removal of dead skin cells for smoother texture.'),
     jsonb_build_object('step', 'Nourishing Mask', 'detail', 'Nutrient-rich mask to replenish and revitalize skin.'),
     jsonb_build_object('step', 'Protection', 'detail', 'Moisturizer and SPF to protect and maintain results.')
-  ],
-  ARRAY['Beginners to professional skincare', 'Maintenance between advanced treatments', 'General skin health improvement', 'Preventative skincare', 'All skin types'],
+  ),
+  to_jsonb(ARRAY['Beginners to professional skincare', 'Maintenance between advanced treatments', 'General skin health improvement', 'Preventative skincare', 'All skin types']::text[]),
   'Gentle yet effective protocol suitable for all skin types. Doctor-supervised with patch-tested, clinical-grade products.',
-  ARRAY[
+  jsonb_build_array(
     jsonb_build_object('q', 'Is this suitable for first-time skincare clients?', 'a', 'Absolutely. This is our foundational treatment, perfect for anyone new to professional skincare or building a routine.'),
     jsonb_build_object('q', 'How often should I get this treatment?', 'a', 'For maintenance, we recommend every 4–6 weeks. Your therapist will create a personalized schedule based on your skin needs.'),
     jsonb_build_object('q', 'Can I combine this with other treatments?', 'a', 'Yes, this treatment pairs well with more advanced protocols. Your skincare expert will recommend the best combination for your goals.')
-  ],
-  ARRAY['Mumbai', 'Delhi', 'Bangalore', 'Ahmedabad'],
+  ),
+  to_jsonb(ARRAY['Mumbai', 'Delhi', 'Bangalore', 'Ahmedabad']::text[]),
   'Book Now',
   NOW(),
   NOW()
@@ -163,22 +163,22 @@ INSERT INTO treatments (
   true,
   false,
   false,
-  ARRAY['Minimalist skin ritual', 'Texture refinement', 'Calm skin', 'Natural radiance', 'Balanced hydration'],
-  ARRAY[
+  to_jsonb(ARRAY['Minimalist skin ritual', 'Texture refinement', 'Calm skin', 'Natural radiance', 'Balanced hydration']::text[]),
+  jsonb_build_array(
     jsonb_build_object('step', 'Ritual Cleanse', 'detail', 'Traditional Japanese cleansing technique for deep purification.'),
     jsonb_build_object('step', 'Refining Exfoliation', 'detail', 'Gentle enzyme exfoliation for smooth, refined texture.'),
     jsonb_build_object('step', 'Essence Infusion', 'detail', 'Lightweight essence layers for deep hydration and balance.'),
     jsonb_build_object('step', 'Clay Mask', 'detail', 'Purifying clay mask to detoxify and refine pores.'),
     jsonb_build_object('step', 'Harmony Finish', 'detail', 'Balancing moisturizer and protective SPF for lasting clarity.')
-  ],
-  ARRAY['Enlarged or visible pores', 'Rough or uneven texture', 'Oily or combination skin', 'Those seeking refined elegance', 'Sensitive or reactive skin'],
+  ),
+  to_jsonb(ARRAY['Enlarged or visible pores', 'Rough or uneven texture', 'Oily or combination skin', 'Those seeking refined elegance', 'Sensitive or reactive skin']::text[]),
   'Doctor-supervised with gentle, purifying ingredients. All products are dermatologically tested and suitable for sensitive skin types.',
-  ARRAY[
+  jsonb_build_array(
     jsonb_build_object('q', 'How is this different from the Korean Glass Treatment?', 'a', 'While Korean Glass focuses on dewy hydration, Japanese treatment emphasizes purification, pore refinement, and achieving a smooth, porcelain-like finish.'),
     jsonb_build_object('q', 'Is this suitable for sensitive skin?', 'a', 'Yes, the Japanese approach is known for being gentle yet effective. We customize the intensity based on your skin sensitivity.'),
     jsonb_build_object('q', 'When will I see results?', 'a', 'Immediate refinement is visible after one session. For lasting porcelain-smooth skin, we recommend 4–6 sessions spaced 2–3 weeks apart.')
-  ],
-  ARRAY['Mumbai', 'Delhi', 'Bangalore'],
+  ),
+  to_jsonb(ARRAY['Mumbai', 'Delhi', 'Bangalore']::text[]),
   'Book Consultation',
   NOW(),
   NOW()
@@ -204,22 +204,22 @@ INSERT INTO treatments (
   true,
   true,
   true,
-  ARRAY['Anti-aging', 'Skin repair', 'Deep hydration', 'Pigmentation control', 'Collagen boost', 'Barrier strengthening'],
-  ARRAY[
+  to_jsonb(ARRAY['Anti-aging', 'Skin repair', 'Deep hydration', 'Pigmentation control', 'Collagen boost', 'Barrier strengthening']::text[]),
+  jsonb_build_array(
     jsonb_build_object('step', 'Advanced Assessment', 'detail', 'Comprehensive skin analysis with imaging technology.'),
     jsonb_build_object('step', 'Professional Peel', 'detail', 'Clinical-grade peel for deep exfoliation and renewal.'),
     jsonb_build_object('step', 'Active Infusion', 'detail', 'High-potency serums with advanced delivery systems.'),
     jsonb_build_object('step', 'Intensive Mask', 'detail', 'Professional-grade treatment mask for targeted repair.'),
     jsonb_build_object('step', 'Barrier Restoration', 'detail', 'Barrier-repair complex and protective aftercare protocol.')
-  ],
-  ARRAY['Deep or stubborn pigmentation', 'Advanced signs of aging', 'Severe texture irregularities', 'Significant skin damage', 'Those seeking dramatic results'],
+  ),
+  to_jsonb(ARRAY['Deep or stubborn pigmentation', 'Advanced signs of aging', 'Severe texture irregularities', 'Significant skin damage', 'Those seeking dramatic results']::text[]),
   'Doctor-supervised with clinical-grade, high-potency actives. Requires pre-treatment assessment and strict aftercare compliance. Not suitable for pregnant or nursing clients.',
-  ARRAY[
+  jsonb_build_array(
     jsonb_build_object('q', 'Is there downtime after this treatment?', 'a', 'Yes, expect 3–5 days of mild redness and peeling as skin renews. This is normal and part of the transformation process.'),
     jsonb_build_object('q', 'How many sessions are needed?', 'a', 'Most clients see significant improvement in 2–3 sessions. A full course of 4–6 sessions is recommended for complete transformation.'),
     jsonb_build_object('q', 'Am I a candidate for this treatment?', 'a', 'A pre-treatment consultation is required. Our doctor will assess your skin, medical history, and goals to determine suitability.')
-  ],
-  ARRAY['Mumbai', 'Delhi'],
+  ),
+  to_jsonb(ARRAY['Mumbai', 'Delhi']::text[]),
   'Book Consultation',
   NOW(),
   NOW()
@@ -260,6 +260,36 @@ INSERT INTO testimonials (
   'Vadodara',
   'Korean Glass Skin',
   'Premium experience from consultation to aftercare. Clean clinic, genuine advice, no upselling. Loved the glow!',
+  5,
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'Neha P.',
+  'Mumbai',
+  'Japanese Skin Treatment',
+  'The Japanese treatment gave me porcelain-smooth skin I never thought possible. The pore refinement is incredible.',
+  5,
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'Sneha R.',
+  'Delhi',
+  'Advanced Skin Treatment',
+  'After years of trying everything, this treatment finally addressed my deep pigmentation. Worth every rupee.',
+  5,
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'Divya S.',
+  'Bangalore',
+  'Skin Lightening',
+  'The home kit program was so convenient. Got professional results without visiting the clinic. The video consultations were very helpful.',
   5,
   true,
   NOW(),
@@ -436,6 +466,276 @@ INSERT INTO system_settings (
 );
 
 -- ============================================================================
+-- SEED BOOKINGS
+-- ============================================================================
+
+-- Clear existing bookings
+DELETE FROM bookings;
+
+INSERT INTO bookings (
+  name, email, phone, treatment_name, treatment_id, date, time, 
+  total_amount, status, notes, created_at, updated_at
+) VALUES
+(
+  'Anjali Patel',
+  'anjali.patel@email.com',
+  '+91 98765 43210',
+  'Korean Glass Treatment',
+  (SELECT id FROM treatments WHERE slug = 'korean-glass-skin' LIMIT 1),
+  '2026-05-20',
+  '14:00',
+  25000,
+  'confirmed',
+  'First-time client, interested in glass skin treatment',
+  NOW(),
+  NOW()
+),
+(
+  'Meera Sharma',
+  'meera.sharma@email.com',
+  '+91 87654 32109',
+  'Skin Lightening Treatment',
+  (SELECT id FROM treatments WHERE slug = 'skin-lightening' LIMIT 1),
+  '2026-05-22',
+  '11:00',
+  18000,
+  'confirmed',
+  'Has pigmentation concerns, wants home kit program',
+  NOW(),
+  NOW()
+),
+(
+  'Priya Desai',
+  'priya.desai@email.com',
+  '+91 76543 21098',
+  'Japanese Skin Treatment',
+  (SELECT id FROM treatments WHERE slug = 'japanese-skin-treatment' LIMIT 1),
+  '2026-05-25',
+  '16:00',
+  22000,
+  'new',
+  'Referred by existing partner, wants consultation first',
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
+-- SEED PARTNERS
+-- ============================================================================
+
+-- Clear existing partners
+DELETE FROM partners;
+
+INSERT INTO partners (
+  user_id, referral_code, full_name, email, phone, city, status,
+  membership_status, total_referrals, total_earnings, created_at, updated_at
+) VALUES
+(
+  'partner-user-1',
+  'OZO1001',
+  'Kavita Mehta',
+  'kavita.mehta@email.com',
+  '+91 99887 76655',
+  'Mumbai',
+  'active',
+  'approved',
+  5,
+  75000,
+  NOW(),
+  NOW()
+),
+(
+  'partner-user-2',
+  'OZO1002',
+  'Neha Joshi',
+  'neha.joshi@email.com',
+  '+91 88776 65544',
+  'Ahmedabad',
+  'active',
+  'approved',
+  3,
+  45000,
+  NOW(),
+  NOW()
+),
+(
+  'partner-user-3',
+  'OZO1003',
+  'Sunita Agarwal',
+  'sunita.agarwal@email.com',
+  '+91 77665 54433',
+  'Bangalore',
+  'active',
+  'approved',
+  8,
+  120000,
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
+-- SEED COMMISSIONS
+-- ============================================================================
+
+-- Clear existing commissions
+DELETE FROM commissions;
+
+INSERT INTO commissions (
+  partner_id, booking_id, commission_amount, level, source, status,
+  created_at, updated_at
+) VALUES
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  (SELECT id FROM bookings WHERE name = 'Anjali Patel' LIMIT 1),
+  1500,
+  1,
+  'Treatment booking',
+  'paid',
+  NOW(),
+  NOW()
+),
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  NULL,
+  1080,
+  2,
+  'Level 2 referral',
+  'paid',
+  NOW(),
+  NOW()
+),
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1002' LIMIT 1),
+  (SELECT id FROM bookings WHERE name = 'Meera Sharma' LIMIT 1),
+  1080,
+  1,
+  'Treatment booking',
+  'paid',
+  NOW(),
+  NOW()
+),
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  NULL,
+  1320,
+  1,
+  'Treatment booking',
+  'paid',
+  NOW(),
+  NOW()
+),
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  NULL,
+  612,
+  2,
+  'Level 2 referral',
+  'paid',
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
+-- SEED PAYOUTS
+-- ============================================================================
+
+-- Clear existing payouts
+DELETE FROM payouts;
+
+INSERT INTO payouts (
+  partner_id, amount, method, payment_details, status, created_at, updated_at
+) VALUES
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  25000,
+  'upi',
+  'kavita@upi',
+  'paid',
+  NOW(),
+  NOW()
+),
+(
+  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  50000,
+  'bank',
+  'HDFC Bank, Account: 50100234567890, IFSC: HDFC0001234',
+  'pending',
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
+-- SEED MEMBERSHIP PLANS
+-- ============================================================================
+
+-- Clear existing membership plans
+DELETE FROM membership_plans;
+
+INSERT INTO membership_plans (
+  name, price, price_label, duration, benefits, features, is_active, 
+  created_at, updated_at
+) VALUES
+(
+  'Basic Partner',
+  1199,
+  '₹1,199',
+  '12 months',
+  to_jsonb(ARRAY['6% commission on direct referrals', 'Access to partner dashboard', 'Referral link generation', 'WhatsApp sharing tools']::text[]),
+  to_jsonb(ARRAY['Basic commission tracking', 'Monthly payout requests', 'Email support']::text[]),
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'Premium Partner',
+  2499,
+  '₹2,499',
+  '12 months',
+  to_jsonb(ARRAY['6% commission on direct referrals', '3% on level 2 referrals', 'Priority support', 'Marketing materials', 'Training resources']::text[]),
+  to_jsonb(ARRAY['Advanced commission tracking', 'Weekly payout requests', 'Phone support', 'Marketing kit access', 'Partner training webinars']::text[]),
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'Elite Partner',
+  4999,
+  '₹4,999',
+  '12 months',
+  to_jsonb(ARRAY['6% commission on direct referrals', '3% on level 2 referrals', '1.7% on level 3 referrals', 'Dedicated account manager', 'Exclusive events', 'Revenue sharing bonus']::text[]),
+  to_jsonb(ARRAY['Full commission tracking', 'Daily payout requests', '24/7 dedicated support', 'Exclusive partner events', 'Revenue sharing up to 20%', 'Custom marketing materials']::text[]),
+  true,
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
+-- SEED FAQ ADDITIONS
+-- ============================================================================
+
+INSERT INTO faqs (
+  question, answer, category, display_order, is_active, created_at, updated_at
+) VALUES
+(
+  'What payment methods do you accept?',
+  'We accept UPI, bank transfer, and all major credit/debit cards. Secure payment links are shared after booking confirmation.',
+  'payment',
+  7,
+  true,
+  NOW(),
+  NOW()
+),
+(
+  'How long is a consultation?',
+  'Consultations typically last 20-30 minutes. Our experts assess your skin, discuss goals, and recommend the best treatment plan.',
+  'general',
+  8,
+  true,
+  NOW(),
+  NOW()
+);
+
+-- ============================================================================
 -- VERIFICATION
 -- ============================================================================
 
@@ -447,3 +747,8 @@ SELECT 'Contact settings seeded:' as status, COUNT(*) as count FROM contact_sett
 SELECT 'Site content seeded:' as status, COUNT(*) as count FROM site_content;
 SELECT 'Commission settings seeded:' as status, COUNT(*) as count FROM commission_settings;
 SELECT 'System settings seeded:' as status, COUNT(*) as count FROM system_settings;
+SELECT 'Bookings seeded:' as status, COUNT(*) as count FROM bookings;
+SELECT 'Partners seeded:' as status, COUNT(*) as count FROM partners;
+SELECT 'Commissions seeded:' as status, COUNT(*) as count FROM commissions;
+SELECT 'Payouts seeded:' as status, COUNT(*) as count FROM payouts;
+SELECT 'Membership plans seeded:' as status, COUNT(*) as count FROM membership_plans;
