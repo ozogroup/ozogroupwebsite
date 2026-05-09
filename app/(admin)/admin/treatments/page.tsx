@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getTreatments, deleteTreatment, toggleTreatmentActive } from "@/lib/actions/treatments";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 type Treatment = {
   id: string;
@@ -228,10 +229,14 @@ function TreatmentFormModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState(treatment?.image || "");
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setError("");
+
+    // Override image field with state value (from upload)
+    formData.set("image", imageUrl);
 
     const { createTreatment, updateTreatment } = await import("@/lib/actions/treatments");
 
@@ -381,18 +386,13 @@ function TreatmentFormModal({
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Image URL
-            </label>
-            <input
-              type="text"
-              name="image"
-              defaultValue={treatment?.image || ""}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageUpload
+            value={imageUrl}
+            onChange={setImageUrl}
+            folder="treatments"
+            label="Treatment Image"
+          />
+          <input type="hidden" name="image" value={imageUrl} />
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">

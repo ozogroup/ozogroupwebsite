@@ -1,91 +1,70 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 interface TopbarProps {
   onMenuClick: () => void;
 }
 
+const PAGE_TITLES: Record<string, string> = {
+  "/admin/dashboard": "Dashboard",
+  "/admin/content": "Website Content",
+  "/admin/treatments": "Treatments / Services",
+  "/admin/bookings": "Bookings",
+  "/admin/memberships": "Membership Requests",
+  "/admin/partners": "Referral Partners",
+  "/admin/commissions": "Commissions",
+  "/admin/payouts": "Payouts",
+  "/admin/testimonials": "Testimonials",
+  "/admin/faqs": "FAQs",
+  "/admin/contact": "Contact Settings",
+  "/admin/media": "Media Library",
+  "/admin/settings": "Settings",
+};
+
 export default function Topbar({ onMenuClick }: TopbarProps) {
+  const pathname = usePathname();
+  const title = PAGE_TITLES[pathname] || "Admin Panel";
+
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-      <div className="flex items-center justify-between px-6 py-4">
+    <header className="bg-white border-b border-brand-border sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 md:px-6 py-3.5">
         {/* Left side */}
-        <div className="flex items-center gap-4">
-          {/* Mobile menu button */}
+        <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Open menu"
+            className="lg:hidden p-2 rounded-lg hover:bg-brand-surface transition-colors"
           >
-            <svg
-              className="w-6 h-6 text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="w-6 h-6 text-brand-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
 
-          {/* Page title */}
-          <h1 className="text-xl font-semibold text-slate-900">Admin Panel</h1>
+          <h1 className="text-lg md:text-xl font-semibold text-brand-ink">{title}</h1>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-4">
-          {/* Search placeholder */}
-          <div className="hidden md:flex items-center">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-64 pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all"
-              />
-              <svg
-                className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {/* Notification placeholder */}
-          <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
-            <svg
-              className="w-6 h-6 text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
+        <div className="flex items-center gap-3">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm text-brand-muted hover:text-brand-accent transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+            View site
+          </a>
 
-          {/* Profile dropdown placeholder */}
-          <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-            <div className="w-8 h-8 bg-brand-accent/10 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-brand-accent">A</span>
+          <div className="flex items-center gap-3 pl-3 border-l border-brand-border">
+            <div className="w-9 h-9 bg-gradient-to-br from-brand-primary to-brand-accent rounded-full flex items-center justify-center shadow-soft">
+              <span className="text-sm font-semibold text-white">A</span>
             </div>
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-slate-900">Admin</p>
-              <p className="text-xs text-slate-500">Super Admin</p>
+              <p className="text-sm font-medium text-brand-ink leading-none">Admin</p>
+              <p className="text-xs text-brand-muted mt-0.5">OZO Group</p>
             </div>
           </div>
         </div>

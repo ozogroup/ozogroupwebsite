@@ -9,6 +9,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Bypass shell entirely for login page (no sidebar/topbar)
+  const isLoginRoute = pathname === "/admin/login";
+
   // Close sidebar on route change (mobile)
   useEffect(() => {
     setSidebarOpen(false);
@@ -26,6 +29,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       document.body.style.width = "";
     }
   }, [sidebarOpen]);
+
+  if (isLoginRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">

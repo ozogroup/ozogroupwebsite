@@ -49,8 +49,8 @@ export async function createTreatment(formData: FormData) {
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
-  const active = formData.get("active") === "true";
-  const requiresSlots = formData.get("requires_slots") === "true";
+  const active = formData.get("active") !== null;
+  const requiresSlots = formData.get("requires_slots") !== null;
   const availableCities = formData.get("available_cities") as string;
 
   const { data, error } = await supabase.from("treatments" as any).insert({
@@ -94,8 +94,8 @@ export async function updateTreatment(formData: FormData) {
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
-  const active = formData.get("active") === "true";
-  const requiresSlots = formData.get("requires_slots") === "true";
+  const active = formData.get("active") !== null;
+  const requiresSlots = formData.get("requires_slots") !== null;
   const availableCities = formData.get("available_cities") as string;
 
   const { data, error } = await supabase

@@ -59,41 +59,44 @@ export default function AdminLoginPage({
   searchParams: { error?: string };
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="fixed inset-0 overflow-auto bg-gradient-to-br from-brand-surface via-white to-brand-light/10 flex items-center justify-center p-4">
+      {/* Decorative blurs */}
+      <div className="pointer-events-none absolute -top-40 -right-40 w-96 h-96 rounded-full bg-brand-accent/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-brand-primary/10 blur-3xl" />
+
+      <div className="relative w-full max-w-md">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Logo />
+        <div className="flex justify-center mb-6">
+          <Logo showDivision={false} />
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-premium border border-brand-border p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">
-              Admin Panel
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-brand-ink mb-2">
+              Admin Login
             </h1>
-            <p className="text-slate-600">
-              Secure access for authorized staff
+            <p className="text-sm text-brand-muted">
+              Manage OZO / IA Skin Care website
             </p>
           </div>
 
           {/* Error Message */}
           {searchParams.error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{searchParams.error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+              <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm text-red-700">{searchParams.error}</p>
             </div>
           )}
 
           {/* Form */}
-          <form action={handleLogin} className="space-y-6">
-            {/* Email */}
+          <form action={handleLogin} className="space-y-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
-                Email
+              <label htmlFor="email" className="block text-sm font-medium text-brand-ink mb-2">
+                Email Address
               </label>
               <input
                 id="email"
@@ -101,17 +104,13 @@ export default function AdminLoginPage({
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all"
-                placeholder="admin@ozo.com"
+                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"
+                placeholder="admin@ozogroup.com"
               />
             </div>
 
-            {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">
                 Password
               </label>
               <input
@@ -120,34 +119,35 @@ export default function AdminLoginPage({
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all"
+                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"
                 placeholder="••••••••"
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all"
+              className="w-full bg-gradient-to-r from-brand-primary to-brand-accent text-white font-semibold py-3 px-4 rounded-lg hover:shadow-glow focus:ring-4 focus:ring-brand-accent/30 transition-all"
             >
               Sign In
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-8 text-center">
+          <div className="mt-8 pt-6 border-t border-brand-border text-center">
             <a
               href="/"
-              className="text-sm text-slate-600 hover:text-brand-accent transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-brand-muted hover:text-brand-accent transition-colors"
             >
-              ← Back to website
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to website
             </a>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="text-center mt-8 text-sm text-slate-500">
-          © {new Date().getFullYear()} OZO / IA Skin Care. All rights reserved.
+        <div className="text-center mt-6 text-xs text-brand-muted">
+          © {new Date().getFullYear()} OZO Group · IA Skin Care Division
         </div>
       </div>
     </div>

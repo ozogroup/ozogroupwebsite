@@ -18,11 +18,11 @@ const navigation = [
   { name: "Membership Requests", href: "/admin/memberships", icon: "👥" },
   { name: "Referral Partners", href: "/admin/partners", icon: "🤝" },
   { name: "Commissions", href: "/admin/commissions", icon: "💰" },
-  { name: "Payouts", href: "/admin/payouts", icon: "�" },
+  { name: "Payouts", href: "/admin/payouts", icon: "💸" },
   { name: "Testimonials", href: "/admin/testimonials", icon: "⭐" },
   { name: "FAQs", href: "/admin/faqs", icon: "❓" },
-  { name: "Contact Settings", href: "/admin/contact", icon: "�" },
-  { name: "Media Library", href: "/admin/media", icon: "�️" },
+  { name: "Contact Settings", href: "/admin/contact", icon: "📞" },
+  { name: "Media Library", href: "/admin/media", icon: "🖼️" },
   { name: "Settings", href: "/admin/settings", icon: "⚙️" },
 ];
 
@@ -39,7 +39,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <div className="flex items-center justify-between p-6 border-b border-brand-border">
             <Logo />
             <button
               onClick={onClose}
@@ -70,13 +70,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center px-4 py-2.5 rounded-lg transition-all text-sm ${
                     isActive
-                      ? "bg-brand-accent/10 text-brand-accent font-medium"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-gradient-to-r from-brand-primary to-brand-accent text-white font-medium shadow-soft"
+                      : "text-brand-ink hover:bg-brand-surface"
                   }`}
                 >
-                  <span className="text-xl mr-3">{item.icon}</span>
+                  <span className="text-lg mr-3">{item.icon}</span>
                   {item.name}
                 </Link>
               );
@@ -84,17 +84,17 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-brand-border">
             <LogoutButton />
           </div>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:bg-white lg:shadow-lg">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:bg-white lg:border-r lg:border-brand-border">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center p-6 border-b border-slate-200">
+          <div className="flex items-center p-6 border-b border-brand-border">
             <Logo />
           </div>
 
@@ -106,13 +106,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center px-4 py-2.5 rounded-lg transition-all text-sm ${
                     isActive
-                      ? "bg-brand-accent/10 text-brand-accent font-medium"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-gradient-to-r from-brand-primary to-brand-accent text-white font-medium shadow-soft"
+                      : "text-brand-ink hover:bg-brand-surface"
                   }`}
                 >
-                  <span className="text-xl mr-3">{item.icon}</span>
+                  <span className="text-lg mr-3">{item.icon}</span>
                   {item.name}
                 </Link>
               );
@@ -120,7 +120,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-brand-border">
             <LogoutButton />
           </div>
         </div>
