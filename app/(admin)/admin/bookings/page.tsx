@@ -57,7 +57,7 @@ export default function AdminBookingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-slate-600">Loading...</div>
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -65,50 +65,55 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Bookings Management</h1>
-        <p className="text-slate-600">Manage treatment bookings</p>
+        <h1 className="font-display text-2xl font-bold text-brand-ink">Bookings</h1>
+        <p className="text-sm text-brand-muted">Manage treatment bookings</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-brand-surface/50 border-b border-brand-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Customer</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Phone</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Treatment</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">City</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Customer</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Phone</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Treatment</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">City</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Date</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Status</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white divide-y divide-brand-border">
             {bookings.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">No bookings found</td>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <span className="text-4xl">📅</span>
+                    <p className="text-brand-muted">No bookings found</p>
+                  </div>
+                </td>
               </tr>
             ) : (
               bookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-900">{booking.name}</td>
-                  <td className="px-6 py-4 text-slate-600">{booking.phone}</td>
-                  <td className="px-6 py-4 text-slate-600">{booking.treatment_name || booking.treatment_id}</td>
-                  <td className="px-6 py-4 text-slate-600">{booking.city}</td>
-                  <td className="px-6 py-4 text-slate-600">
+                <tr key={booking.id} className="hover:bg-brand-surface/30 transition-colors">
+                  <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">{booking.name}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{booking.phone}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{booking.treatment_name || booking.treatment_id}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{booking.city}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">
                     {booking.preferred_date ? new Date(booking.preferred_date).toLocaleDateString() : "-"}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
+                  <td className="px-4 sm:px-6 py-4">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(booking.status)}`}>
                       {booking.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="flex flex-wrap gap-2">
                       <select
                         value={booking.status}
                         onChange={(e) => handleUpdateStatus(booking.id, e.target.value)}
-                        className="px-2 py-1 text-xs border border-slate-300 rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
+                        className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                       >
                         <option value="new">New</option>
                         <option value="confirmed">Confirmed</option>
@@ -117,7 +122,7 @@ export default function AdminBookingsPage() {
                       </select>
                       <button
                         onClick={() => handleDelete(booking.id)}
-                        className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors"
                       >
                         Delete
                       </button>

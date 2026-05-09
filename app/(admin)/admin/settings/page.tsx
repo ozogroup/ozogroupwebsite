@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getCommissionSettings, updateCommissionSettings } from "@/lib/actions/commission-settings";
+import { getSystemSettings, updateSystemSettings } from "@/lib/actions/system-settings";
 
 export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(true);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [commissionSettings, setCommissionSettings] = useState<any>(null);
+  const [systemSettings, setSystemSettings] = useState<any>(null);
+  const [contactData, setContactData] = useState({
     contactNumber: "",
     whatsappNumber: "",
     email: "",
@@ -12,73 +19,142 @@ export default function AdminSettingsPage() {
     instagram: "",
     facebook: "",
     youtube: "",
-    level1Commission: 6,
-    level2Commission: 3,
-    level3Commission: 1.7,
-    level4Commission: 1.2,
-    minPayoutAmount: 1000,
-    payoutProcessingDays: 7,
   });
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  async function loadSettings() {
+    setLoading(true);
+    const [commission, system] = await Promise.all([
+      getCommissionSettings(),
+      getSystemSettings(),
+    ]);
+    setCommissionSettings(commission);
+    setSystemSettings(system);
+    setLoading(false);
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    // TODO: Connect to backend to save settings
-    setTimeout(() => {
-      setSaving(false);
-      alert("Settings saved successfully!");
-    }, 500);
+    setSaveSuccess(false);
+    setSaveError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("level_1_percentage", commissionSettings.level_1_percentage.toString());
+      formData.append("level_2_percentage", commissionSettings.level_2_percentage.toString());
+      formData.append("level_3_percentage", commissionSettings.level_3_percentage.toString());
+      formData.append("level_4_percentage", commissionSettings.level_4_percentage.toString());
+
+      const commissionResult = await updateCommissionSettings(formData);
+      if (commissionResult.error) {
+        setSaveError(commissionResult.error);
+        setSaving(false);
+        return;
+      }
+
+      const systemFormData = new FormData();
+      systemFormData.append("maintenance_mode", systemSettings.maintenance_mode.toString());
+      systemFormData.append("payouts_enabled", systemSettings.payouts_enabled.toString());
+      systemFormData.append("commissions_enabled", systemSettings.commissions_enabled.toString());
+      systemFormData.append("bookings_enabled", systemSettings.bookings_enabled.toString());
+      systemFormData.append("membership_enabled", systemSettings.membership_enabled.toString());
+
+      const systemResult = await updateSystemSettings(systemFormData);
+      if (systemResult.error) {
+        setSaveError(systemResult.error);
+        setSaving(false);
+        return;
+      }
+
+      await loadSettings();
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setSaveError("Error saving settings");
+    }
+
+    setSaving(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-600">Configure application settings</p>
+        <h1 className="font-display text-2xl font-bold text-brand-ink">Settings</h1>
+        <p className="text-sm text-brand-muted">Configure application settings</p>
       </div>
+
+      {saveSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+          <span className="text-green-600">✓</span>
+          <p className="text-sm text-green-700">Settings saved successfully!</p>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <span className="text-red-600">✕</span>
+          <p className="text-sm text-red-700">{saveError}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Contact Information */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Contact Information</h2>
+          <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+            <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+              <span className="text-xl">📞</span>
+              Contact Information
+            </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Contact Number</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Contact Number</label>
                 <input
                   type="text"
-                  value={formData.contactNumber}
-                  onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.contactNumber}
+                  onChange={(e) => setContactData({ ...contactData, contactNumber: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="+91 12345 67890"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">WhatsApp Number</label>
                 <input
                   type="text"
-                  value={formData.whatsappNumber}
-                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.whatsappNumber}
+                  onChange={(e) => setContactData({ ...contactData, whatsappNumber: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="+91 12345 67890"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Email</label>
                 <input
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.email}
+                  onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="contact@ozo.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Address</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Address</label>
                 <textarea
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.address}
+                  onChange={(e) => setContactData({ ...contactData, address: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
                   rows={3}
                   placeholder="Enter address"
                 />
@@ -87,36 +163,39 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Social Links */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Social Links</h2>
+          <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+            <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+              <span className="text-xl">🔗</span>
+              Social Links
+            </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Instagram</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Instagram</label>
                 <input
                   type="url"
-                  value={formData.instagram}
-                  onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.instagram}
+                  onChange={(e) => setContactData({ ...contactData, instagram: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="https://instagram.com/ozo"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Facebook</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Facebook</label>
                 <input
                   type="url"
-                  value={formData.facebook}
-                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.facebook}
+                  onChange={(e) => setContactData({ ...contactData, facebook: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="https://facebook.com/ozo"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">YouTube</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">YouTube</label>
                 <input
                   type="url"
-                  value={formData.youtube}
-                  onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={contactData.youtube}
+                  onChange={(e) => setContactData({ ...contactData, youtube: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                   placeholder="https://youtube.com/@ozo"
                 />
               </div>
@@ -124,73 +203,121 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Referral Settings */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Referral Commission Rates (%)</h2>
+          <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+            <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+              <span className="text-xl">💰</span>
+              Referral Commission Rates (%)
+            </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Level 1 Commission (%)</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Level 1 Commission (%)</label>
                 <input
                   type="number"
                   step="0.1"
-                  value={formData.level1Commission}
-                  onChange={(e) => setFormData({ ...formData, level1Commission: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={commissionSettings?.level_1_percentage || 6}
+                  onChange={(e) => setCommissionSettings({ ...commissionSettings, level_1_percentage: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Level 2 Commission (%)</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Level 2 Commission (%)</label>
                 <input
                   type="number"
                   step="0.1"
-                  value={formData.level2Commission}
-                  onChange={(e) => setFormData({ ...formData, level2Commission: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={commissionSettings?.level_2_percentage || 3}
+                  onChange={(e) => setCommissionSettings({ ...commissionSettings, level_2_percentage: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Level 3 Commission (%)</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Level 3 Commission (%)</label>
                 <input
                   type="number"
                   step="0.1"
-                  value={formData.level3Commission}
-                  onChange={(e) => setFormData({ ...formData, level3Commission: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={commissionSettings?.level_3_percentage || 1.7}
+                  onChange={(e) => setCommissionSettings({ ...commissionSettings, level_3_percentage: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Level 4 Commission (%)</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Level 4 Commission (%)</label>
                 <input
                   type="number"
                   step="0.1"
-                  value={formData.level4Commission}
-                  onChange={(e) => setFormData({ ...formData, level4Commission: parseFloat(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
+                  value={commissionSettings?.level_4_percentage || 1.2}
+                  onChange={(e) => setCommissionSettings({ ...commissionSettings, level_4_percentage: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 />
               </div>
             </div>
           </div>
 
-          {/* Commission Settings */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout Settings</h2>
+          {/* System Settings */}
+          <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+            <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+              <span className="text-xl">⚙️</span>
+              System Settings
+            </h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Minimum Payout Amount (₹)</label>
-                <input
-                  type="number"
-                  value={formData.minPayoutAmount}
-                  onChange={(e) => setFormData({ ...formData, minPayoutAmount: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
-                />
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-brand-ink">Maintenance Mode</label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={systemSettings?.maintenance_mode || false}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, maintenance_mode: e.target.checked })}
+                    className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                  />
+                  <span className="text-sm text-brand-muted">Enable</span>
+                </label>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Payout Processing Time (days)</label>
-                <input
-                  type="number"
-                  value={formData.payoutProcessingDays}
-                  onChange={(e) => setFormData({ ...formData, payoutProcessingDays: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
-                />
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-brand-ink">Payouts Enabled</label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={systemSettings?.payouts_enabled || false}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, payouts_enabled: e.target.checked })}
+                    className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                  />
+                  <span className="text-sm text-brand-muted">Enable</span>
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-brand-ink">Commissions Enabled</label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={systemSettings?.commissions_enabled || false}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, commissions_enabled: e.target.checked })}
+                    className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                  />
+                  <span className="text-sm text-brand-muted">Enable</span>
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-brand-ink">Bookings Enabled</label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={systemSettings?.bookings_enabled || false}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, bookings_enabled: e.target.checked })}
+                    className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                  />
+                  <span className="text-sm text-brand-muted">Enable</span>
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-brand-ink">Membership Enabled</label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={systemSettings?.membership_enabled || false}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, membership_enabled: e.target.checked })}
+                    className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                  />
+                  <span className="text-sm text-brand-muted">Enable</span>
+                </label>
               </div>
             </div>
           </div>
@@ -200,7 +327,7 @@ export default function AdminSettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2 bg-brand-accent text-white rounded-lg hover:bg-brand-accent/90 transition-colors disabled:opacity-50"
+            className="px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
           >
             {saving ? "Saving..." : "Save Settings"}
           </button>

@@ -1,145 +1,156 @@
 "use client";
 
 import { useState } from "react";
+import { uploadImage } from "@/lib/actions/storage";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 export default function AdminMediaLibraryPage() {
   const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [category, setCategory] = useState("treatment");
-  const [altText, setAltText] = useState("");
+  const [uploadedUrl, setUploadedUrl] = useState("");
+  const [error, setError] = useState("");
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  async function handleUpload(file: File, folder: string) {
+    setUploading(true);
+    setError("");
+    setUploadedUrl("");
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", folder);
+      
+      const result = await uploadImage(formData);
+      if (result.url) {
+        setUploadedUrl(result.url);
+      } else {
+        setError(result.error || "Upload failed");
+      }
+    } catch (err: any) {
+      setError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
     }
   }
 
-  async function handleUpload(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedFile) return;
-
-    setUploading(true);
-    // TODO: Implement Supabase Storage upload
-    // For now, just simulate upload
-    setTimeout(() => {
-      setUploading(false);
-      alert("File upload functionality requires Supabase Storage setup. Please configure Supabase Storage bucket first.");
-      setSelectedFile(null);
-      setAltText("");
-    }, 1000);
+  if (uploading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Media Library</h1>
-        <p className="text-slate-600">Manage images and media assets for the website</p>
+        <h1 className="font-display text-2xl font-bold text-brand-ink">Media Library</h1>
+        <p className="text-sm text-brand-muted">Manage images and media files</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Upload New Image</h2>
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Select Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-            />
+      <div className="bg-white rounded-xl shadow-soft p-6 md:p-8 border border-brand-border">
+        <h2 className="font-display text-lg font-semibold text-brand-ink mb-6 flex items-center gap-2">
+          <span className="text-xl">📤</span>
+          Upload New Image
+        </h2>
+        
+        <ImageUpload
+          value=""
+          onChange={(url: string) => setUploadedUrl(url)}
+          folder="general"
+          label="Select Image"
+        />
+
+        {uploadedUrl && (
+          <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <p className="text-sm font-medium text-emerald-800 mb-2">✓ Upload successful!</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={uploadedUrl}
+                className="flex-1 px-3 py-2 text-xs bg-white border border-emerald-200 rounded-lg"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(uploadedUrl);
+                  alert("URL copied to clipboard!");
+                }}
+                className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Copy
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-            >
-              <option value="treatment">Treatment Images</option>
-              <option value="hero">Hero Images</option>
-              <option value="about">About Images</option>
-              <option value="general">General</option>
-            </select>
+        )}
+
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Alt Text (optional)</label>
-            <input
-              type="text"
-              value={altText}
-              onChange={(e) => setAltText(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-              placeholder="Description for accessibility"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!selectedFile || uploading}
-            className="px-6 py-2 bg-brand-accent text-white rounded-lg hover:bg-brand-accent/90 transition-colors disabled:opacity-50"
-          >
-            {uploading ? "Uploading..." : "Upload Image"}
-          </button>
-        </form>
+        )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Instructions</h2>
-        <div className="space-y-3 text-sm text-slate-600">
+      <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+        <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+          <span className="text-xl">ℹ️</span>
+          Setup Instructions
+        </h2>
+        <div className="space-y-3 text-sm text-brand-muted">
           <p>
-            <strong>Note:</strong> To enable file uploads, you need to set up Supabase Storage:
+            <strong className="text-brand-ink">Note:</strong> Uploads use Supabase Storage. Ensure setup:
           </p>
           <ol className="list-decimal list-inside space-y-2 ml-4">
-            <li>Create a Storage bucket named "media" in your Supabase project</li>
-            <li>Enable public access for the bucket (or set up proper RLS policies)</li>
-            <li>Add the Supabase Storage upload functionality to the media actions</li>
-            <li>Configure CORS settings for your domain</li>
+            <li>Create a Storage bucket named <code className="bg-brand-surface px-1 rounded">media</code> in Supabase</li>
+            <li>Enable public access for the bucket</li>
+            <li>Ensure environment variables are configured</li>
           </ol>
-          <p className="mt-4">
-            For now, you can use external image URLs in the Content Management and Treatments pages.
-          </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Alternative: Use External URLs</h2>
-        <p className="text-sm text-slate-600 mb-4">
-          Instead of uploading files, you can use external image hosting services like:
+      <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+        <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+          <span className="text-xl">🔗</span>
+          Alternative: External Hosting
+        </h2>
+        <p className="text-sm text-brand-muted mb-4">
+          You can also use external image hosting services:
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <a
             href="https://imgbb.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 border border-slate-200 rounded-lg hover:border-brand-accent transition-colors text-center"
+            className="p-4 border border-brand-border rounded-lg hover:border-brand-accent hover:bg-brand-surface transition-colors text-center"
           >
             <div className="text-2xl mb-2">🖼️</div>
-            <div className="text-sm font-medium text-slate-900">ImgBB</div>
+            <div className="text-sm font-medium text-brand-ink">ImgBB</div>
           </a>
           <a
             href="https://imgur.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 border border-slate-200 rounded-lg hover:border-brand-accent transition-colors text-center"
+            className="p-4 border border-brand-border rounded-lg hover:border-brand-accent hover:bg-brand-surface transition-colors text-center"
           >
             <div className="text-2xl mb-2">📷</div>
-            <div className="text-sm font-medium text-slate-900">Imgur</div>
+            <div className="text-sm font-medium text-brand-ink">Imgur</div>
           </a>
           <a
             href="https://cloudinary.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 border border-slate-200 rounded-lg hover:border-brand-accent transition-colors text-center"
+            className="p-4 border border-brand-border rounded-lg hover:border-brand-accent hover:bg-brand-surface transition-colors text-center"
           >
             <div className="text-2xl mb-2">☁️</div>
-            <div className="text-sm font-medium text-slate-900">Cloudinary</div>
+            <div className="text-sm font-medium text-brand-ink">Cloudinary</div>
           </a>
           <a
             href="https://aws.amazon.com/s3/"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 border border-slate-200 rounded-lg hover:border-brand-accent transition-colors text-center"
+            className="p-4 border border-brand-border rounded-lg hover:border-brand-accent hover:bg-brand-surface transition-colors text-center"
           >
             <div className="text-2xl mb-2">🗄️</div>
-            <div className="text-sm font-medium text-slate-900">AWS S3</div>
+            <div className="text-sm font-medium text-brand-ink">AWS S3</div>
           </a>
         </div>
       </div>

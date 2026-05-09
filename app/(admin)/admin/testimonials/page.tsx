@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial, toggleTestimonialActive } from "@/lib/actions/testimonials";
+import ImageUpload from "@/components/admin/ImageUpload";
+import BackButton from "@/components/admin/BackButton";
 
 export default function AdminTestimonialsPage() {
   const [testimonials, setTestimonials] = useState<any[]>([]);
@@ -85,79 +87,69 @@ export default function AdminTestimonialsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-slate-600">Loading...</div>
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Testimonials Management</h1>
-          <p className="text-slate-600">Manage customer testimonials</p>
+          <h1 className="font-display text-2xl font-bold text-brand-ink">Testimonials</h1>
+          <p className="text-sm text-brand-muted">Manage customer testimonials</p>
         </div>
         <button
           onClick={handleAdd}
-          className="px-4 py-2 bg-brand-accent text-white rounded-lg hover:bg-brand-accent/90 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           Add Testimonial
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Name</th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Role</th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Message</th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Rating</th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Status</th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-900">Actions</th>
+            <thead className="bg-brand-surface/50 border-b border-brand-border">
+              <tr>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Customer</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Role</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Rating</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Message</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-brand-border">
               {testimonials.map((testimonial) => (
-                <tr key={testimonial.id} className="border-b border-slate-100 last:border-0">
-                  <td className="p-4">
-                    <div className="font-medium text-slate-900">{testimonial.name}</div>
+                <tr key={testimonial.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface/30 transition-colors">
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="font-medium text-brand-ink">{testimonial.name}</div>
                   </td>
-                  <td className="p-4 text-slate-600">{testimonial.role}</td>
-                  <td className="p-4 text-slate-600 max-w-xs truncate">{testimonial.message}</td>
-                  <td className="p-4">
-                    <div className="flex">
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{testimonial.role}</td>
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="flex gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <span key={i} className={i < testimonial.rating ? "text-yellow-400" : "text-slate-300"}>
+                        <span key={i} className={i < testimonial.rating ? "text-yellow-400" : "text-slate-200"}>
                           ★
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="p-4">
-                    <button
-                      onClick={() => handleToggleActive(testimonial.id, !testimonial.is_active)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        testimonial.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {testimonial.is_active ? "Active" : "Inactive"}
-                    </button>
-                  </td>
-                  <td className="p-4">
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm max-w-xs truncate">{testimonial.message}</td>
+                  <td className="px-4 sm:px-6 py-4">
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(testimonial)}
-                        className="px-3 py-1 text-sm text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(testimonial.id)}
-                        className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         Delete
                       </button>
@@ -167,8 +159,17 @@ export default function AdminTestimonialsPage() {
               ))}
               {testimonials.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">
-                    No testimonials found. Add your first testimonial.
+                  <td colSpan={6} className="p-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <span className="text-4xl">⭐</span>
+                      <p className="text-brand-muted">No testimonials yet</p>
+                      <button
+                        onClick={handleAdd}
+                        className="text-sm text-brand-accent hover:underline"
+                      >
+                        Add your first testimonial
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -178,48 +179,60 @@ export default function AdminTestimonialsPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">
-              {editingTestimonial ? "Edit Testimonial" : "Add Testimonial"}
-            </h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-xl shadow-soft max-w-lg w-full p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-semibold text-brand-ink">
+                {editingTestimonial ? "Edit Testimonial" : "Add Testimonial"}
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-brand-muted hover:text-brand-ink transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Customer Name</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  placeholder="e.g., Priya Sharma"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Role / Location</label>
                 <input
                   type="text"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-                  placeholder="e.g., Customer, Business Owner"
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  placeholder="e.g., Customer from Ahmedabad"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Message</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Testimonial Message</label>
                 <textarea
                   required
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent min-h-[100px]"
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all min-h-[100px] resize-none"
                   rows={4}
+                  placeholder="Share their experience..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                <label className="block text-sm font-medium text-brand-ink mb-2">Rating</label>
                 <select
                   value={formData.rating}
                   onChange={(e) => setFormData({ ...formData, rating: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
+                  className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 >
                   {[1, 2, 3, 4, 5].map((n) => (
                     <option key={n} value={n}>
@@ -228,28 +241,24 @@ export default function AdminTestimonialsPage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Image URL (optional)</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-              <div className="flex gap-4 pt-4">
+              <ImageUpload
+                value={formData.image}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                folder="testimonials"
+                label="Customer Photo (optional)"
+              />
+              <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2 bg-brand-accent text-white rounded-lg hover:bg-brand-accent/90 transition-colors disabled:opacity-50"
+                  className="flex-1 px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
                 >
-                  {saving ? "Saving..." : "Save"}
+                  {saving ? "Saving..." : "Save Testimonial"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="px-6 py-2.5 border border-brand-border text-brand-ink text-sm font-medium rounded-lg hover:bg-brand-surface transition-colors"
                 >
                   Cancel
                 </button>

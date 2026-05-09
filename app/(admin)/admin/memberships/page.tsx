@@ -79,7 +79,7 @@ export default function AdminMembershipsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-slate-600">Loading...</div>
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -87,36 +87,41 @@ export default function AdminMembershipsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Membership Requests</h1>
-        <p className="text-slate-600">Manage partner membership requests</p>
+        <h1 className="font-display text-2xl font-bold text-brand-ink">Membership Requests</h1>
+        <p className="text-sm text-brand-muted">Manage partner membership requests</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-brand-surface/50 border-b border-brand-border">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Phone</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">City</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Referral Code</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Payment</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Membership</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Actions</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Name</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Phone</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">City</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Referral Code</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Payment</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Membership</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white divide-y divide-brand-border">
             {memberships.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">No membership requests found</td>
+                <td colSpan={7} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <span className="text-4xl">👥</span>
+                    <p className="text-brand-muted">No membership requests found</p>
+                  </div>
+                </td>
               </tr>
             ) : (
               memberships.map((membership) => (
-                <tr key={membership.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-900">{membership.full_name}</td>
-                  <td className="px-6 py-4 text-slate-600">{membership.phone}</td>
-                  <td className="px-6 py-4 text-slate-600">{membership.city}</td>
-                  <td className="px-6 py-4 text-slate-600">
+                <tr key={membership.id} className="hover:bg-brand-surface/30 transition-colors">
+                  <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">{membership.full_name}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.phone}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.city}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">
                     {membership.generated_referral_code || (
                       <button
                         onClick={() => handleGenerateReferralCode(membership.id)}
@@ -126,37 +131,30 @@ export default function AdminMembershipsPage() {
                       </button>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(membership.payment_status)}`}>
+                  <td className="px-4 sm:px-6 py-4">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(membership.payment_status)}`}>
                       {membership.payment_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getMembershipStatusColor(membership.membership_status)}`}>
+                  <td className="px-4 sm:px-6 py-4">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getMembershipStatusColor(membership.membership_status)}`}>
                       {membership.membership_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2 flex-wrap">
-                      <select
-                        value={membership.membership_status}
-                        onChange={(e) => handleUpdateMembershipStatus(membership.id, e.target.value)}
-                        className="px-2 py-1 text-xs border border-slate-300 rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                      <select
-                        value={membership.payment_status}
-                        onChange={(e) => handleUpdatePaymentStatus(membership.id, e.target.value)}
-                        className="px-2 py-1 text-xs border border-slate-300 rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="failed">Failed</option>
-                      </select>
-                    </div>
+                  <td className="px-4 sm:px-6 py-4">
+                    <select
+                      value={membership.membership_status}
+                      onChange={(e) => handleUpdateMembershipStatus(membership.id, e.target.value)}
+                      className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    >
+                      <option value="pending_payment">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="under_review">Under Review</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="active">Active</option>
+                      <option value="expired">Expired</option>
+                    </select>
                   </td>
                 </tr>
               ))

@@ -56,7 +56,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
         {/* Treatments */}
         <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
           <div className="flex items-center justify-between mb-4">
@@ -143,15 +143,15 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
-        <h2 className="text-lg font-semibold text-brand-ink mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="bg-white rounded-xl shadow-soft p-4 sm:p-6 border border-brand-border">
+        <h2 className="font-display text-lg font-semibold text-brand-ink mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
           {[
             { href: "/admin/treatments", icon: "💆", label: "Add Treatment" },
             { href: "/admin/content", icon: "📝", label: "Edit Home Content" },
             { href: "/admin/bookings", icon: "📅", label: "View Bookings" },
             { href: "/admin/partners", icon: "🤝", label: "View Partners" },
-            { href: "/admin/contact", icon: "�", label: "Update Contact Info" },
+            { href: "/admin/contact", icon: "📞", label: "Update Contact Info" },
             { href: "/admin/media", icon: "🖼️", label: "Upload Media" },
           ].map((action) => (
             <Link
@@ -169,8 +169,8 @@ export default async function AdminDashboardPage() {
       {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Bookings */}
-        <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
-          <h2 className="text-lg font-semibold text-brand-ink mb-4">Recent Bookings</h2>
+        <div className="bg-white rounded-xl shadow-soft p-4 sm:p-6 border border-brand-border">
+          <h2 className="font-display text-lg font-semibold text-brand-ink mb-4">Recent Bookings</h2>
           <div className="space-y-4">
             {recentBookings && recentBookings.length > 0 ? (
               recentBookings.map((booking: any) => (
@@ -193,8 +193,8 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Recent Membership Requests */}
-        <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
-          <h2 className="text-lg font-semibold text-brand-ink mb-4">Recent Membership Requests</h2>
+        <div className="bg-white rounded-xl shadow-soft p-4 sm:p-6 border border-brand-border">
+          <h2 className="font-display text-lg font-semibold text-brand-ink mb-4">Recent Membership Requests</h2>
           <div className="space-y-4">
             {recentMemberships && recentMemberships.length > 0 ? (
               recentMemberships.map((membership: any) => (

@@ -68,7 +68,7 @@ export default function AdminContentPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-slate-600">Loading...</div>
+        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -147,28 +147,28 @@ export default function AdminContentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Website Content Management</h1>
-        <p className="text-slate-600">Edit website content across all pages</p>
+        <h1 className="font-display text-2xl font-bold text-brand-ink">Content Management</h1>
+        <p className="text-sm text-brand-muted">Edit website content sections</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sections.map((section) => (
           <div
             key={section.id}
-            className="bg-white rounded-xl shadow-sm p-6 border border-slate-200 hover:border-brand-accent transition-all"
+            className="bg-white rounded-xl shadow-soft p-6 border border-brand-border hover:border-brand-accent transition-all"
           >
             <div className="flex items-center gap-3 mb-4">
               <span className="text-3xl">{section.icon}</span>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">{section.name}</h2>
-                <p className="text-sm text-slate-600">{section.description}</p>
+                <h2 className="font-display text-lg font-semibold text-brand-ink">{section.name}</h2>
+                <p className="text-sm text-brand-muted">{section.description}</p>
               </div>
             </div>
             <button
               onClick={() => handleEdit(section.id)}
-              className="w-full px-4 py-2 bg-brand-accent text-white rounded-lg hover:bg-brand-accent/90 transition-colors"
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
             >
-              Edit Content
+              Edit Section
             </button>
           </div>
         ))}

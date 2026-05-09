@@ -35,7 +35,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-brand-surface">
       {/* Mobile sidebar overlay - solid dark overlay */}
       {sidebarOpen && (
         <div
@@ -53,7 +53,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Page content */}
-        <main className="p-6 lg:p-8 min-h-screen">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 min-h-screen">{children}</main>
       </div>
     </div>
   );
