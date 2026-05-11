@@ -15,12 +15,19 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/content": "Website Content",
   "/admin/contact": "Contact Settings",
   "/admin/system-health": "System Health",
+  "/admin/bookings": "Bookings",
+  "/admin/memberships": "Membership Requests",
+  "/admin/partners": "Referral Partners",
+  "/admin/referrals": "Referral Network",
+  "/admin/commissions": "Commissions",
+  "/admin/payouts": "Payouts",
+  "/admin/media": "Media Library",
+  "/admin/settings": "Settings",
 };
 
 export default function Topbar({ onMenuClick }: TopbarProps) {
   const pathname = usePathname();
   const title = PAGE_TITLES[pathname] || "Admin Panel";
-  const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -40,32 +47,22 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           </button>
 
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+            <h1 className="text-[15px] font-semibold text-slate-900">{title}</h1>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Search */}
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Search input - visible */}
           <div className="relative hidden md:block">
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-            {searchOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 p-3">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
-                  autoFocus
-                />
-              </div>
-            )}
+            <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search admin..."
+              className="w-64 pl-9 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent/40 focus:bg-white transition-colors placeholder:text-slate-400"
+            />
           </div>
 
           {/* Notifications */}

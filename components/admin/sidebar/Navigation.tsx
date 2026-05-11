@@ -13,6 +13,10 @@ import {
   CreditCard,
   Calendar,
   Activity,
+  Network,
+  Wallet,
+  BadgeIndianRupee,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const navigation = [
@@ -23,7 +27,11 @@ const navigation = [
   { name: "FAQs", href: "/admin/faqs", icon: MessageCircleQuestion, section: "content" },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar, section: "operations" },
   { name: "Membership Requests", href: "/admin/memberships", icon: CreditCard, section: "operations" },
-  { name: "Partner Program", href: "/admin/partners", icon: Users, section: "operations" },
+  { name: "Referral Partners", href: "/admin/partners", icon: Users, section: "referral" },
+  { name: "Referral Network", href: "/admin/referrals", icon: Network, section: "referral" },
+  { name: "Commissions", href: "/admin/commissions", icon: BadgeIndianRupee, section: "referral" },
+  { name: "Payouts", href: "/admin/payouts", icon: Wallet, section: "referral" },
+  { name: "Media Library", href: "/admin/media", icon: ImageIcon, section: "settings" },
   { name: "Contact Settings", href: "/admin/contact", icon: Phone, section: "settings" },
   { name: "System Health", href: "/admin/system-health", icon: Activity, section: "settings" },
 ];
@@ -32,6 +40,7 @@ const sectionLabels: Record<string, string> = {
   main: "Overview",
   content: "Content Management",
   operations: "Operations",
+  referral: "Referral Program",
   settings: "Settings",
 };
 

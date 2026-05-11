@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { Card, PageHeader, Badge, EmptyState, Button } from "@/components/admin/ui";
+import { Plus, Pencil, Trash2, FileText, Search } from "lucide-react";
 
 type SiteContent = {
   id: string;
@@ -168,146 +170,121 @@ export default function AdminContentPage() {
 
       <Breadcrumb items={[{ label: "Website Content" }]} />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-ink">Website Content</h1>
-          <p className="text-brand-muted">Manage website content and text</p>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
-        >
-          Add Content
-        </button>
-      </div>
+      <PageHeader
+        title="Website Content"
+        description="Edit website copy, hero sections, image URLs, and links. Changes go live immediately."
+        actions={
+          <Button variant="primary" icon={<Plus className="w-4 h-4" />} onClick={handleAdd}>
+            Add Content
+          </Button>
+        }
+      />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-brand-ink">Page:</label>
+      {/* Filters Card */}
+      <Card noPadding>
+        <div className="flex flex-wrap items-center gap-3 p-4 border-b border-slate-100">
+          <div className="relative flex-1 min-w-[220px] max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by key or name..."
+              className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent/40 focus:bg-white transition-colors placeholder:text-slate-400"
+            />
+          </div>
           <select
             value={pageFilter}
             onChange={(e) => setPageFilter(e.target.value)}
-            className="px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent/40 transition-colors"
           >
-            <option value="all">All Pages</option>
+            <option value="all">All pages</option>
             {pages.map(page => (
               <option key={page} value={page}>{page}</option>
             ))}
           </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-brand-ink">Section:</label>
           <select
             value={sectionFilter}
             onChange={(e) => setSectionFilter(e.target.value)}
-            className="px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-accent/40 focus:border-brand-accent/40 transition-colors"
           >
-            <option value="all">All Sections</option>
+            <option value="all">All sections</option>
             {sections.map(section => (
               <option key={section} value={section}>{section}</option>
             ))}
           </select>
+          <div className="ml-auto text-xs text-slate-500">
+            {filteredContent.length} of {content.length} items
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-brand-ink">Search:</label>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search key..."
-            className="px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-          />
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+        {/* Table */}
+        <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b border-brand-border">
+          <thead className="bg-slate-50/60">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Page</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Section</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Key</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Value</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Order</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Key</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Page</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Section</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Value</th>
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-brand-border">
+          <tbody className="divide-y divide-slate-100">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-brand-muted">
-                  Loading...
-                </td>
+                <td colSpan={7} className="px-4 py-16 text-center text-sm text-slate-500">Loading content...</td>
               </tr>
             ) : filteredContent.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="text-4xl">📝</span>
-                    <p className="text-brand-ink font-medium">No content found</p>
-                    <p className="text-sm text-brand-muted">Run SEED_DATA.sql or add your first content item</p>
-                    <button
-                      onClick={handleAdd}
-                      className="mt-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
-                    >
-                      Add Content
-                    </button>
-                  </div>
+                <td colSpan={7}>
+                  <EmptyState
+                    icon={FileText}
+                    title="No content found"
+                    description="Add your first content item or seed sample data."
+                    action={<Button variant="primary" icon={<Plus className="w-4 h-4" />} onClick={handleAdd}>Add content</Button>}
+                  />
                 </td>
               </tr>
             ) : (
               filteredContent.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm text-brand-muted">{item.page}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 text-xs rounded bg-blue-50 text-blue-700">
-                      {item.section}
-                    </span>
+                <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-4 py-3.5">
+                    <div className="text-sm font-medium text-slate-900">{item.key_name}</div>
+                    <div className="text-xs text-slate-500 font-mono mt-0.5">{item.content_key}</div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-brand-muted">{item.key_name}</td>
-                  <td className="px-4 py-3 text-sm text-brand-muted">{item.content_key}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded ${
-                      item.value_type === "image_url" ? "bg-purple-50 text-purple-700" :
-                      item.value_type === "link" ? "bg-green-50 text-green-700" :
-                      "bg-slate-50 text-slate-700"
-                    }`}>
+                  <td className="px-4 py-3.5 text-sm text-slate-600 capitalize">{item.page}</td>
+                  <td className="px-4 py-3.5">
+                    <Badge variant="info">{item.section}</Badge>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <Badge variant={item.value_type === "image_url" ? "brand" : item.value_type === "link" ? "success" : "neutral"}>
                       {item.value_type}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="px-4 py-3 text-sm text-brand-ink max-w-md truncate">{item.value}</td>
-                  <td className="px-4 py-3 text-sm text-brand-muted">{item.display_order}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      item.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
+                  <td className="px-4 py-3.5 text-sm text-slate-700 max-w-xs truncate">{item.value}</td>
+                  <td className="px-4 py-3.5">
+                    <Badge variant={item.is_active ? "success" : "neutral"} dot>
                       {item.is_active ? "Active" : "Inactive"}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-4 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="p-1 text-brand-muted hover:text-brand-accent rounded"
+                        className="p-2 text-slate-500 hover:text-brand-accent hover:bg-slate-100 rounded-lg transition-colors"
                         title="Edit"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                        <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
-                        className="p-1 text-brand-muted hover:text-red-600 rounded"
+                        className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title="Delete"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -316,7 +293,8 @@ export default function AdminContentPage() {
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      </Card>
 
       {/* Modal */}
       {showModal && (

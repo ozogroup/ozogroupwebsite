@@ -1,6 +1,12 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/helpers";
 import Link from "next/link";
+import {
+  Sparkles, Star, MessageCircleQuestion, FileText, Phone,
+  Calendar, CreditCard, Users, BadgeIndianRupee, Wallet,
+  ArrowRight, TrendingUp, Award, IndianRupee, Plus,
+} from "lucide-react";
+import { Card, CardHeader, PageHeader, StatCard, Badge, EmptyState, Button } from "@/components/admin/ui";
 
 export const dynamic = 'force-dynamic';
 
@@ -8,37 +14,90 @@ export default async function AdminDashboardPage() {
   await requireAdmin();
   const supabase = getSupabaseServerClient();
 
-  // Fetch real counts from Supabase
-  const [treatmentsResult, testimonialsResult, faqsResult, siteContentResult, contactSettingsResult] = await Promise.all([
-    (supabase as any).from("treatments").select("*", { count: "exact", head: true }),
-    (supabase as any).from("testimonials").select("*", { count: "exact", head: true }),
-    (supabase as any).from("faqs").select("*", { count: "exact", head: true }),
-    (supabase as any).from("site_content").select("*", { count: "exact", head: true }),
-    (supabase as any).from("contact_settings").select("*", { count: "exact", head: true }),
+  // Fetch real counts from Supabase (gracefully fall back to 0 if a table is missing)
+  const safeCount = async (table: string) => {
+    try {
+      const r = await (supabase as any).from(table).select("*", { count: "exact", head: true });
+      return r.count ?? 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const [
+    treatmentsCount,
+    testimonialsCount,
+    faqsCount,
+    siteContentCount,
+    contactSettingsCount,
+    bookingsCount,
+    membershipsCount,
+    partnersCount,
+    commissionsCount,
+    payoutsCount,
+  ] = await Promise.all([
+    safeCount("treatments"),
+    safeCount("testimonials"),
+    safeCount("faqs"),
+    safeCount("site_content"),
+    safeCount("contact_settings"),
+    safeCount("bookings"),
+    safeCount("membership_requests"),
+    safeCount("partners"),
+    safeCount("commissions"),
+    safeCount("payouts"),
   ]);
 
-  const treatmentsCount = treatmentsResult.count ?? 0;
-  const testimonialsCount = testimonialsResult.count ?? 0;
-  const faqsCount = faqsResult.count ?? 0;
-  const siteContentCount = siteContentResult.count ?? 0;
-  const contactSettingsCount = contactSettingsResult.count ?? 0;
-
   // Fetch recent data for overview
-  const [recentTreatments, recentTestimonials] = await Promise.all([
-    (supabase as any).from("treatments").select("id,title,price,price_label,type,active").order("created_at", { ascending: false }).limit(5),
-    (supabase as any).from("testimonials").select("id,name,city,treatment,rating").order("created_at", { ascending: false }).limit(3),
+  const safeQuery = async (q: () => any) => {
+    try {
+      const r = await q();
+      return r?.data ?? [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [recentTreatments, recentTestimonials, recentBookings, recentMemberships, recentPartners, pendingPayouts] = await Promise.all([
+    safeQuery(() => (supabase as any).from("treatments").select("id,title,price,price_label,type,active").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("testimonials").select("id,name,city,treatment,rating").order("created_at", { ascending: false }).limit(3)),
+    safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,preferred_date,status").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("membership_requests").select("id,name,phone,city,membership_status,payment_status,created_at").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("partners").select("id,partner_name,partner_code,phone,total_referrals,status").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_name)").eq("status", "pending").order("created_at", { ascending: false }).limit(5)),
   ]);
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      <PageHeader
+        title="Dashboard"
+        description="Welcome back. Here's what's happening with OZO Services / IA Skin Care today."
+        actions={
+          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+            <Plus className="w-4 h-4" /> Add Treatment
+          </Link>
+        }
+      />
+
+      {/* Content Stats */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-        <p className="text-slate-600 mt-1">Manage OZO Services / IA Skin Care website content, treatments, testimonials and contact settings.</p>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Content Library</h2>
+          <Link href="/admin/content" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
+            Manage all <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <StatCard label="Treatments" value={treatmentsCount} icon={Sparkles} href="/admin/treatments" tone="blue" hint={treatmentsCount > 0 ? "Live on website" : "No data"} />
+          <StatCard label="Testimonials" value={testimonialsCount} icon={Star} href="/admin/testimonials" tone="purple" hint={testimonialsCount > 0 ? "Live on website" : "No data"} />
+          <StatCard label="FAQs" value={faqsCount} icon={MessageCircleQuestion} href="/admin/faqs" tone="amber" hint={faqsCount > 0 ? "Live on website" : "No data"} />
+          <StatCard label="Content Items" value={siteContentCount} icon={FileText} href="/admin/content" tone="teal" hint={siteContentCount > 0 ? "Live on website" : "No data"} />
+          <StatCard label="Contact Settings" value={contactSettingsCount} icon={Phone} href="/admin/contact" tone="rose" hint={contactSettingsCount > 0 ? "Configured" : "Not set"} />
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {/* legacy placeholder to preserve flow - hidden */}
+      <div className="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <Link href="/admin/treatments" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -115,6 +174,97 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
+      {/* Business Operations */}
+      <div>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Business Operations</h2>
+          <Link href="/admin/bookings" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
+            View bookings <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <StatCard label="Bookings" value={bookingsCount} icon={Calendar} href="/admin/bookings" tone="blue" />
+          <StatCard label="Membership Requests" value={membershipsCount} icon={CreditCard} href="/admin/memberships" tone="amber" />
+          <StatCard label="Referral Partners" value={partnersCount} icon={Users} href="/admin/partners" tone="green" />
+          <StatCard label="Commissions" value={commissionsCount} icon={BadgeIndianRupee} href="/admin/commissions" tone="purple" />
+          <StatCard label="Payouts" value={payoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
+        </div>
+      </div>
+
+      {/* Referral Program Summary - premium dark hero */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-2xl border border-slate-800 text-white">
+        <div className="absolute -top-20 -right-20 w-72 h-72 bg-brand-accent/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-brand-primary/10 rounded-full blur-3xl" />
+        <div className="relative p-8">
+          <div className="flex items-start justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-brand-accent/15 border border-brand-accent/20 rounded-full text-xs font-medium text-brand-accent">
+                <TrendingUp className="w-3.5 h-3.5" /> Referral Program
+              </div>
+              <h2 className="text-2xl font-semibold mt-3 tracking-tight">Partner & Membership Overview</h2>
+              <p className="text-sm text-slate-400 mt-1">Multi-level commission structure with milestone bonuses.</p>
+            </div>
+            <Link href="/admin/partners" className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg transition-colors">
+              Manage Partners <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
+              <div className="flex items-center gap-2 text-slate-400">
+                <IndianRupee className="w-3.5 h-3.5" />
+                <span className="text-[11px] uppercase tracking-wider font-medium">Membership</span>
+              </div>
+              <div className="text-2xl font-semibold mt-2 tabular-nums">₹1,199</div>
+              <div className="text-xs text-slate-500 mt-1">One-time payment</div>
+            </div>
+            <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
+              <div className="flex items-center gap-2 text-slate-400">
+                <BadgeIndianRupee className="w-3.5 h-3.5" />
+                <span className="text-[11px] uppercase tracking-wider font-medium">Min. earning</span>
+              </div>
+              <div className="text-2xl font-semibold mt-2 tabular-nums">₹500</div>
+              <div className="text-xs text-slate-500 mt-1">Per direct referral</div>
+            </div>
+            <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Users className="w-3.5 h-3.5" />
+                <span className="text-[11px] uppercase tracking-wider font-medium">Partners</span>
+              </div>
+              <div className="text-2xl font-semibold mt-2 tabular-nums">{partnersCount}</div>
+              <div className="text-xs text-slate-500 mt-1">Total enrolled</div>
+            </div>
+            <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
+              <div className="flex items-center gap-2 text-slate-400">
+                <Wallet className="w-3.5 h-3.5" />
+                <span className="text-[11px] uppercase tracking-wider font-medium">Pending payouts</span>
+              </div>
+              <div className="text-2xl font-semibold mt-2 tabular-nums">{pendingPayouts.length}</div>
+              <div className="text-xs text-slate-500 mt-1">Awaiting approval</div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-white/[0.08]">
+            <div className="flex items-center gap-2 text-slate-400 mb-3">
+              <Award className="w-3.5 h-3.5" />
+              <span className="text-[11px] uppercase tracking-wider font-medium">Bonus Milestones</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { count: 10, bonus: "₹5,000" },
+                { count: 20, bonus: "₹10,000" },
+                { count: 30, bonus: "₹15,000" },
+              ].map((m) => (
+                <div key={m.count} className="bg-gradient-to-br from-brand-accent/15 to-brand-accent/5 border border-brand-accent/20 rounded-xl p-4">
+                  <div className="text-xs text-slate-300">{m.count} referrals</div>
+                  <div className="text-xl font-semibold text-brand-accent mt-1 tabular-nums">{m.bonus}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
@@ -165,53 +315,166 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Recent Data Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Treatments */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Treatments</h2>
-          <div className="space-y-3">
-            {recentTreatments?.data?.length > 0 ? (
-              recentTreatments.data.map((treatment: any) => (
-                <div key={treatment.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{treatment.title}</p>
-                    <p className="text-xs text-slate-500">{treatment.type} • {treatment.price_label || treatment.price}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${treatment.active ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600"}`}>
-                    {treatment.active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              ))
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card>
+          <CardHeader
+            title="Recent Treatments"
+            subtitle="Latest 5 services added"
+            action={<Link href="/admin/treatments" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {recentTreatments.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {recentTreatments.map((t: any) => (
+                  <li key={t.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{t.title}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 capitalize">{t.type?.replace("_", " ")} • {t.price_label || `₹${t.price}`}</p>
+                    </div>
+                    <Badge variant={t.active ? "success" : "neutral"} dot>{t.active ? "Active" : "Inactive"}</Badge>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-sm text-slate-500">No treatments found</p>
+              <EmptyState icon={Sparkles} title="No treatments yet" description="Add your first treatment to get started." />
             )}
           </div>
-        </div>
+        </Card>
 
-        {/* Recent Testimonials */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Recent Testimonials</h2>
-          <div className="space-y-3">
-            {recentTestimonials?.data?.length > 0 ? (
-              recentTestimonials.data.map((testimonial: any) => (
-                <div key={testimonial.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{testimonial.name}</p>
-                    <p className="text-xs text-slate-500">{testimonial.city} • {testimonial.treatment}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="text-xs text-slate-600">{testimonial.rating}</span>
-                  </div>
-                </div>
-              ))
+        <Card>
+          <CardHeader
+            title="Recent Testimonials"
+            subtitle="Latest 3 customer reviews"
+            action={<Link href="/admin/testimonials" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {recentTestimonials.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {recentTestimonials.map((t: any) => (
+                  <li key={t.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{t.city} • {t.treatment}</p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-medium text-slate-700 tabular-nums">{t.rating}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-sm text-slate-500">No testimonials found</p>
+              <EmptyState icon={Star} title="No testimonials yet" />
             )}
           </div>
-        </div>
+        </Card>
+      </div>
+
+      {/* Recent Operational Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card>
+          <CardHeader
+            title="Recent Bookings"
+            action={<Link href="/admin/bookings" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {recentBookings.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {recentBookings.map((b: any) => (
+                  <li key={b.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{b.customer_name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{b.city || "—"} • {b.preferred_date || "—"}</p>
+                    </div>
+                    <Badge variant="info" dot>{b.status || "pending"}</Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={Calendar} title="No bookings yet" />
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Recent Membership Requests"
+            action={<Link href="/admin/memberships" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {recentMemberships.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {recentMemberships.map((m: any) => {
+                  const v = m.membership_status === "active" ? "success" : m.membership_status === "rejected" ? "danger" : "warning";
+                  return (
+                    <li key={m.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{m.phone} • {m.city}</p>
+                      </div>
+                      <Badge variant={v as any} dot>{m.membership_status || "pending"}</Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <EmptyState icon={CreditCard} title="No membership requests" />
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Recent Referral Partners"
+            action={<Link href="/admin/partners" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {recentPartners.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {recentPartners.map((p: any) => (
+                  <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-white">{p.partner_name?.[0] || "P"}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{p.partner_name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5 font-mono">{p.partner_code} • {p.total_referrals || 0} referrals</p>
+                      </div>
+                    </div>
+                    <Badge variant={p.status === "active" ? "success" : "neutral"} dot>{p.status || "—"}</Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={Users} title="No partners yet" />
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Pending Payouts"
+            action={<Link href="/admin/payouts" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
+          />
+          <div className="mt-4 -mx-2">
+            {pendingPayouts.length > 0 ? (
+              <ul className="divide-y divide-slate-100">
+                {pendingPayouts.map((p: any) => (
+                  <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{p.partner?.partner_name || "—"}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900 tabular-nums">₹{p.amount}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={Wallet} title="No pending payouts" />
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

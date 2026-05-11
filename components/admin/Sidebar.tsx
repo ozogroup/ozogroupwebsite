@@ -60,7 +60,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:bg-slate-900 lg:border-r lg:border-slate-800 lg:w-[260px]">
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-[260px] lg:bg-slate-900 lg:border-r lg:border-slate-800">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-800">
@@ -90,7 +90,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
