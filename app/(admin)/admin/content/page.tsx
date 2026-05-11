@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 type SiteContent = {
   id: string;
@@ -35,6 +37,7 @@ export default function AdminContentPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const supabase = getSupabaseBrowserClient();
 
@@ -85,8 +88,12 @@ export default function AdminContentPage() {
       setEditingContent(null);
       resetForm();
       loadContent();
+      setToast({ type: "success", message: editingContent ? "Content updated successfully" : "Content created successfully" });
+      setTimeout(() => setToast(null), 3000);
     } catch (err: any) {
       setError(err.message || "Failed to save content");
+      setToast({ type: "error", message: err.message || "Failed to save content" });
+      setTimeout(() => setToast(null), 4000);
     } finally {
       setSaving(false);
     }
@@ -150,6 +157,17 @@ export default function AdminContentPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-20 right-6 z-[100] px-4 py-3 rounded-lg shadow-lg border ${
+          toast.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
+      <Breadcrumb items={[{ label: "Website Content" }]} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

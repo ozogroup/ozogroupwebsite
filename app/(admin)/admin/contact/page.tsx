@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminContactSettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -120,6 +121,7 @@ export default function AdminContactSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Contact Settings" }]} />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-ink">Contact Settings</h1>

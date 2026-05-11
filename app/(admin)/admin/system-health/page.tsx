@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 async function refreshHealth() {
   "use server";
@@ -97,6 +98,7 @@ export default async function SystemHealthPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "System Health" }]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

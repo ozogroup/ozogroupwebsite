@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 type Treatment = {
   id: string;
@@ -188,6 +189,7 @@ export default function AdminTreatmentsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Treatments" }]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

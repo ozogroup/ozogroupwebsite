@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 
 const navigation = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: "📊", section: "main" },
-  { name: "Treatments", href: "/admin/treatments", icon: "💆", section: "content" },
+  { name: "Dashboard", href: "/admin/dashboard", icon: "🏠", section: "main" },
+  { name: "Website Content", href: "/admin/content", icon: "�", section: "content" },
+  { name: "Treatments", href: "/admin/treatments", icon: "✨", section: "content" },
   { name: "Testimonials", href: "/admin/testimonials", icon: "⭐", section: "content" },
-  { name: "FAQs", href: "/admin/faqs", icon: "❓", section: "content" },
-  { name: "Website Content", href: "/admin/content", icon: "📝", section: "content" },
-  { name: "Contact Settings", href: "/admin/contact", icon: "�", section: "settings" },
-  { name: "System Health", href: "/admin/system-health", icon: "🏥", section: "settings" },
+  { name: "FAQs", href: "/admin/faqs", icon: "�", section: "content" },
+  { name: "Contact Settings", href: "/admin/contact", icon: "📞", section: "settings" },
+  { name: "System Health", href: "/admin/system-health", icon: "⚙️", section: "settings" },
 ];
 
 const sectionLabels: Record<string, string> = {
@@ -40,7 +40,7 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
       {Object.entries(groupedNav).map(([section, items]) => (
         <div key={section} className="mb-6">
           {!collapsed && (
-            <h3 className="px-4 mb-2 text-xs font-semibold text-brand-muted uppercase tracking-wider">
+            <h3 className="px-6 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
               {sectionLabels[section] || section}
             </h3>
           )}
@@ -52,22 +52,22 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                   key={item.name}
                   href={item.href}
                   onClick={onItemClick}
-                  className={`group flex items-center px-4 py-2.5 transition-all duration-200 ${
+                  className={`group flex items-center mx-3 px-3 py-2.5 rounded-lg transition-all duration-150 ${
                     collapsed ? "justify-center" : ""
                   } ${
                     isActive
-                      ? "bg-gradient-to-r from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20"
-                      : "text-brand-ink/70 hover:text-brand-ink hover:bg-brand-surface/50"
+                      ? "bg-brand-accent/15 text-brand-accent border-l-2 border-brand-accent pl-[10px]"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                   }`}
                 >
-                  <span className={`text-xl flex-shrink-0 ${isActive ? "text-white" : "text-brand-muted group-hover:text-brand-accent"}`}>
+                  <span className="text-base flex-shrink-0">
                     {item.icon}
                   </span>
                   {!collapsed && (
                     <span className="ml-3 text-sm font-medium">{item.name}</span>
                   )}
                   {isActive && !collapsed && (
-                    <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full shadow-glow" />
+                    <div className="ml-auto w-1.5 h-1.5 bg-brand-accent rounded-full" />
                   )}
                 </Link>
               );

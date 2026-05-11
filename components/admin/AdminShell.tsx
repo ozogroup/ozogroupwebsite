@@ -48,7 +48,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
-      <div className="lg:pl-72">
+      <div className="lg:pl-[260px]">
         {/* Topbar */}
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
