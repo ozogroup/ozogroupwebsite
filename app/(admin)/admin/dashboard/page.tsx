@@ -34,7 +34,7 @@ export default async function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-        <p className="text-slate-600 mt-1">Manage OZO / IA Skin Care website content, treatments, testimonials and contact settings.</p>
+        <p className="text-slate-600 mt-1">Manage OZO Services / IA Skin Care website content, treatments, testimonials and contact settings.</p>
       </div>
 
       {/* Stats Cards */}

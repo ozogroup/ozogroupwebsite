@@ -2,21 +2,36 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import {
+  LayoutDashboard,
+  FileText,
+  Sparkles,
+  Star,
+  MessageCircleQuestion,
+  Phone,
+  Users,
+  CreditCard,
+  Calendar,
+  Activity,
+} from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/admin/dashboard", icon: "🏠", section: "main" },
-  { name: "Website Content", href: "/admin/content", icon: "�", section: "content" },
-  { name: "Treatments", href: "/admin/treatments", icon: "✨", section: "content" },
-  { name: "Testimonials", href: "/admin/testimonials", icon: "⭐", section: "content" },
-  { name: "FAQs", href: "/admin/faqs", icon: "�", section: "content" },
-  { name: "Contact Settings", href: "/admin/contact", icon: "📞", section: "settings" },
-  { name: "System Health", href: "/admin/system-health", icon: "⚙️", section: "settings" },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, section: "main" },
+  { name: "Website Content", href: "/admin/content", icon: FileText, section: "content" },
+  { name: "Treatments", href: "/admin/treatments", icon: Sparkles, section: "content" },
+  { name: "Testimonials", href: "/admin/testimonials", icon: Star, section: "content" },
+  { name: "FAQs", href: "/admin/faqs", icon: MessageCircleQuestion, section: "content" },
+  { name: "Bookings", href: "/admin/bookings", icon: Calendar, section: "operations" },
+  { name: "Membership Requests", href: "/admin/memberships", icon: CreditCard, section: "operations" },
+  { name: "Partner Program", href: "/admin/partners", icon: Users, section: "operations" },
+  { name: "Contact Settings", href: "/admin/contact", icon: Phone, section: "settings" },
+  { name: "System Health", href: "/admin/system-health", icon: Activity, section: "settings" },
 ];
 
 const sectionLabels: Record<string, string> = {
   main: "Overview",
   content: "Content Management",
+  operations: "Operations",
   settings: "Settings",
 };
 
@@ -60,9 +75,7 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                       : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                   }`}
                 >
-                  <span className="text-base flex-shrink-0">
-                    {item.icon}
-                  </span>
+                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
                   {!collapsed && (
                     <span className="ml-3 text-sm font-medium">{item.name}</span>
                   )}

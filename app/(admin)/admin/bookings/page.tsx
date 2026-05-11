@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getBookings, updateBookingStatus, deleteBooking } from "@/lib/actions/bookings";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -64,6 +65,7 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Bookings" }]} />
       <div>
         <h1 className="font-display text-2xl font-bold text-brand-ink">Bookings</h1>
         <p className="text-sm text-brand-muted">Manage treatment bookings</p>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getPartners, updatePartnerStatus, createPartner } from "@/lib/actions/partners";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<any[]>([]);
@@ -100,6 +101,7 @@ export default function AdminPartnersPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Partner Program" }]} />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Referral Partners</h1>

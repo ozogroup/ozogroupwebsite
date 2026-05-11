@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus, generateReferralCode } from "@/lib/actions/memberships";
+import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminMembershipsPage() {
   const [memberships, setMemberships] = useState<any[]>([]);
@@ -86,6 +87,7 @@ export default function AdminMembershipsPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Membership Requests" }]} />
       <div>
         <h1 className="font-display text-2xl font-bold text-brand-ink">Membership Requests</h1>
         <p className="text-sm text-brand-muted">Manage partner membership requests</p>
