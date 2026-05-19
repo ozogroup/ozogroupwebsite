@@ -29,15 +29,15 @@ export default async function PartnerDashboardPage() {
     commissionsData,
     payoutsData,
   ] = await Promise.all([
-    supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("referrer_id", user.id),
-    supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("referrer_id", user.id).eq("level", 1),
-    supabase.from("commissions" as any).select("commission_amount, status").eq("partner_id", user.id),
+    supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id),
+    supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
+    supabase.from("commissions" as any).select("amount, status").eq("partner_id", user.id),
     supabase.from("payouts" as any).select("amount, status").eq("partner_id", user.id),
   ]);
 
-  const totalEarnings = (commissionsData as any)?.data?.reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0) || 0;
-  const pendingEarnings = (commissionsData as any)?.data?.filter((c: any) => c.status === "pending").reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0) || 0;
-  const paidEarnings = (commissionsData as any)?.data?.filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0) || 0;
+  const totalEarnings = (commissionsData as any)?.data?.reduce((sum: number, c: any) => sum + (c.amount || 0), 0) || 0;
+  const pendingEarnings = (commissionsData as any)?.data?.filter((c: any) => c.status === "pending").reduce((sum: number, c: any) => sum + (c.amount || 0), 0) || 0;
+  const paidEarnings = (commissionsData as any)?.data?.filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.amount || 0), 0) || 0;
   const pendingPayouts = (payoutsData as any)?.data?.filter((p: any) => p.status === "pending").reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
 
   const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ozo.group'}/join?ref=${partnerCode}`;
@@ -113,7 +113,7 @@ export default async function PartnerDashboardPage() {
         </div>
         <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
           <p className="text-sm text-brand-muted mb-1">Wallet Balance</p>
-          <p className="text-2xl font-bold text-brand-accent">₹{pendingEarnings.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-brand-accent">₹{((partner as any)?.wallet_balance || 0).toLocaleString()}</p>
         </div>
       </div>
 

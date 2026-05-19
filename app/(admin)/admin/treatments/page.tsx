@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 type Treatment = {
   id: string;
@@ -438,12 +439,11 @@ export default function AdminTreatmentsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Image URL</label>
-                  <input
-                    type="url"
+                  <ImageUpload
                     value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    onChange={(url) => setFormData({ ...formData, image: url })}
+                    folder="treatments"
+                    label="Image"
                   />
                 </div>
                 <div>

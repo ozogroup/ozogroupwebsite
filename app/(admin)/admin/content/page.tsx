@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { Card, PageHeader, Badge, EmptyState, Button } from "@/components/admin/ui";
 import { Plus, Pencil, Trash2, FileText, Search } from "lucide-react";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 type SiteContent = {
   id: string;
@@ -329,7 +330,8 @@ export default function AdminContentPage() {
                     value={formData.page}
                     onChange={(e) => setFormData({ ...formData, page: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    disabled={!!editingContent}
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="e.g., home, about, contact"
                   />
                 </div>
@@ -340,7 +342,8 @@ export default function AdminContentPage() {
                     value={formData.section}
                     onChange={(e) => setFormData({ ...formData, section: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    disabled={!!editingContent}
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="e.g., hero, about, contact"
                   />
                 </div>
@@ -354,7 +357,8 @@ export default function AdminContentPage() {
                     value={formData.content_key}
                     onChange={(e) => setFormData({ ...formData, content_key: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    disabled={!!editingContent}
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="e.g., hero_title"
                   />
                 </div>
@@ -377,7 +381,8 @@ export default function AdminContentPage() {
                   <select
                     value={formData.value_type}
                     onChange={(e) => setFormData({ ...formData, value_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                    disabled={!!editingContent}
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="text">Text</option>
                     <option value="image_url">Image URL</option>
