@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { site } from "@/lib/site";
+import { createMembership } from "@/lib/actions/memberships";
 
 export default function MembershipPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -17,9 +18,32 @@ export default function MembershipPage() {
     notes: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError("");
+
+    const result = await createMembership({
+      full_name: formData.fullName,
+      mobile: formData.mobile,
+      email: formData.email,
+      city: formData.city,
+      address: formData.address || undefined,
+      pin_code: formData.pinCode || undefined,
+      referral_code: formData.referralCode || undefined,
+      notes: formData.notes || undefined,
+    });
+
+    setLoading(false);
+
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSubmitted(true);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -154,6 +178,11 @@ export default function MembershipPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
                   <div>
                     <label htmlFor="fullName" className="block text-sm font-medium text-brand-ink mb-2">
                       Full Name *
@@ -282,9 +311,10 @@ export default function MembershipPage() {
 
                   <button
                     type="submit"
-                    className="w-full btn-primary justify-center shadow-soft hover:shadow-card transition-shadow"
+                    disabled={loading}
+                    className="w-full btn-primary justify-center shadow-soft hover:shadow-card transition-shadow disabled:opacity-60"
                   >
-                    Book Membership · ₹1,199
+                    {loading ? "Submitting..." : "Book Membership · ₹1,199"}
                   </button>
                 </form>
 
