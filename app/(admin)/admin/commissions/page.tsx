@@ -83,10 +83,10 @@ export default function AdminCommissionsPage() {
               commissions.map((commission) => (
                 <tr key={commission.id} className="hover:bg-brand-surface/30 transition-colors">
                   <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">
-                    {commission.partners?.partner_name || "Unknown"}
+                    {commission.partner?.profiles?.full_name || "Unknown"}
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{commission.level}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">₹{commission.commission_amount?.toLocaleString()}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">₹{commission.amount?.toLocaleString()}</td>
                   <td className="px-4 sm:px-6 py-4">
                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(commission.status)}`}>
                       {commission.status}

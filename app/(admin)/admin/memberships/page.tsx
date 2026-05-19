@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus, generateReferralCode } from "@/lib/actions/memberships";
+import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus } from "@/lib/actions/memberships";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminMembershipsPage() {
@@ -36,18 +36,6 @@ export default function AdminMembershipsPage() {
     } catch (error) {
       console.error("Error updating payment status:", error);
       alert("Error updating payment status");
-    }
-  }
-
-  async function handleGenerateReferralCode(id: string) {
-    const code = prompt("Enter referral code to assign:");
-    if (!code) return;
-    try {
-      await generateReferralCode(id, code);
-      await loadMemberships();
-    } catch (error) {
-      console.error("Error generating referral code:", error);
-      alert("Error generating referral code");
     }
   }
 
@@ -121,18 +109,9 @@ export default function AdminMembershipsPage() {
               memberships.map((membership) => (
                 <tr key={membership.id} className="hover:bg-brand-surface/30 transition-colors">
                   <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">{membership.full_name}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.phone}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.mobile}</td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.city}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">
-                    {membership.generated_referral_code || (
-                      <button
-                        onClick={() => handleGenerateReferralCode(membership.id)}
-                        className="text-xs text-brand-accent hover:underline"
-                      >
-                        Generate
-                      </button>
-                    )}
-                  </td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">—</td>
                   <td className="px-4 sm:px-6 py-4">
                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(membership.payment_status)}`}>
                       {membership.payment_status}

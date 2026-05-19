@@ -11,7 +11,7 @@ export async function getMembershipRequests() {
   const supabase = getSupabaseServerClient();
   
   const { data, error } = await supabase
-    .from("membership_requests" as any)
+    .from("memberships" as any)
     .select("*")
     .order("created_at", { ascending: false });
   
@@ -27,7 +27,7 @@ export async function getMembershipById(id: string) {
   const supabase = getSupabaseServerClient();
   
   const { data, error } = await supabase
-    .from("membership_requests" as any)
+    .from("memberships" as any)
     .select("*")
     .eq("id", id)
     .single();
@@ -44,7 +44,7 @@ export async function updateMembershipStatus(id: string, status: string) {
   const supabase = getSupabaseServerClient();
   
   const { data, error } = await supabase
-    .from("membership_requests" as any)
+    .from("memberships" as any)
     .update({ 
       membership_status: status, 
       updated_at: new Date().toISOString() 
@@ -66,7 +66,7 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
   const supabase = getSupabaseServerClient();
   
   const { data, error } = await supabase
-    .from("membership_requests" as any)
+    .from("memberships" as any)
     .update({ 
       payment_status: paymentStatus, 
       updated_at: new Date().toISOString() 
@@ -84,24 +84,3 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
   return data;
 }
 
-export async function generateReferralCode(id: string, referralCode: string) {
-  const supabase = getSupabaseServerClient();
-  
-  const { data, error } = await supabase
-    .from("membership_requests" as any)
-    .update({ 
-      generated_referral_code: referralCode, 
-      updated_at: new Date().toISOString() 
-    })
-    .eq("id", id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error generating referral code:", error);
-    throw error;
-  }
-  
-  revalidatePath("/admin/memberships");
-  return data;
-}

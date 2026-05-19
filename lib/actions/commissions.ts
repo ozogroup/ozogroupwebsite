@@ -14,8 +14,7 @@ export async function getCommissions() {
     .from("commissions" as any)
     .select(`
       *,
-      partner:partners(partner_name, referral_code),
-      referral:referrals(customer_name)
+      partner:partners(partner_code, profiles(full_name))
     `)
     .order("created_at", { ascending: false });
   

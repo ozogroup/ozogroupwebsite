@@ -78,18 +78,16 @@ export default function AdminPartnersPage() {
 
   const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
-      partner.partner_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      partner.partner_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      partner.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      partner.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      partner.partner_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      partner.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || partner.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Calculate stats
   const totalEarnings = partners.reduce((acc, p) => acc + (p.total_earnings || 0), 0);
-  const pendingPayouts = partners.reduce((acc, p) => acc + (p.pending_payout || 0), 0);
   const activePartners = partners.filter(p => p.status === "active").length;
-  const totalReferrals = partners.reduce((acc, p) => acc + (p.total_referrals || 0), 0);
 
   if (loading) {
     return (
@@ -133,8 +131,8 @@ export default function AdminPartnersPage() {
           <p className="text-2xl font-bold text-slate-900">₹{totalEarnings.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-1">Pending Payouts</p>
-          <p className="text-2xl font-bold text-amber-600">₹{pendingPayouts.toLocaleString()}</p>
+          <p className="text-sm text-slate-600 mb-1">Wallet Balance</p>
+          <p className="text-2xl font-bold text-amber-600">₹{partners.reduce((acc, p) => acc + (p.wallet_balance || 0), 0).toLocaleString()}</p>
         </div>
       </div>
 
@@ -169,7 +167,6 @@ export default function AdminPartnersPage() {
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Code</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">City</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Earnings</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Referrals</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
                 <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">Actions</th>
               </tr>
@@ -196,8 +193,8 @@ export default function AdminPartnersPage() {
                 <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 sm:px-6 py-4">
                     <div>
-                      <p className="font-semibold text-slate-900">{partner.partner_name}</p>
-                      <p className="text-xs text-slate-500">{partner.email || partner.phone}</p>
+                      <p className="font-semibold text-slate-900">{partner.profiles?.full_name || "—"}</p>
+                      <p className="text-xs text-slate-500">{partner.profiles?.email || partner.profiles?.phone || "—"}</p>
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4">
@@ -212,7 +209,6 @@ export default function AdminPartnersPage() {
                       <p className="text-xs text-amber-600">Pending: ₹{(partner.pending_payout || 0).toLocaleString()}</p>
                     </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 text-sm text-slate-600">{partner.total_referrals || 0}</td>
                   <td className="px-4 sm:px-6 py-4">
                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(partner.status)}`}>
                       {partner.status}
@@ -259,14 +255,14 @@ export default function AdminPartnersPage() {
             <h2 className="text-xl font-bold text-slate-900 mb-6">Add Partner</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Partner Name *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Partner Code *</label>
                 <input
                   type="text"
                   required
-                  value={formData.partner_name}
-                  onChange={(e) => setFormData({ ...formData, partner_name: e.target.value })}
+                  value={formData.partner_code}
+                  onChange={(e) => setFormData({ ...formData, partner_code: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="Full name"
+                  placeholder="Unique referral code"
                 />
               </div>
               <div>
@@ -349,7 +345,7 @@ export default function AdminPartnersPage() {
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedPartner.partner_name}</h2>
+                  <h2 className="text-xl font-bold text-slate-900">{selectedPartner.profiles?.full_name || "—"}</h2>
                   <p className="text-sm text-slate-500 mt-1">Partner Code: <code className="bg-slate-100 px-2 py-0.5 rounded">{selectedPartner.partner_code}</code></p>
                 </div>
                 <button
@@ -371,16 +367,12 @@ export default function AdminPartnersPage() {
                   <p className="text-xl font-bold text-slate-900">₹{(selectedPartner.total_earnings || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-600 mb-1">Pending Payout</p>
-                  <p className="text-xl font-bold text-amber-600">₹{(selectedPartner.pending_payout || 0).toLocaleString()}</p>
+                  <p className="text-sm text-slate-600 mb-1">Wallet Balance</p>
+                  <p className="text-xl font-bold text-amber-600">₹{(selectedPartner.wallet_balance || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-600 mb-1">Total Referrals</p>
-                  <p className="text-xl font-bold text-slate-900">{selectedPartner.total_referrals || 0}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-600 mb-1">Commission Rate</p>
-                  <p className="text-xl font-bold text-slate-900">{selectedPartner.commission_rate || 10}%</p>
+                  <p className="text-sm text-slate-600 mb-1">Paid Earnings</p>
+                  <p className="text-xl font-bold text-slate-900">₹{(selectedPartner.paid_earnings || 0).toLocaleString()}</p>
                 </div>
               </div>
 
@@ -412,11 +404,11 @@ export default function AdminPartnersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">Phone</p>
-                    <p className="font-medium text-slate-900">{selectedPartner.phone || "Not provided"}</p>
+                    <p className="font-medium text-slate-900">{selectedPartner.profiles?.phone || "Not provided"}</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">Email</p>
-                    <p className="font-medium text-slate-900">{selectedPartner.email || "Not provided"}</p>
+                    <p className="font-medium text-slate-900">{selectedPartner.profiles?.email || "Not provided"}</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">City</p>

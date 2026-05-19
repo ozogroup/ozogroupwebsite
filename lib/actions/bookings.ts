@@ -14,7 +14,7 @@ export async function getBookings() {
     .from("bookings" as any)
     .select(`
       *,
-      treatment:treatments(name)
+      treatment:treatments(title)
     `)
     .order("created_at", { ascending: false });
   
@@ -46,7 +46,7 @@ export async function getBookingById(id: string) {
 export async function updateBookingStatus(id: string, status: string, adminNote?: string) {
   const supabase = getSupabaseServerClient();
   
-  const updateData: any = { status, updated_at: new Date().toISOString() };
+  const updateData: any = { booking_status: status, updated_at: new Date().toISOString() };
   if (adminNote) {
     updateData.admin_note = adminNote;
   }

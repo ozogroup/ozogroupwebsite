@@ -12,16 +12,21 @@ type UserRole = "super_admin" | "admin" | "staff" | "content_manager" | "partner
  */
 export async function getCurrentUser() {
   const supabase = getSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
+    if (error || !user) {
+      return null;
+    }
+
+    return user;
+  } catch (e: any) {
+    console.error("[AUTH] getUser failed:", e?.message || e);
     return null;
   }
-
-  return user;
 }
 
 /**
@@ -35,29 +40,31 @@ export async function getCurrentProfile(): Promise<Profile | null> {
   }
 
   const supabase = getSupabaseServerClient();
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  try {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-  if (error || !profile) {
+    if (error || !profile) {
+      return null;
+    }
+
+    return profile;
+  } catch (e: any) {
+    console.error("[AUTH] getProfile failed:", e?.message || e);
     return null;
   }
-
-  return profile;
 }
 
 /**
  * Require authentication - redirect to login if not authenticated
  */
 export async function requireAuth() {
-  console.log("[AUTH] Checking authentication");
   const user = await getCurrentUser();
 
-  console.log("[AUTH] User:", user);
   if (!user) {
-    console.log("[AUTH] No user, redirecting to /login");
     redirect("/login");
   }
 
@@ -66,37 +73,30 @@ export async function requireAuth() {
 
 /**
  * Require profile - redirect if no profile exists
- * TEMPORARY: Disabled for development - returns user instead
  */
 export async function requireProfile() {
-  console.log("[AUTH] Checking profile (TEMPORARY: disabled)");
   const user = await getCurrentUser();
 
   if (!user) {
-    console.log("[AUTH] No user, redirecting to /login");
     redirect("/login");
   }
 
-  // TEMPORARY: Return a mock profile object instead of checking database
-  // This allows any authenticated user to access admin routes
-  return {
-    id: user.id,
-    email: user.email || "",
-    role: "admin",
-    created_at: new Date().toISOString(),
-  } as Profile;
+  const profile = await getCurrentProfile();
+
+  if (!profile) {
+    redirect("/unauthorized");
+  }
+
+  return profile;
 }
 
 /**
  * Require specific role - redirect if user doesn't have required role
  */
 export async function requireRole(allowedRoles: UserRole[]) {
-  console.log("[AUTH] Checking role, allowed roles:", allowedRoles);
   const profile = await requireProfile();
 
-  console.log("[AUTH] User role:", profile.role);
   if (!allowedRoles.includes(profile.role as UserRole)) {
-    console.log("[AUTH] Role not in allowed list, redirecting to /unauthorized");
     redirect("/unauthorized");
   }
 

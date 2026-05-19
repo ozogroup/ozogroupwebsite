@@ -22,35 +22,20 @@ import { cookies } from "next/headers";
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  const cookieStore = cookies();
   const pathname = req.nextUrl.pathname;
 
-  console.log("[MIDDLEWARE] Pathname:", pathname);
+  // Only protect admin and partner routes — skip Supabase for everything else
+  const isAdmin = pathname.startsWith("/admin");
+  const isPartner = pathname.startsWith("/partner");
+  if (!isAdmin && !isPartner) return res;
 
-  // Safe middleware guard for missing Supabase env vars
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error("[MIDDLEWARE] ERROR: Missing Supabase environment variables");
-    console.error("[MIDDLEWARE] NEXT_PUBLIC_SUPABASE_URL:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.error("[MIDDLEWARE] NEXT_PUBLIC_SUPABASE_ANON_KEY:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  // Allow login pages without any check
+  if (pathname === "/admin/login" || pathname === "/partner/login") return res;
 
-    // Allow public routes to work even without Supabase
-    const publicRoutes = ['/', '/about', '/contact', '/membership', '/referral', '/treatments', '/thank-you', '/admin/login', '/partner/login'];
-    const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
-
-    if (isPublicRoute) {
-      console.log("[MIDDLEWARE] Allowing public route without Supabase");
-      return res;
-    }
-
-    // For protected routes, show error page
-    console.error("[MIDDLEWARE] Blocking protected route due to missing Supabase config");
-    const redirectUrl = new URL("/admin/login?error=Server configuration error", req.url);
-    return NextResponse.redirect(redirectUrl);
-  }
-
+  const cookieStore = cookies();
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
@@ -61,63 +46,37 @@ export async function middleware(req: NextRequest) {
   );
 
   // Get current session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  console.log("[MIDDLEWARE] Session exists:", !!session);
-  if (session) {
-    console.log("[MIDDLEWARE] User ID:", session.user.id);
+  let session = null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+  } catch (e: any) {
+    console.error("[MIDDLEWARE] Session fetch failed:", e?.message || e);
+    return NextResponse.redirect(new URL("/admin/login?error=Connection+error", req.url));
   }
 
-  // Admin routes protection
-  if (pathname.startsWith("/admin")) {
-    console.log("[MIDDLEWARE] Admin route detected");
-
-    // Allow admin login page
-    if (pathname === "/admin/login") {
-      console.log("[MIDDLEWARE] Allowing admin login page");
-      return res;
-    }
-
-    if (!session) {
-      // Not authenticated - redirect to admin login
-      console.log("[MIDDLEWARE] No session, redirecting to admin login");
-      const redirectUrl = new URL("/admin/login", req.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    // TEMPORARY: Allow any authenticated user to access admin
-    // Profile/role checks disabled for development
-    console.log("[MIDDLEWARE] Session exists, allowing access to admin");
-    return res;
+  if (!session) {
+    const loginPath = isAdmin ? "/admin/login" : "/partner/login";
+    return NextResponse.redirect(new URL(loginPath, req.url));
   }
 
-  // Partner routes protection
-  if (pathname.startsWith("/partner")) {
-    // Allow partner login page
-    if (pathname === "/partner/login") {
-      return res;
-    }
+  // Admin routes: allow any authenticated user for now
+  if (isAdmin) return res;
 
-    if (!session) {
-      // Not authenticated - redirect to partner login
-      const redirectUrl = new URL("/partner/login", req.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    // Get user profile to check role
+  // Partner routes: verify role
+  try {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", session.user.id)
       .single();
 
-    // If profile doesn't exist or role is not partner
     if (!profile || profile.role !== "partner") {
-      const redirectUrl = new URL("/unauthorized", req.url);
-      return NextResponse.redirect(redirectUrl);
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
+  } catch (e: any) {
+    console.error("[MIDDLEWARE] Profile fetch failed:", e?.message || e);
+    return NextResponse.redirect(new URL("/partner/login?error=Connection+error", req.url));
   }
 
   return res;

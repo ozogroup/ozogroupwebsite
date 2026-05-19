@@ -14,7 +14,7 @@ export async function getPayouts() {
     .from("payouts" as any)
     .select(`
       *,
-      partner:partners(partner_name, referral_code)
+      partner:partners(partner_code, profiles(full_name))
     `)
     .order("created_at", { ascending: false });
   

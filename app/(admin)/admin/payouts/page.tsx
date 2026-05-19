@@ -116,7 +116,7 @@ export default function AdminPayoutsPage() {
               payouts.map((payout) => (
                 <tr key={payout.id} className="hover:bg-brand-surface/30 transition-colors">
                   <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">
-                    {payout.partners?.partner_name || "Unknown"}
+                    {payout.partner?.profiles?.full_name || "Unknown"}
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">₹{payout.amount?.toLocaleString()}</td>
                   <td className="px-4 sm:px-6 py-4">

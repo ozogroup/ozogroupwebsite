@@ -12,7 +12,7 @@ export async function getPartners() {
   
   const { data, error } = await supabase
     .from("partners" as any)
-    .select("*")
+    .select("*, profiles(full_name, phone, email)")
     .order("created_at", { ascending: false });
   
   if (error) {

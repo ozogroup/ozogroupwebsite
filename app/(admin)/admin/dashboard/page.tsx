@@ -42,7 +42,7 @@ export default async function AdminDashboardPage() {
     safeCount("site_content"),
     safeCount("contact_settings"),
     safeCount("bookings"),
-    safeCount("membership_requests"),
+    safeCount("memberships"),
     safeCount("partners"),
     safeCount("commissions"),
     safeCount("payouts"),
@@ -61,10 +61,10 @@ export default async function AdminDashboardPage() {
   const [recentTreatments, recentTestimonials, recentBookings, recentMemberships, recentPartners, pendingPayouts] = await Promise.all([
     safeQuery(() => (supabase as any).from("treatments").select("id,title,price,price_label,type,active").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("testimonials").select("id,name,city,treatment,rating").order("created_at", { ascending: false }).limit(3)),
-    safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,preferred_date,status").order("created_at", { ascending: false }).limit(5)),
-    safeQuery(() => (supabase as any).from("membership_requests").select("id,name,phone,city,membership_status,payment_status,created_at").order("created_at", { ascending: false }).limit(5)),
-    safeQuery(() => (supabase as any).from("partners").select("id,partner_name,partner_code,phone,total_referrals,status").order("created_at", { ascending: false }).limit(5)),
-    safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_name)").eq("status", "pending").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,preferred_date,booking_status").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("memberships").select("id,full_name,mobile,city,membership_status,payment_status,created_at").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("partners").select("id,partner_code,status,profiles(full_name,phone)").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_code,profiles(full_name))").eq("status", "pending").order("created_at", { ascending: false }).limit(5)),
   ]);
 
   return (
@@ -409,8 +409,8 @@ export default async function AdminDashboardPage() {
                   return (
                     <li key={m.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{m.phone} • {m.city}</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">{m.full_name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{m.mobile} • {m.city}</p>
                       </div>
                       <Badge variant={v as any} dot>{m.membership_status || "pending"}</Badge>
                     </li>
@@ -435,11 +435,11 @@ export default async function AdminDashboardPage() {
                   <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold text-white">{p.partner_name?.[0] || "P"}</span>
+                        <span className="text-xs font-semibold text-white">{p.profiles?.full_name?.[0] || "P"}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{p.partner_name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 font-mono">{p.partner_code} • {p.total_referrals || 0} referrals</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">{p.profiles?.full_name || "—"}</p>
+                        <p className="text-xs text-slate-500 mt-0.5 font-mono">{p.partner_code}</p>
                       </div>
                     </div>
                     <Badge variant={p.status === "active" ? "success" : "neutral"} dot>{p.status || "—"}</Badge>
@@ -463,7 +463,7 @@ export default async function AdminDashboardPage() {
                 {pendingPayouts.map((p: any) => (
                   <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{p.partner?.partner_name || "—"}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{p.partner?.profiles?.full_name || "—"}</p>
                       <p className="text-xs text-slate-500 mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
                     </div>
                     <span className="text-sm font-semibold text-slate-900 tabular-nums">₹{p.amount}</span>
