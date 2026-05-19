@@ -893,9 +893,11 @@ CREATE TRIGGER trg_prevent_sponsor_change
   FOR EACH ROW
   EXECUTE FUNCTION prevent_sponsor_change();
 
--- Function: Activity logging helper
+-- Function: Activity logging helper (SECURITY DEFINER to bypass RLS)
 CREATE OR REPLACE FUNCTION log_activity()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+AS $$
 BEGIN
   INSERT INTO activity_logs (actor_id, actor_role, action, entity_type, entity_id, old_value, new_value)
   VALUES (
@@ -907,6 +909,9 @@ BEGIN
     row_to_json(OLD),
     row_to_json(NEW)
   );
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- Never block the main operation if logging fails
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

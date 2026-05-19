@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus } from "@/lib/actions/memberships";
+import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus, approveAndCreatePartner } from "@/lib/actions/memberships";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminMembershipsPage() {
   const [memberships, setMemberships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     loadMemberships();
@@ -19,50 +21,62 @@ export default function AdminMembershipsPage() {
     setLoading(false);
   }
 
-  async function handleUpdateMembershipStatus(id: string, status: string) {
+  async function handleMarkPaid(id: string) {
+    setActionLoading(id);
+    setMessage(null);
     try {
-      await updateMembershipStatus(id, status);
+      await updatePaymentStatus(id, "paid");
+      setMessage({ type: "success", text: "Payment marked as paid" });
       await loadMemberships();
-    } catch (error) {
-      console.error("Error updating membership status:", error);
-      alert("Error updating membership status");
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to update payment" });
+    } finally {
+      setActionLoading(null);
     }
   }
 
-  async function handleUpdatePaymentStatus(id: string, paymentStatus: string) {
+  async function handleApproveAndCreatePartner(membership: any) {
+    setActionLoading(membership.id);
+    setMessage(null);
     try {
-      await updatePaymentStatus(id, paymentStatus);
+      const result = await approveAndCreatePartner(membership.id);
+      if (result.error) {
+        setMessage({ type: "error", text: result.error });
+      } else if (result.data) {
+        setMessage({
+          type: "success",
+          text: `Partner created! Code: ${result.data.partner_code}. Tell ${result.data.full_name} to go to /partner/login and use "Forgot Password" with email ${result.data.email} to set their password.`,
+        });
+      }
       await loadMemberships();
-    } catch (error) {
-      console.error("Error updating payment status:", error);
-      alert("Error updating payment status");
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to approve" });
+    } finally {
+      setActionLoading(null);
     }
   }
 
-  function getMembershipStatusColor(status: string) {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "approved":
-        return "bg-green-100 text-green-700";
-      case "rejected":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-slate-100 text-slate-700";
+  async function handleReject(id: string) {
+    if (!confirm("Reject this membership request?")) return;
+    setActionLoading(id);
+    setMessage(null);
+    try {
+      await updateMembershipStatus(id, "rejected");
+      setMessage({ type: "success", text: "Membership rejected" });
+      await loadMemberships();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to reject" });
+    } finally {
+      setActionLoading(null);
     }
   }
 
-  function getPaymentStatusColor(status: string) {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "paid":
-        return "bg-green-100 text-green-700";
-      case "failed":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
+  function getActivationStatus(m: any): { label: string; color: string } {
+    if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
+    if (m.partner_id) return { label: "Partner Created", color: "bg-green-100 text-green-700" };
+    if (m.membership_status === "approved" || m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
+    if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-blue-100 text-blue-700" };
+    return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
   }
 
   if (loading) {
@@ -81,6 +95,16 @@ export default function AdminMembershipsPage() {
         <p className="text-sm text-brand-muted">Manage partner membership requests</p>
       </div>
 
+      {message && (
+        <div className={`p-4 rounded-xl border ${
+          message.type === "success"
+            ? "bg-green-50 border-green-200 text-green-700"
+            : "bg-red-50 border-red-200 text-red-700"
+        }`}>
+          <p className="text-sm">{message.text}</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -89,16 +113,16 @@ export default function AdminMembershipsPage() {
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Name</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Phone</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">City</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Referral Code</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Payment</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Membership</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Email</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Ref Code</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Status</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-brand-border">
             {memberships.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center">
+                <td colSpan={8} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <span className="text-4xl">👥</span>
                     <p className="text-brand-muted">No membership requests found</p>
@@ -111,31 +135,49 @@ export default function AdminMembershipsPage() {
                   <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">{membership.full_name}</td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.mobile}</td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.city}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">—</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.email}</td>
+                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.referral_code || "—"}</td>
                   <td className="px-4 sm:px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getPaymentStatusColor(membership.payment_status)}`}>
-                      {membership.payment_status}
-                    </span>
+                    {(() => {
+                      const s = getActivationStatus(membership);
+                      return <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${s.color}`}>{s.label}</span>;
+                    })()}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getMembershipStatusColor(membership.membership_status)}`}>
-                      {membership.membership_status}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <select
-                      value={membership.membership_status}
-                      onChange={(e) => handleUpdateMembershipStatus(membership.id, e.target.value)}
-                      className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                    >
-                      <option value="pending_payment">Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="under_review">Under Review</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="active">Active</option>
-                      <option value="expired">Expired</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      {membership.payment_status !== "paid" && membership.membership_status !== "rejected" && (
+                        <button
+                          onClick={() => handleMarkPaid(membership.id)}
+                          disabled={actionLoading === membership.id}
+                          className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                        >
+                          Mark Paid
+                        </button>
+                      )}
+                      {membership.payment_status === "paid" && !membership.partner_id && membership.membership_status !== "rejected" && (
+                        <button
+                          onClick={() => handleApproveAndCreatePartner(membership)}
+                          disabled={actionLoading === membership.id}
+                          className="px-3 py-1.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50 transition-colors"
+                        >
+                          {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
+                        </button>
+                      )}
+                      {membership.partner_id && (
+                        <div className="text-xs text-brand-muted">
+                          <span className="font-mono text-brand-accent">{membership.partner_code || "—"}</span>
+                        </div>
+                      )}
+                      {membership.membership_status !== "rejected" && membership.membership_status !== "approved" && !membership.partner_id && (
+                        <button
+                          onClick={() => handleReject(membership.id)}
+                          disabled={actionLoading === membership.id}
+                          className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

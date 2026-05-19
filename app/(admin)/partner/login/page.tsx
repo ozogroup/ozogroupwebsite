@@ -133,6 +133,15 @@ export default function PartnerLoginPage({
             </button>
           </form>
 
+          <div className="mt-4 text-center">
+            <a
+              href="/partner/forgot-password"
+              className="text-sm text-brand-accent hover:text-brand-accent/80 transition-colors"
+            >
+              Forgot Password / Set Password
+            </a>
+          </div>
+
           {/* Footer */}
           <div className="mt-8 text-center">
             <a
