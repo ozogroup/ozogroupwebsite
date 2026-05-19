@@ -85,8 +85,8 @@ export async function createMembership(data: {
       pin_code: data.pin_code || null,
       referral_code: data.referral_code || null,
       notes: data.notes || null,
-      membership_status: "pending",
-      payment_status: "pending",
+      membership_status: "pending_payment",
+      payment_status: "pending_payment",
     })
     .select()
     .single();
