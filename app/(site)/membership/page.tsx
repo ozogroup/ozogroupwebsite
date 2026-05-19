@@ -31,8 +31,8 @@ export default function MembershipPage() {
       mobile: formData.mobile,
       email: formData.email,
       city: formData.city,
-      address: formData.address || undefined,
-      pin_code: formData.pinCode || undefined,
+      address: formData.address,
+      pin_code: formData.pinCode,
       referral_code: formData.referralCode || undefined,
       notes: formData.notes || undefined,
     });
