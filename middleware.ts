@@ -21,11 +21,14 @@ import { cookies } from "next/headers";
  */
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
   const pathname = req.nextUrl.pathname;
 
-  // Set x-pathname header so layouts can read the current path
-  res.headers.set("x-pathname", pathname);
+  // Set x-pathname as request header so layouts can read the current path
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+  const res = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   // Only protect admin and partner routes — skip Supabase for everything else
   const isAdmin = pathname.startsWith("/admin");

@@ -117,6 +117,7 @@ export async function createMembership(data: {
 
 export async function approveAndCreatePartner(membershipId: string) {
   const supabase = getSupabaseServerClient();
+  const serviceClient = getSupabaseServiceClient();
 
   // 1. Fetch membership
   const { data: membership, error: fetchError } = await supabase
@@ -158,14 +159,13 @@ export async function approveAndCreatePartner(membershipId: string) {
     userId = profile.id;
     // Update role to partner if not already
     if (profile.role !== "partner") {
-      await supabase
+      await serviceClient
         .from("profiles" as any)
         .update({ role: "partner", updated_at: new Date().toISOString() })
         .eq("id", userId);
     }
   } else {
     // Create auth user via admin API using service role client
-    const serviceClient = getSupabaseServiceClient();
     const { data: newUser, error: createUserError } = await serviceClient.auth.admin.createUser({
       email,
       email_confirm: true,
@@ -179,8 +179,8 @@ export async function approveAndCreatePartner(membershipId: string) {
 
     userId = newUser.user.id;
 
-    // Create profile
-    const { error: profileInsertError } = await supabase.from("profiles" as any).insert({
+    // Create profile using service client to bypass RLS
+    const { error: profileInsertError } = await serviceClient.from("profiles" as any).insert({
       id: userId,
       email,
       full_name: fullName,
@@ -228,7 +228,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
 
     // 7. Create partner row
-    const { error: partnerError } = await supabase.from("partners" as any).insert({
+    const { error: partnerError } = await serviceClient.from("partners" as any).insert({
       id: userId,
       partner_code: partnerCode,
       referral_link: referralLink,
@@ -247,7 +247,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   }
 
   // 8. Update membership
-  const { error: updateError } = await supabase
+  const { error: updateError } = await serviceClient
     .from("memberships" as any)
     .update({
       membership_status: "approved",
