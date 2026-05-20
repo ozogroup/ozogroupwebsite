@@ -165,7 +165,7 @@ export default function AdminMembershipsPage() {
                       )}
                       {membership.partner_id && (
                         <div className="text-xs text-brand-muted">
-                          <span className="font-mono text-brand-accent">{membership.partner_code || "—"}</span>
+                          <span className="font-mono text-brand-accent">{membership.partners?.partner_code || "—"}</span>
                         </div>
                       )}
                       {membership.membership_status !== "rejected" && membership.membership_status !== "approved" && !membership.partner_id && (

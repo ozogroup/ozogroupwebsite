@@ -179,13 +179,18 @@ export async function approveAndCreatePartner(membershipId: string) {
     userId = newUser.user.id;
 
     // Create profile
-    await supabase.from("profiles" as any).insert({
+    const { error: profileInsertError } = await supabase.from("profiles" as any).insert({
       id: userId,
       email,
       full_name: fullName,
       phone: mobile,
       role: "partner",
     });
+
+    if (profileInsertError) {
+      console.error("Error creating profile:", profileInsertError);
+      return { error: "Failed to create partner profile: " + profileInsertError.message };
+    }
   }
 
   // 5. Check if partner row already exists

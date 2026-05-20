@@ -29,8 +29,8 @@ export async function middleware(req: NextRequest) {
   const isPartner = pathname.startsWith("/partner");
   if (!isAdmin && !isPartner) return res;
 
-  // Allow login pages without any check
-  if (pathname === "/admin/login" || pathname === "/partner/login") return res;
+  // Allow login and password reset pages without any check
+  if (pathname === "/admin/login" || pathname === "/partner/login" || pathname === "/partner/forgot-password" || pathname === "/partner/reset-password") return res;
 
   const cookieStore = cookies();
   const supabase = createServerClient(
