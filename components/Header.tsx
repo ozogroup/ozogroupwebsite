@@ -56,7 +56,7 @@ export default function Header() {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-4">
-          <Link href="#login" className="btn-ghost">
+          <Link href="/partner/login" className="btn-ghost">
             Partner Login
           </Link>
           <button
@@ -158,7 +158,7 @@ export default function Header() {
                 Book Consultation
               </button>
               <Link
-                href="#login"
+                href="/partner/login"
                 onClick={() => setOpen(false)}
                 className="btn-secondary w-full justify-center"
               >

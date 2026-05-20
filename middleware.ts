@@ -24,6 +24,9 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const pathname = req.nextUrl.pathname;
 
+  // Set x-pathname header so layouts can read the current path
+  res.headers.set("x-pathname", pathname);
+
   // Only protect admin and partner routes — skip Supabase for everything else
   const isAdmin = pathname.startsWith("/admin");
   const isPartner = pathname.startsWith("/partner");
