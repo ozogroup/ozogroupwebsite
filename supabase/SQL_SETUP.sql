@@ -31,6 +31,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================================
 
 -- User roles
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
 CREATE TYPE user_role AS ENUM (
   'super_admin',
   'admin',
@@ -39,31 +40,39 @@ CREATE TYPE user_role AS ENUM (
   'partner',
   'customer'
 );
+END IF; END$$;
 
 -- Partner status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'partner_status') THEN
 CREATE TYPE partner_status AS ENUM (
   'active',
   'inactive',
   'pending',
   'suspended'
 );
+END IF; END$$;
 
 -- KYC status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kyc_status') THEN
 CREATE TYPE kyc_status AS ENUM (
   'not_submitted',
   'pending',
   'verified',
   'rejected'
 );
+END IF; END$$;
 
 -- Treatment type
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'treatment_type') THEN
 CREATE TYPE treatment_type AS ENUM (
   'home_kit',
   'clinic',
   'campaign'
 );
+END IF; END$$;
 
 -- Booking status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'booking_status') THEN
 CREATE TYPE booking_status AS ENUM (
   'pending',
   'confirmed',
@@ -71,15 +80,19 @@ CREATE TYPE booking_status AS ENUM (
   'completed',
   'cancelled'
 );
+END IF; END$$;
 
 -- Payment status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
 CREATE TYPE payment_status AS ENUM (
   'pending_payment',
   'paid',
   'failed'
 );
+END IF; END$$;
 
 -- Membership status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'membership_status') THEN
 CREATE TYPE membership_status AS ENUM (
   'pending_payment',
   'paid',
@@ -89,39 +102,49 @@ CREATE TYPE membership_status AS ENUM (
   'active',
   'expired'
 );
+END IF; END$$;
 
 -- Commission status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'commission_status') THEN
 CREATE TYPE commission_status AS ENUM (
   'pending',
   'approved',
   'paid',
   'rejected'
 );
+END IF; END$$;
 
 -- Wallet transaction type
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'wallet_transaction_type') THEN
 CREATE TYPE wallet_transaction_type AS ENUM (
   'commission_credit',
   'payout_debit',
   'adjustment_credit',
   'adjustment_debit'
 );
+END IF; END$$;
 
 -- Reference type for wallet transactions
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reference_type') THEN
 CREATE TYPE reference_type AS ENUM (
   'commission',
   'payout',
   'manual_adjustment'
 );
+END IF; END$$;
 
 -- Payout status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payout_status') THEN
 CREATE TYPE payout_status AS ENUM (
   'requested',
   'processing',
   'paid',
   'rejected'
 );
+END IF; END$$;
 
 -- Razorpay payment status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'razorpay_status') THEN
 CREATE TYPE razorpay_status AS ENUM (
   'created',
   'authorized',
@@ -129,21 +152,27 @@ CREATE TYPE razorpay_status AS ENUM (
   'refunded',
   'failed'
 );
+END IF; END$$;
 
 -- Source type for payments
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'source_type') THEN
 CREATE TYPE source_type AS ENUM (
   'membership',
   'booking'
 );
+END IF; END$$;
 
 -- Booking slot status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'slot_status') THEN
 CREATE TYPE slot_status AS ENUM (
   'available',
   'full',
   'cancelled'
 );
+END IF; END$$;
 
 -- Shipping status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'shipping_status') THEN
 CREATE TYPE shipping_status AS ENUM (
   'pending',
   'created',
@@ -151,22 +180,28 @@ CREATE TYPE shipping_status AS ENUM (
   'delivered',
   'cancelled'
 );
+END IF; END$$;
 
 -- Webhook provider
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'webhook_provider') THEN
 CREATE TYPE webhook_provider AS ENUM (
   'razorpay',
   'shiprocket'
 );
+END IF; END$$;
 
 -- Support ticket status
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'support_status') THEN
 CREATE TYPE support_status AS ENUM (
   'open',
   'in_progress',
   'resolved',
   'closed'
 );
+END IF; END$$;
 
 -- Notification type
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
 CREATE TYPE notification_type AS ENUM (
   'membership_approved',
   'membership_rejected',
@@ -179,21 +214,24 @@ CREATE TYPE notification_type AS ENUM (
   'booking_confirmed',
   'shipping_updated'
 );
+END IF; END$$;
 
 -- OTP type
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'otp_type') THEN
 CREATE TYPE otp_type AS ENUM (
   'phone_verification',
   'email_verification',
   'password_reset',
   'login_2fa'
 );
+END IF; END$$;
 
 -- ============================================================================
 -- CORE TABLES
 -- ============================================================================
 
 -- profiles: User profiles linked to Supabase Auth
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
@@ -206,7 +244,7 @@ CREATE TABLE profiles (
 );
 
 -- admins: Extended admin profile data
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
   id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   department TEXT,
   permissions JSONB,
@@ -216,7 +254,7 @@ CREATE TABLE admins (
 );
 
 -- partners: Partner-specific data with KYC
-CREATE TABLE partners (
+CREATE TABLE IF NOT EXISTS partners (
   id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   partner_code TEXT UNIQUE NOT NULL,
   city TEXT,
@@ -260,7 +298,7 @@ CREATE TABLE partners (
 -- ============================================================================
 
 -- treatments: Treatment catalog
-CREATE TABLE treatments (
+CREATE TABLE IF NOT EXISTS treatments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
@@ -295,7 +333,7 @@ CREATE TABLE treatments (
 );
 
 -- booking_slots: Campaign/clinic slot management
-CREATE TABLE booking_slots (
+CREATE TABLE IF NOT EXISTS booking_slots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   treatment_id UUID NOT NULL REFERENCES treatments(id) ON DELETE CASCADE,
   city TEXT NOT NULL,
@@ -309,7 +347,7 @@ CREATE TABLE booking_slots (
 );
 
 -- bookings: Treatment bookings
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_name TEXT NOT NULL,
   customer_phone TEXT NOT NULL,
@@ -347,7 +385,7 @@ CREATE TABLE bookings (
 );
 
 -- memberships: Membership purchases
-CREATE TABLE memberships (
+CREATE TABLE IF NOT EXISTS memberships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID UNIQUE REFERENCES partners(id) ON DELETE SET NULL,
   full_name TEXT NOT NULL,
@@ -378,7 +416,7 @@ CREATE TABLE memberships (
 -- ============================================================================
 
 -- referral_links: Referral link tracking
-CREATE TABLE referral_links (
+CREATE TABLE IF NOT EXISTS referral_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID UNIQUE REFERENCES partners(id) ON DELETE CASCADE,
   partner_code TEXT UNIQUE NOT NULL,
@@ -388,7 +426,7 @@ CREATE TABLE referral_links (
 );
 
 -- referral_clicks: Referral link visit tracking
-CREATE TABLE referral_clicks (
+CREATE TABLE IF NOT EXISTS referral_clicks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   referral_code TEXT NOT NULL,
@@ -401,7 +439,7 @@ CREATE TABLE referral_clicks (
 );
 
 -- referral_tree: Explicit hierarchy tracking
-CREATE TABLE referral_tree (
+CREATE TABLE IF NOT EXISTS referral_tree (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ancestor_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   descendant_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
@@ -411,7 +449,7 @@ CREATE TABLE referral_tree (
 );
 
 -- commissions: Commission records
-CREATE TABLE commissions (
+CREATE TABLE IF NOT EXISTS commissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   source_type source_type NOT NULL,
@@ -445,7 +483,7 @@ CREATE TABLE commissions (
 -- ============================================================================
 
 -- wallet_transactions: Wallet audit trail
-CREATE TABLE wallet_transactions (
+CREATE TABLE IF NOT EXISTS wallet_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   transaction_type wallet_transaction_type NOT NULL,
@@ -460,7 +498,7 @@ CREATE TABLE wallet_transactions (
 );
 
 -- payouts: Payout requests
-CREATE TABLE payouts (
+CREATE TABLE IF NOT EXISTS payouts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
@@ -485,7 +523,7 @@ CREATE TABLE payouts (
 -- ============================================================================
 
 -- payments: Razorpay payment records
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id TEXT UNIQUE NOT NULL,
   payment_id TEXT UNIQUE,
@@ -507,7 +545,7 @@ CREATE TABLE payments (
 );
 
 -- webhook_logs: Webhook event logs
-CREATE TABLE webhook_logs (
+CREATE TABLE IF NOT EXISTS webhook_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   provider webhook_provider NOT NULL,
   event_type TEXT NOT NULL,
@@ -519,7 +557,7 @@ CREATE TABLE webhook_logs (
 );
 
 -- shipping_orders: Shiprocket shipping
-CREATE TABLE shipping_orders (
+CREATE TABLE IF NOT EXISTS shipping_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   booking_id UUID UNIQUE REFERENCES bookings(id) ON DELETE CASCADE,
   shiprocket_order_id TEXT UNIQUE,
@@ -538,7 +576,7 @@ CREATE TABLE shipping_orders (
 -- ============================================================================
 
 -- commission_settings: Commission percentage configuration
-CREATE TABLE commission_settings (
+CREATE TABLE IF NOT EXISTS commission_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   level_1_percentage NUMERIC(5, 2) NOT NULL DEFAULT 6.00,
   level_2_percentage NUMERIC(5, 2) NOT NULL DEFAULT 3.00,
@@ -550,7 +588,7 @@ CREATE TABLE commission_settings (
 );
 
 -- system_settings: System-wide configuration
-CREATE TABLE system_settings (
+CREATE TABLE IF NOT EXISTS system_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   maintenance_mode BOOLEAN DEFAULT FALSE,
   payouts_enabled BOOLEAN DEFAULT TRUE,
@@ -566,7 +604,7 @@ CREATE TABLE system_settings (
 -- ============================================================================
 
 -- daily_partner_stats: Daily partner statistics for dashboard
-CREATE TABLE daily_partner_stats (
+CREATE TABLE IF NOT EXISTS daily_partner_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   stat_date DATE NOT NULL,
@@ -584,7 +622,7 @@ CREATE TABLE daily_partner_stats (
 -- ============================================================================
 
 -- otp_logs: OTP verification logs
-CREATE TABLE otp_logs (
+CREATE TABLE IF NOT EXISTS otp_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   otp_type otp_type NOT NULL,
@@ -599,7 +637,7 @@ CREATE TABLE otp_logs (
 -- ============================================================================
 
 -- site_content: CMS for site content
-CREATE TABLE site_content (
+CREATE TABLE IF NOT EXISTS site_content (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   page TEXT NOT NULL,
   section TEXT NOT NULL,
@@ -612,7 +650,7 @@ CREATE TABLE site_content (
 );
 
 -- contact_settings: Contact page settings
-CREATE TABLE contact_settings (
+CREATE TABLE IF NOT EXISTS contact_settings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   whatsapp_number TEXT,
   whatsapp_url TEXT,
@@ -624,7 +662,7 @@ CREATE TABLE contact_settings (
 );
 
 -- support_requests: Partner support tickets
-CREATE TABLE support_requests (
+CREATE TABLE IF NOT EXISTS support_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   partner_id UUID REFERENCES partners(id) ON DELETE SET NULL,
   subject TEXT NOT NULL,
@@ -640,7 +678,7 @@ CREATE TABLE support_requests (
 -- ============================================================================
 
 -- notifications: System notifications
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   role user_role,
@@ -654,7 +692,7 @@ CREATE TABLE notifications (
 );
 
 -- activity_logs: Admin/partner action logs
-CREATE TABLE activity_logs (
+CREATE TABLE IF NOT EXISTS activity_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   actor_role user_role NOT NULL,
@@ -673,123 +711,123 @@ CREATE TABLE activity_logs (
 -- ============================================================================
 
 -- profiles
-CREATE INDEX idx_profiles_email ON profiles(email);
-CREATE INDEX idx_profiles_role ON profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
 -- admins
-CREATE INDEX idx_admins_id ON admins(id);
-CREATE INDEX idx_admins_active ON admins(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_admins_id ON admins(id);
+CREATE INDEX IF NOT EXISTS idx_admins_active ON admins(is_active) WHERE deleted_at IS NULL;
 
 -- partners
-CREATE INDEX idx_partners_code ON partners(partner_code);
-CREATE INDEX idx_partners_sponsor ON partners(sponsor_id);
-CREATE INDEX idx_partners_status ON partners(status);
-CREATE INDEX idx_partners_active ON partners(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_partners_code ON partners(partner_code);
+CREATE INDEX IF NOT EXISTS idx_partners_sponsor ON partners(sponsor_id);
+CREATE INDEX IF NOT EXISTS idx_partners_status ON partners(status);
+CREATE INDEX IF NOT EXISTS idx_partners_active ON partners(is_active) WHERE deleted_at IS NULL;
 
 -- treatments
-CREATE INDEX idx_treatments_slug ON treatments(slug);
-CREATE INDEX idx_treatments_type ON treatments(type);
-CREATE INDEX idx_treatments_active ON treatments(active);
-CREATE INDEX idx_treatments_is_active ON treatments(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_treatments_slug ON treatments(slug);
+CREATE INDEX IF NOT EXISTS idx_treatments_type ON treatments(type);
+CREATE INDEX IF NOT EXISTS idx_treatments_active ON treatments(active);
+CREATE INDEX IF NOT EXISTS idx_treatments_is_active ON treatments(is_active) WHERE deleted_at IS NULL;
 
 -- booking_slots
-CREATE INDEX idx_booking_slots_treatment ON booking_slots(treatment_id);
-CREATE INDEX idx_booking_slots_city ON booking_slots(city);
-CREATE INDEX idx_booking_slots_date ON booking_slots(slot_date);
-CREATE INDEX idx_booking_slots_status ON booking_slots(status);
+CREATE INDEX IF NOT EXISTS idx_booking_slots_treatment ON booking_slots(treatment_id);
+CREATE INDEX IF NOT EXISTS idx_booking_slots_city ON booking_slots(city);
+CREATE INDEX IF NOT EXISTS idx_booking_slots_date ON booking_slots(slot_date);
+CREATE INDEX IF NOT EXISTS idx_booking_slots_status ON booking_slots(status);
 
 -- bookings
-CREATE INDEX idx_bookings_phone ON bookings(customer_phone);
-CREATE INDEX idx_bookings_treatment ON bookings(treatment_id);
-CREATE INDEX idx_bookings_referred_by ON bookings(referred_by);
-CREATE INDEX idx_bookings_status ON bookings(booking_status);
-CREATE INDEX idx_bookings_slot ON bookings(booking_slot_id);
-CREATE INDEX idx_bookings_is_active ON bookings(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_bookings_phone ON bookings(customer_phone);
+CREATE INDEX IF NOT EXISTS idx_bookings_treatment ON bookings(treatment_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_referred_by ON bookings(referred_by);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(booking_status);
+CREATE INDEX IF NOT EXISTS idx_bookings_slot ON bookings(booking_slot_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_is_active ON bookings(is_active) WHERE deleted_at IS NULL;
 
 -- memberships
-CREATE INDEX idx_memberships_partner ON memberships(partner_id);
-CREATE INDEX idx_memberships_mobile ON memberships(mobile);
-CREATE INDEX idx_memberships_sponsor ON memberships(sponsor_id);
-CREATE INDEX idx_memberships_status ON memberships(membership_status);
-CREATE INDEX idx_memberships_is_active ON memberships(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_memberships_partner ON memberships(partner_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_mobile ON memberships(mobile);
+CREATE INDEX IF NOT EXISTS idx_memberships_sponsor ON memberships(sponsor_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_status ON memberships(membership_status);
+CREATE INDEX IF NOT EXISTS idx_memberships_is_active ON memberships(is_active) WHERE deleted_at IS NULL;
 
 -- referral_links
-CREATE INDEX idx_referral_links_code ON referral_links(partner_code);
-CREATE INDEX idx_referral_links_partner ON referral_links(partner_id);
+CREATE INDEX IF NOT EXISTS idx_referral_links_code ON referral_links(partner_code);
+CREATE INDEX IF NOT EXISTS idx_referral_links_partner ON referral_links(partner_id);
 
 -- referral_clicks
-CREATE INDEX idx_referral_clicks_partner ON referral_clicks(partner_id);
-CREATE INDEX idx_referral_clicks_code ON referral_clicks(referral_code);
-CREATE INDEX idx_referral_clicks_clicked_at ON referral_clicks(clicked_at);
+CREATE INDEX IF NOT EXISTS idx_referral_clicks_partner ON referral_clicks(partner_id);
+CREATE INDEX IF NOT EXISTS idx_referral_clicks_code ON referral_clicks(referral_code);
+CREATE INDEX IF NOT EXISTS idx_referral_clicks_clicked_at ON referral_clicks(clicked_at);
 
 -- referral_tree
-CREATE INDEX idx_referral_tree_ancestor ON referral_tree(ancestor_id);
-CREATE INDEX idx_referral_tree_descendant ON referral_tree(descendant_id);
-CREATE INDEX idx_referral_tree_level ON referral_tree(level);
+CREATE INDEX IF NOT EXISTS idx_referral_tree_ancestor ON referral_tree(ancestor_id);
+CREATE INDEX IF NOT EXISTS idx_referral_tree_descendant ON referral_tree(descendant_id);
+CREATE INDEX IF NOT EXISTS idx_referral_tree_level ON referral_tree(level);
 
 -- commissions
-CREATE INDEX idx_commissions_partner ON commissions(partner_id);
-CREATE INDEX idx_commissions_source ON commissions(source_type, source_id);
-CREATE INDEX idx_commissions_status ON commissions(status);
-CREATE INDEX idx_commissions_is_active ON commissions(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_commissions_partner ON commissions(partner_id);
+CREATE INDEX IF NOT EXISTS idx_commissions_source ON commissions(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_commissions_status ON commissions(status);
+CREATE INDEX IF NOT EXISTS idx_commissions_is_active ON commissions(is_active) WHERE deleted_at IS NULL;
 
 -- wallet_transactions
-CREATE INDEX idx_wallet_partner ON wallet_transactions(partner_id);
-CREATE INDEX idx_wallet_reference ON wallet_transactions(reference_type, reference_id);
-CREATE INDEX idx_wallet_type ON wallet_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_wallet_partner ON wallet_transactions(partner_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_reference ON wallet_transactions(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_type ON wallet_transactions(transaction_type);
 
 -- payouts
-CREATE INDEX idx_payouts_partner ON payouts(partner_id);
-CREATE INDEX idx_payouts_status ON payouts(status);
-CREATE INDEX idx_payouts_is_active ON payouts(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_payouts_partner ON payouts(partner_id);
+CREATE INDEX IF NOT EXISTS idx_payouts_status ON payouts(status);
+CREATE INDEX IF NOT EXISTS idx_payouts_is_active ON payouts(is_active) WHERE deleted_at IS NULL;
 
 -- payments
-CREATE INDEX idx_payments_order ON payments(order_id);
-CREATE INDEX idx_payments_source ON payments(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_payments_order ON payments(order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_source ON payments(source_type, source_id);
 
 -- webhook_logs
-CREATE INDEX idx_webhook_provider ON webhook_logs(provider);
-CREATE INDEX idx_webhook_event ON webhook_logs(event_type);
-CREATE INDEX idx_webhook_processed ON webhook_logs(processed);
+CREATE INDEX IF NOT EXISTS idx_webhook_provider ON webhook_logs(provider);
+CREATE INDEX IF NOT EXISTS idx_webhook_event ON webhook_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_processed ON webhook_logs(processed);
 
 -- shipping_orders
-CREATE INDEX idx_shipping_booking ON shipping_orders(booking_id);
-CREATE INDEX idx_shipping_tracking ON shipping_orders(tracking_id);
+CREATE INDEX IF NOT EXISTS idx_shipping_booking ON shipping_orders(booking_id);
+CREATE INDEX IF NOT EXISTS idx_shipping_tracking ON shipping_orders(tracking_id);
 
 -- site_content
-CREATE INDEX idx_site_content_page ON site_content(page);
-CREATE INDEX idx_site_content_key ON site_content(content_key);
-CREATE INDEX idx_site_content_is_active ON site_content(is_active) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_site_content_page ON site_content(page);
+CREATE INDEX IF NOT EXISTS idx_site_content_key ON site_content(content_key);
+CREATE INDEX IF NOT EXISTS idx_site_content_is_active ON site_content(is_active) WHERE deleted_at IS NULL;
 
 -- support_requests
-CREATE INDEX idx_support_partner ON support_requests(partner_id);
-CREATE INDEX idx_support_status ON support_requests(status);
+CREATE INDEX IF NOT EXISTS idx_support_partner ON support_requests(partner_id);
+CREATE INDEX IF NOT EXISTS idx_support_status ON support_requests(status);
 
 -- notifications
-CREATE INDEX idx_notifications_user ON notifications(user_id);
-CREATE INDEX idx_notifications_role ON notifications(role);
-CREATE INDEX idx_notifications_read ON notifications(read_status);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_role ON notifications(role);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read_status);
 
 -- activity_logs
-CREATE INDEX idx_activity_actor ON activity_logs(actor_id);
-CREATE INDEX idx_activity_entity ON activity_logs(entity_type, entity_id);
-CREATE INDEX idx_activity_action ON activity_logs(action);
-CREATE INDEX idx_activity_created ON activity_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_activity_actor ON activity_logs(actor_id);
+CREATE INDEX IF NOT EXISTS idx_activity_entity ON activity_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_activity_action ON activity_logs(action);
+CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at);
 
 -- commission_settings
-CREATE INDEX idx_commission_settings_active ON commission_settings(active);
+CREATE INDEX IF NOT EXISTS idx_commission_settings_active ON commission_settings(active);
 
 -- system_settings
-CREATE INDEX idx_system_settings_maintenance ON system_settings(maintenance_mode);
+CREATE INDEX IF NOT EXISTS idx_system_settings_maintenance ON system_settings(maintenance_mode);
 
 -- daily_partner_stats
-CREATE INDEX idx_daily_stats_partner ON daily_partner_stats(partner_id);
-CREATE INDEX idx_daily_stats_date ON daily_partner_stats(stat_date);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_partner ON daily_partner_stats(partner_id);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_partner_stats(stat_date);
 
 -- otp_logs
-CREATE INDEX idx_otp_logs_profile ON otp_logs(profile_id);
-CREATE INDEX idx_otp_logs_created ON otp_logs(created_at);
-CREATE INDEX idx_otp_logs_expires ON otp_logs(expires_at);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_profile ON otp_logs(profile_id);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_created ON otp_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_otp_logs_expires ON otp_logs(expires_at);
 
 -- ============================================================================
 -- TRIGGERS & FUNCTIONS
@@ -805,71 +843,85 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply updated_at trigger to tables with updated_at
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON profiles;
 CREATE TRIGGER trg_profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_partners_updated_at ON partners;
 CREATE TRIGGER trg_partners_updated_at
   BEFORE UPDATE ON partners
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_treatments_updated_at ON treatments;
 CREATE TRIGGER trg_treatments_updated_at
   BEFORE UPDATE ON treatments
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_booking_slots_updated_at ON booking_slots;
 CREATE TRIGGER trg_booking_slots_updated_at
   BEFORE UPDATE ON booking_slots
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_bookings_updated_at ON bookings;
 CREATE TRIGGER trg_bookings_updated_at
   BEFORE UPDATE ON bookings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_memberships_updated_at ON memberships;
 CREATE TRIGGER trg_memberships_updated_at
   BEFORE UPDATE ON memberships
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_commissions_updated_at ON commissions;
 CREATE TRIGGER trg_commissions_updated_at
   BEFORE UPDATE ON commissions
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_payouts_updated_at ON payouts;
 CREATE TRIGGER trg_payouts_updated_at
   BEFORE UPDATE ON payouts
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_site_content_updated_at ON site_content;
 CREATE TRIGGER trg_site_content_updated_at
   BEFORE UPDATE ON site_content
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_contact_settings_updated_at ON contact_settings;
 CREATE TRIGGER trg_contact_settings_updated_at
   BEFORE UPDATE ON contact_settings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_support_requests_updated_at ON support_requests;
 CREATE TRIGGER trg_support_requests_updated_at
   BEFORE UPDATE ON support_requests
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_shipping_orders_updated_at ON shipping_orders;
 CREATE TRIGGER trg_shipping_orders_updated_at
   BEFORE UPDATE ON shipping_orders
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_commission_settings_updated_at ON commission_settings;
 CREATE TRIGGER trg_commission_settings_updated_at
   BEFORE UPDATE ON commission_settings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_system_settings_updated_at ON system_settings;
 CREATE TRIGGER trg_system_settings_updated_at
   BEFORE UPDATE ON system_settings
   FOR EACH ROW
@@ -888,6 +940,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_prevent_sponsor_change ON partners;
 CREATE TRIGGER trg_prevent_sponsor_change
   BEFORE UPDATE ON partners
   FOR EACH ROW
@@ -917,32 +970,38 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply activity logging to critical tables
+DROP TRIGGER IF EXISTS log_partners_changes ON partners;
 CREATE TRIGGER log_partners_changes
   AFTER INSERT OR UPDATE OR DELETE ON partners
   FOR EACH ROW
   EXECUTE FUNCTION log_activity();
 
+DROP TRIGGER IF EXISTS log_commissions_changes ON commissions;
 CREATE TRIGGER log_commissions_changes
   AFTER INSERT OR UPDATE OR DELETE ON commissions
   FOR EACH ROW
   EXECUTE FUNCTION log_activity();
 
+DROP TRIGGER IF EXISTS log_payouts_changes ON payouts;
 CREATE TRIGGER log_payouts_changes
   AFTER INSERT OR UPDATE OR DELETE ON payouts
   FOR EACH ROW
   EXECUTE FUNCTION log_activity();
 
+DROP TRIGGER IF EXISTS log_memberships_changes ON memberships;
 CREATE TRIGGER log_memberships_changes
   AFTER INSERT OR UPDATE OR DELETE ON memberships
   FOR EACH ROW
   EXECUTE FUNCTION log_activity();
 
+DROP TRIGGER IF EXISTS log_bookings_changes ON bookings;
 CREATE TRIGGER log_bookings_changes
   AFTER UPDATE ON bookings
   FOR EACH ROW
   WHEN (OLD.booking_status IS DISTINCT FROM NEW.booking_status)
   EXECUTE FUNCTION log_activity();
 
+DROP TRIGGER IF EXISTS log_treatments_changes ON treatments;
 CREATE TRIGGER log_treatments_changes
   AFTER UPDATE ON treatments
   FOR EACH ROW
@@ -954,36 +1013,37 @@ CREATE TRIGGER log_treatments_changes
 
 -- Wallet balance non-negative (already added in table definition)
 -- Additional check to ensure wallet_balance never goes negative
-ALTER TABLE partners
-  ADD CONSTRAINT chk_wallet_balance_non_negative
-  CHECK (wallet_balance >= 0);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_wallet_balance_non_negative') THEN
+    ALTER TABLE partners ADD CONSTRAINT chk_wallet_balance_non_negative CHECK (wallet_balance >= 0);
+  END IF;
+END$$;
 
 -- Ensure booking_slots doesn't exceed max_slots
-ALTER TABLE booking_slots
-  ADD CONSTRAINT chk_slots_not_exceed_max
-  CHECK (booked_slots <= max_slots);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_slots_not_exceed_max') THEN
+    ALTER TABLE booking_slots ADD CONSTRAINT chk_slots_not_exceed_max CHECK (booked_slots <= max_slots);
+  END IF;
+END$$;
 
 -- ============================================================================
 -- INITIAL DATA
 -- ============================================================================
 
--- Insert default contact settings
+-- Insert default contact settings (only if table is empty)
 INSERT INTO contact_settings (whatsapp_number, whatsapp_url, email, phone, address)
-VALUES (
-  '+919876543210',
-  'https://wa.me/919876543210',
-  'contact@ozo.com',
-  '+91-9876543210',
-  'Mumbai, Maharashtra, India'
-);
+SELECT '+919876543210', 'https://wa.me/919876543210', 'contact@ozo.com', '+91-9876543210', 'Mumbai, Maharashtra, India'
+WHERE NOT EXISTS (SELECT 1 FROM contact_settings);
 
--- Insert default commission settings
+-- Insert default commission settings (only if table is empty)
 INSERT INTO commission_settings (level_1_percentage, level_2_percentage, level_3_percentage, level_4_percentage, active)
-VALUES (6.00, 3.00, 1.70, 1.20, TRUE);
+SELECT 6.00, 3.00, 1.70, 1.20, TRUE
+WHERE NOT EXISTS (SELECT 1 FROM commission_settings);
 
--- Insert default system settings
+-- Insert default system settings (only if table is empty)
 INSERT INTO system_settings (maintenance_mode, payouts_enabled, commissions_enabled, bookings_enabled, membership_enabled)
-VALUES (FALSE, TRUE, TRUE, TRUE, TRUE);
+SELECT FALSE, TRUE, TRUE, TRUE, TRUE
+WHERE NOT EXISTS (SELECT 1 FROM system_settings);
 
 -- ============================================================================
 -- END OF SCHEMA
