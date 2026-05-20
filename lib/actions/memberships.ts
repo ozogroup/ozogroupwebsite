@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -164,8 +164,9 @@ export async function approveAndCreatePartner(membershipId: string) {
         .eq("id", userId);
     }
   } else {
-    // Create auth user via admin API (no password — uses invite flow)
-    const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+    // Create auth user via admin API using service role client
+    const serviceClient = getSupabaseServiceClient();
+    const { data: newUser, error: createUserError } = await serviceClient.auth.admin.createUser({
       email,
       email_confirm: true,
       user_metadata: { full_name: fullName, phone: mobile },

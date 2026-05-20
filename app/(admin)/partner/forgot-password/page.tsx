@@ -22,9 +22,9 @@ export default function PartnerForgotPasswordPage() {
     }
     try {
       const supabase = getSupabaseBrowserClient();
-      const origin = window.location.origin;
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: origin + "/partner/reset-password",
+        redirectTo: baseUrl + "/partner/reset-password",
       });
       if (error) {
         setMessage({ type: "error", text: error.message });

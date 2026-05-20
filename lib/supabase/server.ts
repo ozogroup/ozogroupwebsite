@@ -6,7 +6,8 @@
 
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { assertSupabaseEnv, supabaseEnv } from "./env";
+import { createClient } from "@supabase/supabase-js";
+import { assertSupabaseEnv, supabaseEnv, assertSupabaseServiceRole } from "./env";
 import type { Database } from "./types";
 
 export function getSupabaseServerClient() {
@@ -33,5 +34,16 @@ export function getSupabaseServerClient() {
         }
       },
     },
+  });
+}
+
+/**
+ * Service-role Supabase client for admin operations (auth.admin.createUser, etc).
+ * Only use in server actions — never expose to client.
+ */
+export function getSupabaseServiceClient() {
+  assertSupabaseServiceRole();
+  return createClient<Database>(supabaseEnv.url, supabaseEnv.serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 }
