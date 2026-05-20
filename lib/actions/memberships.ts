@@ -208,6 +208,11 @@ export async function approveAndCreatePartner(membershipId: string) {
   if (partner) {
     partnerCode = partner.partner_code;
     referralLink = partner.referral_link || `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
+    // Ensure status is approved
+    await serviceClient
+      .from("partners" as any)
+      .update({ status: "approved", updated_at: new Date().toISOString() })
+      .eq("id", userId);
   } else {
     // 6. Generate unique partner_code
     const { data: lastPartner } = await supabase
@@ -233,7 +238,7 @@ export async function approveAndCreatePartner(membershipId: string) {
       partner_code: partnerCode,
       referral_link: referralLink,
       city,
-      status: "active",
+      status: "approved",
       wallet_balance: 0,
       total_earnings: 0,
       paid_earnings: 0,

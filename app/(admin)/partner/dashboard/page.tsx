@@ -20,7 +20,28 @@ export default async function PartnerDashboardPage() {
     .single();
 
   const partnerCode = (partner as any)?.partner_code || "N/A";
-  const membershipStatus = (partner as any)?.status || "pending";
+  const partnerStatus = (partner as any)?.status || "pending";
+
+  // Block non-approved partners
+  if (partnerStatus !== "approved" && partnerStatus !== "active") {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md">
+          <span className="text-5xl mb-4 block">⏳</span>
+          <h2 className="text-xl font-bold text-brand-ink mb-2">
+            {partnerStatus === "pending" ? "Approval Pending" : "Account Inactive"}
+          </h2>
+          <p className="text-brand-muted">
+            {partnerStatus === "pending"
+              ? "Your partner account is pending approval. Please wait for the admin to approve your membership."
+              : partnerStatus === "rejected"
+              ? "Your partner request was rejected. Please contact administrator."
+              : `Your account status is "${partnerStatus}". Please contact administrator.`}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch partner stats
   const [
@@ -128,9 +149,9 @@ export default async function PartnerDashboardPage() {
           <div>
             <p className="text-sm text-brand-muted mb-1">Membership Status</p>
             <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-              membershipStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+              partnerStatus === 'approved' || partnerStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
             }`}>
-              {membershipStatus.toUpperCase()}
+              {partnerStatus.toUpperCase()}
             </span>
           </div>
         </div>

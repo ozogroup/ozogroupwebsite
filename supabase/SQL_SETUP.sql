@@ -45,11 +45,17 @@ END IF; END$$;
 -- Partner status
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'partner_status') THEN
 CREATE TYPE partner_status AS ENUM (
+  'approved',
   'active',
   'inactive',
   'pending',
   'suspended'
 );
+ELSE
+  -- Add 'approved' if enum already exists but missing this value
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'partner_status') AND enumlabel = 'approved') THEN
+    ALTER TYPE partner_status ADD VALUE 'approved';
+  END IF;
 END IF; END$$;
 
 -- KYC status
