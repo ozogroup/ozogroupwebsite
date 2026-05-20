@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Logo from "@/components/Logo";
@@ -8,9 +8,9 @@ import Logo from "@/components/Logo";
 export default function PartnerForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
@@ -30,7 +30,7 @@ export default function PartnerForgotPasswordPage() {
       } else {
         setMessage({ type: "success", text: "Password reset link sent. Check your email and click the link to set your password." });
       }
-    } catch (err) {
+    } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Something went wrong" });
     } finally {
       setLoading(false);

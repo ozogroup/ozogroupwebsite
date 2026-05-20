@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Logo from "@/components/Logo";
@@ -9,7 +9,7 @@ export default function PartnerResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function PartnerResetPasswordPage() {
     });
   }, []);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
@@ -46,7 +46,7 @@ export default function PartnerResetPasswordPage() {
       } else {
         setMessage({ type: "success", text: "Password set successfully. You can now login." });
       }
-    } catch (err) {
+    } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Something went wrong" });
     } finally {
       setLoading(false);
