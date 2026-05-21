@@ -1,12 +1,11 @@
-Place your logo here as:
+OZO Service logo assets:
 
-  ozo-group-logo.png
+  ozo-service-logo-source.png
+  ozo-service-logo.png
+  ozo-service-icon.png
 
-Recommended:
-- Square or near-square PNG with transparent background
-- Min 256x256, max ~1024x1024
-- Aspect ratio is preserved automatically by the Logo component.
-
-This file is referenced from:
-- components/Logo.tsx  -> /logos/ozo-group-logo.png
-- app/layout.tsx (favicon / apple icon)
+Notes:
+- ozo-service-logo-source.png preserves the uploaded source PNG.
+- ozo-service-logo.png trims transparent padding for header/sidebar rendering.
+- ozo-service-icon.png is used for favicon and app icons.
+- Aspect ratio is preserved automatically by components/Logo.tsx.

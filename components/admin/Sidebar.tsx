@@ -2,6 +2,7 @@
 
 import LogoutButton from "./LogoutButton";
 import Navigation from "./sidebar/Navigation";
+import Logo from "@/components/Logo";
 
 interface SidebarProps {
   open: boolean;
@@ -21,15 +22,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-accent rounded-xl flex items-center justify-center shadow-glow">
-                <span className="text-white font-bold text-lg">O</span>
-              </div>
-              <div>
-                <span className="text-white font-semibold text-base block leading-tight">OZO Services</span>
-                <span className="text-slate-400 text-xs">IA Skin Care</span>
-              </div>
-            </div>
+            <Logo variant="light" showDivision={false} />
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-white"
@@ -51,7 +44,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">Admin</p>
-                <p className="text-xs text-slate-400 truncate">OZO Services</p>
+                <p className="text-xs text-slate-400 truncate">OZO Service</p>
               </div>
               <LogoutButton />
             </div>
@@ -64,13 +57,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 h-16 border-b border-slate-800">
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-primary to-brand-accent rounded-lg flex items-center justify-center shadow-glow">
-              <span className="text-white font-bold">O</span>
-            </div>
-            <div>
-              <span className="text-white font-semibold text-sm block leading-tight">OZO Services</span>
-              <span className="text-slate-400 text-[11px]">IA Skin Care</span>
-            </div>
+            <Logo variant="light" showDivision={false} />
           </div>
 
           {/* Navigation */}
@@ -84,7 +71,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">Admin</p>
-                <p className="text-xs text-slate-400 truncate">OZO Services</p>
+                <p className="text-xs text-slate-400 truncate">OZO Service</p>
               </div>
               <LogoutButton />
             </div>

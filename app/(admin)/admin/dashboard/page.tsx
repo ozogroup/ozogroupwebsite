@@ -71,7 +71,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <PageHeader
         title="Dashboard"
-        description="Welcome back. Here's what's happening with OZO Services / IA Skin Care today."
+        description="Welcome back. Here's what's happening with OZO Service / IA Skin Care today."
         actions={
           <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
             <Plus className="w-4 h-4" /> Add Treatment

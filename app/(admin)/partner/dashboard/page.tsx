@@ -209,7 +209,7 @@ export default async function PartnerDashboardPage() {
 
   const referralLink = getReferralUrl(partnerCode);
   const whatsappMessage = encodeURIComponent(
-    `Join OZO / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`
+    `Join OZO Service / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`
   );
   const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
 

@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About OZO Skin Care · Premium Luxury Skincare",
-  description: "Learn about OZO Skin Care, a premium skincare division of OZO Group offering doctor-supervised Korean and Japanese skincare treatments.",
+  description: "Learn about OZO Skin Care, a premium skincare division of OZO Service offering doctor-supervised Korean and Japanese skincare treatments.",
 };
 
 const ABOUT_IMAGE =

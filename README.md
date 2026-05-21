@@ -1,4 +1,4 @@
-# IA Skin Care · OZO Group
+# IA Skin Care · OZO Service
 
 Premium skincare website + future referral platform.
 **Tagline:** Glow Better. Earn Smarter.
@@ -20,9 +20,9 @@ Then open: http://localhost:3000
 ## Logo
 Drop your logo PNG at:
 ```
-public/logos/ozo-group-logo.png
+public/logos/ozo-service-logo.png
 ```
-It is used in the header, footer, and as favicon.
+It is used in the header, footer, sidebars, and social preview metadata. The favicon/app icon uses `public/logos/ozo-service-icon.png`.
 
 ## Project Structure
 ```

@@ -123,7 +123,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-slate-900 leading-none">Admin</p>
-                <p className="text-xs text-slate-500 mt-0.5">OZO Services</p>
+                <p className="text-xs text-slate-500 mt-0.5">OZO Service</p>
               </div>
               <svg className="w-4 h-4 text-slate-400 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
