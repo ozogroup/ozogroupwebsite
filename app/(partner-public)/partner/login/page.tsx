@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 export default function PartnerLoginPage() {
   const router = useRouter();
@@ -48,6 +49,10 @@ export default function PartnerLoginPage() {
         onSubmit={handleLogin}
         className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-5"
       >
+        <div className="flex justify-center">
+          <Logo showDivision={false} />
+        </div>
+
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-900">Partner Login</h1>
           <p className="text-slate-500 mt-2">Login to your partner dashboard</p>

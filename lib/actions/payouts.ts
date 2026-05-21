@@ -35,11 +35,11 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   };
   
   if (transactionId) {
-    updateData.transaction_id = transactionId;
+    updateData.admin_notes = transactionId;
   }
   
   if (status === "paid") {
-    updateData.paid_date = new Date().toISOString();
+    updateData.processed_at = new Date().toISOString();
   }
   
   const { data, error } = await supabase
@@ -64,6 +64,9 @@ export async function createPayout(payout: any) {
   const { data, error } = await supabase
     .from("payouts" as any)
     .insert({
+      available_balance: payout.available_balance ?? payout.amount,
+      payment_method: payout.payment_method || "admin",
+      payment_details: payout.payment_details || "Created by admin",
       ...payout,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

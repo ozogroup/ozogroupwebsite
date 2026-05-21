@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { getReferralUrl } from "@/lib/referral-url";
+import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -87,6 +89,9 @@ export async function createMembership(data: {
   if (!mobileRegex.test(data.mobile)) return { error: "Invalid mobile number" };
 
   const supabase = getSupabaseServerClient();
+  const serviceClient = getSupabaseServiceClient();
+  const referralCode = data.referral_code?.trim().toUpperCase() || null;
+  const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
 
   const { data: record, error } = await supabase
     .from("memberships" as any)
@@ -98,7 +103,8 @@ export async function createMembership(data: {
       address: data.address.trim(),
       pin_code: data.pin_code.trim(),
       amount: 1199,
-      referral_code: data.referral_code?.trim() || null,
+      referral_code: referralCode,
+      sponsor_id: (sponsor as any)?.id || null,
       notes: data.notes?.trim() || null,
       membership_status: "pending_payment",
       payment_status: "pending_payment",
@@ -109,6 +115,14 @@ export async function createMembership(data: {
   if (error) {
     console.error("Error creating membership:", error);
     return { error: error.message };
+  }
+
+  if ((sponsor as any)?.id && referralCode) {
+    await serviceClient
+      .from("referral_clicks" as any)
+      .update({ converted_to_membership: true })
+      .eq("partner_id", (sponsor as any).id)
+      .eq("referral_code", referralCode);
   }
 
   revalidatePath("/admin/memberships");
@@ -211,7 +225,7 @@ export async function approveAndCreatePartner(membershipId: string) {
 
   if (partner) {
     partnerCode = partner.partner_code;
-    referralLink = partner.referral_link || `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
+    referralLink = getReferralUrl(partnerCode);
     // Ensure status is approved
     await serviceClient
       .from("partners" as any)
@@ -234,7 +248,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     }
 
     partnerCode = `OZO${nextNumber}`;
-    referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
+    referralLink = getReferralUrl(partnerCode);
 
     // 7. Create partner row
     const { error: partnerError } = await serviceClient.from("partners" as any).insert({
@@ -270,8 +284,15 @@ export async function approveAndCreatePartner(membershipId: string) {
     return { error: "Failed to update membership: " + updateError.message };
   }
 
+  if ((membership as any).sponsor_id) {
+    await createReferralTreeForPartner(serviceClient, userId, (membership as any).sponsor_id);
+  }
+
   revalidatePath("/admin/memberships");
   revalidatePath("/admin/partners");
+  revalidatePath("/partner/dashboard");
+  revalidatePath("/partner/team");
+  revalidatePath("/partner/direct-team");
 
   return {
     data: {
@@ -346,4 +367,3 @@ export async function repairPartnerAuthUser(email: string) {
     },
   };
 }
-

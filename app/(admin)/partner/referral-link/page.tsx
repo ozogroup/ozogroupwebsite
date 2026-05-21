@@ -1,5 +1,7 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
+import ReferralCopyButton from "@/components/partner/ReferralCopyButton";
+import { getReferralUrl } from "@/lib/referral-url";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +18,11 @@ export default async function PartnerReferralLinkPage() {
     .from("partners" as any)
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const partnerCode = (partner as any)?.partner_code || "N/A";
-  const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ozo.group'}/join?ref=${partnerCode}`;
-  const whatsappMessage = encodeURIComponent(`Join OZO / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`);
+  const referralLink = getReferralUrl(partnerCode);
+  const whatsappMessage = encodeURIComponent(`Join OZO Service / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`);
   const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}`;
 
@@ -43,15 +45,15 @@ export default async function PartnerReferralLinkPage() {
           <p className="text-lg font-mono break-all">{referralLink}</p>
         </div>
         <div className="flex flex-wrap gap-4">
-          <button
-            onClick={() => navigator.clipboard.writeText(referralLink)}
+          <ReferralCopyButton value={referralLink} />
+          <a
+            href={referralLink}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-6 py-3 bg-white text-brand-accent rounded-lg font-medium hover:bg-white/90 transition-colors flex items-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            Copy Link
-          </button>
+            Open Link
+          </a>
           <a
             href={whatsappLink}
             target="_blank"
@@ -99,17 +101,15 @@ export default async function PartnerReferralLinkPage() {
             <p className="text-slate-600 mb-4">
               Share this QR code to let people scan and join using your referral link.
             </p>
-            <button
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = qrCodeUrl;
-                link.download = `qr-code-${partnerCode}.png`;
-                link.click();
-              }}
+            <a
+              href={qrCodeUrl}
+              download={`qr-code-${partnerCode}.png`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors"
             >
               Download QR Code
-            </button>
+            </a>
           </div>
         </div>
       </div>

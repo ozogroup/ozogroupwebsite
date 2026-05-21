@@ -32,9 +32,11 @@ export default function AdminCommissionsPage() {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-700";
+      case "approved":
+        return "bg-blue-100 text-blue-700";
       case "paid":
         return "bg-green-100 text-green-700";
-      case "cancelled":
+      case "rejected":
         return "bg-red-100 text-red-700";
       default:
         return "bg-slate-100 text-slate-700";
@@ -58,7 +60,7 @@ export default function AdminCommissionsPage() {
 
       <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[760px]">
           <thead className="bg-brand-surface/50 border-b border-brand-border">
             <tr>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Partner</th>
@@ -105,7 +107,6 @@ export default function AdminCommissionsPage() {
                       <option value="approved">Approved</option>
                       <option value="paid">Paid</option>
                       <option value="rejected">Rejected</option>
-                      <option value="cancelled">Cancelled</option>
                     </select>
                   </td>
                 </tr>

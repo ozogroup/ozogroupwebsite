@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getPartners, updatePartnerStatus, createPartner } from "@/lib/actions/partners";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { getReferralUrl } from "@/lib/referral-url";
 
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<any[]>([]);
@@ -72,8 +73,7 @@ export default function AdminPartnersPage() {
   }
 
   function getReferralLink(partnerCode: string) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    return `${siteUrl}/referral/${partnerCode}`;
+    return getReferralUrl(partnerCode);
   }
 
   const filteredPartners = partners.filter((partner) => {
@@ -160,7 +160,7 @@ export default function AdminPartnersPage() {
       {/* Partners Table */}
       <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[980px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Partner</th>

@@ -50,7 +50,7 @@ export default function UnauthorizedPage() {
 
         {/* Copyright */}
         <div className="text-center mt-8 text-sm text-slate-500">
-          © {new Date().getFullYear()} OZO / IA Skin Care. All rights reserved.
+          © {new Date().getFullYear()} OZO Service / IA Skin Care. All rights reserved.
         </div>
       </div>
     </div>

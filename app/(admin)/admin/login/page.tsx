@@ -74,7 +74,7 @@ export default function AdminLoginPage({
               Admin Login
             </h1>
             <p className="text-sm text-brand-muted">
-              OZO / IA Skin Care
+              OZO Service / IA Skin Care
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export default function AdminLoginPage({
                 autoComplete="email"
                 required
                 className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"
-                placeholder="admin@ozogroup.com"
+                placeholder="admin@ozoservice.com"
               />
             </div>
 

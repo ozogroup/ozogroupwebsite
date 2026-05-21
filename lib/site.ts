@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 
 export const site = {
-  parent: "OZO GROUP",
+  parent: "OZO Service",
   brand: "IA SKIN CARE",
   division: "IA Skin Care Division",
   tagline: "Glow Better. Earn Smarter.",
