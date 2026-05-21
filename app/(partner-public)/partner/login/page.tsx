@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type React from "react";
 import { useRouter } from "next/navigation";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function PartnerLoginPage() {
   const router = useRouter();
@@ -19,13 +19,13 @@ export default function PartnerLoginPage() {
       setLoading(true);
       setError("");
 
+      const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
 
-      const { error: loginError } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
       if (loginError) {
         setError(loginError.message);
@@ -49,13 +49,8 @@ export default function PartnerLoginPage() {
         className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-5"
       >
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-900">
-            Partner Login
-          </h1>
-
-          <p className="text-slate-500 mt-2">
-            Login to your partner dashboard
-          </p>
+          <h1 className="text-3xl font-bold text-slate-900">Partner Login</h1>
+          <p className="text-slate-500 mt-2">Login to your partner dashboard</p>
         </div>
 
         {error && (
@@ -68,7 +63,6 @@ export default function PartnerLoginPage() {
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Email
           </label>
-
           <input
             type="email"
             required
@@ -84,7 +78,6 @@ export default function PartnerLoginPage() {
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Password
           </label>
-
           <input
             type="password"
             required
