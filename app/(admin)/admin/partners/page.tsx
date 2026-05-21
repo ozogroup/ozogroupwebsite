@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getPartners, updatePartnerStatus, createPartner } from "@/lib/actions/partners";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { getReferralUrl } from "@/lib/referral-url";
 
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<any[]>([]);
@@ -72,8 +73,7 @@ export default function AdminPartnersPage() {
   }
 
   function getReferralLink(partnerCode: string) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    return `${siteUrl}/referral/${partnerCode}`;
+    return getReferralUrl(partnerCode);
   }
 
   const filteredPartners = partners.filter((partner) => {

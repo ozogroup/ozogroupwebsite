@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { getReferralUrl } from "@/lib/referral-url";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -211,7 +212,7 @@ export async function approveAndCreatePartner(membershipId: string) {
 
   if (partner) {
     partnerCode = partner.partner_code;
-    referralLink = partner.referral_link || `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
+    referralLink = getReferralUrl(partnerCode);
     // Ensure status is approved
     await serviceClient
       .from("partners" as any)
@@ -234,7 +235,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     }
 
     partnerCode = `OZO${nextNumber}`;
-    referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group"}/?ref=${partnerCode}`;
+    referralLink = getReferralUrl(partnerCode);
 
     // 7. Create partner row
     const { error: partnerError } = await serviceClient.from("partners" as any).insert({
@@ -346,4 +347,3 @@ export async function repairPartnerAuthUser(email: string) {
     },
   };
 }
-

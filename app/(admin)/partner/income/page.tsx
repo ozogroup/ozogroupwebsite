@@ -20,9 +20,9 @@ export default async function PartnerIncomePage() {
     .order("created_at", { ascending: false });
 
   // Calculate earnings
-  const totalEarnings = (commissions || []).reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
-  const pendingEarnings = (commissions || []).filter((c: any) => c.status === "pending").reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
-  const paidEarnings = (commissions || []).filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
+  const totalEarnings = (commissions || []).reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
+  const pendingEarnings = (commissions || []).filter((c: any) => c.status === "pending").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
+  const paidEarnings = (commissions || []).filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
 
   // Fetch payout data
   const { data: payouts } = await supabase
@@ -99,7 +99,7 @@ export default async function PartnerIncomePage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-900">{commission.source || 'Treatment booking'}</td>
                     <td className="py-3 px-4 text-sm text-slate-600">Level {commission.level || 1}</td>
-                    <td className="py-3 px-4 text-sm font-semibold text-green-600">₹{(commission.commission_amount || 0).toLocaleString()}</td>
+                    <td className="py-3 px-4 text-sm font-semibold text-green-600">₹{(commission.amount || commission.commission_amount || 0).toLocaleString()}</td>
                     <td className="py-3 px-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         commission.status === 'paid' 
@@ -144,7 +144,7 @@ export default async function PartnerIncomePage() {
                       {new Date(payout.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="py-3 px-4 text-sm font-semibold text-brand-ink">₹{(payout.amount || 0).toLocaleString()}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{payout.method || 'Bank Transfer'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">{payout.payment_method || payout.method || 'Bank Transfer'}</td>
                     <td className="py-3 px-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         payout.status === 'paid' 
