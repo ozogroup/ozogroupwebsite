@@ -26,7 +26,7 @@ export default async function PartnerLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", user.id)
     .single();
 
@@ -34,5 +34,18 @@ export default async function PartnerLayout({
     redirect("/unauthorized");
   }
 
-  return <PartnerShell>{children}</PartnerShell>;
+  const { data: partner } = await supabase
+    .from("partners")
+    .select("partner_code, status, wallet_balance")
+    .eq("id", user.id)
+    .single();
+
+  const partnerInfo = partner ? {
+    full_name: (profile as any).full_name || null,
+    partner_code: (partner as any).partner_code || null,
+    wallet_balance: (partner as any).wallet_balance || 0,
+    status: (partner as any).status || null,
+  } : null;
+
+  return <PartnerShell partnerInfo={partnerInfo}>{children}</PartnerShell>;
 }

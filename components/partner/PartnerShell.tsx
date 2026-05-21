@@ -17,7 +17,9 @@ const navigation = [
   { name: "Support", href: "/partner/support", icon: "📞" },
 ];
 
-export default function PartnerShell({ children }: { children: React.ReactNode }) {
+type PartnerInfo = { full_name: string | null; partner_code: string | null; wallet_balance: number; status: string | null; } | null;
+
+export default function PartnerShell({ children, partnerInfo }: { children: React.ReactNode; partnerInfo?: PartnerInfo }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -74,6 +76,24 @@ export default function PartnerShell({ children }: { children: React.ReactNode }
             </button>
           </div>
 
+          {partnerInfo && (
+            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-brand-accent/5 to-brand-light/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-brand-ink truncate">{partnerInfo.full_name || "Partner"}</p>
+                  <p className="text-xs text-brand-muted font-mono">{partnerInfo.partner_code || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "approved" || partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
+              </div>
+            </div>
+          )}
+
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
@@ -106,6 +126,24 @@ export default function PartnerShell({ children }: { children: React.ReactNode }
           <div className="flex items-center p-6 border-b border-slate-200">
             <Logo />
           </div>
+
+          {partnerInfo && (
+            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-brand-accent/5 to-brand-light/5">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-brand-ink truncate">{partnerInfo.full_name || "Partner"}</p>
+                  <p className="text-xs text-brand-muted font-mono">{partnerInfo.partner_code || "—"}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "approved" || partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
+              </div>
+            </div>
+          )}
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1">
             {navigation.map((item) => {
