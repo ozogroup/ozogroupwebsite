@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus, approveAndCreatePartner } from "@/lib/actions/memberships";
+import { getMembershipRequests, updateMembershipStatus, updatePaymentStatus, approveAndCreatePartner, repairPartnerAuthUser } from "@/lib/actions/memberships";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 
 export default function AdminMembershipsPage() {
@@ -164,8 +164,27 @@ export default function AdminMembershipsPage() {
                         </button>
                       )}
                       {membership.partner_id && (
-                        <div className="text-xs text-brand-muted">
-                          <span className="font-mono text-brand-accent">{membership.partners?.partner_code || "—"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-brand-accent text-xs">{membership.partners?.partner_code || "—"}</span>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Repair login access for ${membership.email}? This will set a temporary password.`)) return;
+                              setActionLoading(membership.id);
+                              setMessage(null);
+                              const result = await repairPartnerAuthUser(membership.email);
+                              if (result.error) {
+                                setMessage({ type: "error", text: result.error });
+                              } else if (result.data) {
+                                setMessage({ type: "success", text: result.data.message });
+                              }
+                              setActionLoading(null);
+                            }}
+                            disabled={actionLoading === membership.id}
+                            className="px-2 py-1 text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded hover:bg-amber-100 disabled:opacity-50 transition-colors"
+                            title="Repair Login Access"
+                          >
+                            {actionLoading === membership.id ? "..." : "Repair Login"}
+                          </button>
                         </div>
                       )}
                       {membership.membership_status !== "rejected" && membership.membership_status !== "approved" && !membership.partner_id && (

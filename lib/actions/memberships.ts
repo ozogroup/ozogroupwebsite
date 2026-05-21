@@ -305,3 +305,45 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
   return data;
 }
 
+export async function repairPartnerAuthUser(email: string) {
+  "use server";
+  const serviceClient = getSupabaseServiceClient();
+
+  if (!email?.trim()) {
+    return { error: "Email is required" };
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const { data: { users }, error: listError } = await serviceClient.auth.admin.listUsers();
+  if (listError) {
+    console.error("Error listing users:", listError);
+    return { error: "Failed to list auth users: " + listError.message };
+  }
+
+  const authUser = users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+  if (!authUser) {
+    return { error: `No auth user found for email: ${normalizedEmail}` };
+  }
+
+  const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+  const { error: updateError } = await serviceClient.auth.admin.updateUserById(
+    authUser.id,
+    { password: tempPassword, email_confirm: true }
+  );
+
+  if (updateError) {
+    console.error("Error updating auth user:", updateError);
+    return { error: "Failed to repair auth user: " + updateError.message };
+  }
+
+  console.log(`[REPAIR] Auth user ${authUser.id} (${normalizedEmail}) repaired.`);
+  return {
+    data: {
+      message: "Partner auth repaired. Ask partner to use Forgot Password again.",
+      userId: authUser.id,
+      email: normalizedEmail,
+    },
+  };
+}
+
