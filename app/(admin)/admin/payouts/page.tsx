@@ -54,9 +54,9 @@ export default function AdminPayoutsPage() {
 
   function getStatusColor(status: string) {
     switch (status) {
-      case "pending":
+      case "requested":
         return "bg-yellow-100 text-yellow-700";
-      case "approved":
+      case "processing":
         return "bg-green-100 text-green-700";
       case "paid":
         return "bg-emerald-100 text-emerald-700";
@@ -77,14 +77,14 @@ export default function AdminPayoutsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-brand-ink">Payouts</h1>
           <p className="text-sm text-brand-muted">Manage partner payout requests</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
+          className="w-full px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all sm:w-auto"
         >
           Create Payout
         </button>
@@ -92,7 +92,7 @@ export default function AdminPayoutsPage() {
 
       <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[760px]">
           <thead className="bg-brand-surface/50 border-b border-brand-border">
             <tr>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Partner</th>
@@ -133,8 +133,8 @@ export default function AdminPayoutsPage() {
                       onChange={(e) => handleUpdateStatus(payout.id, e.target.value)}
                       className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
+                      <option value="requested">Requested</option>
+                      <option value="processing">Processing</option>
                       <option value="paid">Paid</option>
                       <option value="rejected">Rejected</option>
                     </select>
@@ -173,7 +173,7 @@ export default function AdminPayoutsPage() {
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col gap-3 pt-4 sm:flex-row">
                 <button
                   type="submit"
                   disabled={saving}

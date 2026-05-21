@@ -4,11 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBooking } from "./BookingContext";
 import { treatments, site } from "@/lib/site";
+import { createBooking } from "@/lib/actions/bookings";
+import { REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 
 type FormState = {
   fullName: string;
   mobile: string;
   email: string;
+  city: string;
+  address: string;
+  pinCode: string;
   treatment: string;
   date: string;
   time: string;
@@ -20,6 +25,9 @@ const initial: FormState = {
   fullName: "",
   mobile: "",
   email: "",
+  city: "",
+  address: "",
+  pinCode: "",
   treatment: "",
   date: "",
   time: "",
@@ -37,6 +45,14 @@ export default function BookingModal() {
   useEffect(() => {
     if (isOpen && treatmentSlug) {
       setForm((f) => ({ ...f, treatment: treatmentSlug }));
+    }
+    if (isOpen) {
+      try {
+        const storedReferralCode = window.localStorage.getItem(REFERRAL_STORAGE_KEY);
+        if (storedReferralCode) {
+          setForm((f) => ({ ...f, referralCode: f.referralCode || storedReferralCode }));
+        }
+      } catch {}
     }
     if (!isOpen) {
       setError("");
@@ -66,19 +82,32 @@ export default function BookingModal() {
     if (!form.fullName.trim()) return setError("Please enter your full name.");
     if (!/^[0-9+\-\s]{10,15}$/.test(form.mobile.trim()))
       return setError("Please enter a valid mobile number.");
+    if (!form.city.trim()) return setError("Please enter your city.");
+    if (!form.address.trim()) return setError("Please enter your full address.");
+    if (!form.pinCode.trim()) return setError("Please enter your pin code.");
     if (!form.treatment) return setError("Please select a treatment.");
     if (!form.date) return setError("Please pick a preferred date.");
     if (!form.time) return setError("Please pick a preferred time.");
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 700));
+    const result = await createBooking({
+      fullName: form.fullName,
+      mobile: form.mobile,
+      email: form.email,
+      city: form.city,
+      address: form.address,
+      pinCode: form.pinCode,
+      treatment: form.treatment,
+      date: form.date,
+      time: form.time,
+      referralCode: form.referralCode,
+      message: form.message,
+    });
 
-    try {
-      sessionStorage.setItem(
-        "ia_last_booking",
-        JSON.stringify({ ...form, submittedAt: new Date().toISOString() })
-      );
-    } catch {}
+    if (result.error) {
+      setSubmitting(false);
+      return setError(result.error);
+    }
 
     setSubmitting(false);
     setForm(initial);
@@ -165,6 +194,40 @@ export default function BookingModal() {
             />
           </FloatingLabel>
 
+          <div className="grid sm:grid-cols-2 gap-5">
+            <FloatingLabel label="City" required>
+              <input
+                type="text"
+                value={form.city}
+                onChange={update("city")}
+                placeholder=" "
+                className="premium-input"
+                autoComplete="address-level2"
+              />
+            </FloatingLabel>
+            <FloatingLabel label="Pin Code" required>
+              <input
+                type="text"
+                value={form.pinCode}
+                onChange={update("pinCode")}
+                placeholder=" "
+                className="premium-input"
+                autoComplete="postal-code"
+              />
+            </FloatingLabel>
+          </div>
+
+          <FloatingLabel label="Full Address" required>
+            <textarea
+              value={form.address}
+              onChange={update("address")}
+              rows={3}
+              placeholder=" "
+              className="premium-input resize-none"
+              autoComplete="street-address"
+            />
+          </FloatingLabel>
+
           <FloatingLabel label="Select Treatment" required>
             <select value={form.treatment} onChange={update("treatment")} className="premium-input">
               <option value="">Choose a treatment</option>
@@ -228,7 +291,7 @@ export default function BookingModal() {
 
           {/* Premium Price Summary */}
           {selected && (
-            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-5 flex items-center justify-between shadow-soft">
+            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shadow-soft">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] font-semibold text-brand-muted mb-1">
                   Estimated Amount

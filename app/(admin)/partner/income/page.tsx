@@ -21,7 +21,7 @@ export default async function PartnerIncomePage() {
 
   // Calculate earnings
   const totalEarnings = (commissions || []).reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
-  const pendingEarnings = (commissions || []).filter((c: any) => c.status === "pending").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
+  const pendingEarnings = (commissions || []).filter((c: any) => c.status === "pending" || c.status === "approved").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
   const paidEarnings = (commissions || []).filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
 
   // Fetch payout data
@@ -31,7 +31,7 @@ export default async function PartnerIncomePage() {
     .eq("partner_id", user.id)
     .order("created_at", { ascending: false });
 
-  const pendingPayouts = (payouts || []).filter((p: any) => p.status === "pending").reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+  const pendingPayouts = (payouts || []).filter((p: any) => ["pending", "requested", "processing"].includes(p.status)).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -62,14 +62,14 @@ export default async function PartnerIncomePage() {
       {/* Wallet Balance */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Wallet Balance</h2>
-        <div className="flex items-center justify-between p-6 bg-brand-accent/10 rounded-lg">
+        <div className="flex flex-col gap-4 p-6 bg-brand-accent/10 rounded-lg sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-slate-600 mb-1">Available Balance</p>
             <p className="text-3xl font-bold text-brand-accent">₹{pendingEarnings.toLocaleString()}</p>
           </div>
           <a
             href="/partner/payouts"
-            className="px-6 py-3 bg-brand-accent text-white rounded-lg font-medium hover:bg-brand-accent/90 transition-colors"
+            className="px-6 py-3 bg-brand-accent text-center text-white rounded-lg font-medium hover:bg-brand-accent/90 transition-colors"
           >
             Request Payout
           </a>
@@ -81,7 +81,7 @@ export default async function PartnerIncomePage() {
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Commission History</h2>
         {commissions && commissions.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[760px]">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
@@ -128,7 +128,7 @@ export default async function PartnerIncomePage() {
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout History</h2>
         {payouts && payouts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[680px]">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>

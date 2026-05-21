@@ -28,6 +28,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       document.body.style.position = "";
       document.body.style.width = "";
     }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+    };
   }, [sidebarOpen]);
 
   if (isLoginRoute) {
@@ -35,7 +41,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC]">
       {/* Mobile sidebar overlay - solid dark overlay */}
       {sidebarOpen && (
         <div
@@ -48,13 +54,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}
-      <div className="lg:pl-[260px]">
+      <div className="min-w-0 lg:pl-[260px]">
         {/* Topbar */}
         <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Page content */}
-        <main className="px-4 md:px-6 lg:px-8 py-6 lg:py-8 min-h-screen">
-          <div className="max-w-7xl mx-auto">{children}</div>
+        <main className="min-h-screen overflow-x-hidden px-4 py-6 md:px-6 lg:px-8 lg:py-8">
+          <div className="mx-auto max-w-7xl min-w-0">{children}</div>
         </main>
       </div>
     </div>

@@ -33,9 +33,9 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
 
   return (
     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-40 backdrop-blur-md">
-      <div className="flex items-center justify-between px-4 md:px-6 lg:px-8 py-3.5">
+      <div className="flex min-w-0 items-center justify-between gap-3 px-4 py-3.5 md:px-6 lg:px-8">
         {/* Left side */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
           <button
             onClick={onMenuClick}
             aria-label="Open menu"
@@ -46,13 +46,13 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
             </svg>
           </button>
 
-          <div>
-            <h1 className="text-[15px] font-semibold text-slate-900">{title}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-[15px] font-semibold text-slate-900">{title}</h1>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex shrink-0 items-center gap-2 md:gap-3">
           {/* Search input - visible */}
           <div className="relative hidden md:block">
             <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             {notificationsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 p-4">
+              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 bg-white rounded-xl shadow-lg border border-slate-200 p-4">
                 <h3 className="font-semibold text-slate-900 mb-3">Notifications</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
@@ -130,7 +130,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               </svg>
             </button>
             {profileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2">
+              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2">
                 <div className="px-4 py-3 border-b border-slate-100">
                   <p className="text-sm font-medium text-slate-900">Admin User</p>
                   <p className="text-xs text-slate-500 mt-0.5">admin@ozoservices.com</p>

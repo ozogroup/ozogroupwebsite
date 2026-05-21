@@ -30,7 +30,7 @@ export default function PartnerPayoutsPage() {
         .from("commissions" as any)
         .select("amount")
         .eq("partner_id", user.id)
-        .eq("status", "pending");
+        .in("status", ["pending", "approved"]);
 
       const balance = (commissions || []).reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
       setAvailableBalance(balance);
@@ -204,7 +204,7 @@ export default function PartnerPayoutsPage() {
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout History</h2>
         {payouts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[680px]">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>

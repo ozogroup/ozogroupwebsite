@@ -183,14 +183,22 @@ export default async function PartnerDashboardPage() {
     .sort((a, b) => new Date(b.processed_at || b.created_at || 0).getTime() - new Date(a.processed_at || a.created_at || 0).getTime())[0];
 
   const confirmedBookings = bookings.filter((row) => ["confirmed", "completed"].includes(row.booking_status)).length;
+  const pendingBookings = bookings.filter((row) => ["pending", "in_progress"].includes(row.booking_status)).length;
+  const directReferralTotal = directReferrals + confirmedBookings;
   const confirmedMemberships = memberships.filter(
     (row) => row.membership_status === "active" || row.membership_status === "approved" || row.payment_status === "paid"
   ).length;
-  const confirmedReferrals = Math.max(confirmedBookings, confirmedMemberships);
+  const confirmedReferrals = confirmedBookings + confirmedMemberships;
 
   const levelCounts = [1, 2, 3, 4].map((level) => ({
     level,
     count: referralTree.filter((row) => Number(row.level) === level).length,
+  }));
+  const levelEarnings = [1, 2, 3, 4].map((level) => ({
+    level,
+    earnings: commissions
+      .filter((row) => Number(row.level || 1) === level)
+      .reduce((sum, row) => sum + amountOf(row), 0),
   }));
   const bestLevel = levelCounts.reduce((best, current) => (current.count > best.count ? current : best), {
     level: 1,
@@ -263,8 +271,10 @@ export default async function PartnerDashboardPage() {
         <StatCard label="Total Earnings" value={money(totalEarnings)} tone="green" />
         <StatCard label="Paid Earnings" value={money(paidEarnings)} />
         <StatCard label="Pending Earnings" value={money(pendingEarnings)} tone="amber" />
-        <StatCard label="Direct Referrals" value={directReferrals} />
+        <StatCard label="Direct Referrals" value={directReferralTotal} helper={`${directReferrals} partners + ${confirmedBookings} sales`} />
         <StatCard label="Total Network" value={totalNetwork} />
+        <StatCard label="Confirmed Sales" value={confirmedBookings} tone="green" />
+        <StatCard label="Pending Sales" value={pendingBookings} tone="amber" />
         <StatCard label="Pending Payout" value={money(pendingPayout)} tone="amber" />
         <StatCard label="Partner Status" value={titleCase(partnerStatus)} helper={`KYC: ${titleCase(partnerData.kyc_status || "not_submitted")}`} />
       </section>
@@ -329,7 +339,9 @@ export default async function PartnerDashboardPage() {
           <ReportCard
             title="Referral Overview"
             rows={[
-              { label: "Direct referrals", value: directReferrals },
+              { label: "Direct referrals", value: directReferralTotal },
+              { label: "Direct partner referrals", value: directReferrals },
+              { label: "Direct confirmed sales", value: confirmedBookings },
               { label: "Total network", value: totalNetwork },
               { label: "Active partners", value: activePartners },
               { label: "Pending partners", value: pendingPartners },
@@ -347,7 +359,7 @@ export default async function PartnerDashboardPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-5">
         <ReportCard
           title="Earnings Report"
           rows={[
@@ -357,6 +369,16 @@ export default async function PartnerDashboardPage() {
             { label: "Paid earnings", value: money(paidEarnings) },
           ]}
         />
+        <ReportCard
+          title="Level-wise Network"
+          rows={[
+            ...levelCounts.map((row) => ({ label: `Level ${row.level} referrals`, value: row.count })),
+            ...levelEarnings.map((row) => ({ label: `Level ${row.level} earnings`, value: money(row.earnings) })),
+          ]}
+        />
+      </section>
+
+      <section className="grid grid-cols-1 gap-5">
         <ReportCard
           title="Payout Report"
           rows={[

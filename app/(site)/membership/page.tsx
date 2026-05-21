@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type React from "react";
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { createMembership } from "@/lib/actions/memberships";
+import { REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 
 export default function MembershipPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -21,6 +22,18 @@ export default function MembershipPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      const storedReferralCode = window.localStorage.getItem(REFERRAL_STORAGE_KEY);
+      if (storedReferralCode) {
+        setFormData((current) => ({
+          ...current,
+          referralCode: current.referralCode || storedReferralCode,
+        }));
+      }
+    } catch {}
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

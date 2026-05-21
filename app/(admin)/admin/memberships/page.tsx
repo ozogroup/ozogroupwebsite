@@ -107,7 +107,7 @@ export default function AdminMembershipsPage() {
 
       <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[920px]">
           <thead className="bg-brand-surface/50 border-b border-brand-border">
             <tr>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Name</th>
