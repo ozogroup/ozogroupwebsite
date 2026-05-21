@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import PartnerShell from "@/components/partner/PartnerShell";
 
-export const dynamic = 'force-dynamic';
-
 const PUBLIC_PATHS = ["/partner/login", "/partner/forgot-password", "/partner/reset-password"];
 
 export default async function PartnerLayout({
