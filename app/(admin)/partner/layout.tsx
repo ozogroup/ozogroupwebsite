@@ -23,7 +23,7 @@ export default async function PartnerLayout({
     .from("profiles")
     .select("role, full_name")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!profile || profile.role !== "partner") {
     redirect("/unauthorized");
@@ -33,14 +33,19 @@ export default async function PartnerLayout({
     .from("partners")
     .select("partner_code, status, wallet_balance")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  const walletBalance =
+    typeof partner?.wallet_balance === "number"
+      ? partner.wallet_balance
+      : Number(partner?.wallet_balance ?? 0) || 0;
 
   const partnerInfo = partner
     ? {
-        full_name: profile.full_name || null,
-        partner_code: partner.partner_code || null,
-        wallet_balance: partner.wallet_balance || 0,
-        status: partner.status || null,
+        full_name: profile.full_name ?? null,
+        partner_code: partner.partner_code ?? null,
+        wallet_balance: walletBalance,
+        status: partner.status ?? null,
       }
     : null;
 

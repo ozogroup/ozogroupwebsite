@@ -17,10 +17,11 @@ export default async function PartnerDashboardPage() {
     .from("partners" as any)
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const partnerCode = (partner as any)?.partner_code || "N/A";
   const partnerStatus = (partner as any)?.status || "pending";
+  const walletBalance = Number((partner as any)?.wallet_balance ?? 0) || 0;
 
   // Block non-approved partners
   if (partnerStatus !== "active") {
@@ -82,12 +83,14 @@ export default async function PartnerDashboardPage() {
             value={referralLink}
             className="flex-1 px-4 py-2.5 bg-white/20 rounded-lg text-white placeholder-white/70 outline-none border border-white/30"
           />
-          <button
-            onClick={() => navigator.clipboard.writeText(referralLink)}
+          <a
+            href={referralLink}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-6 py-2.5 bg-white text-brand-primary rounded-lg font-semibold hover:bg-white/90 transition-colors"
           >
-            Copy Link
-          </button>
+            Open Link
+          </a>
           <a
             href={whatsappLink}
             target="_blank"
@@ -134,7 +137,7 @@ export default async function PartnerDashboardPage() {
         </div>
         <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
           <p className="text-sm text-brand-muted mb-1">Wallet Balance</p>
-          <p className="text-2xl font-bold text-brand-accent">₹{((partner as any)?.wallet_balance || 0).toLocaleString()}</p>
+          <p className="text-2xl font-bold text-brand-accent">₹{walletBalance.toLocaleString()}</p>
         </div>
       </div>
 

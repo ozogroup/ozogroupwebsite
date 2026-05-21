@@ -26,8 +26,8 @@ export default async function PartnerProfilePage({ searchParams }: { searchParam
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return <div>User not found</div>;
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-  const { data: partner } = await supabase.from("partners" as any).select("partner_code, city, status").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  const { data: partner } = await supabase.from("partners" as any).select("partner_code, city, status").eq("id", user.id).maybeSingle();
   const profileData = profile as any;
   const partnerData = partner as any;
 
