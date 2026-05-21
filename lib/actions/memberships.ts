@@ -166,8 +166,12 @@ export async function approveAndCreatePartner(membershipId: string) {
     }
   } else {
     // Create auth user via admin API using service role client
+    // Must provide an initial password so the user has a password auth method;
+    // otherwise updateUser({password}) in the reset flow silently fails.
+    const initialPassword = crypto.randomUUID() + crypto.randomUUID();
     const { data: newUser, error: createUserError } = await serviceClient.auth.admin.createUser({
       email,
+      password: initialPassword,
       email_confirm: true,
       user_metadata: { full_name: fullName, phone: mobile },
     });

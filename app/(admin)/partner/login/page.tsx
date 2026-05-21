@@ -7,8 +7,9 @@ export const dynamic = 'force-dynamic';
 async function handlePartnerLogin(formData: FormData) {
   "use server";
   
-  const email = formData.get("email") as string;
+  const rawEmail = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const email = rawEmail?.trim().toLowerCase() || "";
 
   if (!email || !password) {
     redirect("/partner/login?error=Email and password are required");
