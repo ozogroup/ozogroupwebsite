@@ -53,7 +53,7 @@ export default async function PartnerDirectTeamPage() {
                 <td className="px-6 py-4 text-sm text-slate-600">{m.city || "—"}</td>
                 <td className="px-6 py-4 text-sm font-mono text-brand-accent">{m.partner_code}</td>
                 <td className="px-6 py-4 text-sm text-slate-600">{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-medium ${m.status === "active" || m.status === "approved" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{m.status}</span></td>
+                <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-medium ${m.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{m.status}</span></td>
               </tr>
             ))}
           </tbody>

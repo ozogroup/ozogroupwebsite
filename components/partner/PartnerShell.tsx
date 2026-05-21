@@ -89,7 +89,7 @@ export default function PartnerShell({ children, partnerInfo }: { children: Reac
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
-                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "approved" || partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
               </div>
             </div>
           )}
@@ -140,7 +140,7 @@ export default function PartnerShell({ children, partnerInfo }: { children: Reac
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
-                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "approved" || partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
               </div>
             </div>
           )}

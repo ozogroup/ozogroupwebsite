@@ -74,7 +74,7 @@ export default function AdminMembershipsPage() {
   function getActivationStatus(m: any): { label: string; color: string } {
     if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
     if (m.partner_id) return { label: "Partner Created", color: "bg-green-100 text-green-700" };
-    if (m.membership_status === "approved" || m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
+    if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
     if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-blue-100 text-blue-700" };
     return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
   }
@@ -187,7 +187,7 @@ export default function AdminMembershipsPage() {
                           </button>
                         </div>
                       )}
-                      {membership.membership_status !== "rejected" && membership.membership_status !== "approved" && !membership.partner_id && (
+                      {membership.membership_status !== "rejected" && membership.membership_status !== "active" && !membership.partner_id && (
                         <button
                           onClick={() => handleReject(membership.id)}
                           disabled={actionLoading === membership.id}

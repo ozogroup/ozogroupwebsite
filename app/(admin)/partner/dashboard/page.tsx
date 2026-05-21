@@ -23,7 +23,7 @@ export default async function PartnerDashboardPage() {
   const partnerStatus = (partner as any)?.status || "pending";
 
   // Block non-approved partners
-  if (partnerStatus !== "approved" && partnerStatus !== "active") {
+  if (partnerStatus !== "active") {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center max-w-md">
@@ -149,7 +149,7 @@ export default async function PartnerDashboardPage() {
           <div>
             <p className="text-sm text-brand-muted mb-1">Membership Status</p>
             <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-              partnerStatus === 'approved' || partnerStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+              partnerStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
             }`}>
               {partnerStatus.toUpperCase()}
             </span>

@@ -136,7 +136,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   }
 
   // 3. Check if already approved
-  if ((membership as any).membership_status === "approved" || (membership as any).membership_status === "active") {
+  if ((membership as any).membership_status === "active") {
     return { error: "Membership is already approved" };
   }
 
@@ -215,7 +215,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     // Ensure status is approved
     await serviceClient
       .from("partners" as any)
-      .update({ status: "approved", updated_at: new Date().toISOString() })
+      .update({ status: "active", updated_at: new Date().toISOString() })
       .eq("id", userId);
   } else {
     // 6. Generate unique partner_code
@@ -242,7 +242,7 @@ export async function approveAndCreatePartner(membershipId: string) {
       partner_code: partnerCode,
       referral_link: referralLink,
       city,
-      status: "approved",
+      status: "active",
       wallet_balance: 0,
       total_earnings: 0,
       paid_earnings: 0,
@@ -259,7 +259,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   const { error: updateError } = await serviceClient
     .from("memberships" as any)
     .update({
-      membership_status: "approved",
+      membership_status: "active",
       partner_id: userId,
       updated_at: new Date().toISOString(),
     })

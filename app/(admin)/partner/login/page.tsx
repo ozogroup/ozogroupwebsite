@@ -94,7 +94,7 @@ async function handlePartnerLogin(formData: FormData) {
     redirect("/partner/login?error=Your partner account has been suspended. Please contact administrator.");
   }
 
-  if (partnerStatus !== "approved" && partnerStatus !== "active") {
+  if (partnerStatus !== "active") {
     await supabase.auth.signOut();
     redirect(`/partner/login?error=Partner account status is "${partnerStatus}". Please contact administrator.`);
   }
