@@ -20,12 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
     title: siteContent.seo_title || "OZO Skin Care | Luxury Korean & Japanese Skincare Treatments",
     description:
       siteContent.seo_description ||
-      "Experience premium skincare treatments at OZO Skin Care. Korean Glass Skin, Japanese purification, and advanced clinical protocols for visible transformation. Doctor-supervised luxury skincare.",
+      "Experience premium skincare treatments at OZO Skin Care. Korean Glass Treatment, Japanese kits, and premium skincare protocols for visible transformation. Doctor-supervised luxury skincare.",
     keywords: siteContent.seo_keywords ? siteContent.seo_keywords.split(",") : [
       "OZO Skin Care",
-      "Korean Glass Skin",
+      "Korean Glass Treatment",
       "Japanese Skincare",
-      "Advanced Skin Treatment",
+      "Advance Kit",
+      "Korean Glass Kit",
       "Luxury Skincare Clinic",
       "Skin Treatment India",
       "Premium Skincare",

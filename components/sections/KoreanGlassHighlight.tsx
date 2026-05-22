@@ -18,7 +18,7 @@ export default function KoreanGlassHighlight() {
               </span>
             </div>
             <h2 className="mt-6">
-              Korean Glass Skin{" "}
+              Korean Glass Treatment{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
                 Treatment
               </span>
@@ -62,7 +62,7 @@ export default function KoreanGlassHighlight() {
             <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-[32px] border border-brand-border/60 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
                 src={GLASS_IMAGE}
-                alt="Korean Glass Skin treatment — luminous dewy radiant skin"
+                alt="Korean Glass Treatment — luminous dewy radiant skin"
                 fill
                 sizes="(max-width: 1024px) 90vw, 600px"
                 className="object-cover"

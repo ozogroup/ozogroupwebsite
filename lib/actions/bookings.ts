@@ -89,6 +89,7 @@ export async function createBooking(payload: CreateBookingPayload) {
     .select("id, title, kit_name, price, price_label, type")
     .eq("slug", treatmentSlug)
     .eq("active", true)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (treatmentError || !treatment) {

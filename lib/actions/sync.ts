@@ -19,36 +19,54 @@ export async function syncWebsiteData() {
   // TREATMENTS
   // ==========================
   try {
-    const { data: existingTreatments } = await supabase
+    const approvedSlugs = siteTreatments.map((t) => t.slug);
+    const approvedSlugFilter = `(${approvedSlugs.map((slug) => `"${slug}"`).join(",")})`;
+
+    await supabase
       .from("treatments" as any)
-      .select("slug");
+      .update({
+        active: false,
+        is_active: false,
+        deleted_at: new Date().toISOString(),
+      })
+      .not("slug", "in", approvedSlugFilter);
 
-    const existingSlugs = new Set((existingTreatments as any[] | null)?.map((t) => t.slug) || []);
-
-    const toInsert = siteTreatments
-      .filter((t) => !existingSlugs.has(t.slug))
+    const toUpsert = siteTreatments
       .map((t) => ({
         title: t.title,
         slug: t.slug,
-        type: t.treatmentType === "home-kit" ? "home_kit" : t.treatmentType === "camp" ? "campaign" : "clinic",
+        type: t.treatmentType === "home-kit" ? "home_kit" : "clinic",
         price: t.price,
+        price_label: t.priceLabel,
+        kit_name: t.title,
+        unit: t.unit,
         tagline: t.tagline || t.subtitle || "",
+        subtitle: t.subtitle || "",
         description: t.description || t.overview || "",
+        overview: t.overview || t.description || "",
         benefits: t.benefits || [],
         duration: t.duration || "",
         sessions: t.sessions || "",
         image: t.image || "",
+        image_alt: t.imageAlt || t.title,
+        badge: t.badge || "",
+        featured: t.treatmentType === "camp" || t.slug === "advance-kit" || t.slug === "korean-glass-kit",
+        cta_text: t.note || "Book Now",
         active: true,
+        is_active: true,
+        deleted_at: null,
         requires_slots: t.treatmentType === "camp",
         available_cities: [],
       }));
 
-    if (toInsert.length > 0) {
-      const { error } = await supabase.from("treatments" as any).insert(toInsert as any);
+    if (toUpsert.length > 0) {
+      const { error } = await supabase
+        .from("treatments" as any)
+        .upsert(toUpsert as any, { onConflict: "slug" });
       if (error) {
         result.errors.push(`Treatments: ${error.message}`);
       } else {
-        result.treatments = toInsert.length;
+        result.treatments = toUpsert.length;
       }
     }
   } catch (e: any) {

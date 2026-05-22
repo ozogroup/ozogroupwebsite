@@ -7,7 +7,7 @@ const HERO_IMAGE =
   "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80";
 
 const defaultHeroPoints = [
-  "Advanced Skin Treatments",
+  "Premium Treatment Kits",
   "Doctor-Supervised Protocols",
   "Premium Clinical Care",
   "Visible Results",

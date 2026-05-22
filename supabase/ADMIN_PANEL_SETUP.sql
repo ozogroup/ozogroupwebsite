@@ -25,15 +25,31 @@ CREATE TABLE IF NOT EXISTS treatments (
   slug VARCHAR(255) UNIQUE NOT NULL,
   type VARCHAR(50) NOT NULL, -- 'home_kit', 'clinic', 'campaign'
   price DECIMAL(10, 2) NOT NULL,
+  price_label TEXT,
+  kit_name TEXT,
+  unit TEXT,
   tagline VARCHAR(255),
+  subtitle TEXT,
   description TEXT,
+  overview TEXT,
   benefits JSONB DEFAULT '[]',
+  process JSONB DEFAULT '[]',
+  who_for JSONB DEFAULT '[]',
+  safety TEXT,
   duration VARCHAR(100),
   sessions VARCHAR(100),
+  badge TEXT,
+  icon TEXT,
+  tone TEXT,
   image TEXT,
+  image_alt TEXT,
   active BOOLEAN DEFAULT true,
+  is_active BOOLEAN DEFAULT true,
+  deleted_at TIMESTAMPTZ,
+  featured BOOLEAN DEFAULT false,
   requires_slots BOOLEAN DEFAULT false,
   available_cities JSONB DEFAULT '[]',
+  cta_text TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -240,7 +256,7 @@ CREATE INDEX IF NOT EXISTS idx_site_content_section ON site_content(section);
 INSERT INTO site_content (section, key_name, value, value_type, display_order) VALUES
 -- Home Hero
 ('home_hero', 'title', 'Transform Your Skin with Korean Beauty Secrets', 'text', 1),
-('home_hero', 'subtitle', 'Advanced Skin Treatments by IA Skin Care', 'text', 2),
+('home_hero', 'subtitle', 'Premium Treatment Kits by IA Skin Care', 'text', 2),
 ('home_hero', 'description', 'Experience the power of Korean glass skin treatments and advanced skincare solutions tailored for your unique beauty needs.', 'text', 3),
 ('home_hero', 'cta_text', 'Book Consultation', 'text', 4),
 ('home_hero', 'cta_link', '/contact', 'text', 5),
@@ -278,13 +294,41 @@ ON CONFLICT (section, key_name) DO NOTHING;
 -- =====================================================
 -- INITIAL TREATMENTS SEED DATA
 -- =====================================================
-INSERT INTO treatments (title, slug, type, price, tagline, description, benefits, duration, sessions, image, active, requires_slots, available_cities) VALUES
-('Korean Glass Skin Treatment', 'korean-glass-skin', 'clinic', 2999, 'Achieve Flawless Glass Skin', 'Advanced Korean facial treatment for flawless, glowing skin', '["Deep pore cleansing", "Intense hydration", "Brightening effect", "Anti-aging benefits"]', '90 minutes', '1 session', null, true, true, '["Mumbai", "Delhi", "Bangalore"]'),
-('Skin Lightening Treatment', 'skin-lightening', 'clinic', 3499, 'Radiant Even-Toned Skin', 'Professional skin lightening treatment for even skin tone', '["Reduces pigmentation", "Evens skin tone", "Brightens complexion", "Safe for all skin types"]', '120 minutes', '1 session', null, true, true, '["Mumbai", "Delhi", "Bangalore", "Pune"]'),
-('Basic Skin Treatment', 'basic-skin-treatment', 'clinic', 1499, 'Essential Skin Care', 'Fundamental skincare treatment for healthy skin', '["Deep cleansing", "Hydration", "Basic exfoliation", "Skin nourishment"]', '60 minutes', '1 session', null, true, false, '["Mumbai", "Delhi", "Bangalore", "Pune", "Hyderabad"]'),
-('Japanese Skin Treatment', 'japanese-skin-treatment', 'clinic', 3999, 'Traditional Japanese Beauty Secrets', 'Experience authentic Japanese skincare rituals', '["Traditional techniques", "Natural ingredients", "Anti-aging", "Deep relaxation"]', '90 minutes', '1 session', null, true, true, '["Mumbai", "Delhi"]'),
-('Advanced Skin Treatment', 'advanced-skin-treatment', 'clinic', 4999, 'Premium Skincare Solution', 'Comprehensive advanced treatment for skin concerns', '["Targets specific concerns", "Medical-grade products", "Advanced technology", "Visible results"]', '120 minutes', '1 session', null, true, true, '["Mumbai", "Delhi", "Bangalore"]')
-ON CONFLICT (slug) DO NOTHING;
+UPDATE treatments
+SET active = false,
+    is_active = false,
+    deleted_at = COALESCE(deleted_at, NOW()),
+    updated_at = NOW()
+WHERE slug NOT IN ('advance-kit', 'japanese-kit', 'korean-glass-kit', 'basic-kit', 'korean-glass-treatment');
+
+INSERT INTO treatments (title, slug, kit_name, type, price, price_label, unit, tagline, subtitle, description, overview, benefits, duration, sessions, image, image_alt, active, featured, requires_slots, available_cities, cta_text) VALUES
+('Advance Kit', 'advance-kit', 'Advance Kit', 'home_kit', 18000, '₹18,000', 'complete kit', 'Advanced Home Kit', 'Advanced Home Kit', 'A premium advanced skincare kit designed for guided home-care transformation.', 'A complete advanced home-care kit with premium clinical-grade products and support.', '["Advanced skin repair", "Pigmentation support", "Premium guided home care", "Visible radiance"]', '4-6 weeks', 'Complete kit program', 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80', 'Advance skincare kit', true, true, false, '["All India"]', 'Book Advance Kit'),
+('Japanese Kit', 'japanese-kit', 'Japanese Kit', 'home_kit', 22000, '₹22,000', 'complete kit', 'Japanese Ritual Kit', 'Japanese Ritual Kit', 'A refined Japanese-inspired skincare kit for calm, clear, porcelain-like radiance.', 'A luxury home-care kit inspired by Japanese skincare rituals and gentle refinement.', '["Texture refinement", "Calm clear skin", "Balanced glow", "Gentle home ritual"]', '4-6 weeks', 'Complete kit program', 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80', 'Japanese skincare kit', true, false, false, '["All India"]', 'Book Japanese Kit'),
+('Korean Glass Kit', 'korean-glass-kit', 'Korean Glass Kit', 'home_kit', 15000, '₹15,000', 'complete kit', 'Glass Glow Home Kit', 'Glass Glow Home Kit', 'A Korean glass-skin inspired home kit for hydrated, luminous, dewy skin.', 'A complete Korean-inspired home-care kit for dewy hydration and everyday radiance.', '["Glass-skin glow", "Hydration support", "Dewy finish", "K-beauty inspired care"]', '4-6 weeks', 'Complete kit program', 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80', 'Korean glass skincare kit', true, true, false, '["All India"]', 'Book Korean Glass Kit'),
+('Basic Kit', 'basic-kit', 'Basic Kit', 'home_kit', 14000, '₹14,000', 'complete kit', 'Essential Skin Kit', 'Essential Skin Kit', 'An essential skincare kit for foundational cleansing, hydration, and glow maintenance.', 'A premium starter kit for healthy skin routines and visible daily freshness.', '["Beginner friendly", "Glow maintenance", "Hydration and cleansing", "All-skin support"]', '4-6 weeks', 'Complete kit program', 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80', 'Basic skincare kit', true, false, false, '["All India"]', 'Book Basic Kit'),
+('Korean Glass Treatment', 'korean-glass-treatment', 'Korean Glass Treatment', 'clinic', 25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience', 'Premium Clinical Glow Experience', 'A premium Korean glass-skin clinical treatment for luminous, dewy, event-ready radiance.', 'A doctor-supervised premium protocol focused on hydration, refinement, and the signature glass-skin finish.', '["Deep hydration glow", "Glass skin finish", "Skin texture refinement", "Premium clinical care"]', '75-90 min', 'Event-based sessions', 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80', 'Korean Glass Treatment', true, true, true, '["Mumbai", "Delhi", "Bangalore", "Ahmedabad"]', 'Book Korean Glass Treatment')
+ON CONFLICT (slug) DO UPDATE SET
+  title = EXCLUDED.title,
+  kit_name = EXCLUDED.kit_name,
+  type = EXCLUDED.type,
+  price = EXCLUDED.price,
+  price_label = EXCLUDED.price_label,
+  unit = EXCLUDED.unit,
+  tagline = EXCLUDED.tagline,
+  subtitle = EXCLUDED.subtitle,
+  description = EXCLUDED.description,
+  overview = EXCLUDED.overview,
+  benefits = EXCLUDED.benefits,
+  duration = EXCLUDED.duration,
+  sessions = EXCLUDED.sessions,
+  image = EXCLUDED.image,
+  image_alt = EXCLUDED.image_alt,
+  active = TRUE,
+  featured = EXCLUDED.featured,
+  requires_slots = EXCLUDED.requires_slots,
+  available_cities = EXCLUDED.available_cities,
+  cta_text = EXCLUDED.cta_text,
+  updated_at = NOW();
 
 -- =====================================================
 -- INITIAL CONTACT SETTINGS SEED DATA

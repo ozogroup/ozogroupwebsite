@@ -14,6 +14,14 @@ ALTER TABLE treatments ADD COLUMN IF NOT EXISTS process JSONB DEFAULT '[]'::json
 ALTER TABLE treatments ADD COLUMN IF NOT EXISTS who_for JSONB DEFAULT '[]'::jsonb;
 ALTER TABLE treatments ADD COLUMN IF NOT EXISTS icon TEXT;
 
+ALTER TABLE treatments
+  ALTER COLUMN who_for TYPE JSONB
+  USING CASE
+    WHEN who_for IS NULL OR btrim(who_for::text) = '' THEN '[]'::jsonb
+    WHEN left(btrim(who_for::text), 1) IN ('[', '{') THEN who_for::jsonb
+    ELSE to_jsonb(ARRAY[who_for::text])
+  END;
+
 CREATE INDEX IF NOT EXISTS idx_treatments_featured ON treatments(featured) WHERE active = TRUE AND is_active = TRUE;
 CREATE INDEX IF NOT EXISTS idx_treatments_kit_name ON treatments(kit_name);
 
@@ -129,6 +137,19 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET public = FALSE;
 
 -- Seed requested treatment/kit catalog. Existing rows are updated by slug.
+UPDATE treatments
+SET active = FALSE,
+    is_active = FALSE,
+    deleted_at = COALESCE(deleted_at, NOW()),
+    updated_at = NOW()
+WHERE slug NOT IN (
+  'advance-kit',
+  'japanese-kit',
+  'korean-glass-kit',
+  'basic-kit',
+  'korean-glass-treatment'
+);
+
 INSERT INTO treatments (
   slug, title, kit_name, type, treatment_type, price, price_label, unit, tagline,
   description, overview, benefits, process, who_for, duration, sessions, badge,

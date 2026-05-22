@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBooking } from "@/lib/actions/bookings";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { site } from "@/lib/site";
+import { treatmentKitCatalog } from "@/lib/treatments/catalog";
 import { useBooking } from "./BookingContext";
 
 type FormState = {
@@ -42,13 +43,14 @@ const initial: FormState = {
   message: "",
 };
 
-const defaultBookingTreatments: TreatmentOption[] = [
-  { slug: "advance-kit", title: "Advance Kit", kitName: "Advance Kit", price: 18000, priceLabel: "₹18,000", unit: "complete kit" },
-  { slug: "japanese-kit", title: "Japanese Kit", kitName: "Japanese Kit", price: 22000, priceLabel: "₹22,000", unit: "complete kit" },
-  { slug: "korean-glass-kit", title: "Korean Glass Kit", kitName: "Korean Glass Kit", price: 15000, priceLabel: "₹15,000", unit: "complete kit" },
-  { slug: "basic-kit", title: "Basic Kit", kitName: "Basic Kit", price: 14000, priceLabel: "₹14,000", unit: "complete kit" },
-  { slug: "korean-glass-treatment", title: "Korean Glass Treatment", kitName: "Korean Glass Treatment", price: 25000, priceLabel: "₹25,000", unit: "per session" },
-];
+const defaultBookingTreatments: TreatmentOption[] = treatmentKitCatalog.map((treatment) => ({
+  slug: treatment.slug,
+  title: treatment.title,
+  kitName: treatment.kitName,
+  price: treatment.price,
+  priceLabel: treatment.priceLabel,
+  unit: treatment.unit,
+}));
 
 export default function BookingModal() {
   const { isOpen, treatmentSlug, close } = useBooking();
@@ -95,6 +97,7 @@ export default function BookingModal() {
           .from("treatments" as any)
           .select("slug,title,kit_name,price,price_label,unit")
           .eq("active", true)
+          .is("deleted_at", null)
           .order("featured", { ascending: false })
           .order("created_at", { ascending: false });
 

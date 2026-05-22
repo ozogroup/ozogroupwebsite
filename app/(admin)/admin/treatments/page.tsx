@@ -57,7 +57,11 @@ export default function AdminTreatmentsPage() {
 
   async function loadTreatments() {
     setLoading(true);
-    const { data, error } = await supabase.from("treatments" as any).select("*");
+    const { data, error } = await supabase
+      .from("treatments" as any)
+      .select("*")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
     if (error) {
       console.error("Error loading treatments:", error);
       setTreatments([]);
