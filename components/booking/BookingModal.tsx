@@ -105,8 +105,12 @@ export default function BookingModal() {
           .order("created_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
+          const sorted = [...data].sort(
+            (a: any, b: any) =>
+              treatmentKitSlugs.indexOf(a.slug) - treatmentKitSlugs.indexOf(b.slug)
+          );
           setAvailableTreatments(
-            data.map((t: any) => ({
+            sorted.map((t: any) => ({
               slug: t.slug,
               title: t.title,
               kitName: t.kit_name || t.title,

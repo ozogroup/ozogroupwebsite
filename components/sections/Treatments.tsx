@@ -1,10 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
-import { getPublicTreatments } from "@/lib/data/public";
+import { getPublicSiteContent, getPublicTreatments } from "@/lib/data/public";
 
 export default async function Treatments() {
-  const treatments = await getPublicTreatments();
+  const [treatments, siteContent] = await Promise.all([
+    getPublicTreatments(),
+    getPublicSiteContent("home_treatment"),
+  ]);
+  const heading = siteContent.treatment_heading || siteContent.heading || "Advanced Skincare Solutions";
+  const subtitle =
+    siteContent.treatment_description ||
+    siteContent.treatment_subtitle ||
+    siteContent.subtitle ||
+    "Choose between premium home treatment programs or exclusive clinical experiences designed for visible, lasting results.";
 
   return (
     <section className="section">
@@ -16,10 +25,9 @@ export default async function Treatments() {
               Premium Treatments
             </span>
           </div>
-          <h2 className="mt-6">Advanced Skincare Solutions</h2>
+          <h2 className="mt-6">{heading}</h2>
           <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            Choose between premium home treatment programs or exclusive clinical experiences 
-            designed for visible, lasting results.
+            {subtitle}
           </p>
         </div>
 

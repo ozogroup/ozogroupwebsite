@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
 
 export async function getTreatments() {
   const supabase = getSupabaseServerClient();
@@ -169,4 +171,75 @@ export async function toggleTreatmentActive(id: string, active: boolean) {
 
   revalidatePath("/admin/treatments");
   return { success: true };
+}
+
+export async function ensureFinalTreatmentCatalog() {
+  "use server";
+
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+  const approvedSlugFilter = `(${treatmentKitSlugs.map((slug) => `"${slug}"`).join(",")})`;
+
+  const { error: deactivateError } = await supabase
+    .from("treatments" as any)
+    .update({
+      active: false,
+      is_active: false,
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .not("slug", "in", approvedSlugFilter);
+
+  if (deactivateError) {
+    console.error("Error deactivating old treatments:", deactivateError);
+    return { error: "Unable to prepare treatment catalog." };
+  }
+
+  const rows = treatmentKitCatalog.map((treatment) => ({
+    slug: treatment.slug,
+    title: treatment.title,
+    kit_name: treatment.kitName,
+    type: treatment.type,
+    treatment_type: treatment.treatmentType,
+    price: treatment.price,
+    price_label: treatment.priceLabel,
+    unit: treatment.unit,
+    tagline: treatment.tagline,
+    subtitle: treatment.subtitle,
+    description: treatment.description,
+    overview: treatment.overview,
+    benefits: treatment.benefits,
+    process: treatment.process,
+    safety: treatment.safety,
+    duration: treatment.duration,
+    sessions: treatment.sessions,
+    badge: treatment.badge,
+    icon: treatment.icon,
+    tone: treatment.tone,
+    image: treatment.image,
+    image_alt: treatment.imageAlt,
+    cta_text: treatment.note,
+    active: true,
+    is_active: true,
+    featured: treatment.featured,
+    requires_slots: treatment.requiresSlots,
+    available_cities: treatment.availableCities,
+    deleted_at: null,
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase
+    .from("treatments" as any)
+    .upsert(rows as any, { onConflict: "slug" });
+
+  if (error) {
+    console.error("Error seeding final treatments:", error);
+    return { error: "Unable to sync final treatments. Please apply the treatment SQL migration first." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/treatments");
+  revalidatePath("/admin/treatments");
+  revalidatePath("/admin/dashboard");
+  return { success: true, count: rows.length };
 }

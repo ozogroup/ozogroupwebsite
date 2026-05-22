@@ -18,6 +18,14 @@ function normalizePublicTreatmentName(name?: string | null) {
   return approved.has(value) ? value : "Advance Kit";
 }
 
+function normalizeWhatsapp(value?: string | null) {
+  const raw = (value || "").trim();
+  if (!raw) return staticSite.whatsapp;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : staticSite.whatsapp;
+}
+
 /**
  * Fetch treatments from Supabase with fallback to the requested kit catalog.
  */
@@ -37,8 +45,12 @@ export async function getPublicTreatments() {
       return defaultTreatmentCatalog;
     }
 
+    const sorted = [...data].sort(
+      (a: any, b: any) => treatmentKitSlugs.indexOf(a.slug) - treatmentKitSlugs.indexOf(b.slug)
+    );
+
     // Transform Supabase data to match Treatment type
-    return data.map((t: any) => ({
+    return sorted.map((t: any) => ({
       slug: t.slug,
       title: t.title,
       kitName: t.kit_name || t.title,
@@ -168,20 +180,42 @@ export async function getPublicSiteContent(section?: string) {
 export async function getPublicContactSettings() {
   try {
     const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
-      .from("contact_settings" as any)
-      .select("*")
-      .single();
+    const [{ data, error }, { data: contentRows }] = await Promise.all([
+      supabase.from("contact_settings" as any).select("*").single(),
+      supabase
+        .from("site_content" as any)
+        .select("*")
+        .in("section", ["contact", "footer"]),
+    ]);
+
+    const content: Record<string, string> = {};
+    (contentRows || []).forEach((item: any) => {
+      content[item.content_key || item.key_name] = item.value || "";
+    });
 
     if (error || !data) {
       console.log("Using static contact data (fallback)");
-      return staticSite;
+      return {
+        ...staticSite,
+        phone: content.phone || staticSite.phone,
+        phoneRaw: (content.phone || staticSite.phone).replace(/\s/g, ""),
+        whatsapp: normalizeWhatsapp(content.whatsapp || staticSite.whatsapp),
+        email: content.email || "",
+        address: content.address || "",
+        footerText: content.footer_text || "",
+      };
     }
 
+    const phone = content.phone || (data as any).phone || staticSite.phone;
+    const whatsapp = normalizeWhatsapp(content.whatsapp || (data as any).whatsapp || staticSite.whatsapp);
+
     return {
-      phone: (data as any).phone,
-      phoneRaw: ((data as any).phone || "").replace(/\s/g, ""),
-      whatsapp: (data as any).whatsapp,
+      phone,
+      phoneRaw: phone.replace(/\s/g, ""),
+      whatsapp,
+      email: content.email || (data as any).email || "",
+      address: content.address || (data as any).address || "",
+      footerText: content.footer_text || "",
       instagram: (data as any).instagram_url,
     };
   } catch (error) {

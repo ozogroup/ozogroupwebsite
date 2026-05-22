@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
+import { getPublicSiteContent } from "@/lib/data/public";
 
 export const metadata: Metadata = {
   title: "About OZO Skin Care · Premium Luxury Skincare",
@@ -10,7 +11,23 @@ export const metadata: Metadata = {
 const ABOUT_IMAGE =
   "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const siteContent = await getPublicSiteContent("about");
+  const aboutTitle = siteContent.about_title || siteContent.title || "Premium Skincare, Redefined";
+  const aboutContent =
+    siteContent.about_description ||
+    siteContent.description ||
+    `${site.brand} is a premium skincare division of ${site.parent}, offering advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions.`;
+  const mission =
+    siteContent.about_mission ||
+    siteContent.mission ||
+    "We believe that everyone deserves access to premium skincare that delivers visible, lasting results. Our mission is to make advanced clinical treatments accessible, safe, and effective for all skin types.";
+  const vision =
+    siteContent.about_vision ||
+    siteContent.vision ||
+    "To become India's most trusted skincare destination, known for visible results, ethical practices, and customer-centric care.";
+  const aboutImage = siteContent.about_image || siteContent.image || ABOUT_IMAGE;
+
   return (
     <>
       {/* Hero Section */}
@@ -31,16 +48,9 @@ export default function AboutPage() {
                   About Us
                 </span>
               </div>
-              <h1 className="mt-6">
-                Premium Skincare,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-                  Redefined
-                </span>
-              </h1>
+              <h1 className="mt-6">{aboutTitle}</h1>
               <p className="mt-4 text-lg text-brand-muted max-w-2xl leading-relaxed">
-                {site.brand} is a premium skincare division of {site.parent}, offering 
-                advanced clinical treatments with visible, lasting results inspired by 
-                Korean and Japanese beauty traditions.
+                {aboutContent}
               </p>
             </div>
           </div>
@@ -51,7 +61,7 @@ export default function AboutPage() {
           <div className="container-x">
             <div className="relative aspect-[16/9] w-full max-w-5xl mx-auto rounded-[32px] border border-brand-border/60 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
-                src={ABOUT_IMAGE}
+                src={aboutImage}
                 alt="Premium skincare treatment at OZO Skin Care"
                 fill
                 sizes="(max-width: 1024px) 100vw, 1200px"
@@ -82,9 +92,23 @@ export default function AboutPage() {
                 </span>
               </h2>
               <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-                We believe that everyone deserves access to premium skincare that delivers 
-                visible, lasting results. Our mission is to make advanced clinical treatments 
-                accessible, safe, and effective for all skin types.
+                {mission}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="section">
+          <div className="container-x">
+            <div className="max-w-3xl text-center mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
+                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+                  Our Vision
+                </span>
+              </div>
+              <p className="mt-6 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+                {vision}
               </p>
             </div>
           </div>

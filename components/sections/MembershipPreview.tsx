@@ -1,6 +1,17 @@
 import Link from "next/link";
+import { getPublicSiteContent } from "@/lib/data/public";
 
-export default function MembershipPreview() {
+export default async function MembershipPreview() {
+  const siteContent = await getPublicSiteContent("home_membership");
+  const heading = siteContent.membership_heading || siteContent.heading || "Become a Premium Referral Partner";
+  const description =
+    siteContent.membership_description ||
+    siteContent.description ||
+    siteContent.subtitle ||
+    "Experience premium skincare while unlocking an optional earning opportunity through treatment referrals and partner rewards.";
+  const ctaText = siteContent.membership_cta_text || siteContent.cta_text || "Book Membership Now";
+  const ctaLink = siteContent.membership_cta_link || siteContent.cta_link || "/membership";
+
   return (
     <section className="section bg-gradient-to-b from-white to-brand-surface/50">
       <div className="container-x">
@@ -11,15 +22,9 @@ export default function MembershipPreview() {
               Premium Partner Program
             </span>
           </div>
-          <h2 className="mt-6">
-            Become a{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-              Premium Referral Partner
-            </span>
-          </h2>
+          <h2 className="mt-6">{heading}</h2>
           <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            Experience premium skincare while unlocking an optional earning opportunity 
-            through treatment referrals and partner rewards.
+            {description}
           </p>
         </div>
 
@@ -39,10 +44,10 @@ export default function MembershipPreview() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/membership"
+                    href={ctaLink}
                     className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-6 py-3 text-sm font-semibold hover:bg-brand-surface transition-colors"
                   >
-                    Book Membership Now
+                    {ctaText}
                   </Link>
                   <Link
                     href="/referral"
