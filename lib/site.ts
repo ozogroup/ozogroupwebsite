@@ -1,4 +1,4 @@
-import { treatmentKitCatalog } from "@/lib/treatments/catalog";
+﻿import { treatmentKitCatalog } from "@/lib/treatments/catalog";
 import type {
   Treatment,
   ReferralLevel,
@@ -98,7 +98,7 @@ export const testimonials: Testimonial[] = [
   {
     name: "Priya S.",
     city: "Ahmedabad",
-    treatment: "Korean Glass Treatment",
+    treatment: "Korean Glass Treatment Campaign",
     quote:
       "My skin has never looked this smooth. The team is professional and the results showed from the second session itself.",
     rating: 5,
@@ -147,3 +147,4 @@ export const faqs: FAQItem[] = [
     a: "No. Treatments are open to everyone. Membership is only for people who want to earn commission by referring others.",
   },
 ];
+

@@ -1,6 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { testimonials as staticTestimonials, faqs as staticFaqs, site as staticSite, referralLevels as staticReferralLevels, salesBonuses as staticSalesBonuses } from "@/lib/site";
-import { treatmentKitCatalog } from "@/lib/treatments/catalog";
+import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
 
 // ============================================================================
 // PUBLIC DATA FETCHING WITH FALLBACK
@@ -23,6 +23,7 @@ export async function getPublicTreatments() {
       .select("*")
       .eq("active", true)
       .is("deleted_at", null)
+      .in("slug", treatmentKitSlugs as unknown as string[])
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {

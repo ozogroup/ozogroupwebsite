@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 
 type Treatment = {
   id: string;
@@ -61,6 +62,7 @@ export default function AdminTreatmentsPage() {
       .from("treatments" as any)
       .select("*")
       .is("deleted_at", null)
+      .in("slug", treatmentKitSlugs as unknown as string[])
       .order("created_at", { ascending: false });
     if (error) {
       console.error("Error loading treatments:", error);

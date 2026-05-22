@@ -11,9 +11,9 @@ export const treatmentKitCatalog = [
     tagline: "Advanced Home Kit",
     subtitle: "Advanced Home Kit",
     description:
-      "A premium advanced skincare kit designed for guided home-care transformation.",
+      "Advanced skincare kit designed for enhanced glow and visible skin improvement.",
     overview:
-      "A complete advanced home-care kit with premium clinical-grade products and support.",
+      "Advanced skincare kit designed for enhanced glow and visible skin improvement.",
     benefits: [
       "Advanced skin repair",
       "Pigmentation support",
@@ -50,9 +50,9 @@ export const treatmentKitCatalog = [
     tagline: "Japanese Ritual Kit",
     subtitle: "Japanese Ritual Kit",
     description:
-      "A refined Japanese-inspired skincare kit for calm, clear, porcelain-like radiance.",
+      "Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.",
     overview:
-      "A luxury home-care kit inspired by Japanese skincare rituals and gentle refinement.",
+      "Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.",
     benefits: [
       "Texture refinement",
       "Calm clear skin",
@@ -89,9 +89,9 @@ export const treatmentKitCatalog = [
     tagline: "Glass Glow Home Kit",
     subtitle: "Glass Glow Home Kit",
     description:
-      "A Korean glass-skin inspired home kit for hydrated, luminous, dewy skin.",
+      "Kit-based Korean glass skin care option for a fresh, radiant look.",
     overview:
-      "A complete Korean-inspired home-care kit for dewy hydration and everyday radiance.",
+      "Kit-based Korean glass skin care option for a fresh, radiant look.",
     benefits: [
       "Glass-skin glow",
       "Hydration support",
@@ -128,9 +128,9 @@ export const treatmentKitCatalog = [
     tagline: "Essential Skin Kit",
     subtitle: "Essential Skin Kit",
     description:
-      "An essential skincare kit for foundational cleansing, hydration, and glow maintenance.",
+      "Essential skincare kit for regular care and beginner-level treatment support.",
     overview:
-      "A premium starter kit for healthy skin routines and visible daily freshness.",
+      "Essential skincare kit for regular care and beginner-level treatment support.",
     benefits: [
       "Beginner friendly",
       "Glow maintenance",
@@ -157,19 +157,19 @@ export const treatmentKitCatalog = [
   },
   {
     slug: "korean-glass-treatment",
-    title: "Korean Glass Treatment",
-    kitName: "Korean Glass Treatment",
+    title: "Korean Glass Treatment Campaign",
+    kitName: "Korean Glass Treatment Campaign",
     price: 25000,
     priceLabel: "₹25,000",
     unit: "per session",
-    type: "clinic",
+    type: "campaign",
     treatmentType: "camp",
     tagline: "Premium Clinical Glow Experience",
     subtitle: "Premium Clinical Glow Experience",
     description:
-      "A premium Korean glass-skin clinical treatment for luminous, dewy, event-ready radiance.",
+      "Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.",
     overview:
-      "A doctor-supervised premium protocol focused on hydration, refinement, and the signature glass-skin finish.",
+      "Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.",
     benefits: [
       "Deep hydration glow",
       "Glass skin finish",
@@ -187,9 +187,9 @@ export const treatmentKitCatalog = [
     tone: "accent",
     image:
       "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Korean Glass Treatment",
-    note: "Clinic and campaign-based premium experience.",
-    ctaText: "Book Korean Glass Treatment",
+    imageAlt: "Korean Glass Treatment Campaign",
+    note: "Our team will contact you on WhatsApp for campaign location and schedule.",
+    ctaText: "Enquire Now",
     featured: true,
     requiresSlots: true,
     availableCities: ["Mumbai", "Delhi", "Bangalore", "Ahmedabad"],

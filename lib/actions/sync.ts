@@ -35,7 +35,7 @@ export async function syncWebsiteData() {
       .map((t) => ({
         title: t.title,
         slug: t.slug,
-        type: t.treatmentType === "home-kit" ? "home_kit" : "clinic",
+        type: t.treatmentType === "home-kit" ? "home_kit" : t.treatmentType === "camp" ? "campaign" : "clinic",
         price: t.price,
         price_label: t.priceLabel,
         kit_name: t.title,

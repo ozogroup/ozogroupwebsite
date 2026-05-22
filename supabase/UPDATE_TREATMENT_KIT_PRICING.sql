@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- OZO Service - Exact Treatment / Kit Pricing Update
 -- ============================================================================
 -- Run this in the Supabase SQL Editor for production.
@@ -55,8 +55,8 @@ VALUES
   (
     'advance-kit', 'Advance Kit', 'Advance Kit', 'home_kit', 'home-kit',
     18000, '₹18,000', 'complete kit', 'Advanced Home Kit', 'Advanced Home Kit',
-    'A premium advanced skincare kit designed for guided home-care transformation.',
-    'A complete advanced home-care kit with premium clinical-grade products and support.',
+    'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
+    'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
     '["Advanced skin repair","Pigmentation support","Premium guided home care","Visible radiance"]'::jsonb,
     '[]'::jsonb,
     '["Advanced home-care clients","Pigmentation and repair focused users"]'::jsonb,
@@ -69,8 +69,8 @@ VALUES
   (
     'japanese-kit', 'Japanese Kit', 'Japanese Kit', 'home_kit', 'home-kit',
     22000, '₹22,000', 'complete kit', 'Japanese Ritual Kit', 'Japanese Ritual Kit',
-    'A refined Japanese-inspired skincare kit for calm, clear, porcelain-like radiance.',
-    'A luxury home-care kit inspired by Japanese skincare rituals and gentle refinement.',
+    'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
+    'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
     '["Texture refinement","Calm clear skin","Balanced glow","Gentle home ritual"]'::jsonb,
     '[]'::jsonb,
     '["Sensitive skin","Texture refinement","Refined glow seekers"]'::jsonb,
@@ -83,8 +83,8 @@ VALUES
   (
     'korean-glass-kit', 'Korean Glass Kit', 'Korean Glass Kit', 'home_kit', 'home-kit',
     15000, '₹15,000', 'complete kit', 'Glass Glow Home Kit', 'Glass Glow Home Kit',
-    'A Korean glass-skin inspired home kit for hydrated, luminous, dewy skin.',
-    'A complete Korean-inspired home-care kit for dewy hydration and everyday radiance.',
+    'Kit-based Korean glass skin care option for a fresh, radiant look.',
+    'Kit-based Korean glass skin care option for a fresh, radiant look.',
     '["Glass-skin glow","Hydration support","Dewy finish","K-beauty inspired care"]'::jsonb,
     '[]'::jsonb,
     '["Dull skin","Hydration seekers","K-beauty glow lovers"]'::jsonb,
@@ -97,8 +97,8 @@ VALUES
   (
     'basic-kit', 'Basic Kit', 'Basic Kit', 'home_kit', 'home-kit',
     14000, '₹14,000', 'complete kit', 'Essential Skin Kit', 'Essential Skin Kit',
-    'An essential skincare kit for foundational cleansing, hydration, and glow maintenance.',
-    'A premium starter kit for healthy skin routines and visible daily freshness.',
+    'Essential skincare kit for regular care and beginner-level treatment support.',
+    'Essential skincare kit for regular care and beginner-level treatment support.',
     '["Beginner friendly","Glow maintenance","Hydration and cleansing","All-skin support"]'::jsonb,
     '[]'::jsonb,
     '["First-time skincare clients","Maintenance care","All skin types"]'::jsonb,
@@ -109,18 +109,18 @@ VALUES
     '["All India"]'::jsonb, 'Book Basic Kit', NOW()
   ),
   (
-    'korean-glass-treatment', 'Korean Glass Treatment', 'Korean Glass Treatment', 'clinic', 'camp',
+    'korean-glass-treatment', 'Korean Glass Treatment Campaign', 'Korean Glass Treatment Campaign', 'campaign', 'camp',
     25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience', 'Premium Clinical Glow Experience',
-    'A premium Korean glass-skin clinical treatment for luminous, dewy, event-ready radiance.',
-    'A doctor-supervised premium protocol focused on hydration, refinement, and the signature glass-skin finish.',
+    'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
+    'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
     '["Deep hydration glow","Glass skin finish","Skin texture refinement","Premium clinical care"]'::jsonb,
     '[]'::jsonb,
     '["Pre-event glow seekers","Dry or dull skin","Premium clinical care clients"]'::jsonb,
     'Doctor-supervised and delivered in premium clinical settings.',
     '75-90 min', 'Event-based sessions', 'Premium', 'sparkle', 'accent',
     'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
-    'Korean Glass Treatment', true, true, null, true, true,
-    '["Mumbai","Delhi","Bangalore","Ahmedabad"]'::jsonb, 'Book Korean Glass Treatment', NOW()
+    'Korean Glass Treatment Campaign', true, true, null, true, true,
+    '["Mumbai","Delhi","Bangalore","Ahmedabad"]'::jsonb, 'Enquire Now', NOW()
   )
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
@@ -153,3 +153,6 @@ ON CONFLICT (slug) DO UPDATE SET
   available_cities = EXCLUDED.available_cities,
   cta_text = EXCLUDED.cta_text,
   updated_at = NOW();
+
+
+

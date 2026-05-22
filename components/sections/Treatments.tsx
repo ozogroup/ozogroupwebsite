@@ -89,21 +89,12 @@ export default async function Treatments() {
                   )}
 
                   <div className="flex flex-col sm:flex-row gap-3">
-                    {treatment.treatmentType === "home-kit" ? (
-                      <Link
-                        href={`/treatments/${treatment.slug}`}
-                        className="btn-primary justify-center text-sm"
-                      >
-                        Book Home Kit Program
-                      </Link>
-                    ) : (
-                      <a
-                        href="#consultation"
-                        className="btn-primary justify-center text-sm"
-                      >
-                        Book Consultation
-                      </a>
-                    )}
+                    <BookNowButton
+                      treatmentSlug={treatment.slug}
+                      className="justify-center text-sm"
+                    >
+                      {treatment.treatmentType === "camp" ? "Enquire Now" : "Book Now"}
+                    </BookNowButton>
                     <Link
                       href={`/treatments/${treatment.slug}`}
                       className="btn-secondary justify-center text-sm"

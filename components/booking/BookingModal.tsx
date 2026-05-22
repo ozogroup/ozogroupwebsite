@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBooking } from "@/lib/actions/bookings";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { site } from "@/lib/site";
-import { treatmentKitCatalog } from "@/lib/treatments/catalog";
+import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
 import { useBooking } from "./BookingContext";
 
 type FormState = {
@@ -28,6 +28,8 @@ type TreatmentOption = {
   price: number;
   priceLabel: string;
   unit?: string;
+  treatmentType?: string;
+  note?: string;
 };
 
 const initial: FormState = {
@@ -50,6 +52,8 @@ const defaultBookingTreatments: TreatmentOption[] = treatmentKitCatalog.map((tre
   price: treatment.price,
   priceLabel: treatment.priceLabel,
   unit: treatment.unit,
+  treatmentType: treatment.treatmentType,
+  note: treatment.note,
 }));
 
 export default function BookingModal() {
@@ -95,9 +99,10 @@ export default function BookingModal() {
         const supabase = getSupabaseBrowserClient();
         const { data, error } = await supabase
           .from("treatments" as any)
-          .select("slug,title,kit_name,price,price_label,unit")
+          .select("slug,title,kit_name,price,price_label,unit,treatment_type,cta_text")
           .eq("active", true)
           .is("deleted_at", null)
+          .in("slug", treatmentKitSlugs as unknown as string[])
           .order("featured", { ascending: false })
           .order("created_at", { ascending: false });
 
@@ -111,6 +116,8 @@ export default function BookingModal() {
               priceLabel:
                 t.price_label || `₹${Number(t.price || 0).toLocaleString("en-IN")}`,
               unit: t.unit || "",
+              treatmentType: t.treatment_type || "",
+              note: t.cta_text || "",
             }))
           );
         }
@@ -352,6 +359,12 @@ export default function BookingModal() {
               <span className="text-xs font-semibold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 px-4 py-2 rounded-full text-center">
                 Payment link sent after confirmation
               </span>
+            </div>
+          )}
+
+          {selected?.slug === "korean-glass-treatment" && (
+            <div className="rounded-2xl border border-brand-accent/20 bg-brand-accent/10 px-4 py-3 text-sm font-medium text-brand-ink">
+              Our team will contact you on WhatsApp for campaign location and schedule.
             </div>
           )}
 

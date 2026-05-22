@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- OZO / IA Skin Care - Seed Current Website Data into Supabase
 -- ============================================================================
 -- This script seeds the hardcoded website data from lib/site.ts into Supabase
@@ -32,8 +32,8 @@ INSERT INTO treatments (
 ) VALUES
 (
   'Advance Kit', 'advance-kit', 'Advance Kit', 'Advanced Home Kit',
-  'A premium advanced skincare kit designed for guided home-care transformation.',
-  'A complete advanced home-care kit with premium clinical-grade products and support.',
+  'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
+  'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
   18000, '₹18,000', 'complete kit', 'Advanced Home Kit', 'home_kit', 'home-kit',
   'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80',
   'Advance skincare kit', '4-6 weeks', 'Complete kit program', 'Premium Kit', 'award', 'primaryDark', true, true, false,
@@ -45,8 +45,8 @@ INSERT INTO treatments (
 ),
 (
   'Japanese Kit', 'japanese-kit', 'Japanese Kit', 'Japanese Ritual Kit',
-  'A refined Japanese-inspired skincare kit for calm, clear, porcelain-like radiance.',
-  'A luxury home-care kit inspired by Japanese skincare rituals and gentle refinement.',
+  'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
+  'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
   22000, '₹22,000', 'complete kit', 'Japanese Ritual Kit', 'home_kit', 'home-kit',
   'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80',
   'Japanese skincare kit', '4-6 weeks', 'Complete kit program', 'Japanese Care', 'sparkle', 'light', true, false, false,
@@ -58,8 +58,8 @@ INSERT INTO treatments (
 ),
 (
   'Korean Glass Kit', 'korean-glass-kit', 'Korean Glass Kit', 'Glass Glow Home Kit',
-  'A Korean glass-skin inspired home kit for hydrated, luminous, dewy skin.',
-  'A complete Korean-inspired home-care kit for dewy hydration and everyday radiance.',
+  'Kit-based Korean glass skin care option for a fresh, radiant look.',
+  'Kit-based Korean glass skin care option for a fresh, radiant look.',
   15000, '₹15,000', 'complete kit', 'Glass Glow Home Kit', 'home_kit', 'home-kit',
   'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
   'Korean glass skincare kit', '4-6 weeks', 'Complete kit program', 'Glass Kit', 'sparkle', 'accent', true, true, false,
@@ -71,8 +71,8 @@ INSERT INTO treatments (
 ),
 (
   'Basic Kit', 'basic-kit', 'Basic Kit', 'Essential Skin Kit',
-  'An essential skincare kit for foundational cleansing, hydration, and glow maintenance.',
-  'A premium starter kit for healthy skin routines and visible daily freshness.',
+  'Essential skincare kit for regular care and beginner-level treatment support.',
+  'Essential skincare kit for regular care and beginner-level treatment support.',
   14000, '₹14,000', 'complete kit', 'Essential Skin Kit', 'home_kit', 'home-kit',
   'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80',
   'Basic skincare kit', '4-6 weeks', 'Complete kit program', 'Essential', 'droplet', 'primary', true, false, false,
@@ -83,17 +83,17 @@ INSERT INTO treatments (
   'Book Basic Kit', NOW(), NOW()
 ),
 (
-  'Korean Glass Treatment', 'korean-glass-treatment', 'Korean Glass Treatment', 'Premium Clinical Glow Experience',
-  'A premium Korean glass-skin clinical treatment for luminous, dewy, event-ready radiance.',
-  'A doctor-supervised premium protocol focused on hydration, refinement, and the signature glass-skin finish.',
-  25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience', 'clinic', 'camp',
+  'Korean Glass Treatment Campaign', 'korean-glass-treatment', 'Korean Glass Treatment Campaign', 'Premium Clinical Glow Experience',
+  'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
+  'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
+  25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience', 'campaign', 'camp',
   'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
-  'Korean Glass Treatment', '75-90 min', 'Event-based sessions', 'Premium', 'sparkle', 'accent', true, true, true,
+  'Korean Glass Treatment Campaign', '75-90 min', 'Event-based sessions', 'Premium', 'sparkle', 'accent', true, true, true,
   to_jsonb(ARRAY['Deep hydration glow', 'Glass skin finish', 'Skin texture refinement', 'Premium clinical care']::text[]),
   '[]'::jsonb,
   to_jsonb(ARRAY['Pre-event glow seekers', 'Dry or dull skin', 'Premium clinical care clients']::text[]),
   'Doctor-supervised and delivered in premium clinical settings.', '[]'::jsonb, to_jsonb(ARRAY['Mumbai', 'Delhi', 'Bangalore', 'Ahmedabad']::text[]),
-  'Book Korean Glass Treatment', NOW(), NOW()
+  'Enquire Now', NOW(), NOW()
 )
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
@@ -138,7 +138,7 @@ INSERT INTO testimonials (
 (
   'Priya S.',
   'Ahmedabad',
-  'Korean Glass Treatment',
+  'Korean Glass Treatment Campaign',
   'My skin has never looked this smooth. The team is professional and the results showed from the second session itself.',
   5,
   true,
@@ -178,7 +178,7 @@ INSERT INTO testimonials (
 (
   'Sneha R.',
   'Delhi',
-  'Korean Glass Treatment',
+  'Korean Glass Treatment Campaign',
   'After years of trying everything, this premium treatment finally gave me a visible event-ready glow. Worth every rupee.',
   5,
   true,
@@ -380,7 +380,7 @@ INSERT INTO bookings (
   'Anjali Patel',
   'anjali.patel@email.com',
   '+91 98765 43210',
-  'Korean Glass Treatment',
+  'Korean Glass Treatment Campaign',
   (SELECT id FROM treatments WHERE slug = 'korean-glass-treatment' LIMIT 1),
   '2026-05-20',
   '14:00',
@@ -652,3 +652,7 @@ SELECT 'Partners seeded:' as status, COUNT(*) as count FROM partners;
 SELECT 'Commissions seeded:' as status, COUNT(*) as count FROM commissions;
 SELECT 'Payouts seeded:' as status, COUNT(*) as count FROM payouts;
 SELECT 'Membership plans seeded:' as status, COUNT(*) as count FROM membership_plans;
+
+
+
+

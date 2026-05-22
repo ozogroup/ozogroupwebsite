@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 
@@ -18,14 +18,10 @@ export default function KoreanGlassHighlight() {
               </span>
             </div>
             <h2 className="mt-6">
-              Korean Glass Treatment{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-                Treatment
-              </span>
+              Korean Glass Treatment Campaign
             </h2>
             <p className="mt-4 text-lg text-brand-muted max-w-xl leading-relaxed">
-              Experience the legendary Korean glass skin protocol — deep hydration, pore refinement, 
-              and luminous translucency for that signature mirror-like finish.
+              Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.
             </p>
 
             <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -50,7 +46,7 @@ export default function KoreanGlassHighlight() {
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <BookNowButton treatmentSlug="korean-glass-treatment" className="justify-center shadow-soft hover:shadow-card transition-shadow">
-                Book Korean Glass Treatment
+                Enquire Now
               </BookNowButton>
               <Link href="/treatments/korean-glass-treatment" className="btn-secondary justify-center">
                 Learn More
@@ -62,7 +58,7 @@ export default function KoreanGlassHighlight() {
             <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-[32px] border border-brand-border/60 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
                 src={GLASS_IMAGE}
-                alt="Korean Glass Treatment — luminous dewy radiant skin"
+                alt="Korean Glass Treatment Campaign - luminous dewy radiant skin"
                 fill
                 sizes="(max-width: 1024px) 90vw, 600px"
                 className="object-cover"
@@ -85,3 +81,4 @@ export default function KoreanGlassHighlight() {
     </section>
   );
 }
+

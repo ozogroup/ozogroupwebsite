@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 
 // =====================================================
 // BOOKINGS ACTIONS
@@ -82,6 +83,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   if (!address) return { error: "Please enter your address." };
   if (!pinCode) return { error: "Please enter your pin code." };
   if (!treatmentSlug) return { error: "Please select a treatment." };
+  if (!treatmentKitSlugs.includes(treatmentSlug as any)) return { error: "Selected treatment is not available." };
   if (!preferredDate) return { error: "Please pick a preferred date." };
 
   const { data: treatment, error: treatmentError } = await serviceClient
@@ -99,6 +101,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   const partner = await findPartnerByCode(serviceClient, referralCode);
   const partnerIsEligible = isMembershipActive(partner);
   const treatmentPrice = Number((treatment as any).price || 0);
+  const treatmentType = (treatment as any).type;
   const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * COMMISSION_RATE) / 100) : 0;
 
   const { data: booking, error: bookingError } = await serviceClient
@@ -113,7 +116,12 @@ export async function createBooking(payload: CreateBookingPayload) {
       treatment_id: (treatment as any).id,
       treatment_name: (treatment as any).title,
       treatment_price: treatmentPrice,
-      booking_type: (treatment as any).type === "home_kit" ? "home_kit" : "consultation",
+      booking_type:
+        treatmentType === "home_kit"
+          ? "home_kit"
+          : treatmentType === "campaign"
+            ? "campaign"
+            : "consultation",
       preferred_date: preferredDate,
       referral_code: referralCode || null,
       partner_code: partner?.partner_code || (referralCode ? referralCode.toUpperCase() : null),

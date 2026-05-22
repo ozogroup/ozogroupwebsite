@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- OZO Service - Partner System, KYC, Kit Tracking, and Booking Cleanup
 -- ============================================================================
 
@@ -157,45 +157,45 @@ INSERT INTO treatments (
 )
 VALUES
   ('advance-kit', 'Advance Kit', 'Advance Kit', 'home_kit', 'home-kit', 18000, '₹18,000', 'complete kit', 'Advanced Home Kit',
-   'A premium advanced skincare kit designed for guided home-care transformation.',
-   'A complete advanced home-care kit with premium clinical-grade products and support.',
+   'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
+   'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
    '["Advanced skin repair","Pigmentation support","Premium guided home care"]'::jsonb,
    '[]'::jsonb, '["Advanced home-care clients","Pigmentation and repair focused users"]'::jsonb,
    '4-6 weeks', 'Complete kit program', 'Premium Kit',
    'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80',
    'Advance skincare kit', TRUE, TRUE, TRUE),
   ('japanese-kit', 'Japanese Kit', 'Japanese Kit', 'home_kit', 'home-kit', 22000, '₹22,000', 'complete kit', 'Japanese Ritual Kit',
-   'A refined Japanese-inspired skincare kit for calm, clear, porcelain-like radiance.',
-   'A luxury home-care kit inspired by Japanese skincare rituals and gentle refinement.',
+   'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
+   'Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.',
    '["Texture refinement","Calm clear skin","Balanced glow"]'::jsonb,
    '[]'::jsonb, '["Sensitive skin","Texture refinement","Refined glow seekers"]'::jsonb,
    '4-6 weeks', 'Complete kit program', 'Japanese Care',
    'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80',
    'Japanese skincare kit', TRUE, TRUE, FALSE),
   ('korean-glass-kit', 'Korean Glass Kit', 'Korean Glass Kit', 'home_kit', 'home-kit', 15000, '₹15,000', 'complete kit', 'Glass Glow Home Kit',
-   'A Korean glass-skin inspired home kit for hydrated, luminous, dewy skin.',
-   'A complete Korean-inspired home-care kit for dewy hydration and everyday radiance.',
+   'Kit-based Korean glass skin care option for a fresh, radiant look.',
+   'Kit-based Korean glass skin care option for a fresh, radiant look.',
    '["Glass-skin glow","Hydration support","Dewy finish"]'::jsonb,
    '[]'::jsonb, '["Dull skin","Hydration seekers","K-beauty glow lovers"]'::jsonb,
    '4-6 weeks', 'Complete kit program', 'Glass Kit',
    'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
    'Korean glass skincare kit', TRUE, TRUE, TRUE),
   ('basic-kit', 'Basic Kit', 'Basic Kit', 'home_kit', 'home-kit', 14000, '₹14,000', 'complete kit', 'Essential Skin Kit',
-   'An essential skincare kit for foundational cleansing, hydration, and glow maintenance.',
-   'A premium starter kit for healthy skin routines and visible daily freshness.',
+   'Essential skincare kit for regular care and beginner-level treatment support.',
+   'Essential skincare kit for regular care and beginner-level treatment support.',
    '["Beginner friendly","Glow maintenance","Hydration and cleansing"]'::jsonb,
    '[]'::jsonb, '["First-time skincare clients","Maintenance care","All skin types"]'::jsonb,
    '4-6 weeks', 'Complete kit program', 'Essential',
    'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80',
    'Basic skincare kit', TRUE, TRUE, FALSE),
-  ('korean-glass-treatment', 'Korean Glass Treatment', 'Korean Glass Treatment', 'clinic', 'camp', 25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience',
-   'A premium Korean glass-skin clinical treatment for luminous, dewy, event-ready radiance.',
-   'A doctor-supervised premium protocol focused on hydration, refinement, and the signature glass-skin finish.',
+  ('korean-glass-treatment', 'Korean Glass Treatment Campaign', 'Korean Glass Treatment Campaign', 'campaign', 'camp', 25000, '₹25,000', 'per session', 'Premium Clinical Glow Experience',
+   'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
+   'Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.',
    '["Deep hydration glow","Glass skin finish","Skin texture refinement"]'::jsonb,
    '[]'::jsonb, '["Pre-event glow seekers","Dry or dull skin","Premium clinical care clients"]'::jsonb,
    '75-90 min', 'Event-based sessions', 'Premium',
    'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
-   'Korean Glass Treatment', TRUE, TRUE, TRUE)
+   'Korean Glass Treatment Campaign', TRUE, TRUE, TRUE)
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
   kit_name = EXCLUDED.kit_name,
@@ -304,3 +304,6 @@ CREATE TRIGGER trg_sync_partner_sale_booking_status
   AFTER UPDATE OF booking_status ON bookings
   FOR EACH ROW
   EXECUTE FUNCTION sync_partner_sale_booking_status();
+
+
+

@@ -286,7 +286,7 @@ export default function AdminTestimonialsPage() {
                   value={formData.treatment}
                   onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="e.g., Korean Glass Treatment"
+                  placeholder="e.g., Korean Glass Treatment Campaign"
                 />
               </div>
 
