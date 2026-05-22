@@ -1,25 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import {
+  BadgeIndianRupee,
+  CircleUserRound,
+  Headphones,
+  LayoutDashboard,
+  Link as LinkIcon,
+  LogOut,
+  Menu,
+  Network,
+  ShieldCheck,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
 import Logo from "@/components/Logo";
 import LogoutButton from "@/components/admin/LogoutButton";
 
 const navigation = [
-  { name: "Dashboard", href: "/partner/dashboard", icon: "📊" },
-  { name: "Profile", href: "/partner/profile", icon: "👤" },
-  { name: "Referral Link", href: "/partner/referral-link", icon: "🔗" },
-  { name: "Direct Team", href: "/partner/direct-team", icon: "👥" },
-  { name: "My Team", href: "/partner/team", icon: "🌳" },
-  { name: "My Income", href: "/partner/income", icon: "💰" },
-  { name: "Commission History", href: "/partner/commissions", icon: "📜" },
-  { name: "Payout Request", href: "/partner/payouts", icon: "💸" },
-  { name: "Support", href: "/partner/support", icon: "📞" },
+  { name: "Dashboard", href: "/partner/dashboard", icon: LayoutDashboard },
+  { name: "Profile", href: "/partner/profile", icon: CircleUserRound },
+  { name: "KYC & Bank", href: "/partner/kyc", icon: ShieldCheck },
+  { name: "Referral Link", href: "/partner/referral-link", icon: LinkIcon },
+  { name: "Direct Team", href: "/partner/direct-team", icon: Users },
+  { name: "My Team", href: "/partner/team", icon: Network },
+  { name: "My Income", href: "/partner/income", icon: BadgeIndianRupee },
+  { name: "Payout Request", href: "/partner/payouts", icon: Wallet },
+  { name: "Support", href: "/partner/support", icon: Headphones },
 ];
 
-type PartnerInfo = { full_name: string | null; partner_code: string | null; wallet_balance: number; status: string | null; } | null;
+type PartnerInfo = {
+  full_name: string | null;
+  partner_code: string | null;
+  wallet_balance: number;
+  status: string | null;
+} | null;
 
-export default function PartnerShell({ children, partnerInfo }: { children: React.ReactNode; partnerInfo?: PartnerInfo }) {
+export default function PartnerShell({
+  children,
+  partnerInfo,
+}: {
+  children: React.ReactNode;
+  partnerInfo?: PartnerInfo;
+}) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -28,172 +53,104 @@ export default function PartnerShell({ children, partnerInfo }: { children: Reac
   }, [pathname]);
 
   useEffect(() => {
-    if (sidebarOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-    } else {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-    }
+    };
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f7f4ee]">
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[9998] lg:hidden"
+        <button
+          aria-label="Close navigation overlay"
+          className="fixed inset-0 bg-slate-950/55 backdrop-blur-sm z-[9998] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <div
-        className={`fixed inset-y-0 left-0 z-[9999] w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:hidden ${
+      <aside
+        className={`fixed inset-y-0 left-0 z-[9999] w-[286px] max-w-[86vw] bg-slate-950 text-white shadow-2xl transform transition-transform duration-300 ease-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
             <Logo />
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              className="lg:hidden h-10 w-10 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 inline-flex items-center justify-center"
+              aria-label="Close partner navigation"
             >
-              <svg
-                className="w-6 h-6 text-slate-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-5 w-5" />
             </button>
           </div>
 
           {partnerInfo && (
-            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-brand-accent/5 to-brand-light/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xs shrink-0">
+            <div className="mx-4 mt-4 rounded-xl border border-amber-300/20 bg-white/[0.05] p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-300 to-brand-accent flex items-center justify-center text-slate-950 font-bold text-sm shrink-0">
                   {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-brand-ink truncate">{partnerInfo.full_name || "Partner"}</p>
-                  <p className="text-xs text-brand-muted font-mono">{partnerInfo.partner_code || "—"}</p>
+                  <p className="text-sm font-semibold truncate">{partnerInfo.full_name || "Partner"}</p>
+                  <p className="text-xs text-amber-200 font-mono">{partnerInfo.partner_code || "-"}</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
-                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-black/20 p-2">
+                  <p className="text-slate-400">Wallet</p>
+                  <p className="font-semibold text-amber-200">₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}</p>
+                </div>
+                <div className="rounded-lg bg-black/20 p-2">
+                  <p className="text-slate-400">Status</p>
+                  <p className="font-semibold capitalize">{partnerInfo.status || "pending"}</p>
+                </div>
               </div>
             </div>
           )}
 
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <a
                   key={item.name}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
                     isActive
-                      ? "bg-brand-accent/10 text-brand-accent font-medium"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-amber-300/15 text-amber-200 border border-amber-300/20"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  <span className="text-xl mr-3">{item.icon}</span>
-                  {item.name}
+                  <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+                  <span className="font-medium">{item.name}</span>
                 </a>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-200">
-            <LogoutButton />
-          </div>
-        </div>
-      </div>
-
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:bg-white lg:shadow-lg">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center p-6 border-b border-slate-200">
-            <Logo />
-          </div>
-
-          {partnerInfo && (
-            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-brand-accent/5 to-brand-light/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center text-white font-bold text-xs shrink-0">
-                  {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-brand-ink truncate">{partnerInfo.full_name || "Partner"}</p>
-                  <p className="text-xs text-brand-muted font-mono">{partnerInfo.partner_code || "—"}</p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-brand-muted">Wallet: <span className="font-semibold text-brand-ink">₹{(partnerInfo.wallet_balance || 0).toLocaleString()}</span></span>
-                <span className={`px-2 py-0.5 rounded-full font-medium ${partnerInfo.status === "active" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>{partnerInfo.status || "pending"}</span>
-              </div>
+          <div className="p-4 border-t border-white/10">
+            <div className="flex items-center gap-2 rounded-lg bg-white/[0.05] p-2">
+              <LogOut className="h-4 w-4 text-slate-400" />
+              <LogoutButton />
             </div>
-          )}
-
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-brand-accent/10 text-brand-accent font-medium"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-                >
-                  <span className="text-xl mr-3">{item.icon}</span>
-                  {item.name}
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="p-4 border-t border-slate-200">
-            <LogoutButton />
           </div>
         </div>
-      </div>
+      </aside>
 
-      <div className="lg:pl-64">
-        <div className="lg:hidden p-4 bg-white border-b border-slate-200 flex items-center justify-between">
+      <div className="lg:pl-[286px]">
+        <header className="lg:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <Logo />
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="h-10 w-10 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center"
+            aria-label="Open partner navigation"
           >
-            <svg
-              className="w-6 h-6 text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+            <Menu className="h-5 w-5" />
           </button>
-        </div>
-        <main className="p-6 lg:p-8">{children}</main>
+        </header>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

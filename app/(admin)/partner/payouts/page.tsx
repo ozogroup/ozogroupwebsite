@@ -1,130 +1,91 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
+import { getPartnerPayoutContext, requestPartnerPayout } from "@/lib/actions/payouts";
 
 export default function PartnerPayoutsPage() {
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentDetails, setPaymentDetails] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [availableBalance, setAvailableBalance] = useState(0);
+  const [partner, setPartner] = useState<any>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
 
-  // Fetch data on mount
   useEffect(() => {
-    loadPayoutData();
+    load();
   }, []);
 
-  async function loadPayoutData() {
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-
-      // Fetch pending commissions
-      const { data: commissions } = await supabase
-        .from("commissions" as any)
-        .select("commission_amount")
-        .eq("partner_id", user.id)
-        .eq("status", "pending");
-
-      const balance = (commissions || []).reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
-      setAvailableBalance(balance);
-
-      // Fetch payout history
-      const { data: payoutData } = await supabase
-        .from("payouts" as any)
-        .select("*")
-        .eq("partner_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setPayouts(payoutData || []);
-    } catch (err: any) {
-      console.error("Error loading payout data:", err);
-    }
+  async function load() {
+    setLoading(true);
+    const data = await getPartnerPayoutContext();
+    setPartner(data.partner);
+    setPayouts(data.payouts);
+    setLoading(false);
   }
+
+  const wallet = Number(partner?.wallet_balance || 0);
+  const membershipActive =
+    partner?.status === "active" &&
+    (!partner?.membership_expires_at || new Date(partner.membership_expires_at).getTime() >= Date.now());
+  const restrictions = [
+    partner?.kyc_status !== "verified" ? "KYC must be approved" : null,
+    !partner?.bank_verified ? "Bank details must be verified" : null,
+    !membershipActive ? "Membership must be active" : null,
+    wallet < 1000 ? "Minimum wallet balance is ₹1000" : null,
+  ].filter(Boolean);
+  const canRequest = restrictions.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSuccess("");
-    setLoading(true);
+    setSubmitting(true);
 
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum < 1000) {
-      setError("Minimum payout amount is ₹1000");
-      setLoading(false);
-      return;
+    const result = await requestPartnerPayout(Number(amount));
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setSuccess("Payout request submitted successfully.");
+      setAmount("");
+      await load();
     }
+    setSubmitting(false);
+  }
 
-    if (amountNum > availableBalance) {
-      setError("Insufficient balance");
-      setLoading(false);
-      return;
-    }
-
-    if (!paymentMethod || !paymentDetails) {
-      setError("Please fill in all required fields");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setError("User not authenticated");
-        setLoading(false);
-        return;
-      }
-
-      // Create payout request
-      const { error: payoutError } = await supabase
-        .from("payouts" as any)
-        .insert({
-          partner_id: user.id,
-          amount: amountNum,
-          method: paymentMethod,
-          payment_details: paymentDetails,
-          status: "pending",
-        });
-
-      if (payoutError) {
-        setError(payoutError.message || "Failed to create payout request");
-      } else {
-        setSuccess("Payout request submitted successfully!");
-        setAmount("");
-        setPaymentMethod("");
-        setPaymentDetails("");
-        loadPayoutData();
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to create payout request");
-    } finally {
-      setLoading(false);
-    }
+  if (loading) {
+    return <div className="p-8 text-brand-muted">Loading payout details...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Payout Request</h1>
-        <p className="text-slate-600">Request payout from your wallet balance</p>
+        <p className="text-slate-600">Withdraw approved wallet earnings after KYC verification.</p>
       </div>
+
+      {restrictions.length > 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+          <p className="font-semibold mb-2">Withdrawal is currently locked</p>
+          <ul className="list-disc list-inside text-sm space-y-1">
+            {restrictions.map((item) => (
+              <li key={item as string}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Balance</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Wallet</h2>
           <div className="p-6 bg-brand-accent/10 rounded-lg text-center">
-            <p className="text-4xl font-bold text-brand-accent">₹{availableBalance.toLocaleString()}</p>
-            <p className="text-sm text-slate-600 mt-2">Available for withdrawal</p>
+            <p className="text-4xl font-bold text-brand-accent">₹{wallet.toLocaleString("en-IN")}</p>
+            <p className="text-sm text-slate-600 mt-2">Minimum payout: ₹1000</p>
           </div>
-          <p className="text-xs text-slate-500 mt-4 text-center">Minimum payout: ₹1000</p>
+          <div className="mt-4 text-sm text-slate-600 space-y-1">
+            <p>KYC: <span className="font-semibold capitalize">{partner?.kyc_status || "not_submitted"}</span></p>
+            <p>Bank: <span className="font-semibold">{partner?.bank_verified ? "Verified" : "Not verified"}</span></p>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
@@ -139,110 +100,54 @@ export default function PartnerPayoutsPage() {
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
                 placeholder="Enter amount"
                 min="1000"
-                max={availableBalance}
+                max={wallet}
                 required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
-                required
-              >
-                <option value="">Select payment method</option>
-                <option value="upi">UPI</option>
-                <option value="bank">Bank Transfer</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                {paymentMethod === "upi" ? "UPI ID" : "Bank Account Details"}
-              </label>
-              <textarea
-                value={paymentDetails}
-                onChange={(e) => setPaymentDetails(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none"
-                rows={3}
-                placeholder={
-                  paymentMethod === "upi"
-                    ? "Enter your UPI ID (e.g., example@upi)"
-                    : paymentMethod === "bank"
-                    ? "Account number, IFSC code, Bank name, Account holder name"
-                    : "Enter your UPI ID or bank account details"
-                }
-                required
+                disabled={!canRequest}
               />
             </div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting || !canRequest}
               className="w-full px-6 py-3 bg-brand-accent text-white rounded-lg font-medium hover:bg-brand-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Submitting..." : "Submit Payout Request"}
+              {submitting ? "Submitting..." : "Submit Payout Request"}
             </button>
           </form>
-          <p className="text-xs text-slate-500 mt-4">Processing time: 7 business days</p>
-          
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-          
-          {success && (
-            <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <p className="text-sm text-emerald-700">{success}</p>
-            </div>
-          )}
+          {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
+          {success && <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">{success}</div>}
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout History</h2>
-        {payouts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Reference</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {payouts.length === 0 ? (
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Payment Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                  <td colSpan={4} className="px-4 py-10 text-center text-slate-500">No payout requests found</td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {payouts.map((payout) => (
-                  <tr key={payout.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {new Date(payout.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-brand-ink">₹{payout.amount?.toLocaleString() || 0}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 capitalize">{payout.method || 'N/A'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        payout.status === 'paid' 
-                          ? 'bg-green-100 text-green-700' 
-                          : payout.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : payout.status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {payout.status?.toUpperCase() || 'PENDING'}
-                      </span>
-                    </td>
+              ) : (
+                payouts.map((payout) => (
+                  <tr key={payout.id}>
+                    <td className="px-4 py-4 text-sm text-slate-600">{new Date(payout.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">₹{Number(payout.amount || 0).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-4 text-sm capitalize">{payout.status}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600">{payout.transaction_reference || "-"}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-slate-500">No payout requests found</p>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -43,12 +43,14 @@ export async function createTreatment(formData: FormData) {
   const slug = formData.get("slug") as string;
   const type = formData.get("type") as string;
   const price = formData.get("price") as string;
+  const kitName = formData.get("kit_name") as string;
   const tagline = formData.get("tagline") as string;
   const description = formData.get("description") as string;
   const benefits = formData.get("benefits") as string;
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
+  const featured = formData.get("featured") !== null;
   const active = formData.get("active") !== null;
   const requiresSlots = formData.get("requires_slots") !== null;
   const availableCities = formData.get("available_cities") as string;
@@ -58,12 +60,14 @@ export async function createTreatment(formData: FormData) {
     slug,
     type: type as "home_kit" | "clinic" | "campaign",
     price: parseFloat(price) || 0,
+    kit_name: kitName || title,
     tagline,
     description,
     benefits: benefits ? JSON.parse(benefits) : [],
     duration,
     sessions,
     image,
+    featured,
     active,
     requires_slots: requiresSlots,
     available_cities: availableCities ? JSON.parse(availableCities) : [],
@@ -88,12 +92,14 @@ export async function updateTreatment(formData: FormData) {
   const slug = formData.get("slug") as string;
   const type = formData.get("type") as string;
   const price = formData.get("price") as string;
+  const kitName = formData.get("kit_name") as string;
   const tagline = formData.get("tagline") as string;
   const description = formData.get("description") as string;
   const benefits = formData.get("benefits") as string;
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
+  const featured = formData.get("featured") !== null;
   const active = formData.get("active") !== null;
   const requiresSlots = formData.get("requires_slots") !== null;
   const availableCities = formData.get("available_cities") as string;
@@ -105,12 +111,14 @@ export async function updateTreatment(formData: FormData) {
       slug,
       type: type as "home_kit" | "clinic" | "campaign",
       price: parseFloat(price) || 0,
+      kit_name: kitName || title,
       tagline,
       description,
       benefits: benefits ? JSON.parse(benefits) : [],
       duration,
       sessions,
       image,
+      featured,
       active,
       requires_slots: requiresSlots,
       available_cities: availableCities ? JSON.parse(availableCities) : [],

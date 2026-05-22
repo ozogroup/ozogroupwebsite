@@ -72,8 +72,8 @@ export default function AdminPartnersPage() {
   }
 
   function getReferralLink(partnerCode: string) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    return `${siteUrl}/referral/${partnerCode}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ozo.group";
+    return `${siteUrl}/?ref=${partnerCode}`;
   }
 
   const filteredPartners = partners.filter((partner) => {

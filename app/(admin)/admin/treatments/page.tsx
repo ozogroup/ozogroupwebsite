@@ -12,6 +12,7 @@ type Treatment = {
   type: string;
   price: number;
   price_label?: string;
+  kit_name?: string;
   image: string;
   active: boolean;
   featured?: boolean;
@@ -28,6 +29,7 @@ export default function AdminTreatmentsPage() {
     type: "clinic",
     price: "",
     price_label: "",
+    kit_name: "",
     unit: "per session",
     subtitle: "",
     description: "",
@@ -83,6 +85,7 @@ export default function AdminTreatmentsPage() {
         type: formData.type,
         price: parseFloat(formData.price),
         price_label: formData.price_label,
+        kit_name: formData.kit_name,
         unit: formData.unit,
         subtitle: formData.subtitle,
         description: formData.description,
@@ -138,6 +141,7 @@ export default function AdminTreatmentsPage() {
       type: treatment.type || "clinic",
       price: treatment.price?.toString() || "",
       price_label: treatment.price_label || "",
+      kit_name: treatment.kit_name || treatment.title || "",
       unit: treatment.unit || "per session",
       subtitle: treatment.subtitle || "",
       description: treatment.description || "",
@@ -164,6 +168,7 @@ export default function AdminTreatmentsPage() {
       type: "clinic",
       price: "",
       price_label: "",
+      kit_name: "",
       unit: "per session",
       subtitle: "",
       description: "",
@@ -396,6 +401,19 @@ export default function AdminTreatmentsPage() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-1">Kit Name</label>
+                  <input
+                    type="text"
+                    value={formData.kit_name}
+                    onChange={(e) => setFormData({ ...formData, kit_name: e.target.value })}
+                    placeholder="e.g., Korean Glass Kit"
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium text-brand-ink mb-1">Unit</label>
                   <input
                     type="text"
@@ -404,6 +422,18 @@ export default function AdminTreatmentsPage() {
                     placeholder="per session"
                     className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-1">Featured Treatment</label>
+                  <label className="flex h-[42px] items-center gap-2 px-3 py-2 border border-brand-border rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      className="rounded border-brand-border"
+                    />
+                    <span className="text-sm text-brand-ink">Mark as featured</span>
+                  </label>
                 </div>
               </div>
 

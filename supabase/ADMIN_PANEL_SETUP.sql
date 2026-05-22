@@ -49,7 +49,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   treatment_id UUID REFERENCES treatments(id),
   treatment_name VARCHAR(255),
   preferred_date DATE,
-  preferred_time VARCHAR(50),
   city VARCHAR(100),
   referral_code VARCHAR(50),
   message TEXT,

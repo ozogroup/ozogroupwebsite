@@ -19,7 +19,7 @@ export default async function PartnerReferralLinkPage() {
     .single();
 
   const partnerCode = (partner as any)?.partner_code || "N/A";
-  const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ozo.group'}/join?ref=${partnerCode}`;
+  const referralLink = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://ozo.group'}/?ref=${partnerCode}`;
   const whatsappMessage = encodeURIComponent(`Join OZO / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`);
   const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}`;

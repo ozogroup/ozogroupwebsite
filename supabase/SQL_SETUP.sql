@@ -365,7 +365,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   booking_slot_id UUID REFERENCES booking_slots(id) ON DELETE SET NULL,
   booking_type TEXT NOT NULL,
   preferred_date DATE NOT NULL,
-  preferred_time TEXT NOT NULL,
   referral_code TEXT,
   referred_by UUID REFERENCES partners(id) ON DELETE SET NULL,
   payment_status payment_status NOT NULL DEFAULT 'pending_payment',

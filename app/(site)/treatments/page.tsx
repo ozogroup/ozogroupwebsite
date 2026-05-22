@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
-import { treatments } from "@/lib/site";
+import { getPublicTreatments } from "@/lib/data/public";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +9,9 @@ export const metadata: Metadata = {
   description: "Explore our premium skincare treatments including home kit programs and clinical glow experiences designed for visible, lasting results.",
 };
 
-export default function TreatmentsPage() {
+export default async function TreatmentsPage() {
+  const treatments = await getPublicTreatments();
+
   return (
     <>
       {/* HERO */}
@@ -72,7 +74,7 @@ export default function TreatmentsPage() {
                   </p>
 
                   <div className="mb-4 space-y-2">
-                    {treatment.benefits.slice(0, 4).map((benefit) => (
+                    {treatment.benefits.slice(0, 4).map((benefit: string) => (
                       <div key={benefit} className="flex items-center gap-2 text-sm text-brand-ink/90">
                         <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent">
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
