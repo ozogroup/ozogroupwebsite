@@ -10,7 +10,7 @@ export async function getPayments() {
     .from("payments")
     .select(`
       *,
-      bookings:bookings(customer_name, customer_phone, preferred_date)
+      bookings:bookings(customer_name, customer_phone)
     `)
     .order("created_at", { ascending: false });
 

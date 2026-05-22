@@ -43,12 +43,11 @@ export default function AdminBookingsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[820px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Customer</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Treatment / Kit</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Referral</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
@@ -57,9 +56,9 @@ export default function AdminBookingsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200">
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">Loading...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">Loading...</td></tr>
               ) : bookings.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No bookings found</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No bookings found</td></tr>
               ) : (
                 bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-slate-50">
@@ -69,9 +68,6 @@ export default function AdminBookingsPage() {
                     </td>
                     <td className="px-4 py-4 text-sm text-slate-900">
                       {booking.treatment_name || booking.treatment?.title || "N/A"}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-600">
-                      {booking.preferred_date ? new Date(booking.preferred_date).toLocaleDateString() : "N/A"}
                     </td>
                     <td className="px-4 py-4 text-sm text-slate-600">
                       {booking.partner_code || booking.referral_code || "-"}

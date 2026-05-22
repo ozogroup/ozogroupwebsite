@@ -61,7 +61,7 @@ export default async function AdminDashboardPage() {
   const [recentTreatments, recentTestimonials, recentBookings, recentMemberships, recentPartners, pendingPayouts] = await Promise.all([
     safeQuery(() => (supabase as any).from("treatments").select("id,title,price,price_label,type,active").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("testimonials").select("id,name,city,treatment,rating").order("created_at", { ascending: false }).limit(3)),
-    safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,preferred_date,booking_status").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,booking_status,created_at").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("memberships").select("id,full_name,mobile,city,membership_status,payment_status,created_at").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("partners").select("id,partner_code,status,profiles(full_name,phone)").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_code,profiles(full_name))").in("status", ["requested", "processing"]).order("created_at", { ascending: false }).limit(5)),
@@ -453,9 +453,9 @@ export default async function AdminDashboardPage() {
                   <li key={b.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">{b.customer_name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{b.city || "—"} • {b.preferred_date || "—"}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{b.city || "—"} • {b.created_at ? new Date(b.created_at).toLocaleDateString() : "—"}</p>
                     </div>
-                    <Badge variant="info" dot>{b.status || "pending"}</Badge>
+                    <Badge variant="info" dot>{b.booking_status || "pending"}</Badge>
                   </li>
                 ))}
               </ul>

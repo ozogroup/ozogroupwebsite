@@ -168,7 +168,6 @@ export type Database = {
           payment_amount: number | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           pin_code: string
-          preferred_date: string
           referral_code: string | null
           referred_by: string | null
           refund_status: string | null
@@ -198,7 +197,6 @@ export type Database = {
           payment_amount?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code: string
-          preferred_date: string
           referral_code?: string | null
           referred_by?: string | null
           refund_status?: string | null
@@ -230,7 +228,6 @@ export type Database = {
           payment_amount?: number | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code?: string
-          preferred_date?: string
           referral_code?: string | null
           referred_by?: string | null
           refund_status?: string | null

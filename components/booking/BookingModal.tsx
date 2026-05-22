@@ -16,7 +16,6 @@ type FormState = {
   city: string;
   address: string;
   pinCode: string;
-  date: string;
   referralCode: string;
   message: string;
 };
@@ -40,7 +39,6 @@ const initial: FormState = {
   city: "",
   address: "",
   pinCode: "",
-  date: "",
   referralCode: "",
   message: "",
 };
@@ -147,7 +145,6 @@ export default function BookingModal() {
     if (!form.city.trim()) return setError("Please enter your city.");
     if (!form.address.trim()) return setError("Please enter your address.");
     if (!form.pinCode.trim()) return setError("Please enter your pin code.");
-    if (!form.date) return setError("Please pick a preferred date.");
 
     setSubmitting(true);
     const result = await createBooking({
@@ -158,7 +155,6 @@ export default function BookingModal() {
       address: form.address,
       pin_code: form.pinCode,
       treatment_slug: form.treatment,
-      preferred_date: form.date,
       referral_code: form.referralCode,
       notes: form.message,
     });
@@ -176,7 +172,6 @@ export default function BookingModal() {
 
   if (!isOpen) return null;
 
-  const today = new Date().toISOString().split("T")[0];
   const selected = availableTreatments.find((t) => t.slug === form.treatment);
 
   return (
@@ -312,26 +307,15 @@ export default function BookingModal() {
             />
           </FormField>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <FormField label="Preferred Date" required>
-              <input
-                type="date"
-                min={today}
-                value={form.date}
-                onChange={update("date")}
-                className="premium-input"
-              />
-            </FormField>
-            <FormField label="Referral Code">
-              <input
-                type="text"
-                value={form.referralCode}
-                onChange={update("referralCode")}
-                placeholder="OZO1003"
-                className="premium-input uppercase"
-              />
-            </FormField>
-          </div>
+          <FormField label="Referral Code">
+            <input
+              type="text"
+              value={form.referralCode}
+              onChange={update("referralCode")}
+              placeholder="OZO1003"
+              className="premium-input uppercase"
+            />
+          </FormField>
 
           <FormField label="Your Message">
             <textarea

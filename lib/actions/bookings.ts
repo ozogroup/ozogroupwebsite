@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
+import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 
 // =====================================================
 // BOOKINGS ACTIONS
@@ -36,7 +37,6 @@ type CreateBookingPayload = {
   address: string;
   pin_code: string;
   treatment_slug: string;
-  preferred_date: string;
   referral_code?: string;
   notes?: string;
 };
@@ -72,7 +72,6 @@ export async function createBooking(payload: CreateBookingPayload) {
   const address = clean(payload.address);
   const pinCode = clean(payload.pin_code);
   const treatmentSlug = clean(payload.treatment_slug);
-  const preferredDate = clean(payload.preferred_date);
   const referralCode =
     clean(payload.referral_code) ||
     clean(cookies().get("ozo_referral_code")?.value);
@@ -84,7 +83,6 @@ export async function createBooking(payload: CreateBookingPayload) {
   if (!pinCode) return { error: "Please enter your pin code." };
   if (!treatmentSlug) return { error: "Please select a treatment." };
   if (!treatmentKitSlugs.includes(treatmentSlug as any)) return { error: "Selected treatment is not available." };
-  if (!preferredDate) return { error: "Please pick a preferred date." };
 
   const { data: treatment, error: treatmentError } = await serviceClient
     .from("treatments" as any)
@@ -122,7 +120,6 @@ export async function createBooking(payload: CreateBookingPayload) {
           : treatmentType === "campaign"
             ? "campaign"
             : "consultation",
-      preferred_date: preferredDate,
       referral_code: referralCode || null,
       partner_code: partner?.partner_code || (referralCode ? referralCode.toUpperCase() : null),
       referred_by: partnerIsEligible ? partner.id : null,
@@ -136,31 +133,7 @@ export async function createBooking(payload: CreateBookingPayload) {
 
   if (bookingError || !booking) {
     console.error("Error creating booking:", bookingError);
-    return { error: bookingError?.message || "Failed to create booking." };
-  }
-
-  let commissionId: string | null = null;
-  if (partnerIsEligible && commissionAmount > 0) {
-    const { data: commission, error: commissionError } = await serviceClient
-      .from("commissions" as any)
-      .insert({
-        partner_id: partner.id,
-        source_type: "booking",
-        source_id: (booking as any).id,
-        source_amount: treatmentPrice,
-        level: 1,
-        percentage: COMMISSION_RATE,
-        amount: commissionAmount,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (!commissionError && commission) {
-      commissionId = (commission as any).id;
-    } else {
-      console.error("Error creating commission:", commissionError);
-    }
+    return { error: "Failed to create booking. Please try again or contact us on WhatsApp." };
   }
 
   if (partner) {
@@ -176,7 +149,7 @@ export async function createBooking(payload: CreateBookingPayload) {
       customer_phone: customerPhone,
       booking_status: "pending",
       commission_amount: commissionAmount,
-      commission_id: commissionId,
+      commission_id: null,
     });
 
     if (saleError) console.error("Error creating partner sale:", saleError);
@@ -224,8 +197,21 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     console.error("Error updating booking status:", error);
     throw error;
   }
+
+  if (["confirmed", "completed"].includes(status)) {
+    await generateBookingCommissions(supabase, {
+      id: (data as any).id,
+      referred_by: (data as any).referred_by,
+      payment_amount:
+        (data as any).payment_amount ?? (data as any).treatment_price ?? 0,
+      booking_status: (data as any).booking_status,
+    });
+  }
   
   revalidatePath("/admin/bookings");
+  revalidatePath("/admin/commissions");
+  revalidatePath("/partner/dashboard");
+  revalidatePath("/partner/commissions");
   return data;
 }
 

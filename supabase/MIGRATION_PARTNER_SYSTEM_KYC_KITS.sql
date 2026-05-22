@@ -27,11 +27,15 @@ CREATE INDEX IF NOT EXISTS idx_treatments_kit_name ON treatments(kit_name);
 
 -- Booking cleanup and denormalized sale fields
 ALTER TABLE bookings DROP COLUMN IF EXISTS preferred_time;
+ALTER TABLE bookings DROP COLUMN IF EXISTS preferred_date;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS treatment_name TEXT;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS treatment_price NUMERIC(15, 2);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS partner_code TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_bookings_partner_code ON bookings(partner_code);
+CREATE INDEX IF NOT EXISTS idx_bookings_referral_code ON bookings(referral_code);
+CREATE INDEX IF NOT EXISTS idx_bookings_booking_status ON bookings(booking_status);
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at);
 
 -- Partner membership validity and KYC details
 ALTER TABLE partners ADD COLUMN IF NOT EXISTS membership_started_at TIMESTAMPTZ;

@@ -364,7 +364,6 @@ CREATE TABLE IF NOT EXISTS bookings (
   treatment_id UUID NOT NULL REFERENCES treatments(id) ON DELETE CASCADE,
   booking_slot_id UUID REFERENCES booking_slots(id) ON DELETE SET NULL,
   booking_type TEXT NOT NULL,
-  preferred_date DATE NOT NULL,
   referral_code TEXT,
   referred_by UUID REFERENCES partners(id) ON DELETE SET NULL,
   payment_status payment_status NOT NULL DEFAULT 'pending_payment',
@@ -745,7 +744,9 @@ CREATE INDEX IF NOT EXISTS idx_booking_slots_status ON booking_slots(status);
 CREATE INDEX IF NOT EXISTS idx_bookings_phone ON bookings(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_bookings_treatment ON bookings(treatment_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_referred_by ON bookings(referred_by);
+CREATE INDEX IF NOT EXISTS idx_bookings_referral_code ON bookings(referral_code);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(booking_status);
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at);
 CREATE INDEX IF NOT EXISTS idx_bookings_slot ON bookings(booking_slot_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_is_active ON bookings(is_active) WHERE deleted_at IS NULL;
 

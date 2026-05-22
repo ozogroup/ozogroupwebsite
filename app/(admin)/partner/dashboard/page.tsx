@@ -75,7 +75,7 @@ export default async function PartnerDashboardPage() {
 
   const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingEarnings = commissions
-    .filter((c: any) => c.status === "pending")
+    .filter((c: any) => c.status === "pending" || c.status === "approved")
     .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const paidEarnings = commissions
     .filter((c: any) => c.status === "paid")
@@ -89,13 +89,13 @@ export default async function PartnerDashboardPage() {
 
   const totalSales = sales.reduce((sum: number, s: any) => sum + Number(s.treatment_price || 0), 0);
   const confirmedTreatments = sales.filter((s: any) => ["confirmed", "completed"].includes(s.booking_status)).length;
-  const thisMonthEarnings = sales
-    .filter((s: any) => {
-      const d = new Date(s.created_at);
+  const thisMonthEarnings = commissions
+    .filter((c: any) => {
+      const d = new Date(c.created_at);
       const now = new Date();
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     })
-    .reduce((sum: number, s: any) => sum + Number(s.commission_amount || 0), 0);
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
 
   const kitStats = sales.reduce((acc: Record<string, { count: number; sales: number }>, s: any) => {
     const kit = s.kit_name || s.treatment_name || "Unknown";
