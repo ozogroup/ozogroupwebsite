@@ -4,11 +4,15 @@ import { useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import PasswordInput from "@/components/ui/PasswordInput";
+import { resolvePartnerLoginEmail } from "@/lib/actions/partner-login";
+
+const LOGIN_ERROR = "Invalid email/mobile or password.";
 
 export default function PartnerLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -22,14 +26,20 @@ export default function PartnerLoginPage() {
 
       const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
+      const resolved = await resolvePartnerLoginEmail(identifier);
+
+      if (resolved.error || !resolved.email) {
+        setError(LOGIN_ERROR);
+        return;
+      }
 
       const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: resolved.email,
         password,
       });
 
       if (loginError) {
-        setError(loginError.message);
+        setError(LOGIN_ERROR);
         return;
       }
 
@@ -66,16 +76,17 @@ export default function PartnerLoginPage() {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Email
+            Email or Mobile Number
           </label>
           <input
-            type="email"
+            type="text"
             required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            inputMode="email"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-cyan-500"
-            placeholder="Enter your email"
+            placeholder="Enter email or mobile number"
           />
         </div>
 
@@ -83,8 +94,7 @@ export default function PartnerLoginPage() {
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             required
             autoComplete="current-password"
             value={password}

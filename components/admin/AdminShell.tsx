@@ -41,7 +41,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC]">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50">
       {/* Mobile sidebar overlay - solid dark overlay */}
       {sidebarOpen && (
         <div

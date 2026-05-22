@@ -10,7 +10,9 @@ export default function PartnerPayoutsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [partner, setPartner] = useState<any>(null);
+  const [kyc, setKyc] = useState<any>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<"bank" | "upi">("bank");
 
   useEffect(() => {
     load();
@@ -20,7 +22,11 @@ export default function PartnerPayoutsPage() {
     setLoading(true);
     const data = await getPartnerPayoutContext();
     setPartner(data.partner);
+    setKyc(data.kyc);
     setPayouts(data.payouts);
+    if (!data.partner?.bank_account_number && (data.kyc?.upi_id || data.partner?.upi_id)) {
+      setPaymentMethod("upi");
+    }
     setLoading(false);
   }
 
@@ -34,6 +40,8 @@ export default function PartnerPayoutsPage() {
     !membershipActive ? "Membership must be active" : null,
     wallet < 1000 ? "Minimum wallet balance is ₹1000" : null,
   ].filter(Boolean);
+  const hasBank = Boolean(partner?.bank_account_holder && partner?.bank_name && partner?.bank_account_number && partner?.bank_ifsc);
+  const hasUpi = Boolean(kyc?.upi_id || partner?.upi_id);
   const canRequest = restrictions.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,7 +50,7 @@ export default function PartnerPayoutsPage() {
     setSuccess("");
     setSubmitting(true);
 
-    const result = await requestPartnerPayout(Number(amount));
+    const result = await requestPartnerPayout(Number(amount), paymentMethod);
     if (result.error) {
       setError(result.error);
     } else {
@@ -85,6 +93,7 @@ export default function PartnerPayoutsPage() {
           <div className="mt-4 text-sm text-slate-600 space-y-1">
             <p>KYC: <span className="font-semibold capitalize">{partner?.kyc_status || "not_submitted"}</span></p>
             <p>Bank: <span className="font-semibold">{partner?.bank_verified ? "Verified" : "Not verified"}</span></p>
+            <p>UPI: <span className="font-semibold">{hasUpi ? "Available" : "Not added"}</span></p>
           </div>
         </div>
 
@@ -105,6 +114,37 @@ export default function PartnerPayoutsPage() {
                 disabled={!canRequest}
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Payout Method</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className={`rounded-xl border p-3 text-sm ${paymentMethod === "bank" ? "border-brand-accent bg-brand-accent/10" : "border-slate-200 bg-white"}`}>
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    value="bank"
+                    checked={paymentMethod === "bank"}
+                    onChange={() => setPaymentMethod("bank")}
+                    disabled={!hasBank || !canRequest}
+                    className="mr-2"
+                  />
+                  Bank Transfer
+                  <span className="block pl-5 text-xs text-slate-500">{hasBank ? partner?.bank_name || "Bank details saved" : "Bank details missing"}</span>
+                </label>
+                <label className={`rounded-xl border p-3 text-sm ${paymentMethod === "upi" ? "border-brand-accent bg-brand-accent/10" : "border-slate-200 bg-white"}`}>
+                  <input
+                    type="radio"
+                    name="payment_method"
+                    value="upi"
+                    checked={paymentMethod === "upi"}
+                    onChange={() => setPaymentMethod("upi")}
+                    disabled={!hasUpi || !canRequest}
+                    className="mr-2"
+                  />
+                  UPI
+                  <span className="block pl-5 text-xs text-slate-500">{hasUpi ? kyc?.upi_id || partner?.upi_id : "UPI details missing"}</span>
+                </label>
+              </div>
+            </div>
             <button
               type="submit"
               disabled={submitting || !canRequest}
@@ -115,6 +155,27 @@ export default function PartnerPayoutsPage() {
           </form>
           {error && <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
           {success && <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-700">{success}</div>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 mb-3">Saved Bank Details</h2>
+          <div className="space-y-1 text-sm text-slate-600">
+            <p><span className="font-medium text-slate-800">Holder:</span> {partner?.bank_account_holder || "-"}</p>
+            <p><span className="font-medium text-slate-800">Bank:</span> {partner?.bank_name || "-"}</p>
+            <p><span className="font-medium text-slate-800">Account:</span> {partner?.bank_account_number || "-"}</p>
+            <p><span className="font-medium text-slate-800">IFSC:</span> {partner?.bank_ifsc || "-"}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 mb-3">Saved UPI Details</h2>
+          <div className="space-y-1 text-sm text-slate-600">
+            <p><span className="font-medium text-slate-800">Holder:</span> {kyc?.upi_holder_name || "-"}</p>
+            <p><span className="font-medium text-slate-800">Mobile:</span> {kyc?.upi_mobile || "-"}</p>
+            <p><span className="font-medium text-slate-800">UPI ID:</span> {kyc?.upi_id || partner?.upi_id || "-"}</p>
+            <p><span className="font-medium text-slate-800">App:</span> {kyc?.upi_app || "-"}</p>
+          </div>
         </div>
       </div>
 

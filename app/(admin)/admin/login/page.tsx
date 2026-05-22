@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export const dynamic = 'force-dynamic';
 
@@ -109,10 +110,9 @@ export default function AdminLoginPage({
               <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"

@@ -13,6 +13,11 @@ function value(formData: FormData, key: string) {
   return ((formData.get(key) as string | null) || "").trim();
 }
 
+function normalizeMobile(input: string) {
+  const digits = input.replace(/\D/g, "");
+  return digits.length > 10 ? digits.slice(-10) : digits;
+}
+
 async function uploadKycFile(partnerId: string, file: File | null, label: string) {
   if (!file || file.size === 0) return null;
   if (file.size > MAX_FILE_SIZE) throw new Error(`${label} must be 10MB or smaller.`);
@@ -38,6 +43,11 @@ export async function submitPartnerKyc(formData: FormData) {
 
   const accountNumber = value(formData, "account_number");
   const confirmAccountNumber = value(formData, "confirm_account_number");
+  const mobileNumber = normalizeMobile(value(formData, "mobile_number"));
+  const upiMobile = normalizeMobile(value(formData, "upi_mobile"));
+  const bankIfsc = value(formData, "bank_ifsc").toUpperCase();
+  const upiId = value(formData, "upi_id").toLowerCase();
+
   if (accountNumber !== confirmAccountNumber) {
     redirect("/partner/kyc?error=Account numbers do not match");
   }
@@ -57,6 +67,22 @@ export async function submitPartnerKyc(formData: FormData) {
     if (!value(formData, key)) {
       redirect(`/partner/kyc?error=${encodeURIComponent("Please complete all required fields")}`);
     }
+  }
+
+  if (!/^\d{10}$/.test(mobileNumber)) {
+    redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid 10 digit mobile number")}`);
+  }
+
+  if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) {
+    redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid IFSC code")}`);
+  }
+
+  if (upiMobile && !/^\d{10}$/.test(upiMobile)) {
+    redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid 10 digit UPI mobile number")}`);
+  }
+
+  if (upiId && !/^[a-z0-9._-]+@[a-z0-9.-]+$/i.test(upiId)) {
+    redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid UPI ID")}`);
   }
 
   try {
@@ -83,14 +109,17 @@ export async function submitPartnerKyc(formData: FormData) {
     const payload = {
       partner_id: profile.id,
       full_name: value(formData, "full_name"),
-      mobile_number: value(formData, "mobile_number"),
+      mobile_number: mobileNumber,
       email: value(formData, "email"),
       account_holder_name: value(formData, "account_holder_name"),
       bank_name: value(formData, "bank_name"),
       account_number: accountNumber,
-      bank_ifsc: value(formData, "bank_ifsc").toUpperCase(),
+      bank_ifsc: bankIfsc,
       branch_name: value(formData, "branch_name"),
-      upi_id: value(formData, "upi_id") || null,
+      upi_holder_name: value(formData, "upi_holder_name") || null,
+      upi_mobile: upiMobile || null,
+      upi_id: upiId || null,
+      upi_app: value(formData, "upi_app") || null,
       pan_card_path: panPath,
       aadhaar_front_path: aadhaarFrontPath,
       aadhaar_back_path: aadhaarBackPath,
@@ -114,13 +143,17 @@ export async function submitPartnerKyc(formData: FormData) {
         bank_ifsc: payload.bank_ifsc,
         bank_name: payload.bank_name,
         bank_branch_name: payload.branch_name,
+        upi_holder_name: payload.upi_holder_name,
+        upi_mobile: payload.upi_mobile,
         upi_id: payload.upi_id,
+        upi_app: payload.upi_app,
         bank_verified: false,
         updated_at: new Date().toISOString(),
       })
       .eq("id", profile.id);
   } catch (e: any) {
-    redirect(`/partner/kyc?error=${encodeURIComponent(e?.message || "KYC submission failed")}`);
+    console.error("KYC submission failed:", e);
+    redirect(`/partner/kyc?error=${encodeURIComponent("KYC submission failed. Please check your details and try again.")}`);
   }
 
   revalidatePath("/partner/kyc");

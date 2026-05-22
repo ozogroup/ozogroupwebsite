@@ -36,6 +36,7 @@ type PartnerInfo = {
   partner_code: string | null;
   wallet_balance: number;
   status: string | null;
+  kyc_status?: string | null;
 } | null;
 
 export default function PartnerShell({
@@ -60,7 +61,7 @@ export default function PartnerShell({
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-[#f7f4ee]">
+    <div className="min-h-screen bg-slate-50">
       {sidebarOpen && (
         <button
           aria-label="Close navigation overlay"
@@ -70,7 +71,7 @@ export default function PartnerShell({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[9999] w-[286px] max-w-[86vw] bg-slate-950 text-white shadow-2xl transform transition-transform duration-300 ease-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[9999] w-[286px] max-w-[86vw] bg-[#061423] text-white shadow-2xl transform transition-transform duration-300 ease-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -87,9 +88,10 @@ export default function PartnerShell({
           </div>
 
           {partnerInfo && (
-            <div className="mx-4 mt-4 rounded-xl border border-amber-300/20 bg-white/[0.05] p-4">
+            <div className="mx-4 mt-4 rounded-2xl border border-amber-200/40 bg-gradient-to-br from-amber-100 via-yellow-200 to-amber-500 p-[1px] shadow-xl shadow-amber-950/20">
+              <div className="rounded-2xl bg-slate-950/95 p-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-300 to-brand-accent flex items-center justify-center text-slate-950 font-bold text-sm shrink-0">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-100 to-amber-400 flex items-center justify-center text-slate-950 font-bold text-sm shrink-0">
                   {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -98,14 +100,21 @@ export default function PartnerShell({
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-lg bg-black/20 p-2">
-                  <p className="text-slate-400">Wallet</p>
+                <div className="rounded-xl bg-black/30 p-2.5 ring-1 ring-amber-200/10">
+                  <p className="text-slate-300">Wallet</p>
                   <p className="font-semibold text-amber-200">₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}</p>
                 </div>
-                <div className="rounded-lg bg-black/20 p-2">
-                  <p className="text-slate-400">Status</p>
+                <div className="rounded-xl bg-black/30 p-2.5 ring-1 ring-amber-200/10">
+                  <p className="text-slate-300">Status</p>
                   <p className="font-semibold capitalize">{partnerInfo.status || "pending"}</p>
                 </div>
+              </div>
+              <div className="mt-2 rounded-xl bg-black/30 p-2.5 text-xs ring-1 ring-amber-200/10">
+                <p className="text-slate-300">KYC Status</p>
+                <p className="font-semibold capitalize text-amber-100">
+                  {(partnerInfo.kyc_status || "not_submitted").replace("_", " ")}
+                </p>
+              </div>
               </div>
             </div>
           )}
@@ -119,7 +128,7 @@ export default function PartnerShell({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
                     isActive
-                      ? "bg-amber-300/15 text-amber-200 border border-amber-300/20"
+                      ? "bg-cyan-400/15 text-cyan-100 border border-cyan-300/20"
                       : "text-slate-300 hover:text-white hover:bg-white/10"
                   }`}
                 >

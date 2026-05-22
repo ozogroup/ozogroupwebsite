@@ -81,7 +81,13 @@ export default function AdminKycPage() {
                       <p>{item.bank_name}</p>
                       <p>AC: {item.account_number}</p>
                       <p>IFSC: {item.bank_ifsc}</p>
-                      <p>UPI: {item.upi_id || "-"}</p>
+                      <div className="mt-2 rounded-lg bg-cyan-50 p-2 text-xs text-slate-700">
+                        <p className="font-semibold text-brand-ink">UPI</p>
+                        <p>Holder: {item.upi_holder_name || "-"}</p>
+                        <p>Mobile: {item.upi_mobile || "-"}</p>
+                        <p>ID: {item.upi_id || "-"}</p>
+                        <p>App: {item.upi_app || "-"}</p>
+                      </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-2 text-sm">
