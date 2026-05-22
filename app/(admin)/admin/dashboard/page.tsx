@@ -64,8 +64,57 @@ export default async function AdminDashboardPage() {
     safeQuery(() => (supabase as any).from("bookings").select("id,customer_name,customer_phone,city,preferred_date,booking_status").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("memberships").select("id,full_name,mobile,city,membership_status,payment_status,created_at").order("created_at", { ascending: false }).limit(5)),
     safeQuery(() => (supabase as any).from("partners").select("id,partner_code,status,profiles(full_name,phone)").order("created_at", { ascending: false }).limit(5)),
-    safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_code,profiles(full_name))").eq("status", "pending").order("created_at", { ascending: false }).limit(5)),
+    safeQuery(() => (supabase as any).from("payouts").select("id,amount,status,created_at,partner:partners(partner_code,profiles(full_name))").in("status", ["requested", "processing"]).order("created_at", { ascending: false }).limit(5)),
   ]);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const [activePartnersCount, expiredMembershipsCount, todayBookingsCount, pendingKycCount, pendingPayoutsCount, monthlyBookings, allPayouts, allSales] = await Promise.all([
+    safeCount("partners").then(async () => {
+      const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).eq("status", "active");
+      return r.count ?? 0;
+    }),
+    (async () => {
+      const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).lt("membership_expires_at", new Date().toISOString());
+      return r.count ?? 0;
+    })(),
+    (async () => {
+      const r = await (supabase as any).from("bookings").select("*", { count: "exact", head: true }).gte("created_at", `${today}T00:00:00`).lte("created_at", `${today}T23:59:59`);
+      return r.count ?? 0;
+    })(),
+    (async () => {
+      const r = await (supabase as any).from("partner_kyc").select("*", { count: "exact", head: true }).eq("status", "pending");
+      return r.count ?? 0;
+    })(),
+    (async () => {
+      const r = await (supabase as any).from("payouts").select("*", { count: "exact", head: true }).in("status", ["requested", "processing"]);
+      return r.count ?? 0;
+    })(),
+    safeQuery(() => (supabase as any).from("bookings").select("payment_amount,treatment_name,treatment_price,created_at").gte("created_at", monthStart.toISOString())),
+    safeQuery(() => (supabase as any).from("payouts").select("amount,status")),
+    safeQuery(() => (supabase as any).from("partner_sales").select("treatment_name,kit_name,treatment_price,partner_id,partner:partners(partner_code,profiles(full_name))")),
+  ]);
+
+  const monthlyRevenue = monthlyBookings.reduce((sum: number, b: any) => sum + Number(b.payment_amount || b.treatment_price || 0), 0);
+  const totalPayoutAmount = allPayouts.filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const treatmentRanking = allSales.reduce((acc: Record<string, number>, s: any) => {
+    const name = s.kit_name || s.treatment_name || "Unknown";
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+  const topSellingTreatment = Object.entries(treatmentRanking).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || "No sales yet";
+  const partnerRanking = allSales.reduce((acc: Record<string, { name: string; count: number }>, s: any) => {
+    const id = s.partner_id || "unknown";
+    acc[id] = acc[id] || { name: s.partner?.profiles?.full_name || s.partner?.partner_code || "Unknown", count: 0 };
+    acc[id].count += 1;
+    return acc;
+  }, {});
+  const topPerformingPartner =
+    (Object.values(partnerRanking) as Array<{ name: string; count: number }>).sort((a, b) => b.count - a.count)[0]?.name ||
+    "No sales yet";
 
   return (
     <div className="space-y-8">
@@ -188,6 +237,26 @@ export default async function AdminDashboardPage() {
           <StatCard label="Referral Partners" value={partnersCount} icon={Users} href="/admin/partners" tone="green" />
           <StatCard label="Commissions" value={commissionsCount} icon={BadgeIndianRupee} href="/admin/commissions" tone="purple" />
           <StatCard label="Payouts" value={payoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Live Partner System</h2>
+          <Link href="/admin/kyc" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
+            Review KYC <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <StatCard label="Active Partners" value={activePartnersCount} icon={Users} href="/admin/partners" tone="green" />
+          <StatCard label="Expired Memberships" value={expiredMembershipsCount} icon={CreditCard} href="/admin/partners" tone="rose" />
+          <StatCard label="Today Bookings" value={todayBookingsCount} icon={Calendar} href="/admin/bookings" tone="blue" />
+          <StatCard label="Monthly Revenue" value={`₹${monthlyRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/bookings" tone="amber" />
+          <StatCard label="Total Payouts" value={`₹${totalPayoutAmount.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" />
+          <StatCard label="Pending KYC" value={pendingKycCount} icon={CreditCard} href="/admin/kyc" tone="amber" />
+          <StatCard label="Pending Payouts" value={pendingPayoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
+          <StatCard label="Top Treatment" value={topSellingTreatment} icon={Sparkles} href="/admin/treatments" tone="blue" />
+          <StatCard label="Top Partner" value={topPerformingPartner} icon={Award} href="/admin/partners" tone="green" />
         </div>
       </div>
 

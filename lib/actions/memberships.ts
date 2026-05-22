@@ -223,13 +223,23 @@ export async function approveAndCreatePartner(membershipId: string) {
   let partnerCode: string;
   let referralLink: string;
 
+  const startedAt = new Date();
+  const expiresAt = new Date(startedAt);
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
   if (partner) {
     partnerCode = partner.partner_code;
     referralLink = getReferralUrl(partnerCode);
     // Ensure status is approved
     await serviceClient
       .from("partners" as any)
-      .update({ status: "active", updated_at: new Date().toISOString() })
+      .update({
+        status: "active",
+        membership_started_at: startedAt.toISOString(),
+        membership_expires_at: expiresAt.toISOString(),
+        membership_purchased_at: startedAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", userId);
   } else {
     // 6. Generate unique partner_code
@@ -260,7 +270,9 @@ export async function approveAndCreatePartner(membershipId: string) {
       wallet_balance: 0,
       total_earnings: 0,
       paid_earnings: 0,
-      membership_purchased_at: new Date().toISOString(),
+      membership_purchased_at: startedAt.toISOString(),
+      membership_started_at: startedAt.toISOString(),
+      membership_expires_at: expiresAt.toISOString(),
     });
 
     if (partnerError) {

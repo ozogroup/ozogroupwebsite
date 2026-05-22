@@ -2,57 +2,66 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useBooking } from "./BookingContext";
-import { treatments, site } from "@/lib/site";
 import { createBooking } from "@/lib/actions/bookings";
-import { REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { site } from "@/lib/site";
+import { useBooking } from "./BookingContext";
 
 type FormState = {
   fullName: string;
   mobile: string;
   email: string;
+  treatment: string;
   city: string;
   address: string;
   pinCode: string;
-  treatment: string;
   date: string;
-  time: string;
   referralCode: string;
   message: string;
+};
+
+type TreatmentOption = {
+  slug: string;
+  title: string;
+  kitName?: string;
+  price: number;
+  priceLabel: string;
+  unit?: string;
 };
 
 const initial: FormState = {
   fullName: "",
   mobile: "",
   email: "",
+  treatment: "",
   city: "",
   address: "",
   pinCode: "",
-  treatment: "",
   date: "",
-  time: "",
   referralCode: "",
   message: "",
 };
+
+const defaultBookingTreatments: TreatmentOption[] = [
+  { slug: "advance-kit", title: "Advance Kit", kitName: "Advance Kit", price: 18000, priceLabel: "₹18,000", unit: "complete kit" },
+  { slug: "japanese-kit", title: "Japanese Kit", kitName: "Japanese Kit", price: 22000, priceLabel: "₹22,000", unit: "complete kit" },
+  { slug: "korean-glass-kit", title: "Korean Glass Kit", kitName: "Korean Glass Kit", price: 15000, priceLabel: "₹15,000", unit: "complete kit" },
+  { slug: "basic-kit", title: "Basic Kit", kitName: "Basic Kit", price: 14000, priceLabel: "₹14,000", unit: "complete kit" },
+  { slug: "korean-glass-treatment", title: "Korean Glass Treatment", kitName: "Korean Glass Treatment", price: 25000, priceLabel: "₹25,000", unit: "per session" },
+];
 
 export default function BookingModal() {
   const { isOpen, treatmentSlug, close } = useBooking();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(initial);
+  const [availableTreatments, setAvailableTreatments] =
+    useState<TreatmentOption[]>(defaultBookingTreatments);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (isOpen && treatmentSlug) {
       setForm((f) => ({ ...f, treatment: treatmentSlug }));
-    }
-    if (isOpen) {
-      try {
-        const storedReferralCode = window.localStorage.getItem(REFERRAL_STORAGE_KEY);
-        if (storedReferralCode) {
-          setForm((f) => ({ ...f, referralCode: f.referralCode || storedReferralCode }));
-        }
-      } catch {}
     }
     if (!isOpen) {
       setError("");
@@ -68,6 +77,48 @@ export default function BookingModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const urlCode = new URLSearchParams(window.location.search).get("ref");
+    const storedCode = localStorage.getItem("ozo_referral_code");
+    if (urlCode) localStorage.setItem("ozo_referral_code", urlCode.toUpperCase());
+    setForm((f) => ({
+      ...f,
+      referralCode: (urlCode || storedCode || f.referralCode).toUpperCase(),
+    }));
+
+    async function loadTreatments() {
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from("treatments" as any)
+          .select("slug,title,kit_name,price,price_label,unit")
+          .eq("active", true)
+          .order("featured", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setAvailableTreatments(
+            data.map((t: any) => ({
+              slug: t.slug,
+              title: t.title,
+              kitName: t.kit_name || t.title,
+              price: Number(t.price || 0),
+              priceLabel:
+                t.price_label || `₹${Number(t.price || 0).toLocaleString("en-IN")}`,
+              unit: t.unit || "",
+            }))
+          );
+        }
+      } catch (e) {
+        console.error("Unable to load treatments", e);
+      }
+    }
+
+    loadTreatments();
+  }, [isOpen]);
+
   const update =
     (key: keyof FormState) =>
     (
@@ -82,34 +133,32 @@ export default function BookingModal() {
     if (!form.fullName.trim()) return setError("Please enter your full name.");
     if (!/^[0-9+\-\s]{10,15}$/.test(form.mobile.trim()))
       return setError("Please enter a valid mobile number.");
-    if (!form.city.trim()) return setError("Please enter your city.");
-    if (!form.address.trim()) return setError("Please enter your full address.");
-    if (!form.pinCode.trim()) return setError("Please enter your pin code.");
     if (!form.treatment) return setError("Please select a treatment.");
+    if (!form.city.trim()) return setError("Please enter your city.");
+    if (!form.address.trim()) return setError("Please enter your address.");
+    if (!form.pinCode.trim()) return setError("Please enter your pin code.");
     if (!form.date) return setError("Please pick a preferred date.");
-    if (!form.time) return setError("Please pick a preferred time.");
 
     setSubmitting(true);
     const result = await createBooking({
-      fullName: form.fullName,
-      mobile: form.mobile,
-      email: form.email,
+      customer_name: form.fullName,
+      customer_phone: form.mobile,
+      customer_email: form.email,
       city: form.city,
       address: form.address,
-      pinCode: form.pinCode,
-      treatment: form.treatment,
-      date: form.date,
-      time: form.time,
-      referralCode: form.referralCode,
-      message: form.message,
+      pin_code: form.pinCode,
+      treatment_slug: form.treatment,
+      preferred_date: form.date,
+      referral_code: form.referralCode,
+      notes: form.message,
     });
+    setSubmitting(false);
 
     if (result.error) {
-      setSubmitting(false);
-      return setError(result.error);
+      setError(result.error);
+      return;
     }
 
-    setSubmitting(false);
     setForm(initial);
     close();
     router.push("/thank-you");
@@ -118,130 +167,143 @@ export default function BookingModal() {
   if (!isOpen) return null;
 
   const today = new Date().toISOString().split("T")[0];
-  const selected = treatments.find((t) => t.slug === form.treatment);
+  const selected = availableTreatments.find((t) => t.slug === form.treatment);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="booking-title"
-      className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-0 sm:p-6"
+      className="fixed inset-0 z-[9998] flex items-end justify-center p-0 sm:items-center sm:p-6"
     >
       <button
         aria-label="Close booking form"
         onClick={close}
         className="absolute inset-0 bg-brand-ink/60 backdrop-blur-sm animate-fadeUp"
       />
-      <div
-        className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-t-[32px] sm:rounded-[32px] shadow-premium animate-scaleIn"
-      >
-        {/* Premium Header */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-brand-border/60 px-6 sm:px-8 py-5 flex items-center justify-between gap-4">
-          <div>
+
+      <div className="relative w-full sm:max-w-2xl max-h-[min(92vh,calc(100dvh-24px))] overflow-y-auto overscroll-contain bg-white rounded-t-[28px] sm:rounded-[28px] shadow-premium animate-scaleIn">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-brand-border/60 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
               <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-brand-accent">
                 Secure Booking
               </p>
             </div>
-            <h3 id="booking-title" className="mt-2 text-xl sm:text-2xl font-semibold text-brand-ink">
+            <h3
+              id="booking-title"
+              className="mt-2 text-xl sm:text-2xl font-semibold text-brand-ink"
+            >
               Book Your Consultation
             </h3>
           </div>
           <button
             aria-label="Close"
             onClick={close}
-            className="h-10 w-10 rounded-full border border-brand-border/60 text-brand-ink hover:bg-brand-surface flex items-center justify-center transition-colors"
+            className="h-10 w-10 shrink-0 rounded-full border border-brand-border/60 text-brand-ink hover:bg-brand-surface flex items-center justify-center transition-colors"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-6 sm:py-8 grid gap-6">
-          <div className="grid sm:grid-cols-2 gap-5">
-            <FloatingLabel label="Full Name" required>
+        <form
+          onSubmit={handleSubmit}
+          className="px-4 sm:px-8 py-5 sm:py-8 grid gap-5 pb-[max(20px,env(safe-area-inset-bottom))]"
+        >
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FormField label="Full Name" required>
               <input
                 type="text"
                 value={form.fullName}
                 onChange={update("fullName")}
-                placeholder=" "
+                placeholder="Enter your full name"
                 className="premium-input"
                 autoComplete="name"
               />
-            </FloatingLabel>
-            <FloatingLabel label="Mobile Number" required>
+            </FormField>
+            <FormField label="Mobile Number" required>
               <input
                 type="tel"
                 value={form.mobile}
                 onChange={update("mobile")}
-                placeholder=" "
+                placeholder="+91 XXXXX XXXXX"
                 className="premium-input"
                 autoComplete="tel"
               />
-            </FloatingLabel>
+            </FormField>
           </div>
 
-          <FloatingLabel label="Email Address">
+          <FormField label="Email Address">
             <input
               type="email"
               value={form.email}
               onChange={update("email")}
-              placeholder=" "
+              placeholder="you@example.com"
               className="premium-input"
               autoComplete="email"
             />
-          </FloatingLabel>
+          </FormField>
 
-          <div className="grid sm:grid-cols-2 gap-5">
-            <FloatingLabel label="City" required>
+          <FormField label="Treatment / Kit" required>
+            <select value={form.treatment} onChange={update("treatment")} className="premium-input">
+              <option value="">Choose a treatment or kit</option>
+              {availableTreatments.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.title} - {t.priceLabel}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FormField label="City" required>
               <input
                 type="text"
                 value={form.city}
                 onChange={update("city")}
-                placeholder=" "
+                placeholder="Enter your city"
                 className="premium-input"
                 autoComplete="address-level2"
               />
-            </FloatingLabel>
-            <FloatingLabel label="Pin Code" required>
+            </FormField>
+            <FormField label="Pin Code" required>
               <input
                 type="text"
                 value={form.pinCode}
                 onChange={update("pinCode")}
-                placeholder=" "
+                placeholder="Enter pin code"
                 className="premium-input"
+                inputMode="numeric"
                 autoComplete="postal-code"
               />
-            </FloatingLabel>
+            </FormField>
           </div>
 
-          <FloatingLabel label="Full Address" required>
+          <FormField label="Address" required>
             <textarea
               value={form.address}
               onChange={update("address")}
-              rows={3}
-              placeholder=" "
-              className="premium-input resize-none"
+              rows={2}
+              placeholder="House, street, area"
+              className="premium-input min-h-[92px] resize-none"
               autoComplete="street-address"
             />
-          </FloatingLabel>
+          </FormField>
 
-          <FloatingLabel label="Select Treatment" required>
-            <select value={form.treatment} onChange={update("treatment")} className="premium-input">
-              <option value="">Choose a treatment</option>
-              {treatments.map((t) => (
-                <option key={t.slug} value={t.slug}>
-                  {t.title} — {t.priceLabel}
-                </option>
-              ))}
-              <option value="general-consultation">General Consultation</option>
-            </select>
-          </FloatingLabel>
-
-          <div className="grid sm:grid-cols-2 gap-5">
-            <FloatingLabel label="Preferred Date" required>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FormField label="Preferred Date" required>
               <input
                 type="date"
                 min={today}
@@ -249,49 +311,30 @@ export default function BookingModal() {
                 onChange={update("date")}
                 className="premium-input"
               />
-            </FloatingLabel>
-            <FloatingLabel label="Preferred Time" required>
-              <select value={form.time} onChange={update("time")} className="premium-input">
-                <option value="">Select time</option>
-                {[
-                  "10:00 AM",
-                  "11:30 AM",
-                  "1:00 PM",
-                  "3:00 PM",
-                  "4:30 PM",
-                  "6:00 PM",
-                ].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </FloatingLabel>
+            </FormField>
+            <FormField label="Referral Code">
+              <input
+                type="text"
+                value={form.referralCode}
+                onChange={update("referralCode")}
+                placeholder="OZO1003"
+                className="premium-input uppercase"
+              />
+            </FormField>
           </div>
 
-          <FloatingLabel label="Referral Code">
-            <input
-              type="text"
-              value={form.referralCode}
-              onChange={update("referralCode")}
-              placeholder=" "
-              className="premium-input uppercase"
-            />
-          </FloatingLabel>
-
-          <FloatingLabel label="Your Message">
+          <FormField label="Your Message">
             <textarea
               value={form.message}
               onChange={update("message")}
-              rows={3}
+              rows={4}
               placeholder="Tell us about your skin concerns..."
-              className="premium-input resize-none"
+              className="premium-input min-h-[116px] resize-none"
             />
-          </FloatingLabel>
+          </FormField>
 
-          {/* Premium Price Summary */}
           {selected && (
-            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shadow-soft">
+            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-soft">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] font-semibold text-brand-muted mb-1">
                   Estimated Amount
@@ -303,7 +346,7 @@ export default function BookingModal() {
                   </span>
                 </p>
               </div>
-              <span className="text-xs font-semibold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 px-4 py-2 rounded-full">
+              <span className="text-xs font-semibold text-brand-accent bg-brand-accent/10 border border-brand-accent/20 px-4 py-2 rounded-full text-center">
                 Payment link sent after confirmation
               </span>
             </div>
@@ -311,7 +354,17 @@ export default function BookingModal() {
 
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-start gap-3">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mt-0.5 shrink-0"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 8v4M12 16h.01" />
               </svg>
@@ -320,7 +373,7 @@ export default function BookingModal() {
           )}
 
           <p className="text-sm text-brand-muted leading-relaxed">
-            By submitting, you agree to be contacted on WhatsApp/phone to confirm your slot. 
+            By submitting, you agree to be contacted on WhatsApp/phone to confirm your booking.
             Need help? Call our customer care at{" "}
             <a
               href={`tel:${site.phoneRaw}`}
@@ -331,11 +384,7 @@ export default function BookingModal() {
           </p>
 
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:justify-end pt-2">
-            <button
-              type="button"
-              onClick={close}
-              className="btn-secondary justify-center"
-            >
+            <button type="button" onClick={close} className="btn-secondary justify-center">
               Cancel
             </button>
             <button
@@ -347,7 +396,7 @@ export default function BookingModal() {
             </button>
           </div>
 
-          <p className="text-center text-sm text-brand-muted pt-2">
+          <p className="text-center text-sm text-brand-muted pt-1">
             Prefer chat?{" "}
             <a
               href={site.whatsapp}
@@ -364,12 +413,14 @@ export default function BookingModal() {
       <style jsx>{`
         .premium-input {
           width: 100%;
-          border-radius: 16px;
-          border: 2px solid #E3EDF2;
+          min-height: 52px;
+          border-radius: 14px;
+          border: 1.5px solid #e3edf2;
           background: #fff;
-          padding: 16px 18px;
-          font-size: 15px;
-          color: #0B2030;
+          padding: 14px 16px;
+          font-size: 16px;
+          line-height: 1.35;
+          color: #0b2030;
           outline: none;
           transition: all 0.2s ease;
           appearance: none;
@@ -384,31 +435,32 @@ export default function BookingModal() {
           padding-right: 44px;
         }
         .premium-input:focus {
-          border-color: #1BA3C6;
+          border-color: #1ba3c6;
           box-shadow: 0 0 0 4px rgba(27, 163, 198, 0.12);
         }
         select.premium-input:focus {
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231BA3C6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
         }
         .premium-input::placeholder {
-          color: transparent;
-        }
-        .premium-input:not(:placeholder-shown) + label,
-        .premium-input:focus + label {
-          transform: translateY(-28px) scale(0.85);
-          color: #1BA3C6;
+          color: #94a3b8;
         }
         .premium-input option {
           background: #fff;
-          color: #0B2030;
+          color: #0b2030;
           padding: 12px 16px;
+        }
+        @media (max-width: 420px) {
+          .premium-input {
+            min-height: 50px;
+            padding: 13px 14px;
+          }
         }
       `}</style>
     </div>
   );
 }
 
-function FloatingLabel({
+function FormField({
   label,
   children,
   required = false,
@@ -418,12 +470,12 @@ function FloatingLabel({
   required?: boolean;
 }) {
   return (
-    <label className="relative block">
-      {children}
-      <span className="absolute left-4 top-4 text-sm text-brand-muted transition-all duration-200 pointer-events-none origin-[0]">
+    <label className="block min-w-0">
+      <span className="mb-2 block text-sm font-semibold text-brand-ink">
         {label}
         {required && <span className="text-brand-accent ml-1">*</span>}
       </span>
+      {children}
     </label>
   );
 }

@@ -17,6 +17,7 @@ import {
   Wallet,
   BadgeIndianRupee,
   Image as ImageIcon,
+  ShieldCheck,
 } from "lucide-react";
 
 const navigation = [
@@ -30,6 +31,7 @@ const navigation = [
   { name: "Referral Partners", href: "/admin/partners", icon: Users, section: "referral" },
   { name: "Referral Network", href: "/admin/referrals", icon: Network, section: "referral" },
   { name: "Commissions", href: "/admin/commissions", icon: BadgeIndianRupee, section: "referral" },
+  { name: "KYC Approvals", href: "/admin/kyc", icon: ShieldCheck, section: "referral" },
   { name: "Payouts", href: "/admin/payouts", icon: Wallet, section: "referral" },
   { name: "Media Library", href: "/admin/media", icon: ImageIcon, section: "settings" },
   { name: "Contact Settings", href: "/admin/contact", icon: Phone, section: "settings" },

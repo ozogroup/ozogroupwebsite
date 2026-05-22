@@ -30,6 +30,16 @@ export async function middleware(req: NextRequest) {
     request: { headers: requestHeaders },
   });
 
+  const referralCode = req.nextUrl.searchParams.get("ref");
+  if (referralCode) {
+    res.cookies.set("ozo_referral_code", referralCode.toUpperCase(), {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+
   // Only protect admin and partner routes — skip Supabase for everything else
   const isAdmin = pathname.startsWith("/admin");
   const isPartner = pathname.startsWith("/partner");

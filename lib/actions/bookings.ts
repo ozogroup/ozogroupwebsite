@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
-import { generateBookingCommissions, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
 
 // =====================================================
 // BOOKINGS ACTIONS
@@ -15,114 +15,168 @@ export async function getBookings() {
     .from("bookings" as any)
     .select(`
       *,
-      treatment:treatments(title),
-      referred_partner:partners!bookings_referred_by_fkey(partner_code, status, profiles(full_name, phone, email))
+      treatment:treatments(title)
     `)
     .order("created_at", { ascending: false });
   
   if (error) {
-    console.error("Error fetching bookings with partner details:", error);
-    const fallback = await supabase
-      .from("bookings" as any)
-      .select(`
-        *,
-        treatment:treatments(title),
-        referred_partner:partners!bookings_referred_by_fkey(partner_code, status)
-      `)
-      .order("created_at", { ascending: false });
-
-    if (fallback.error) {
-      console.error("Error fetching bookings:", fallback.error);
-      return [];
-    }
-
-    return fallback.data || [];
+    console.error("Error fetching bookings:", error);
+    return [];
   }
   
   return data || [];
 }
 
-export async function createBooking(data: {
-  fullName: string;
-  mobile: string;
-  email?: string;
+type CreateBookingPayload = {
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
   city: string;
   address: string;
-  pinCode: string;
-  treatment: string;
-  date: string;
-  time: string;
-  referralCode?: string;
-  message?: string;
-}) {
-  if (!data.fullName?.trim()) return { error: "Full name is required" };
-  if (!data.mobile?.trim()) return { error: "Mobile number is required" };
-  if (!data.city?.trim()) return { error: "City is required" };
-  if (!data.address?.trim()) return { error: "Address is required" };
-  if (!data.pinCode?.trim()) return { error: "Pin code is required" };
-  if (!data.treatment?.trim()) return { error: "Treatment is required" };
-  if (!data.date?.trim()) return { error: "Preferred date is required" };
-  if (!data.time?.trim()) return { error: "Preferred time is required" };
+  pin_code: string;
+  treatment_slug: string;
+  preferred_date: string;
+  referral_code?: string;
+  notes?: string;
+};
 
-  const mobileRegex = /^[0-9+\-\s()]{7,15}$/;
-  if (!mobileRegex.test(data.mobile.trim())) return { error: "Invalid mobile number" };
+const COMMISSION_RATE = 6;
 
-  const email = data.email?.trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: "Invalid email format" };
-  }
+function clean(value?: string) {
+  return value?.trim() || "";
+}
 
-  const supabase = getSupabaseServiceClient();
-  const treatmentSlug = data.treatment.trim();
-  const referralCode = data.referralCode?.trim().toUpperCase() || null;
+async function findPartnerByCode(supabase: ReturnType<typeof getSupabaseServiceClient>, code: string) {
+  if (!code) return null;
+  const { data } = await supabase
+    .from("partners" as any)
+    .select("id, partner_code, status, membership_expires_at, kyc_status, bank_verified")
+    .eq("partner_code", code.toUpperCase())
+    .maybeSingle();
+  return data as any;
+}
 
-  const { data: treatment, error: treatmentError } = await supabase
+function isMembershipActive(partner: any) {
+  if (!partner || partner.status !== "active") return false;
+  if (!partner.membership_expires_at) return true;
+  return new Date(partner.membership_expires_at).getTime() >= Date.now();
+}
+
+export async function createBooking(payload: CreateBookingPayload) {
+  const serviceClient = getSupabaseServiceClient();
+
+  const customerName = clean(payload.customer_name);
+  const customerPhone = clean(payload.customer_phone);
+  const city = clean(payload.city);
+  const address = clean(payload.address);
+  const pinCode = clean(payload.pin_code);
+  const treatmentSlug = clean(payload.treatment_slug);
+  const preferredDate = clean(payload.preferred_date);
+  const referralCode =
+    clean(payload.referral_code) ||
+    clean(cookies().get("ozo_referral_code")?.value);
+
+  if (!customerName) return { error: "Please enter your full name." };
+  if (!/^[0-9+\-\s]{10,15}$/.test(customerPhone)) return { error: "Please enter a valid mobile number." };
+  if (!city) return { error: "Please enter your city." };
+  if (!address) return { error: "Please enter your address." };
+  if (!pinCode) return { error: "Please enter your pin code." };
+  if (!treatmentSlug) return { error: "Please select a treatment." };
+  if (!preferredDate) return { error: "Please pick a preferred date." };
+
+  const { data: treatment, error: treatmentError } = await serviceClient
     .from("treatments" as any)
-    .select("id, price, slug")
+    .select("id, title, kit_name, price, price_label, type")
     .eq("slug", treatmentSlug)
+    .eq("active", true)
     .maybeSingle();
 
-  if (treatmentError) {
-    console.error("Error fetching treatment for booking:", treatmentError);
-    return { error: "Selected treatment is unavailable. Please try again." };
+  if (treatmentError || !treatment) {
+    return { error: "Selected treatment is not available." };
   }
 
-  if (!treatment) {
-    return { error: "Selected treatment is unavailable. Please choose another treatment." };
-  }
+  const partner = await findPartnerByCode(serviceClient, referralCode);
+  const partnerIsEligible = isMembershipActive(partner);
+  const treatmentPrice = Number((treatment as any).price || 0);
+  const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * COMMISSION_RATE) / 100) : 0;
 
-  const partner = await resolvePartnerByCode(supabase, referralCode);
-
-  const { data: booking, error } = await supabase
+  const { data: booking, error: bookingError } = await serviceClient
     .from("bookings" as any)
     .insert({
-      customer_name: data.fullName.trim(),
-      customer_phone: data.mobile.trim(),
-      customer_email: email || null,
-      city: data.city.trim(),
-      address: data.address.trim(),
-      pin_code: data.pinCode.trim(),
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      customer_email: clean(payload.customer_email) || null,
+      city,
+      address,
+      pin_code: pinCode,
       treatment_id: (treatment as any).id,
-      booking_type: "consultation",
-      preferred_date: data.date,
-      preferred_time: data.time,
-      referral_code: referralCode,
-      referred_by: (partner as any)?.id || null,
+      treatment_name: (treatment as any).title,
+      treatment_price: treatmentPrice,
+      booking_type: (treatment as any).type === "home_kit" ? "home_kit" : "consultation",
+      preferred_date: preferredDate,
+      referral_code: referralCode || null,
+      partner_code: partner?.partner_code || (referralCode ? referralCode.toUpperCase() : null),
+      referred_by: partnerIsEligible ? partner.id : null,
       payment_status: "pending_payment",
       booking_status: "pending",
-      payment_amount: Number((treatment as any).price ?? 0) || null,
-      notes: data.message?.trim() || null,
+      payment_amount: treatmentPrice,
+      notes: clean(payload.notes) || null,
     })
-    .select()
+    .select("id")
     .single();
 
-  if (error) {
-    console.error("Error creating booking:", error);
-    return { error: error.message };
+  if (bookingError || !booking) {
+    console.error("Error creating booking:", bookingError);
+    return { error: bookingError?.message || "Failed to create booking." };
+  }
+
+  let commissionId: string | null = null;
+  if (partnerIsEligible && commissionAmount > 0) {
+    const { data: commission, error: commissionError } = await serviceClient
+      .from("commissions" as any)
+      .insert({
+        partner_id: partner.id,
+        source_type: "booking",
+        source_id: (booking as any).id,
+        source_amount: treatmentPrice,
+        level: 1,
+        percentage: COMMISSION_RATE,
+        amount: commissionAmount,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (!commissionError && commission) {
+      commissionId = (commission as any).id;
+    } else {
+      console.error("Error creating commission:", commissionError);
+    }
+  }
+
+  if (partner) {
+    const { error: saleError } = await serviceClient.from("partner_sales" as any).insert({
+      partner_id: partner.id,
+      partner_code: partner.partner_code,
+      treatment_id: (treatment as any).id,
+      treatment_name: (treatment as any).title,
+      kit_name: (treatment as any).kit_name || (treatment as any).title,
+      treatment_price: treatmentPrice,
+      booking_id: (booking as any).id,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      booking_status: "pending",
+      commission_amount: commissionAmount,
+      commission_id: commissionId,
+    });
+
+    if (saleError) console.error("Error creating partner sale:", saleError);
   }
 
   revalidatePath("/admin/bookings");
-  return { data: booking };
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/partner/dashboard");
+  return { data: { booking_id: (booking as any).id } };
 }
 
 export async function getBookingById(id: string) {
@@ -143,7 +197,7 @@ export async function getBookingById(id: string) {
 }
 
 export async function updateBookingStatus(id: string, status: string, adminNote?: string) {
-  const supabase = getSupabaseServiceClient();
+  const supabase = getSupabaseServerClient();
   
   const updateData: any = { booking_status: status, updated_at: new Date().toISOString() };
   if (adminNote) {
@@ -161,17 +215,8 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     console.error("Error updating booking status:", error);
     throw error;
   }
-
-  if (["confirmed", "completed"].includes(status)) {
-    await generateBookingCommissions(supabase, data as any);
-  }
   
   revalidatePath("/admin/bookings");
-  revalidatePath("/admin/commissions");
-  revalidatePath("/admin/partners");
-  revalidatePath("/partner/dashboard");
-  revalidatePath("/partner/income");
-  revalidatePath("/partner/commissions");
   return data;
 }
 

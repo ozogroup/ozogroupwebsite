@@ -1,420 +1,249 @@
-import ReferralCopyButton from "@/components/partner/ReferralCopyButton";
+import Link from "next/link";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 import { getReferralUrl } from "@/lib/referral-url";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-function money(value: number | null | undefined) {
-  return `₹${Number(value ?? 0).toLocaleString()}`;
-}
-
-function titleCase(value: string | null | undefined) {
-  return (value || "pending")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function amountOf(row: any) {
-  return Number(row?.amount ?? row?.commission_amount ?? 0) || 0;
-}
-
-function StatCard({
-  label,
-  value,
-  helper,
-  tone = "slate",
-}: {
-  label: string;
-  value: string | number;
-  helper?: string;
-  tone?: "slate" | "green" | "amber" | "blue";
-}) {
-  const tones = {
-    slate: "text-slate-950 bg-white",
-    green: "text-green-700 bg-green-50",
-    amber: "text-amber-700 bg-amber-50",
-    blue: "text-blue-700 bg-blue-50",
-  };
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className={`mb-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>
-        {label}
-      </div>
-      <p className="break-words text-2xl font-bold text-slate-950 md:text-3xl">{value}</p>
-      {helper && <p className="mt-2 text-sm text-slate-500">{helper}</p>}
-    </div>
-  );
-}
-
-function ReportCard({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: Array<{ label: string; value: string | number }>;
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 space-y-3">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
-            <span className="text-sm text-slate-500">{row.label}</span>
-            <span className="text-right text-sm font-semibold text-slate-950">{row.value}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default async function PartnerDashboardPage() {
   await requirePartner();
-
   const supabase = getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return <div>User not found</div>;
-  }
+  if (!user) return <div>User not found</div>;
 
   const { data: partner } = await supabase
     .from("partners" as any)
-    .select("id, partner_code, status, wallet_balance, total_earnings, paid_earnings, kyc_status")
+    .select("*")
     .eq("id", user.id)
-    .maybeSingle();
+    .single();
 
-  const partnerData = (partner || {}) as any;
-  const partnerCode = partnerData.partner_code || "N/A";
-  const partnerStatus = partnerData.status || "pending";
-  const walletBalance = Number(partnerData.wallet_balance ?? 0) || 0;
+  const partnerData = partner as any;
+  const partnerCode = partnerData?.partner_code || "N/A";
+  const partnerStatus = partnerData?.status || "pending";
+  const membershipStart =
+    partnerData?.membership_started_at || partnerData?.membership_purchased_at || partnerData?.created_at;
+  const fallbackExpiry = membershipStart
+    ? new Date(new Date(membershipStart).setFullYear(new Date(membershipStart).getFullYear() + 1)).toISOString()
+    : null;
+  const membershipExpiry = partnerData?.membership_expires_at || fallbackExpiry;
+  const remainingDays = membershipExpiry
+    ? Math.max(0, Math.ceil((new Date(membershipExpiry).getTime() - Date.now()) / 86400000))
+    : 0;
+  const membershipActive = partnerStatus === "active" && remainingDays > 0;
 
   if (partnerStatus !== "active") {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="max-w-md text-center">
-          <span className="mb-4 block text-5xl">...</span>
-          <h2 className="mb-2 text-xl font-bold text-brand-ink">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-bold text-brand-ink mb-2">
             {partnerStatus === "pending" ? "Approval Pending" : "Account Inactive"}
           </h2>
           <p className="text-brand-muted">
-            {partnerStatus === "pending"
-              ? "Your partner account is pending approval. Please wait for the admin to approve your membership."
-              : partnerStatus === "rejected"
-              ? "Your partner request was rejected. Please contact administrator."
-              : `Your account status is "${partnerStatus}". Please contact administrator.`}
+            Your account status is "{partnerStatus}". Please contact the administrator for help.
           </p>
         </div>
       </div>
     );
   }
 
-  const [
-    referralTreeResult,
-    commissionsResult,
-    payoutsResult,
-    bookingsResult,
-    membershipsResult,
-    clicksResult,
-  ] = await Promise.all([
-    supabase.from("referral_tree" as any).select("descendant_id, level").eq("ancestor_id", user.id),
-    supabase.from("commissions" as any).select("amount, status, level, created_at").eq("partner_id", user.id),
-    supabase.from("payouts" as any).select("amount, status, created_at, processed_at").eq("partner_id", user.id),
-    supabase.from("bookings" as any).select("id, booking_status, payment_status").eq("referred_by", user.id),
-    supabase.from("memberships" as any).select("id, membership_status, payment_status").eq("sponsor_id", user.id),
-    supabase.from("referral_clicks" as any).select("id, converted_to_membership").eq("partner_id", user.id),
-  ]);
+  const [referrals, directTeam, commissionsData, payoutsData, bookingsData, salesData] =
+    await Promise.all([
+      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id),
+      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
+      supabase.from("commissions" as any).select("amount,status,created_at").eq("partner_id", user.id),
+      supabase.from("payouts" as any).select("amount,status").eq("partner_id", user.id),
+      supabase
+        .from("bookings" as any)
+        .select("id,customer_name,customer_phone,booking_status,created_at,treatment_name,treatment_price")
+        .eq("referred_by", user.id)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase
+        .from("partner_sales" as any)
+        .select("kit_name,treatment_name,treatment_price,booking_status,commission_amount,created_at,customer_name,customer_phone")
+        .eq("partner_id", user.id)
+        .order("created_at", { ascending: false }),
+    ]);
 
-  const referralTree = ((referralTreeResult as any)?.data || []) as any[];
-  const commissions = ((commissionsResult as any)?.data || []) as any[];
-  const payouts = ((payoutsResult as any)?.data || []) as any[];
-  const bookings = ((bookingsResult as any)?.data || []) as any[];
-  const memberships = ((membershipsResult as any)?.data || []) as any[];
-  const clicks = ((clicksResult as any)?.data || []) as any[];
+  const commissions = (commissionsData as any)?.data || [];
+  const payouts = (payoutsData as any)?.data || [];
+  const bookings = (bookingsData as any)?.data || [];
+  const sales = (salesData as any)?.data || [];
 
-  const descendantIds = Array.from(new Set(referralTree.map((row) => row.descendant_id).filter(Boolean)));
-  let teamPartners: any[] = [];
-  if (descendantIds.length > 0) {
-    const { data } = await supabase
-      .from("partners" as any)
-      .select("id, status")
-      .in("id", descendantIds);
-    teamPartners = (data || []) as any[];
-  }
-
-  const directReferrals = referralTree.filter((row) => Number(row.level) === 1).length;
-  const totalNetwork = referralTree.length;
-  const activePartners = teamPartners.filter((row) => row.status === "active").length;
-  const pendingPartners = teamPartners.filter((row) => row.status === "pending").length;
-
-  const totalEarnings =
-    commissions.reduce((sum, row) => sum + amountOf(row), 0) ||
-    Number(partnerData.total_earnings ?? 0) ||
-    0;
-  const paidEarnings =
-    commissions
-      .filter((row) => row.status === "paid")
-      .reduce((sum, row) => sum + amountOf(row), 0) ||
-    Number(partnerData.paid_earnings ?? 0) ||
-    0;
+  const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingEarnings = commissions
-    .filter((row) => row.status === "pending" || row.status === "approved")
-    .reduce((sum, row) => sum + amountOf(row), 0);
-
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const thisMonthEarnings = commissions
-    .filter((row) => row.created_at && new Date(row.created_at) >= monthStart)
-    .reduce((sum, row) => sum + amountOf(row), 0);
-
+    .filter((c: any) => c.status === "pending")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const paidEarnings = commissions
+    .filter((c: any) => c.status === "paid")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingPayout = payouts
-    .filter((row) => ["requested", "processing", "pending"].includes(row.status))
-    .reduce((sum, row) => sum + (Number(row.amount ?? 0) || 0), 0);
+    .filter((p: any) => p.status === "requested" || p.status === "processing")
+    .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
   const paidPayout = payouts
-    .filter((row) => row.status === "paid")
-    .reduce((sum, row) => sum + (Number(row.amount ?? 0) || 0), 0);
-  const lastPaidPayout = payouts
-    .filter((row) => row.status === "paid")
-    .sort((a, b) => new Date(b.processed_at || b.created_at || 0).getTime() - new Date(a.processed_at || a.created_at || 0).getTime())[0];
+    .filter((p: any) => p.status === "paid")
+    .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
-  const confirmedBookings = bookings.filter((row) => ["confirmed", "completed"].includes(row.booking_status)).length;
-  const pendingBookings = bookings.filter((row) => ["pending", "in_progress"].includes(row.booking_status)).length;
-  const directReferralTotal = directReferrals + confirmedBookings;
-  const confirmedMemberships = memberships.filter(
-    (row) => row.membership_status === "active" || row.membership_status === "approved" || row.payment_status === "paid"
-  ).length;
-  const confirmedReferrals = confirmedBookings + confirmedMemberships;
+  const totalSales = sales.reduce((sum: number, s: any) => sum + Number(s.treatment_price || 0), 0);
+  const confirmedTreatments = sales.filter((s: any) => ["confirmed", "completed"].includes(s.booking_status)).length;
+  const thisMonthEarnings = sales
+    .filter((s: any) => {
+      const d = new Date(s.created_at);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum: number, s: any) => sum + Number(s.commission_amount || 0), 0);
 
-  const levelCounts = [1, 2, 3, 4].map((level) => ({
-    level,
-    count: referralTree.filter((row) => Number(row.level) === level).length,
-  }));
-  const levelEarnings = [1, 2, 3, 4].map((level) => ({
-    level,
-    earnings: commissions
-      .filter((row) => Number(row.level || 1) === level)
-      .reduce((sum, row) => sum + amountOf(row), 0),
-  }));
-  const bestLevel = levelCounts.reduce((best, current) => (current.count > best.count ? current : best), {
-    level: 1,
-    count: 0,
-  });
-  const bestPerformingLevel = bestLevel.count > 0 ? `Level ${bestLevel.level} (${bestLevel.count})` : "No referral data yet";
-  const conversionRate = clicks.length > 0 ? `${Math.round((confirmedReferrals / clicks.length) * 100)}%` : "No click data yet";
+  const kitStats = sales.reduce((acc: Record<string, { count: number; sales: number }>, s: any) => {
+    const kit = s.kit_name || s.treatment_name || "Unknown";
+    acc[kit] = acc[kit] || { count: 0, sales: 0 };
+    acc[kit].count += 1;
+    acc[kit].sales += Number(s.treatment_price || 0);
+    return acc;
+  }, {});
+  const topSellingKit = Object.entries(kitStats).sort((a: any, b: any) => b[1].count - a[1].count)[0]?.[0] || "No sales yet";
 
   const referralLink = getReferralUrl(partnerCode);
   const whatsappMessage = encodeURIComponent(
-    `Join OZO Service / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`
+    `Book OZO / IA Skin Care with my referral code: ${partnerCode}\n\n${referralLink}`
   );
-  const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
-
-  const milestones = [
-    { target: 10, reward: "₹5,000" },
-    { target: 20, reward: "₹10,000" },
-    { target: 30, reward: "₹15,000" },
-  ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-slate-950 md:text-3xl">
-            Partner Dashboard
-          </h1>
-          <p className="text-sm text-slate-500">Track referrals, payouts, earnings, and milestone progress.</p>
-        </div>
-        <span className="w-fit rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
-          {titleCase(partnerStatus)}
-        </span>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div>
+        <h1 className="font-display text-2xl md:text-3xl font-bold text-brand-ink">Partner Dashboard</h1>
+        <p className="text-sm text-brand-muted">Live sales, bookings, kit tracking, and earnings.</p>
       </div>
 
-      <section className="rounded-xl bg-gradient-to-r from-slate-950 via-slate-900 to-amber-800 p-5 text-white shadow-lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-200">Referral Link</p>
-            <input
-              type="text"
-              readOnly
-              value={referralLink}
-              className="mt-3 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm text-white outline-none"
-            />
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:pt-8">
-            <ReferralCopyButton value={referralLink} />
-            <a
-              href={referralLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-white/25 px-5 py-2.5 text-center font-semibold text-white transition-colors hover:bg-white/10"
-            >
-              Open Link
-            </a>
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg bg-green-500 px-5 py-2.5 text-center font-semibold text-white transition-colors hover:bg-green-600"
-            >
-              WhatsApp
-            </a>
-          </div>
+      {!membershipActive && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          Membership expired. Referral earnings and payout requests are disabled until renewal.
         </div>
-      </section>
+      )}
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Wallet Balance" value={money(walletBalance)} tone="blue" />
-        <StatCard label="Total Earnings" value={money(totalEarnings)} tone="green" />
-        <StatCard label="Paid Earnings" value={money(paidEarnings)} />
-        <StatCard label="Pending Earnings" value={money(pendingEarnings)} tone="amber" />
-        <StatCard label="Direct Referrals" value={directReferralTotal} helper={`${directReferrals} partners + ${confirmedBookings} sales`} />
-        <StatCard label="Total Network" value={totalNetwork} />
-        <StatCard label="Confirmed Sales" value={confirmedBookings} tone="green" />
-        <StatCard label="Pending Sales" value={pendingBookings} tone="amber" />
-        <StatCard label="Pending Payout" value={money(pendingPayout)} tone="amber" />
-        <StatCard label="Partner Status" value={titleCase(partnerStatus)} helper={`KYC: ${titleCase(partnerData.kyc_status || "not_submitted")}`} />
-      </section>
+      <div className="bg-gradient-to-r from-brand-primary to-brand-accent rounded-xl shadow-glow p-6 text-white">
+        <h2 className="font-display text-lg font-semibold mb-2">Your Production Referral Link</h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <input readOnly value={referralLink} className="flex-1 px-4 py-2.5 bg-white/20 rounded-lg text-white outline-none border border-white/30" />
+          <Link href={`https://wa.me/?text=${whatsappMessage}`} target="_blank" className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-semibold text-center hover:bg-green-600 transition-colors">
+            Share
+          </Link>
+        </div>
+      </div>
 
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-950">Referral Program</h2>
-              <p className="text-sm text-slate-500">Commission levels and milestone rewards.</p>
-            </div>
-            <p className="text-sm font-semibold text-slate-700">{confirmedReferrals} confirmed referrals</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Stat label="Total Sales" value={`₹${totalSales.toLocaleString("en-IN")}`} />
+        <Stat label="Total Bookings" value={bookings.length} />
+        <Stat label="Total Referrals" value={referrals.count || 0} />
+        <Stat label="Earnings" value={`₹${totalEarnings.toLocaleString("en-IN")}`} tone="green" />
+        <Stat label="Pending Payout" value={`₹${pendingPayout.toLocaleString("en-IN")}`} tone="orange" />
+        <Stat label="Paid Payout" value={`₹${paidPayout.toLocaleString("en-IN")}`} />
+        <Stat label="This Month Earnings" value={`₹${thisMonthEarnings.toLocaleString("en-IN")}`} tone="green" />
+        <Stat label="Confirmed Treatments" value={confirmedTreatments} tone="accent" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Panel title="Top Selling Kit">
+          <p className="text-xl font-bold text-brand-ink">{topSellingKit}</p>
+        </Panel>
+        <Panel title="Membership">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <Info label="Start" value={membershipStart ? new Date(membershipStart).toLocaleDateString() : "-"} />
+            <Info label="Expiry" value={membershipExpiry ? new Date(membershipExpiry).toLocaleDateString() : "-"} />
+            <Info label="Remaining" value={`${remainingDays} days`} />
+            <Info label="Status" value={membershipActive ? "Active" : "Expired"} />
           </div>
+        </Panel>
+        <Panel title="Earnings Breakdown">
+          <Info label="Pending" value={`₹${pendingEarnings.toLocaleString("en-IN")}`} />
+          <Info label="Paid" value={`₹${paidEarnings.toLocaleString("en-IN")}`} />
+          <Info label="Wallet" value={`₹${Number(partnerData?.wallet_balance || 0).toLocaleString("en-IN")}`} />
+        </Panel>
+      </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
-            {[
-              ["Level 1 Direct Referral", "6%"],
-              ["Level 2 Network Referral", "3%"],
-              ["Level 3 Extended Reach", "1.7%"],
-              ["Level 4 Deep Network", "1.2%"],
-            ].map(([label, rate]) => (
-              <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-950">{label}</p>
-                <p className="mt-2 text-2xl font-bold text-amber-700">{rate}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Milestone Bonus Rewards
-            </h3>
-            {milestones.map((milestone) => {
-              const progress = Math.min(100, Math.round((confirmedReferrals / milestone.target) * 100));
-              const achieved = confirmedReferrals >= milestone.target;
-
-              return (
-                <div key={milestone.target} className="rounded-lg border border-slate-200 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-950">
-                        {milestone.target} confirmed referrals = {milestone.reward}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {confirmedReferrals} of {milestone.target} referrals
-                      </p>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${achieved ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-                      {achieved ? "Achieved" : "Locked"}
-                    </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Panel title="Kit-wise Sales">
+          <div className="space-y-3">
+            {Object.entries(kitStats).length === 0 ? (
+              <p className="text-sm text-brand-muted">No kit sales yet.</p>
+            ) : (
+              Object.entries(kitStats).map(([kit, stat]: any) => (
+                <div key={kit} className="flex items-center justify-between border-b border-brand-border/60 pb-2">
+                  <div>
+                    <p className="font-medium text-brand-ink">{kit}</p>
+                    <p className="text-xs text-brand-muted">{stat.count} bookings</p>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-700" style={{ width: `${progress}%` }} />
-                  </div>
+                  <p className="font-semibold text-brand-ink">₹{stat.sales.toLocaleString("en-IN")}</p>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
-        </div>
+        </Panel>
 
-        <div className="grid grid-cols-1 gap-5">
-          <ReportCard
-            title="Referral Overview"
-            rows={[
-              { label: "Direct referrals", value: directReferralTotal },
-              { label: "Direct partner referrals", value: directReferrals },
-              { label: "Direct confirmed sales", value: confirmedBookings },
-              { label: "Total network", value: totalNetwork },
-              { label: "Active partners", value: activePartners },
-              { label: "Pending partners", value: pendingPartners },
-            ]}
-          />
-          <ReportCard
-            title="Performance Report"
-            rows={[
-              { label: "Confirmed referrals", value: confirmedReferrals },
-              { label: "Milestone progress", value: `${Math.min(confirmedReferrals, 30)} / 30` },
-              { label: "Best performing level", value: bestPerformingLevel },
-              { label: "Referral conversion", value: conversionRate },
-            ]}
-          />
-        </div>
-      </section>
+        <Panel title="Recent Bookings">
+          <div className="space-y-3">
+            {bookings.length === 0 ? (
+              <p className="text-sm text-brand-muted">No referred bookings yet.</p>
+            ) : (
+              bookings.slice(0, 6).map((booking: any) => (
+                <div key={booking.id} className="flex items-center justify-between border-b border-brand-border/60 pb-2">
+                  <div>
+                    <p className="font-medium text-brand-ink">{booking.customer_name}</p>
+                    <p className="text-xs text-brand-muted">{booking.treatment_name || "Treatment"} • {booking.customer_phone}</p>
+                  </div>
+                  <span className="text-xs capitalize px-2 py-1 rounded-full bg-brand-surface text-brand-ink">{booking.booking_status}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </Panel>
+      </div>
 
-      <section className="grid grid-cols-1 gap-5">
-        <ReportCard
-          title="Earnings Report"
-          rows={[
-            { label: "Total earnings", value: money(totalEarnings) },
-            { label: "This month earnings", value: money(thisMonthEarnings) },
-            { label: "Pending earnings", value: money(pendingEarnings) },
-            { label: "Paid earnings", value: money(paidEarnings) },
-          ]}
-        />
-        <ReportCard
-          title="Level-wise Network"
-          rows={[
-            ...levelCounts.map((row) => ({ label: `Level ${row.level} referrals`, value: row.count })),
-            ...levelEarnings.map((row) => ({ label: `Level ${row.level} earnings`, value: money(row.earnings) })),
-          ]}
-        />
-      </section>
-
-      <section className="grid grid-cols-1 gap-5">
-        <ReportCard
-          title="Payout Report"
-          rows={[
-            { label: "Available balance", value: money(walletBalance) },
-            { label: "Pending payout", value: money(pendingPayout) },
-            { label: "Paid payout", value: money(paidPayout) },
-            {
-              label: "Last payout date",
-              value: lastPaidPayout
-                ? new Date(lastPaidPayout.processed_at || lastPaidPayout.created_at).toLocaleDateString()
-                : "No paid payouts yet",
-            },
-          ]}
-        />
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-950">Quick Actions</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            ["Share Referral Link", "/partner/referral-link"],
-            ["View Direct Team", "/partner/direct-team"],
-            ["My Income", "/partner/income"],
-            ["Request Payout", "/partner/payouts"],
-            ["Profile / KYC", "/partner/profile"],
-          ].map(([label, href]) => (
-            <a
-              key={href}
-              href={href}
-              className="rounded-lg border border-slate-200 px-4 py-4 text-center text-sm font-semibold text-slate-800 transition-colors hover:border-amber-400 hover:bg-amber-50"
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-      </section>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Quick href="/partner/referral-link" label="Share Link" />
+        <Quick href="/partner/kyc" label="KYC & Bank" />
+        <Quick href="/partner/income" label="My Income" />
+        <Quick href="/partner/payouts" label="Request Payout" />
+      </div>
     </div>
+  );
+}
+
+function Stat({ label, value, tone = "ink" }: { label: string; value: React.ReactNode; tone?: "ink" | "green" | "orange" | "accent" }) {
+  const color = tone === "green" ? "text-green-600" : tone === "orange" ? "text-orange-600" : tone === "accent" ? "text-brand-accent" : "text-brand-ink";
+  return (
+    <div className="bg-white rounded-xl shadow-soft p-5 border border-brand-border">
+      <p className="text-sm text-brand-muted mb-1">{label}</p>
+      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+      <h2 className="font-display text-lg font-semibold text-brand-ink mb-4">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Info({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-sm text-brand-muted">{label}</p>
+      <p className="font-semibold text-brand-ink">{value}</p>
+    </div>
+  );
+}
+
+function Quick({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} className="p-5 rounded-xl border border-brand-border bg-white hover:border-brand-accent hover:bg-brand-surface transition-colors text-center text-sm font-medium text-brand-ink">
+      {label}
+    </Link>
   );
 }
