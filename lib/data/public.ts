@@ -12,6 +12,12 @@ export const defaultTreatmentCatalog = treatmentKitCatalog.map((treatment) => ({
   treatmentType: treatment.treatmentType,
 }));
 
+function normalizePublicTreatmentName(name?: string | null) {
+  const value = (name || "").trim();
+  const approved = new Set<string>(treatmentKitCatalog.map((treatment) => treatment.title));
+  return approved.has(value) ? value : "Advance Kit";
+}
+
 /**
  * Fetch treatments from Supabase with fallback to the requested kit catalog.
  */
@@ -85,7 +91,7 @@ export async function getPublicTestimonials() {
     return data.map((t: any) => ({
       name: t.name,
       city: t.city,
-      treatment: t.treatment,
+      treatment: normalizePublicTreatmentName(t.treatment),
       quote: t.quote,
       rating: t.rating,
     }));
