@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   BadgeIndianRupee,
+  Bell,
   CircleUserRound,
   Headphones,
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
   Menu,
   Network,
   ShieldCheck,
+  Sparkles,
   Users,
   Wallet,
   X,
@@ -35,6 +37,7 @@ type PartnerInfo = {
   full_name: string | null;
   partner_code: string | null;
   wallet_balance: number;
+  total_earnings?: number;
   status: string | null;
   kyc_status?: string | null;
 } | null;
@@ -60,27 +63,34 @@ export default function PartnerShell({
     };
   }, [sidebarOpen]);
 
+  const initials = (partnerInfo?.full_name || "Partner")
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#fbf8f2_0%,#f5fafc_45%,#ffffff_100%)]">
       {sidebarOpen && (
         <button
           aria-label="Close navigation overlay"
-          className="fixed inset-0 bg-slate-950/55 backdrop-blur-sm z-[9998] lg:hidden"
+          className="fixed inset-0 z-[9998] bg-brand-ink/45 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[9999] w-[286px] max-w-[86vw] bg-[#061423] text-white shadow-2xl transform transition-transform duration-300 ease-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[9999] w-[304px] max-w-[88vw] transform border-r border-brand-border/80 bg-white/[0.92] text-brand-ink shadow-premium backdrop-blur-xl transition-transform duration-300 ease-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+          <div className="flex items-center justify-between border-b border-brand-border/70 px-5 py-5">
             <Logo />
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden h-10 w-10 rounded-lg border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 inline-flex items-center justify-center"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border text-brand-muted transition hover:border-brand-accent hover:bg-brand-surface hover:text-brand-primary lg:hidden"
               aria-label="Close partner navigation"
             >
               <X className="h-5 w-5" />
@@ -88,76 +98,123 @@ export default function PartnerShell({
           </div>
 
           {partnerInfo && (
-            <div className="mx-4 mt-4 rounded-2xl border border-amber-200/40 bg-gradient-to-br from-amber-100 via-yellow-200 to-amber-500 p-[1px] shadow-xl shadow-amber-950/20">
-              <div className="rounded-2xl bg-slate-950/95 p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-100 to-amber-400 flex items-center justify-center text-slate-950 font-bold text-sm shrink-0">
-                  {(partnerInfo.full_name || "P").charAt(0).toUpperCase()}
+            <div className="mx-4 mt-4 overflow-hidden rounded-[1.35rem] border border-amber-200/80 bg-gradient-to-br from-[#f8e59d] via-[#d5a935] to-[#7b520e] p-[1px] shadow-premium">
+              <div className="relative overflow-hidden rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(20,20,18,0.95),rgba(91,64,14,0.9))] p-4 text-white">
+                <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-white/[0.18] blur-2xl" />
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-100/90">
+                      VIP Partner
+                    </p>
+                    <p className="mt-1 truncate text-base font-semibold text-white">
+                      {partnerInfo.full_name || "Partner"}
+                    </p>
+                    <p className="mt-0.5 font-mono text-xs text-amber-100">
+                      {partnerInfo.partner_code || "-"}
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.14] text-sm font-bold text-amber-100 ring-1 ring-white/25">
+                    {initials}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{partnerInfo.full_name || "Partner"}</p>
-                  <p className="text-xs text-amber-200 font-mono">{partnerInfo.partner_code || "-"}</p>
+
+                <div className="relative mt-5 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
+                    <p className="text-amber-100/75">Wallet</p>
+                    <p className="mt-1 text-sm font-semibold text-white">
+                      ₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
+                    <p className="text-amber-100/75">Status</p>
+                    <p className="mt-1 text-sm font-semibold capitalize text-white">
+                      {partnerInfo.status || "pending"}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-xl bg-black/30 p-2.5 ring-1 ring-amber-200/10">
-                  <p className="text-slate-300">Wallet</p>
-                  <p className="font-semibold text-amber-200">₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}</p>
+
+                <div className="relative mt-2 rounded-2xl bg-white/10 p-3 text-xs ring-1 ring-white/[0.15]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-amber-100/75">KYC</span>
+                    <span className="font-semibold capitalize text-amber-50">
+                      {(partnerInfo.kyc_status || "not_submitted").replace("_", " ")}
+                    </span>
+                  </div>
                 </div>
-                <div className="rounded-xl bg-black/30 p-2.5 ring-1 ring-amber-200/10">
-                  <p className="text-slate-300">Status</p>
-                  <p className="font-semibold capitalize">{partnerInfo.status || "pending"}</p>
-                </div>
-              </div>
-              <div className="mt-2 rounded-xl bg-black/30 p-2.5 text-xs ring-1 ring-amber-200/10">
-                <p className="text-slate-300">KYC Status</p>
-                <p className="font-semibold capitalize text-amber-100">
-                  {(partnerInfo.kyc_status || "not_submitted").replace("_", " ")}
-                </p>
-              </div>
               </div>
             </div>
           )}
 
-          <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
+          <div className="mx-4 mt-4 rounded-2xl border border-brand-border bg-brand-surface/70 p-3">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-brand-primary shadow-soft">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-brand-ink">Keep Sharing, Keep Earning</p>
+                <p className="mt-1 text-xs leading-5 text-brand-muted">
+                  More bookings build stronger recurring income.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors ${
+                  className={`group relative flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all ${
                     isActive
-                      ? "bg-cyan-400/15 text-cyan-100 border border-cyan-300/20"
-                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                      ? "bg-brand-primary text-white shadow-card"
+                      : "text-brand-muted hover:bg-brand-surface hover:text-brand-primary"
                   }`}
                 >
-                  <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+                  {isActive && (
+                    <span className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-brand-accent" />
+                  )}
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${
+                      isActive
+                        ? "bg-white/[0.15] text-white"
+                        : "bg-white text-brand-primary shadow-soft group-hover:bg-brand-primary group-hover:text-white"
+                    }`}
+                  >
+                    <item.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                  </span>
                   <span className="font-medium">{item.name}</span>
                 </a>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-white/10">
-            <div className="flex items-center gap-2 rounded-lg bg-white/[0.05] p-2">
-              <LogOut className="h-4 w-4 text-slate-400" />
+          <div className="border-t border-brand-border/70 p-4">
+            <div className="flex items-center gap-2 rounded-2xl bg-brand-surface/80 p-2">
+              <LogOut className="h-4 w-4 text-brand-muted" />
               <LogoutButton />
             </div>
           </div>
         </div>
       </aside>
 
-      <div className="lg:pl-[286px]">
-        <header className="lg:hidden sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <div className="lg:pl-[304px]">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-brand-border/70 bg-white/[0.88] px-4 py-3 backdrop-blur-xl lg:hidden">
           <Logo />
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="h-10 w-10 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center"
-            aria-label="Open partner navigation"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-white text-brand-primary shadow-soft">
+              <Bell className="h-5 w-5" />
+            </span>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-white text-brand-primary shadow-soft transition hover:bg-brand-surface"
+              aria-label="Open partner navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </header>
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
