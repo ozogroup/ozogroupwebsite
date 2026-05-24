@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Hero from "@/components/sections/Hero";
 import TrustBadges from "@/components/sections/TrustBadges";
 import Treatments from "@/components/sections/Treatments";
+import TreatmentBenefits from "@/components/sections/TreatmentBenefits";
 import KoreanGlassHighlight from "@/components/sections/KoreanGlassHighlight";
 import ConsultationBanner from "@/components/sections/ConsultationBanner";
 import WhyChooseUs from "@/components/sections/WhyChooseUs";
@@ -26,6 +27,7 @@ export default function HomePage() {
       <Hero />
       <TrustBadges />
       <Treatments />
+      <TreatmentBenefits />
       <KoreanGlassHighlight />
       <ConsultationBanner />
       <WhyChooseUs />

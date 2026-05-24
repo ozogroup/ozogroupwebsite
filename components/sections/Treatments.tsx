@@ -16,7 +16,7 @@ export default async function Treatments() {
     "Choose between premium home treatment programs or exclusive clinical experiences designed for visible, lasting results.";
 
   return (
-    <section className="section">
+    <section id="treatments" className="section scroll-mt-24">
       <div className="container-x">
         <div className="max-w-3xl text-center mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
