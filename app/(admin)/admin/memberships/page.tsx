@@ -45,7 +45,7 @@ export default function AdminMembershipsPage() {
       } else if (result.data) {
         setMessage({
           type: "success",
-          text: `Partner created! Code: ${result.data.partner_code}. Tell ${result.data.full_name} to go to /partner/login and use "Forgot Password" with email ${result.data.email} to set their password.`,
+          text: `Partner created! Code: ${result.data.partner_code}. ${result.data.full_name} can now log in at /partner/login with email ${result.data.email} and the password they set while booking membership.`,
         });
       }
       await loadMemberships();
@@ -73,7 +73,6 @@ export default function AdminMembershipsPage() {
 
   function getActivationStatus(m: any): { label: string; color: string } {
     if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
-    if (m.partner_id) return { label: "Partner Created", color: "bg-green-100 text-green-700" };
     if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
     if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-blue-100 text-blue-700" };
     return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
@@ -154,7 +153,7 @@ export default function AdminMembershipsPage() {
                           Mark Paid
                         </button>
                       )}
-                      {membership.payment_status === "paid" && !membership.partner_id && membership.membership_status !== "rejected" && (
+                      {membership.payment_status === "paid" && membership.membership_status !== "active" && membership.membership_status !== "rejected" && (
                         <button
                           onClick={() => handleApproveAndCreatePartner(membership)}
                           disabled={actionLoading === membership.id}
@@ -163,7 +162,7 @@ export default function AdminMembershipsPage() {
                           {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
                         </button>
                       )}
-                      {membership.partner_id && (
+                      {membership.partner_id && membership.membership_status === "active" && (
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-brand-accent text-xs">{membership.partners?.partner_code || "—"}</span>
                           <button
@@ -187,7 +186,7 @@ export default function AdminMembershipsPage() {
                           </button>
                         </div>
                       )}
-                      {membership.membership_status !== "rejected" && membership.membership_status !== "active" && !membership.partner_id && (
+                      {membership.membership_status !== "rejected" && membership.membership_status !== "active" && (
                         <button
                           onClick={() => handleReject(membership.id)}
                           disabled={actionLoading === membership.id}

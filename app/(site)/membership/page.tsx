@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import type React from "react";
 import Link from "next/link";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { site } from "@/lib/site";
 import { createMembership } from "@/lib/actions/memberships";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 
 export default function MembershipPage() {
@@ -18,6 +20,8 @@ export default function MembershipPage() {
     pinCode: "",
     referralCode: "",
     notes: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -37,8 +41,19 @@ export default function MembershipPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Password and Confirm Password do not match.");
+      return;
+    }
+
+    setLoading(true);
 
     const result = await createMembership({
       full_name: formData.fullName,
@@ -49,13 +64,27 @@ export default function MembershipPage() {
       pin_code: formData.pinCode,
       referral_code: formData.referralCode || undefined,
       notes: formData.notes || undefined,
+      password: formData.password,
+      confirm_password: formData.confirmPassword,
     });
-
-    setLoading(false);
 
     if (result.error) {
       setError(result.error);
+      setLoading(false);
     } else {
+      const supabase = getSupabaseBrowserClient();
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
+
+      setLoading(false);
+
+      if (loginError) {
+        setError("Membership request submitted, but automatic login failed. Please log in with your email and password.");
+        return;
+      }
+
       setSubmitted(true);
     }
   };
@@ -242,6 +271,40 @@ export default function MembershipPage() {
                       onChange={handleChange}
                       className="w-full px-4 py-3 rounded-2xl border border-brand-border/60 bg-white text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
                       placeholder="your@email.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">
+                      Set Password *
+                    </label>
+                    <PasswordInput
+                      id="password"
+                      name="password"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-2xl border border-brand-border/60 bg-white text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
+                      placeholder="Minimum 8 characters"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">
+                      Confirm Password *
+                    </label>
+                    <PasswordInput
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-2xl border border-brand-border/60 bg-white text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
+                      placeholder="Re-enter password"
                     />
                   </div>
 

@@ -9,12 +9,39 @@ import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/action
 // MEMBERSHIP REQUESTS ACTIONS
 // =====================================================
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function generatePartnerCode(supabase: ReturnType<typeof getSupabaseServiceClient>) {
+  const { data: lastPartner } = await supabase
+    .from("partners" as any)
+    .select("partner_code")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const lastPartners = lastPartner as any[];
+  let nextNumber = 1001;
+  if (lastPartners && lastPartners.length > 0) {
+    const lastCode = lastPartners[0].partner_code;
+    const num = parseInt(String(lastCode).replace("OZO", ""), 10);
+    if (!isNaN(num)) nextNumber = num + 1;
+  }
+
+  return `OZO${nextNumber}`;
+}
+
+function toIndianAuthPhone(mobile: string) {
+  const digits = mobile.replace(/\D/g, "");
+  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;
+  return mobile.trim().startsWith("+") ? mobile.trim() : undefined;
+}
+
 export async function getMembershipRequests() {
   const supabase = getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
-    .select("*, partners:partner_id(partner_code, referral_link)")
+    .select("*, partners:partner_id(partner_code, referral_link, status)")
     .order("created_at", { ascending: false });
   
   if (error) {
@@ -73,6 +100,8 @@ export async function createMembership(data: {
   pin_code: string;
   referral_code?: string;
   notes?: string;
+  password: string;
+  confirm_password: string;
 }) {
   // Validation
   if (!data.full_name?.trim()) return { error: "Full name is required" };
@@ -82,23 +111,104 @@ export async function createMembership(data: {
   if (!data.address?.trim()) return { error: "Address is required" };
   if (!data.pin_code?.trim()) return { error: "Pin code is required" };
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(data.email)) return { error: "Invalid email format" };
+  const normalizedEmail = data.email.trim().toLowerCase();
+  if (!emailRegex.test(normalizedEmail)) return { error: "Invalid email format" };
 
   const mobileRegex = /^\+?[\d\s\-()]{7,15}$/;
   if (!mobileRegex.test(data.mobile)) return { error: "Invalid mobile number" };
+  if (!data.password) return { error: "Password is required" };
+  if (data.password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (data.password !== data.confirm_password) {
+    return { error: "Password and Confirm Password do not match." };
+  }
 
   const supabase = getSupabaseServerClient();
   const serviceClient = getSupabaseServiceClient();
   const referralCode = data.referral_code?.trim().toUpperCase() || null;
   const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
 
+  const { data: existingProfile, error: existingProfileError } = await serviceClient
+    .from("profiles" as any)
+    .select("id")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (existingProfileError) {
+    console.error("Error checking existing profile:", existingProfileError);
+    return { error: "Unable to verify email. Please try again." };
+  }
+
+  if (existingProfile) {
+    return { error: "An account with this email already exists. Please use a different email or log in." };
+  }
+
+  const { data: authUser, error: authError } = await serviceClient.auth.admin.createUser({
+    email: normalizedEmail,
+    phone: toIndianAuthPhone(data.mobile),
+    password: data.password,
+    email_confirm: true,
+    phone_confirm: Boolean(toIndianAuthPhone(data.mobile)),
+    user_metadata: {
+      full_name: data.full_name.trim(),
+      phone: data.mobile.trim(),
+    },
+  });
+
+  if (authError || !authUser.user) {
+    console.error("Error creating auth user:", authError);
+    const message = authError?.message?.toLowerCase().includes("already")
+      ? "An account with this email already exists. Please use a different email or log in."
+      : "Failed to create user account. Please try again.";
+    return { error: message };
+  }
+
+  const authUserId = authUser.user.id;
+  const partnerCode = await generatePartnerCode(serviceClient);
+  const referralLink = getReferralUrl(partnerCode);
+
+  const { error: profileInsertError } = await serviceClient.from("profiles" as any).insert({
+    id: authUserId,
+    email: normalizedEmail,
+    full_name: data.full_name.trim(),
+    phone: data.mobile.trim(),
+    role: "customer",
+    email_verified: true,
+  });
+
+  if (profileInsertError) {
+    console.error("Error creating profile:", profileInsertError);
+    await serviceClient.auth.admin.deleteUser(authUserId);
+    return { error: "Failed to create user profile. Please try again." };
+  }
+
+  const { error: partnerInsertError } = await serviceClient.from("partners" as any).insert({
+    id: authUserId,
+    partner_code: partnerCode,
+    referral_link: referralLink,
+    city: data.city.trim(),
+    address: data.address.trim(),
+    pin_code: data.pin_code.trim(),
+    sponsor_id: (sponsor as any)?.id || null,
+    status: "pending",
+    wallet_balance: 0,
+    total_earnings: 0,
+    paid_earnings: 0,
+  });
+
+  if (partnerInsertError) {
+    console.error("Error creating pending partner:", partnerInsertError);
+    await serviceClient.from("profiles" as any).delete().eq("id", authUserId);
+    await serviceClient.auth.admin.deleteUser(authUserId);
+    return { error: "Failed to create pending partner request. Please try again." };
+  }
+
   const { data: record, error } = await supabase
     .from("memberships" as any)
     .insert({
       full_name: data.full_name.trim(),
       mobile: data.mobile.trim(),
-      email: data.email.trim(),
+      email: normalizedEmail,
+      partner_id: authUserId,
       city: data.city.trim(),
       address: data.address.trim(),
       pin_code: data.pin_code.trim(),
@@ -114,6 +224,9 @@ export async function createMembership(data: {
 
   if (error) {
     console.error("Error creating membership:", error);
+    await serviceClient.from("partners" as any).delete().eq("id", authUserId);
+    await serviceClient.from("profiles" as any).delete().eq("id", authUserId);
+    await serviceClient.auth.admin.deleteUser(authUserId);
     return { error: error.message };
   }
 
@@ -158,12 +271,13 @@ export async function approveAndCreatePartner(membershipId: string) {
   const fullName = (membership as any).full_name;
   const mobile = (membership as any).mobile;
   const city = (membership as any).city;
+  const pendingPartnerId = (membership as any).partner_id as string | null;
 
   // 4. Check if profile already exists for this email
   const { data: existingProfile } = await supabase
     .from("profiles" as any)
     .select("id, role")
-    .eq("email", email)
+    .eq(pendingPartnerId ? "id" : "email", pendingPartnerId || email)
     .maybeSingle();
 
   const profile = existingProfile as any;
@@ -242,22 +356,7 @@ export async function approveAndCreatePartner(membershipId: string) {
       })
       .eq("id", userId);
   } else {
-    // 6. Generate unique partner_code
-    const { data: lastPartner } = await supabase
-      .from("partners" as any)
-      .select("partner_code")
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const lastPartners = lastPartner as any[];
-    let nextNumber = 1001;
-    if (lastPartners && lastPartners.length > 0) {
-      const lastCode = lastPartners[0].partner_code;
-      const num = parseInt(lastCode.replace("OZO", ""), 10);
-      if (!isNaN(num)) nextNumber = num + 1;
-    }
-
-    partnerCode = `OZO${nextNumber}`;
+    partnerCode = await generatePartnerCode(serviceClient);
     referralLink = getReferralUrl(partnerCode);
 
     // 7. Create partner row
