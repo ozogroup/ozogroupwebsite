@@ -45,7 +45,7 @@ export default async function TreatmentDetail({ params }: Params) {
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(ellipse at 80% 0%, rgba(27,163,198,0.15) 0%, rgba(255,255,255,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(93,169,214,0.12) 0%, rgba(255,255,255,0) 50%), linear-gradient(180deg, rgba(245,250,252,0.5) 0%, rgba(255,255,255,0) 100%)",
+              "radial-gradient(ellipse at 80% 0%, rgba(156,175,146,0.20) 0%, rgba(244,235,220,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(220,230,214,0.58) 0%, rgba(244,235,220,0) 50%), linear-gradient(180deg, rgba(255,253,248,0.58) 0%, rgba(244,235,220,0) 100%)",
           }}
         />
         <div className="container-x pt-12 md:pt-16 pb-14 md:pb-18 grid gap-10 lg:gap-14 lg:grid-cols-12 items-center">
@@ -158,7 +158,7 @@ export default async function TreatmentDetail({ params }: Params) {
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                 />
-                <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/70 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-brand-ink/75 text-white text-xs font-medium rounded-full backdrop-blur-sm">
                   Before
                 </div>
               </div>

@@ -33,7 +33,7 @@ export default function AdminCommissionsPage() {
       case "pending":
         return "bg-yellow-100 text-yellow-700";
       case "approved":
-        return "bg-blue-100 text-blue-700";
+        return "bg-brand-light text-brand-primaryDark";
       case "paid":
         return "bg-green-100 text-green-700";
       case "rejected":

@@ -36,7 +36,7 @@ export default async function Hero() {
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(ellipse at 80% 0%, rgba(27,163,198,0.15) 0%, rgba(255,255,255,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(93,169,214,0.12) 0%, rgba(255,255,255,0) 50%), linear-gradient(180deg, rgba(245,250,252,0.5) 0%, rgba(255,255,255,0) 100%)",
+            "radial-gradient(ellipse at 80% 0%, rgba(156,175,146,0.20) 0%, rgba(244,235,220,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(220,230,214,0.58) 0%, rgba(244,235,220,0) 50%), linear-gradient(180deg, rgba(255,253,248,0.58) 0%, rgba(244,235,220,0) 100%)",
         }}
       />
 
@@ -95,7 +95,7 @@ export default async function Hero() {
                   key={i}
                   className="h-10 w-10 rounded-full ring-3 ring-white shadow-soft"
                   style={{
-                    background: `linear-gradient(135deg, ${i % 2 === 0 ? '#1BA3C6' : '#5DA9D6'}, ${i === 0 ? '#0D5C7D' : i === 1 ? '#1BA3C6' : '#5DA9D6'})`,
+                    background: `linear-gradient(135deg, ${i % 2 === 0 ? '#9CAF92' : '#DCE6D6'}, ${i === 0 ? '#7F927A' : i === 1 ? '#9CAF92' : '#DCE6D6'})`,
                   }}
                 />
               ))}

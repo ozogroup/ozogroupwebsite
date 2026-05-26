@@ -74,7 +74,7 @@ export default function AdminMembershipsPage() {
   function getActivationStatus(m: any): { label: string; color: string } {
     if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
     if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
-    if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-blue-100 text-blue-700" };
+    if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-brand-light text-brand-primaryDark" };
     return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
   }
 
@@ -148,7 +148,7 @@ export default function AdminMembershipsPage() {
                         <button
                           onClick={() => handleMarkPaid(membership.id)}
                           disabled={actionLoading === membership.id}
-                          className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-brand-light/55 text-brand-primaryDark border border-brand-primary/20 rounded-lg hover:bg-brand-light disabled:opacity-50 transition-colors"
                         >
                           Mark Paid
                         </button>
@@ -157,7 +157,7 @@ export default function AdminMembershipsPage() {
                         <button
                           onClick={() => handleApproveAndCreatePartner(membership)}
                           disabled={actionLoading === membership.id}
-                          className="px-3 py-1.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 disabled:opacity-50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-brand-primary text-white border border-brand-primary rounded-lg hover:bg-brand-primaryDark disabled:opacity-50 transition-colors"
                         >
                           {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
                         </button>

@@ -60,7 +60,7 @@ export default function AdminLoginPage({
   searchParams: { error?: string };
 }) {
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/40 to-brand-card flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -68,7 +68,7 @@ export default function AdminLoginPage({
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-xl shadow-premium border border-brand-border p-8 md:p-10">
+        <div className="bg-brand-card rounded-xl shadow-premium border border-brand-border p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="font-display text-2xl md:text-3xl font-bold text-brand-ink mb-2">
@@ -101,7 +101,7 @@ export default function AdminLoginPage({
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"
+                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all bg-brand-card text-brand-ink placeholder:text-brand-muted"
                 placeholder="admin@company.com"
               />
             </div>
@@ -115,14 +115,14 @@ export default function AdminLoginPage({
                 name="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all bg-white text-brand-ink placeholder:text-slate-400"
+                className="w-full px-4 py-3 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all bg-brand-card text-brand-ink placeholder:text-brand-muted"
                 placeholder="••••••••"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-brand-primary to-brand-accent text-white font-semibold py-3 px-4 rounded-lg hover:shadow-glow focus:ring-4 focus:ring-brand-accent/30 transition-all"
+              className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark hover:shadow-glow focus:ring-4 focus:ring-brand-primary/30 transition-all"
             >
               Sign In
             </button>

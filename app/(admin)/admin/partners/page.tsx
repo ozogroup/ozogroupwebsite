@@ -250,7 +250,7 @@ export default function AdminPartnersPage() {
 
       {/* Add Partner Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 bg-brand-ink/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-4 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-6">Add Partner</h2>
             <form onSubmit={handleCreate} className="space-y-4">
@@ -340,7 +340,7 @@ export default function AdminPartnersPage() {
 
       {/* Partner Detail Modal */}
       {showDetailModal && selectedPartner && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 bg-brand-ink/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
@@ -430,7 +430,7 @@ export default function AdminPartnersPage() {
                   href={`https://wa.me/?text=${encodeURIComponent(`Join KIA Skin Care Partner Program! Use my code: ${selectedPartner.partner_code}\n${getReferralLink(selectedPartner.partner_code)}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-primary text-white rounded-lg hover:bg-brand-primaryDark transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52.075-.149.669-1.612.916-2.207.242-.579.072-1.054.077-1.054.077-.446.052-1.232.26-1.935.644-.705.384-1.85 1.23-1.85 2.608 0 1.378 1.015 2.228 1.158 2.416.143.188 2.006 3.061 4.862 4.297 2.857 1.236 3.436 1.008 4.045.946.612-.064 1.975-.807 2.25-1.584.278-.79.278-1.468.197-1.615.474-.149.724-.734 1.008-1.09.273-.357.724-.267 1.008-.173.285.094 1.8.846 2.108 1.008.307.162.669.198.865.149.198-.05.724-.298 1.008-.598.284-.299.724-.734.724-.734.464-.646.724-1.488.724-1.488-.074-.149-.464-.597-1.108-.823-.447-.167-1.05-.258-1.658-.262-.548-.004-1.356.05-2.073.367-.717.317-1.469.892-1.469 2.206 0 1.314 1.067 2.228 1.158 2.416.143.188 2.006 3.061 4.862 4.297 2.857 1.236 3.436 1.008 4.045.946.612-.064 1.975-.807 2.25-1.584.278-.79.278-1.468.197-1.615.474-.149.724-.734 1.008-1.09.273-.357.724-.267 1.008-.173.285.094 1.8.846 2.108 1.008.307.162.669.198.865.149.198-.05.724-.298 1.008-.598.284-.299.724-.734.724-.734.464-.646.724-1.488.724-1.488-.074-.149-.464-.597-1.108-.823z"/>

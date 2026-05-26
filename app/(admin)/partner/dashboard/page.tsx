@@ -273,7 +273,7 @@ export default async function PartnerDashboardPage() {
       )}
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-primary via-[#0b4c68] to-brand-accent p-5 text-white shadow-premium md:p-7">
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-primary via-brand-primaryDark to-brand-accent p-5 text-white shadow-premium md:p-7">
           <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/[0.14] blur-3xl" />
           <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
@@ -517,7 +517,7 @@ function StatCard({
     primary: "from-brand-primary/12 to-brand-primary/5 text-brand-primary",
     accent: "from-brand-accent/14 to-brand-accent/5 text-brand-accent",
     green: "from-emerald-500/14 to-emerald-500/5 text-emerald-600",
-    orange: "from-orange-500/14 to-orange-500/5 text-orange-600",
+    orange: "from-brand-light/70 to-brand-surface text-brand-primaryDark",
     rose: "from-rose-500/14 to-rose-500/5 text-rose-600",
   }[tone];
 
@@ -572,7 +572,7 @@ function StatusBadge({ status }: { status: string }) {
     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
     : normalized === "cancelled"
       ? "bg-red-50 text-red-700 border-red-100"
-      : "bg-orange-50 text-orange-700 border-orange-100";
+      : "bg-brand-surface text-brand-muted border-brand-border";
 
   return (
     <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${className}`}>

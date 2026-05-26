@@ -344,7 +344,7 @@ export default function AdminTreatmentsPage() {
                     <p className="text-xs text-brand-muted mt-1 line-clamp-2">{treatment.description || treatment.slug}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 text-xs rounded bg-blue-50 text-blue-700">
+                    <span className="px-2 py-1 text-xs rounded bg-brand-light/55 text-brand-primaryDark">
                       {treatment.type === "home_kit" ? "Kit" : treatment.type === "campaign" ? "Campaign" : treatment.type}
                     </span>
                     <p className="text-xs text-brand-muted mt-1">{treatment.kit_name || treatment.title}</p>
@@ -399,7 +399,7 @@ export default function AdminTreatmentsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-brand-ink/55 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-brand-border flex items-center justify-between">
               <h2 className="text-lg font-bold text-brand-ink">

@@ -85,7 +85,7 @@ export default async function PartnerKycPage({
           </div>
         </section>
 
-        <section className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4 sm:p-5">
+        <section className="rounded-xl border border-brand-primary/20 bg-brand-light/45 p-4 sm:p-5">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-slate-900">UPI Details</h2>
             <p className="text-sm text-slate-600">Optional when bank details are complete. Add UPI for faster payout choices.</p>

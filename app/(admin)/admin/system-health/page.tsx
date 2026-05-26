@@ -168,8 +168,8 @@ export default async function SystemHealthPage() {
               <p className="text-sm text-slate-600">Treatments</p>
               <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.treatments.count ?? "null"}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
             </div>
@@ -185,8 +185,8 @@ export default async function SystemHealthPage() {
               <p className="text-sm text-slate-600">Testimonials</p>
               <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.testimonials.count ?? "null"}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
             </div>
@@ -202,8 +202,8 @@ export default async function SystemHealthPage() {
               <p className="text-sm text-slate-600">FAQs</p>
               <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.faqs.count ?? "null"}</p>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -219,8 +219,8 @@ export default async function SystemHealthPage() {
               <p className="text-sm text-slate-600">Website Content</p>
               <p className="text-3xl font-bold text-slate-900 mt-1">{tableResults.site_content.count ?? "null"}</p>
             </div>
-            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -250,9 +250,9 @@ export default async function SystemHealthPage() {
 
       {/* Instructions */}
       {connectionStatus === "connected" && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">Next Steps</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <div className="bg-brand-light/45 border border-brand-primary/20 rounded-lg p-4">
+          <h3 className="font-semibold text-brand-ink mb-2">Next Steps</h3>
+          <ul className="text-sm text-brand-muted space-y-1">
             <li>• If counts are 0, run the SEED_DATA.sql in Supabase SQL Editor</li>
             <li>• Verify all tables have expected data before using admin panel</li>
             <li>• Use Refresh button to re-check connection and counts</li>
@@ -261,7 +261,7 @@ export default async function SystemHealthPage() {
       )}
 
       {/* Collapsible Debug Panel */}
-      <details className="bg-gray-900 rounded-xl border border-gray-700">
+      <details className="bg-brand-primaryDark rounded-xl border border-brand-primary">
         <summary className="px-6 py-4 cursor-pointer text-white font-medium flex items-center justify-between">
           <span>🔧 Advanced Debug Information</span>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,26 +270,26 @@ export default async function SystemHealthPage() {
         </summary>
         <div className="px-6 pb-6 space-y-4 text-sm font-mono">
           <div>
-            <p className="text-gray-400">Supabase URL (first 35 chars):</p>
-            <p className="text-green-400">{supabaseUrl.substring(0, 35)}</p>
+            <p className="text-brand-light">Supabase URL (first 35 chars):</p>
+            <p className="text-brand-card">{supabaseUrl.substring(0, 35)}</p>
           </div>
           
           <div>
-            <p className="text-gray-400">Anon key exists:</p>
-            <p className={supabaseAnonKey ? "text-green-400" : "text-red-400"}>{supabaseAnonKey ? "true" : "false"}</p>
+            <p className="text-brand-light">Anon key exists:</p>
+            <p className={supabaseAnonKey ? "text-brand-card" : "text-red-200"}>{supabaseAnonKey ? "true" : "false"}</p>
           </div>
           
           <div>
-            <p className="text-gray-400">Logged-in user email:</p>
-            <p className="text-green-400">{user?.email || "none"}</p>
+            <p className="text-brand-light">Logged-in user email:</p>
+            <p className="text-brand-card">{user?.email || "none"}</p>
           </div>
 
-          <div className="pt-4 border-t border-gray-700">
+          <div className="pt-4 border-t border-brand-light/35">
             <h3 className="text-white font-semibold mb-3">Table Query Results:</h3>
             {Object.entries(tableResults).map(([tableName, result]) => (
-              <div key={tableName} className="bg-gray-800 rounded p-3 mb-2">
-                <p className="text-yellow-400 font-semibold">{tableName}:</p>
-                <p className="text-gray-300">Count: {result.count !== null ? result.count : "null"}</p>
+              <div key={tableName} className="bg-brand-ink/25 rounded p-3 mb-2">
+                <p className="text-brand-light font-semibold">{tableName}:</p>
+                <p className="text-brand-card/85">Count: {result.count !== null ? result.count : "null"}</p>
                 {result.error.message && (
                   <>
                     <p className="text-red-400">Error message: {result.error.message}</p>

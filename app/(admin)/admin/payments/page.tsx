@@ -31,13 +31,13 @@ export default function AdminPaymentsPage() {
   function getStatusColor(status: string) {
     switch (status) {
       case "created":
-        return "bg-blue-100 text-blue-700";
+        return "bg-brand-light text-brand-primaryDark";
       case "authorized":
         return "bg-yellow-100 text-yellow-700";
       case "captured":
         return "bg-green-100 text-green-700";
       case "refunded":
-        return "bg-purple-100 text-purple-700";
+        return "bg-brand-light text-brand-primaryDark";
       case "failed":
         return "bg-red-100 text-red-700";
       default:
@@ -97,7 +97,7 @@ export default function AdminPaymentsPage() {
                   <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">₹{payment.amount?.toLocaleString()}</td>
                   <td className="px-4 sm:px-6 py-4">
                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                      payment.source_type === 'membership' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
+                      payment.source_type === 'membership' ? 'bg-brand-surface text-brand-muted' : 'bg-brand-light/60 text-brand-primaryDark'
                     }`}>
                       {payment.source_type}
                     </span>

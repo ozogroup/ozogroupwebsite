@@ -66,7 +66,7 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
       {Object.entries(groupedNav).map(([section, items]) => (
         <div key={section} className="mb-6">
           {!collapsed && (
-            <h3 className="px-6 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            <h3 className="px-6 mb-2 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
               {sectionLabels[section] || section}
             </h3>
           )}
@@ -82,8 +82,8 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                     collapsed ? "justify-center" : ""
                   } ${
                     isActive
-                      ? "bg-brand-accent/15 text-brand-accent border-l-2 border-brand-accent pl-[10px]"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-white/15 text-white border-l-2 border-brand-light pl-[10px]"
+                      : "text-white/72 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
@@ -91,7 +91,7 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                     <span className="ml-3 text-sm font-medium">{item.name}</span>
                   )}
                   {isActive && !collapsed && (
-                    <div className="ml-auto w-1.5 h-1.5 bg-brand-accent rounded-full" />
+                    <div className="ml-auto w-1.5 h-1.5 bg-brand-light rounded-full" />
                   )}
                 </Link>
               );

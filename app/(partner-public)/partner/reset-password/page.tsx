@@ -57,23 +57,23 @@ export default function PartnerResetPasswordPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-slate-600">Verifying your reset link...</p>
+          <p className="text-brand-muted">Verifying your reset link...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8"><Logo /></div>
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Set New Password</h1>
-            <p className="text-slate-600">Choose a new password for your partner account</p>
+            <h1 className="text-3xl font-bold text-brand-ink mb-2">Set New Password</h1>
+            <p className="text-brand-muted">Choose a new password for your partner account</p>
           </div>
           {message && (
             <div className={"mb-6 p-4 rounded-lg border " + (message.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700")}>
@@ -85,19 +85,19 @@ export default function PartnerResetPasswordPage() {
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
-              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="Min 6 characters" />
+              <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">New Password</label>
+              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Min 6 characters" />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">Confirm Password</label>
-              <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="Re-enter password" />
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>
+              <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Re-enter password" />
             </div>
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all disabled:opacity-60">
+            <button type="submit" disabled={loading} className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
               {loading ? "Setting Password..." : "Set Password"}
             </button>
           </form>
         </div>
-        <div className="text-center mt-8 text-sm text-slate-500">© 2026 KIA Skin Care. All rights reserved.</div>
+        <div className="text-center mt-8 text-sm text-brand-muted">&copy; 2026 KIA Skin Care. All rights reserved.</div>
       </div>
     </div>
   );

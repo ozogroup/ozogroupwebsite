@@ -453,7 +453,7 @@ export default function AdminContentPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+        <div className="fixed inset-0 bg-brand-ink/55 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
           <div className="bg-white rounded-t-2xl sm:rounded-xl max-w-2xl w-full max-h-[92vh] overflow-y-auto">
             <div className="sticky top-0 bg-white z-10 p-4 border-b border-brand-border flex items-center justify-between">
               <div>

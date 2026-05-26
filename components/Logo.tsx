@@ -25,7 +25,7 @@ export default function Logo({ variant = "dark" }: Props) {
       {!imgFailed ? (
         <span
           className={`relative block h-11 w-[82px] shrink-0 md:h-14 md:w-[104px] ${
-            variant === "light" ? "rounded-xl bg-white px-2 py-1.5 shadow-sm" : ""
+            variant === "light" ? "rounded-xl bg-brand-card px-2 py-1.5 shadow-sm" : ""
           }`}
         >
           <Image

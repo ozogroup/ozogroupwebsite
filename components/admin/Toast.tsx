@@ -26,7 +26,7 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
   const styles = {
     success: "bg-emerald-50 border-emerald-200 text-emerald-800",
     error: "bg-red-50 border-red-200 text-red-800",
-    info: "bg-blue-50 border-blue-200 text-blue-800",
+    info: "bg-brand-light/55 border-brand-primary/25 text-brand-ink",
   };
 
   const icons = {

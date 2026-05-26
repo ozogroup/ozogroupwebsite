@@ -54,7 +54,7 @@ export default async function Testimonials() {
                 <span
                   className="h-11 w-11 rounded-full shrink-0 shadow-soft"
                   style={{
-                    background: `linear-gradient(135deg, #1BA3C6, #0D5C7D)`,
+                    background: `linear-gradient(135deg, #9CAF92, #7F927A)`,
                   }}
                   aria-hidden
                 />

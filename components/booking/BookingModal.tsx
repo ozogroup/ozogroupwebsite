@@ -191,8 +191,8 @@ export default function BookingModal() {
         className="absolute inset-0 bg-brand-ink/60 backdrop-blur-sm animate-fadeUp"
       />
 
-      <div className="relative w-full sm:max-w-2xl max-h-[min(92vh,calc(100dvh-24px))] overflow-y-auto overscroll-contain bg-white rounded-t-[28px] sm:rounded-[28px] shadow-premium animate-scaleIn">
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-brand-border/60 px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
+      <div className="relative w-full sm:max-w-2xl max-h-[min(92vh,calc(100dvh-24px))] overflow-y-auto overscroll-contain bg-brand-card rounded-t-[28px] sm:rounded-[28px] shadow-premium animate-scaleIn">
+        <div className="sticky top-0 z-10 bg-brand-card/95 backdrop-blur-md border-b border-brand-border px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
@@ -332,7 +332,7 @@ export default function BookingModal() {
           </FormField>
 
           {selected && (
-            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-white border border-brand-border/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-soft">
+            <div className="rounded-2xl bg-gradient-to-r from-brand-surface to-brand-card border border-brand-border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-soft">
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] font-semibold text-brand-muted mb-1">
                   Estimated Amount
@@ -419,12 +419,12 @@ export default function BookingModal() {
           width: 100%;
           min-height: 52px;
           border-radius: 14px;
-          border: 1.5px solid #e3edf2;
-          background: #fff;
+          border: 1.5px solid #E6DCCF;
+          background: #FFFDF8;
           padding: 14px 16px;
           font-size: 16px;
           line-height: 1.35;
-          color: #0b2030;
+          color: #4F4542;
           outline: none;
           transition: all 0.2s ease;
           appearance: none;
@@ -432,25 +432,25 @@ export default function BookingModal() {
           -moz-appearance: none;
         }
         select.premium-input {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230B2030'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234F4542'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
           background-repeat: no-repeat;
           background-position: right 16px center;
           background-size: 16px;
           padding-right: 44px;
         }
         .premium-input:focus {
-          border-color: #1ba3c6;
-          box-shadow: 0 0 0 4px rgba(27, 163, 198, 0.12);
+          border-color: #9CAF92;
+          box-shadow: 0 0 0 4px rgba(156, 175, 146, 0.18);
         }
         select.premium-input:focus {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231BA3C6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237F927A'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
         }
         .premium-input::placeholder {
-          color: #94a3b8;
+          color: #6F625C;
         }
         .premium-input option {
-          background: #fff;
-          color: #0b2030;
+          background: #FFFDF8;
+          color: #4F4542;
           padding: 12px 16px;
         }
         @media (max-width: 420px) {

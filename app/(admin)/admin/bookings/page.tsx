@@ -80,7 +80,7 @@ export default function AdminBookingsPage() {
                         booking.booking_status === "confirmed" ? "bg-green-100 text-green-700" :
                         booking.booking_status === "completed" ? "bg-emerald-100 text-emerald-700" :
                         booking.booking_status === "cancelled" ? "bg-red-100 text-red-700" :
-                        "bg-blue-100 text-blue-700"
+                        "bg-brand-light text-brand-primaryDark"
                       }`}>
                         {booking.booking_status || "pending"}
                       </span>

@@ -41,11 +41,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-slate-50">
+    <div className="min-h-screen overflow-x-hidden bg-brand-surface">
       {/* Mobile sidebar overlay - solid dark overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-[9998] lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-brand-ink/55 z-[9998] lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}

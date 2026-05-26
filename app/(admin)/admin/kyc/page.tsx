@@ -81,7 +81,7 @@ export default function AdminKycPage() {
                       <p>{item.bank_name}</p>
                       <p>AC: {item.account_number}</p>
                       <p>IFSC: {item.bank_ifsc}</p>
-                      <div className="mt-2 rounded-lg bg-cyan-50 p-2 text-xs text-slate-700">
+                      <div className="mt-2 rounded-lg bg-brand-light/50 p-2 text-xs text-brand-ink">
                         <p className="font-semibold text-brand-ink">UPI</p>
                         <p>Holder: {item.upi_holder_name || "-"}</p>
                         <p>Mobile: {item.upi_mobile || "-"}</p>
@@ -130,7 +130,7 @@ export default function AdminKycPage() {
                           <button
                             onClick={() => review(item.id, "verified")}
                             disabled={busy === item.id}
-                            className="px-3 py-1.5 text-xs rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs rounded-lg bg-brand-primary text-white border border-brand-primary hover:bg-brand-primaryDark disabled:opacity-50"
                           >
                             Approve
                           </button>

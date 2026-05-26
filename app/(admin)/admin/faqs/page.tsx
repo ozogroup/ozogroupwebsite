@@ -216,7 +216,7 @@ export default function AdminFaqsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-brand-ink/55 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-brand-border flex items-center justify-between">
               <h2 className="text-lg font-bold text-brand-ink">

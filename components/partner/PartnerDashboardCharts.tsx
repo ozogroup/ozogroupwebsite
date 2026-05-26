@@ -40,7 +40,7 @@ const rupee = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
-const chartColors = ["#0D5C7D", "#1BA3C6", "#66B7CA", "#D4AF37", "#E8B4B8"];
+const chartColors = ["#7F927A", "#9CAF92", "#DCE6D6", "#6F625C", "#4F4542"];
 
 function formatMoney(value: number) {
   return rupee.format(value || 0);
@@ -91,7 +91,7 @@ export default function PartnerDashboardCharts({
                 {donutData.map((_, index) => (
                   <Cell
                     key={`earnings-${index}`}
-                    fill={hasEarnings ? chartColors[index % chartColors.length] : "#E3EDF2"}
+                    fill={hasEarnings ? chartColors[index % chartColors.length] : "#E6DCCF"}
                   />
                 ))}
               </Pie>
@@ -130,21 +130,21 @@ export default function PartnerDashboardCharts({
             <ComposedChart data={monthlyTrend} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="salesFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#0D5C7D" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="#0D5C7D" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#7F927A" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#7F927A" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="earningsFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#1BA3C6" stopOpacity={0.24} />
-                  <stop offset="95%" stopColor="#1BA3C6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#9CAF92" stopOpacity={0.24} />
+                  <stop offset="95%" stopColor="#9CAF92" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#E3EDF2" strokeDasharray="4 6" vertical={false} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: "#475866", fontSize: 12 }} />
+              <CartesianGrid stroke="#E6DCCF" strokeDasharray="4 6" vertical={false} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: "#6F625C", fontSize: 12 }} />
               <YAxis
                 yAxisId="money"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#475866", fontSize: 12 }}
+                tick={{ fill: "#6F625C", fontSize: 12 }}
                 tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
                 width={42}
               />
@@ -153,7 +153,7 @@ export default function PartnerDashboardCharts({
                 orientation="right"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#475866", fontSize: 12 }}
+                tick={{ fill: "#6F625C", fontSize: 12 }}
                 width={28}
               />
               <Tooltip
@@ -161,16 +161,16 @@ export default function PartnerDashboardCharts({
                   name === "Referrals" ? `${numericValue(value)} partners` : formatMoney(numericValue(value))
                 }
                 contentStyle={{
-                  border: "1px solid #E3EDF2",
+                  border: "1px solid #E6DCCF",
                   borderRadius: 14,
-                  boxShadow: "0 8px 32px rgba(13, 92, 125, 0.15)",
+                  boxShadow: "0 8px 32px rgba(79, 69, 66, 0.13)",
                 }}
               />
               <Area
                 yAxisId="money"
                 type="monotone"
                 dataKey="sales"
-                stroke="#0D5C7D"
+                stroke="#7F927A"
                 strokeWidth={3}
                 fill="url(#salesFill)"
                 name="Sales"
@@ -179,7 +179,7 @@ export default function PartnerDashboardCharts({
                 yAxisId="money"
                 type="monotone"
                 dataKey="earnings"
-                stroke="#1BA3C6"
+                stroke="#9CAF92"
                 strokeWidth={3}
                 fill="url(#earningsFill)"
                 name="Earnings"
@@ -188,9 +188,9 @@ export default function PartnerDashboardCharts({
                 yAxisId="referrals"
                 type="monotone"
                 dataKey="referrals"
-                stroke="#D4AF37"
+                stroke="#6F625C"
                 strokeWidth={3}
-                dot={{ r: 4, fill: "#D4AF37", stroke: "#ffffff", strokeWidth: 2 }}
+                dot={{ r: 4, fill: "#6F625C", stroke: "#FFFDF8", strokeWidth: 2 }}
                 name="Referrals"
               />
             </ComposedChart>
@@ -213,12 +213,12 @@ export default function PartnerDashboardCharts({
         <div className="mt-5 h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={levelIncome} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#E3EDF2" strokeDasharray="4 6" vertical={false} />
-              <XAxis dataKey="level" tickLine={false} axisLine={false} tick={{ fill: "#475866", fontSize: 12 }} />
+              <CartesianGrid stroke="#E6DCCF" strokeDasharray="4 6" vertical={false} />
+              <XAxis dataKey="level" tickLine={false} axisLine={false} tick={{ fill: "#6F625C", fontSize: 12 }} />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#475866", fontSize: 12 }}
+                tick={{ fill: "#6F625C", fontSize: 12 }}
                 tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
                 width={42}
               />
@@ -227,9 +227,9 @@ export default function PartnerDashboardCharts({
                   name === "partners" ? `${numericValue(value)} partners` : formatMoney(numericValue(value))
                 }
                 contentStyle={{
-                  border: "1px solid #E3EDF2",
+                  border: "1px solid #E6DCCF",
                   borderRadius: 14,
-                  boxShadow: "0 8px 32px rgba(13, 92, 125, 0.15)",
+                  boxShadow: "0 8px 32px rgba(79, 69, 66, 0.13)",
                 }}
               />
               <Bar dataKey="income" name="Income" radius={[10, 10, 0, 0]}>

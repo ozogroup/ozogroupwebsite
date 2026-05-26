@@ -135,13 +135,13 @@ export default function PartnerForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8"><Logo /></div>
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Set Your Password</h1>
-            <p className="text-slate-600">Enter your partner email or mobile number to reset your password</p>
+            <h1 className="text-3xl font-bold text-brand-ink mb-2">Set Your Password</h1>
+            <p className="text-brand-muted">Enter your partner email or mobile number to reset your password</p>
           </div>
           {message && (
             <div className={"mb-6 p-4 rounded-lg border " + (message.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700")}>
@@ -151,37 +151,37 @@ export default function PartnerForgotPasswordPage() {
           {!otpPhone ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-slate-700 mb-2">Partner Email or Mobile Number</label>
-                <input id="identifier" type="text" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="partner@example.com or 9876543210" />
+                <label htmlFor="identifier" className="block text-sm font-medium text-brand-ink mb-2">Partner Email or Mobile Number</label>
+                <input id="identifier" type="text" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="partner@example.com or 9876543210" />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all disabled:opacity-60">
+              <button type="submit" disabled={loading} className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
                 {loading ? "Sending..." : "Continue"}
               </button>
             </form>
           ) : (
             <form onSubmit={handleOtpSubmit} className="space-y-6">
               <div>
-                <label htmlFor="otp" className="block text-sm font-medium text-slate-700 mb-2">OTP</label>
-                <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" required value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="Enter OTP" />
+                <label htmlFor="otp" className="block text-sm font-medium text-brand-ink mb-2">OTP</label>
+                <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" required value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Enter OTP" />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
-                <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="Minimum 8 characters" />
+                <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">New Password</label>
+                <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Minimum 8 characters" />
               </div>
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">Confirm Password</label>
-                <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none transition-all" placeholder="Re-enter password" />
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>
+                <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Re-enter password" />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all disabled:opacity-60">
+              <button type="submit" disabled={loading} className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
                 {loading ? "Resetting..." : "Reset Password"}
               </button>
             </form>
           )}
           <div className="mt-6 text-center">
-            <Link href="/partner/login" className="text-sm text-brand-accent hover:text-brand-accent/80 transition-colors">Back to Partner Login</Link>
+            <Link href="/partner/login" className="text-sm text-brand-primaryDark hover:text-brand-ink transition-colors">Back to Partner Login</Link>
           </div>
         </div>
-        <div className="text-center mt-8 text-sm text-slate-500">© 2026 KIA Skin Care. All rights reserved.</div>
+        <div className="text-center mt-8 text-sm text-brand-muted">&copy; 2026 KIA Skin Care. All rights reserved.</div>
       </div>
     </div>
   );

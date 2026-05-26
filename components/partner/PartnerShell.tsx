@@ -71,7 +71,7 @@ export default function PartnerShell({
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#fbf8f2_0%,#f5fafc_45%,#ffffff_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#F4EBDC_0%,#DCE6D6_46%,#FFFDF8_100%)]">
       {sidebarOpen && (
         <button
           aria-label="Close navigation overlay"
@@ -81,7 +81,7 @@ export default function PartnerShell({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[9999] w-[304px] max-w-[88vw] transform border-r border-brand-border/80 bg-white/[0.92] text-brand-ink shadow-premium backdrop-blur-xl transition-transform duration-300 ease-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[9999] w-[304px] max-w-[88vw] transform border-r border-brand-border bg-brand-card/[0.94] text-brand-ink shadow-premium backdrop-blur-xl transition-transform duration-300 ease-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -98,36 +98,36 @@ export default function PartnerShell({
           </div>
 
           {partnerInfo && (
-            <div className="mx-4 mt-4 overflow-hidden rounded-[1.35rem] border border-amber-200/80 bg-gradient-to-br from-[#f8e59d] via-[#d5a935] to-[#7b520e] p-[1px] shadow-premium">
+            <div className="mx-4 mt-4 overflow-hidden rounded-[1.35rem] border border-[#ead38b]/80 bg-gradient-to-br from-[#f8e59d] via-[#d5a935] to-[#7b520e] p-[1px] shadow-premium">
               <div className="relative overflow-hidden rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(20,20,18,0.95),rgba(91,64,14,0.9))] p-4 text-white">
                 <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-white/[0.18] blur-2xl" />
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
                 <div className="relative flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-100/90">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f8e9b4]/90">
                       VIP Partner
                     </p>
                     <p className="mt-1 truncate text-base font-semibold text-white">
                       {partnerInfo.full_name || "Partner"}
                     </p>
-                    <p className="mt-0.5 font-mono text-xs text-amber-100">
+                    <p className="mt-0.5 font-mono text-xs text-[#f8e9b4]">
                       {partnerInfo.partner_code || "-"}
                     </p>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.14] text-sm font-bold text-amber-100 ring-1 ring-white/25">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.14] text-sm font-bold text-[#f8e9b4] ring-1 ring-white/25">
                     {initials}
                   </div>
                 </div>
 
                 <div className="relative mt-5 grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
-                    <p className="text-amber-100/75">Wallet</p>
+                    <p className="text-[#f8e9b4]/75">Wallet</p>
                     <p className="mt-1 text-sm font-semibold text-white">
                       ₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}
                     </p>
                   </div>
                   <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
-                    <p className="text-amber-100/75">Status</p>
+                    <p className="text-[#f8e9b4]/75">Status</p>
                     <p className="mt-1 text-sm font-semibold capitalize text-white">
                       {partnerInfo.status || "pending"}
                     </p>
@@ -136,8 +136,8 @@ export default function PartnerShell({
 
                 <div className="relative mt-2 rounded-2xl bg-white/10 p-3 text-xs ring-1 ring-white/[0.15]">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-amber-100/75">KYC</span>
-                    <span className="font-semibold capitalize text-amber-50">
+                    <span className="text-[#f8e9b4]/75">KYC</span>
+                    <span className="font-semibold capitalize text-[#fff5d5]">
                       {(partnerInfo.kyc_status || "not_submitted").replace("_", " ")}
                     </span>
                   </div>
@@ -148,7 +148,7 @@ export default function PartnerShell({
 
           <div className="mx-4 mt-4 rounded-2xl border border-brand-border bg-brand-surface/70 p-3">
             <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-brand-primary shadow-soft">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-card text-brand-primaryDark shadow-soft">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div>
@@ -180,7 +180,7 @@ export default function PartnerShell({
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${
                       isActive
                         ? "bg-white/[0.15] text-white"
-                        : "bg-white text-brand-primary shadow-soft group-hover:bg-brand-primary group-hover:text-white"
+                        : "bg-brand-card text-brand-primaryDark shadow-soft group-hover:bg-brand-primary group-hover:text-white"
                     }`}
                   >
                     <item.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
@@ -201,15 +201,15 @@ export default function PartnerShell({
       </aside>
 
       <div className="lg:pl-[304px]">
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-brand-border/70 bg-white/[0.88] px-4 py-3 backdrop-blur-xl lg:hidden">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-brand-border bg-brand-card/[0.92] px-4 py-3 backdrop-blur-xl lg:hidden">
           <Logo />
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-white text-brand-primary shadow-soft">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-brand-card text-brand-primaryDark shadow-soft">
               <Bell className="h-5 w-5" />
             </span>
             <button
               onClick={() => setSidebarOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-white text-brand-primary shadow-soft transition hover:bg-brand-surface"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-brand-border bg-brand-card text-brand-primaryDark shadow-soft transition hover:bg-brand-light"
               aria-label="Open partner navigation"
             >
               <Menu className="h-5 w-5" />

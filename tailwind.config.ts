@@ -1,5 +1,18 @@
 import type { Config } from "tailwindcss";
 
+const kiaAccentScale = {
+  50: "#F4EBDC",
+  100: "#DCE6D6",
+  200: "#DCE6D6",
+  300: "#9CAF92",
+  400: "#9CAF92",
+  500: "#9CAF92",
+  600: "#7F927A",
+  700: "#6F625C",
+  800: "#4F4542",
+  900: "#4F4542",
+};
+
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -24,20 +37,41 @@ const config: Config = {
     },
     extend: {
       colors: {
+        white: "#FFFDF8",
         brand: {
-          primary: "#0D5C7D",
-          accent: "#1BA3C6",
-          light: "#5DA9D6",
-          ink: "#0B2030",
-          muted: "#475866",
-          surface: "#F5FAFC",
-          border: "#E3EDF2",
+          primary: "#9CAF92",
+          primaryDark: "#7F927A",
+          accent: "#7F927A",
+          light: "#DCE6D6",
+          ink: "#4F4542",
+          muted: "#6F625C",
+          surface: "#F4EBDC",
+          card: "#FFFDF8",
+          border: "#E6DCCF",
         },
+        slate: {
+          50: "#F4EBDC",
+          100: "#F4EBDC",
+          200: "#E6DCCF",
+          300: "#E6DCCF",
+          400: "#6F625C",
+          500: "#6F625C",
+          600: "#6F625C",
+          700: "#4F4542",
+          800: "#4F4542",
+          900: "#4F4542",
+          950: "#4F4542",
+        },
+        purple: kiaAccentScale,
+        pink: kiaAccentScale,
+        teal: kiaAccentScale,
+        green: kiaAccentScale,
+        emerald: kiaAccentScale,
+        orange: kiaAccentScale,
+        yellow: kiaAccentScale,
+        amber: kiaAccentScale,
         luxury: {
           gold: "#D4AF37",
-          rose: "#E8B4B8",
-          lavender: "#E6E6FA",
-          pearl: "#F5F5F5",
         },
       },
       spacing: {
@@ -60,10 +94,10 @@ const config: Config = {
         "4xl": ["2.25rem", { lineHeight: "2.5rem" }],
       },
       boxShadow: {
-        soft: "0 2px 8px rgba(13, 92, 125, 0.08)",
-        card: "0 4px 16px rgba(13, 92, 125, 0.12)",
-        premium: "0 8px 32px rgba(13, 92, 125, 0.15)",
-        glow: "0 0 24px rgba(27, 163, 198, 0.3)",
+        soft: "0 2px 8px rgba(79, 69, 66, 0.07)",
+        card: "0 4px 18px rgba(79, 69, 66, 0.10)",
+        premium: "0 10px 34px rgba(79, 69, 66, 0.13)",
+        glow: "0 0 24px rgba(127, 146, 122, 0.28)",
         glass: "0 4px 16px rgba(255, 255, 255, 0.1)",
       },
       animation: {
@@ -113,7 +147,7 @@ const config: Config = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "glass-gradient": "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)",
+        "glass-gradient": "linear-gradient(135deg, rgba(255, 253, 248, 0.92) 0%, rgba(244, 235, 220, 0.76) 100%)",
       },
     },
   },

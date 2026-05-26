@@ -15,7 +15,7 @@ const description =
   "Premium skincare kits, Korean glass treatment campaign, and partner referral program by KIA Skin Care.";
 
 export const viewport: Viewport = {
-  themeColor: "#0D5C7D",
+  themeColor: "#9CAF92",
   width: "device-width",
   initialScale: 1,
 };
@@ -57,7 +57,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="font-sans bg-white text-brand-ink antialiased">
+      <body className="font-sans bg-brand-surface text-brand-ink antialiased">
         <BookingProvider>
           {children}
         </BookingProvider>

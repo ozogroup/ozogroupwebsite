@@ -3,9 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #0D5C7D;
-  --brand-accent: #1BA3C6;
-  --brand-light: #5DA9D6;
+  --brand-primary: #9CAF92;
+  --brand-primary-dark: #7F927A;
+  --brand-accent: #7F927A;
+  --brand-light: #DCE6D6;
+  --brand-surface: #F4EBDC;
+  --brand-card: #FFFDF8;
+  --brand-ink: #4F4542;
+  --brand-muted: #6F625C;
+  --brand-border: #E6DCCF;
 }
 
 html,
@@ -19,8 +25,8 @@ html {
 }
 
 body {
-  color: #0B2030;
-  background: #ffffff;
+  color: #4F4542;
+  background: #F4EBDC;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "ss01", "cv11";
@@ -35,9 +41,9 @@ body {
   h3 { @apply text-xl md:text-2xl font-semibold; }
   p  { @apply text-brand-muted leading-relaxed; }
   /* Sub-label colors used inline below headings — bumped for readability */
-  .text-brand-muted { color: #475866; }
+  .text-brand-muted { color: #6F625C; }
   a  { @apply transition-colors; }
-  ::selection { background: #1BA3C6; color: #fff; }
+  ::selection { background: #9CAF92; color: #FFFDF8; }
 }
 
 @layer components {
@@ -51,10 +57,10 @@ body {
            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2;
   }
   .btn-primary {
-    @apply btn bg-brand-primary text-white hover:bg-brand-accent shadow-soft;
+    @apply btn bg-brand-primary text-white hover:bg-brand-primaryDark shadow-soft;
   }
   .btn-secondary {
-    @apply btn bg-white text-brand-primary border border-brand-border hover:border-brand-accent hover:text-brand-accent;
+    @apply btn bg-brand-card text-brand-primaryDark border border-brand-border hover:border-brand-primaryDark hover:text-brand-primaryDark;
   }
   .btn-ghost {
     @apply btn text-brand-primary hover:text-brand-accent;
@@ -62,7 +68,7 @@ body {
 
   /* Card */
   .card {
-    @apply bg-white border border-brand-border rounded-2xl p-6 shadow-soft hover:shadow-card transition;
+    @apply bg-brand-card border border-brand-border rounded-2xl p-6 shadow-soft hover:shadow-card transition;
   }
 
   /* Section */

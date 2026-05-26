@@ -34,8 +34,8 @@ export default function Header() {
       <header
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           scrolled
-            ? "bg-white/90 backdrop-blur-md border-b border-brand-border/60 shadow-soft"
-            : "bg-white/70 backdrop-blur-sm border-b border-transparent"
+            ? "bg-brand-card/95 backdrop-blur-md border-b border-brand-border shadow-soft"
+            : "bg-brand-card/80 backdrop-blur-sm border-b border-brand-border/50"
         }`}
       >
       <div className="container-x flex h-16 md:h-20 items-center justify-between gap-4">
@@ -73,7 +73,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => openBooking()}
-            className="inline-flex items-center rounded-full bg-gradient-to-r from-brand-primary to-brand-accent text-white px-4 py-2.5 text-xs font-semibold shadow-soft hover:shadow-card transition-all"
+            className="inline-flex items-center rounded-full bg-brand-primary text-white px-4 py-2.5 text-xs font-semibold shadow-soft hover:bg-brand-primaryDark hover:shadow-card transition-all"
           >
             Book Now
           </button>
@@ -81,7 +81,7 @@ export default function Header() {
             aria-label="Toggle menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-border/60 bg-white text-brand-ink hover:bg-brand-surface transition-colors"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-border bg-brand-card text-brand-ink hover:bg-brand-light transition-colors"
           >
           <span className="sr-only">Menu</span>
           <div className="relative h-5 w-6">
@@ -113,13 +113,13 @@ export default function Header() {
         }`}
       >
         <div
-          className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+          className={`fixed inset-0 bg-brand-ink/55 backdrop-blur-sm transition-opacity duration-300 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`fixed right-0 top-0 bottom-0 h-full w-[85vw] max-w-[340px] bg-white shadow-premium border-l border-brand-border/60 transition-transform duration-300 flex flex-col ${
+          className={`fixed right-0 top-0 bottom-0 h-full w-[85vw] max-w-[340px] bg-brand-card shadow-premium border-l border-brand-border transition-transform duration-300 flex flex-col ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -128,7 +128,7 @@ export default function Header() {
             <button
               aria-label="Close menu"
               onClick={() => setOpen(false)}
-              className="h-10 w-10 rounded-xl border border-brand-border/60 bg-white text-brand-ink hover:bg-brand-surface transition-colors flex items-center justify-center"
+              className="h-10 w-10 rounded-xl border border-brand-border bg-brand-card text-brand-ink hover:bg-brand-light transition-colors flex items-center justify-center"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 6L6 18M6 6l12 12" />

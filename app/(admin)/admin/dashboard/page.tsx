@@ -122,7 +122,7 @@ export default async function AdminDashboardPage() {
         title="Dashboard"
         description="Welcome back. Here's what's happening with KIA Skin Care today."
         actions={
-          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-brand-primary text-white rounded-lg hover:bg-brand-primaryDark transition-colors">
             <Plus className="w-4 h-4" /> Add Treatment
           </Link>
         }
@@ -137,7 +137,7 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard label="Treatments" value={treatmentsCount} icon={Sparkles} href="/admin/treatments" tone="blue" hint={treatmentsCount > 0 ? "Live on website" : "No data"} />
+          <StatCard label="Treatments" value={treatmentsCount} icon={Sparkles} href="/admin/treatments" tone="sage" hint={treatmentsCount > 0 ? "Live on website" : "No data"} />
           <StatCard label="Testimonials" value={testimonialsCount} icon={Star} href="/admin/testimonials" tone="purple" hint={testimonialsCount > 0 ? "Live on website" : "No data"} />
           <StatCard label="FAQs" value={faqsCount} icon={MessageCircleQuestion} href="/admin/faqs" tone="amber" hint={faqsCount > 0 ? "Live on website" : "No data"} />
           <StatCard label="Content Items" value={siteContentCount} icon={FileText} href="/admin/content" tone="teal" hint={siteContentCount > 0 ? "Live on website" : "No data"} />
@@ -149,8 +149,8 @@ export default async function AdminDashboardPage() {
       <div className="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <Link href="/admin/treatments" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
             </div>
@@ -164,8 +164,8 @@ export default async function AdminDashboardPage() {
 
         <Link href="/admin/testimonials" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
             </div>
@@ -179,8 +179,8 @@ export default async function AdminDashboardPage() {
 
         <Link href="/admin/faqs" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -194,8 +194,8 @@ export default async function AdminDashboardPage() {
 
         <Link href="/admin/content" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -232,7 +232,7 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard label="Bookings" value={bookingsCount} icon={Calendar} href="/admin/bookings" tone="blue" />
+          <StatCard label="Bookings" value={bookingsCount} icon={Calendar} href="/admin/bookings" tone="sage" />
           <StatCard label="Membership Requests" value={membershipsCount} icon={CreditCard} href="/admin/memberships" tone="amber" />
           <StatCard label="Referral Partners" value={partnersCount} icon={Users} href="/admin/partners" tone="green" />
           <StatCard label="Commissions" value={commissionsCount} icon={BadgeIndianRupee} href="/admin/commissions" tone="purple" />
@@ -250,18 +250,18 @@ export default async function AdminDashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard label="Active Partners" value={activePartnersCount} icon={Users} href="/admin/partners" tone="green" />
           <StatCard label="Expired Memberships" value={expiredMembershipsCount} icon={CreditCard} href="/admin/partners" tone="rose" />
-          <StatCard label="Today Bookings" value={todayBookingsCount} icon={Calendar} href="/admin/bookings" tone="blue" />
+          <StatCard label="Today Bookings" value={todayBookingsCount} icon={Calendar} href="/admin/bookings" tone="sage" />
           <StatCard label="Monthly Revenue" value={`₹${monthlyRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/bookings" tone="amber" />
           <StatCard label="Total Payouts" value={`₹${totalPayoutAmount.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" />
           <StatCard label="Pending KYC" value={pendingKycCount} icon={CreditCard} href="/admin/kyc" tone="amber" />
           <StatCard label="Pending Payouts" value={pendingPayoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
-          <StatCard label="Top Treatment" value={topSellingTreatment} icon={Sparkles} href="/admin/treatments" tone="blue" />
+          <StatCard label="Top Treatment" value={topSellingTreatment} icon={Sparkles} href="/admin/treatments" tone="sage" />
           <StatCard label="Top Partner" value={topPerformingPartner} icon={Award} href="/admin/partners" tone="green" />
         </div>
       </div>
 
       {/* Referral Program Summary - premium dark hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 rounded-2xl border border-slate-800 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-primaryDark via-brand-primaryDark to-brand-primary rounded-2xl border border-brand-primary text-white">
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-brand-accent/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-brand-primary/10 rounded-full blur-3xl" />
         <div className="relative p-8">

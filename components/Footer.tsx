@@ -7,7 +7,7 @@ export default async function Footer() {
   const contactSettings = await getPublicContactSettings();
   const footerText = "footerText" in contactSettings ? contactSettings.footerText : "";
   return (
-    <footer className="mt-20 bg-gradient-to-br from-brand-ink via-brand-primary to-brand-primaryDark text-white relative overflow-hidden">
+    <footer className="mt-20 bg-gradient-to-br from-brand-primaryDark via-brand-primaryDark to-brand-primary text-white relative overflow-hidden">
       <div className="container-x py-16 md:py-24 grid gap-12 md:grid-cols-12 relative z-10">
         <div className="md:col-span-5 space-y-6">
           <Logo variant="light" />
@@ -20,7 +20,7 @@ export default async function Footer() {
               href={contactSettings.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent to-brand-light px-6 py-3.5 text-sm font-semibold hover:shadow-glow transition-all"
+              className="inline-flex items-center gap-2.5 rounded-full bg-brand-card px-6 py-3.5 text-sm font-semibold text-brand-primaryDark hover:bg-brand-light hover:shadow-glow transition-all"
             >
               <span>Chat on WhatsApp</span>
               <span aria-hidden>-&gt;</span>

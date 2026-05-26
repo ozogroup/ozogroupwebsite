@@ -3,7 +3,7 @@ import Logo from "@/components/Logo";
 
 export default function UnauthorizedPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -11,7 +11,7 @@ export default function UnauthorizedPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8 text-center">
           {/* Icon */}
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
@@ -30,27 +30,27 @@ export default function UnauthorizedPage() {
           </div>
 
           {/* Heading */}
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-brand-ink mb-2">
             Access Denied
           </h1>
 
           {/* Message */}
-          <p className="text-slate-600 mb-8">
+          <p className="text-brand-muted mb-8">
             You are not authorized to access this page. Please contact your administrator if you believe this is an error.
           </p>
 
           {/* Button */}
           <Link
             href="/"
-            className="inline-flex items-center justify-center w-full bg-gradient-to-r from-brand-accent to-brand-light text-white font-semibold py-3 px-4 rounded-lg hover:from-brand-accent/90 hover:to-brand-light/90 focus:ring-4 focus:ring-brand-accent/20 transition-all"
+            className="inline-flex items-center justify-center w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all"
           >
             Return Home
           </Link>
         </div>
 
         {/* Copyright */}
-        <div className="text-center mt-8 text-sm text-slate-500">
-          © 2026 KIA Skin Care. All rights reserved.
+        <div className="text-center mt-8 text-sm text-brand-muted">
+          &copy; 2026 KIA Skin Care. All rights reserved.
         </div>
       </div>
     </div>
