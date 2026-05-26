@@ -1,4 +1,4 @@
--- Final OZO treatment catalog.
+-- Final KIA Skin Care treatment catalog.
 -- Run in Supabase SQL editor if Admin > Treatments is empty or out of sync.
 
 ALTER TABLE treatments ADD COLUMN IF NOT EXISTS kit_name TEXT;

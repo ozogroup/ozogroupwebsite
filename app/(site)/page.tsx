@@ -17,8 +17,8 @@ import FinalCTA from "@/components/sections/FinalCTA";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "OZO Skin Care · Premium Luxury Skincare Treatments",
-  description: "Experience premium luxury skincare treatments at OZO Skin Care. Doctor-supervised Korean and Japanese skincare protocols for visible, lasting results.",
+  title: "KIA Skin Care | Premium Skincare & Partner Program",
+  description: "Premium skincare kits, Korean glass treatment campaign, and partner referral program by KIA Skin Care.",
 };
 
 export default function HomePage() {

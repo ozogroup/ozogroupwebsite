@@ -13,7 +13,7 @@ export default async function Footer() {
           <Logo variant="light" />
           <p className="text-white/80 max-w-sm leading-relaxed">
             {footerText ||
-              `${site.brand} is a premium skincare division of ${site.parent}, offering advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions.`}
+              "KIA Skin Care offers advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions."}
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <a
@@ -23,13 +23,13 @@ export default async function Footer() {
               className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent to-brand-light px-6 py-3.5 text-sm font-semibold hover:shadow-glow transition-all"
             >
               <span>Chat on WhatsApp</span>
-              <span aria-hidden>→</span>
+              <span aria-hidden>-&gt;</span>
             </a>
             <a
               href={contactSettings.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Follow on Instagram"
+              aria-label="Follow KIA Skin Care on Instagram"
               className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 transition"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -73,14 +73,14 @@ export default async function Footer() {
                 rel="noopener noreferrer"
                 className="font-medium text-white hover:text-brand-accent transition-colors"
               >
-                @ia_korean_gloh_tretment
+                Visit Instagram
               </a>
             </li>
             <li>
               <span className="text-white/60">Brand:</span> {site.brand}
             </li>
             <li>
-              <span className="text-white/60">Parent:</span> {site.parent}
+              <span className="text-white/60">Program:</span> {site.division}
             </li>
             <li className="text-white/70 italic">{site.tagline}</li>
           </ul>
@@ -89,7 +89,7 @@ export default async function Footer() {
 
       <div className="border-t border-white/10">
         <div className="container-x py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/70">
-          <p>© {new Date().getFullYear()} {site.parent}. All rights reserved.</p>
+          <p>© 2026 KIA Skin Care. All rights reserved.</p>
           <p>
             Developed by{" "}
             <a

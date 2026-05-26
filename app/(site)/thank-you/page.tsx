@@ -2,7 +2,7 @@ import Link from "next/link";
 import { site } from "@/lib/site";
 
 export const metadata = {
-  title: "Booking Received · IA Skin Care",
+  title: "Booking Received | KIA Skin Care",
   description: "Thank you! Your booking request has been received.",
 };
 

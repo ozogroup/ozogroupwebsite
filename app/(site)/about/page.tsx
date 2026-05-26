@@ -4,8 +4,8 @@ import { site } from "@/lib/site";
 import { getPublicSiteContent } from "@/lib/data/public";
 
 export const metadata: Metadata = {
-  title: "About OZO Skin Care · Premium Luxury Skincare",
-  description: "Learn about OZO Skin Care, a premium skincare division of OZO Service offering doctor-supervised Korean and Japanese skincare treatments.",
+  title: "About KIA Skin Care | Premium Skincare",
+  description: "Learn about KIA Skin Care and our doctor-supervised Korean and Japanese skincare treatments.",
 };
 
 const ABOUT_IMAGE =
@@ -17,7 +17,7 @@ export default async function AboutPage() {
   const aboutContent =
     siteContent.about_description ||
     siteContent.description ||
-    `${site.brand} is a premium skincare division of ${site.parent}, offering advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions.`;
+    "KIA Skin Care offers advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions.";
   const mission =
     siteContent.about_mission ||
     siteContent.mission ||
@@ -62,7 +62,7 @@ export default async function AboutPage() {
             <div className="relative aspect-[16/9] w-full max-w-5xl mx-auto rounded-[32px] border border-brand-border/60 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
                 src={aboutImage}
-                alt="Premium skincare treatment at OZO Skin Care"
+                alt="Premium skincare treatment at KIA Skin Care"
                 fill
                 sizes="(max-width: 1024px) 100vw, 1200px"
                 className="object-cover"

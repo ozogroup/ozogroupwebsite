@@ -1,4 +1,4 @@
-﻿-- OZO / IA Skin Care - Admin Panel Database Setup
+﻿-- KIA Skin Care - Admin Panel Database Setup
 -- This SQL file creates all required tables for the admin panel
 
 -- =====================================================
@@ -255,7 +255,7 @@ CREATE INDEX IF NOT EXISTS idx_site_content_section ON site_content(section);
 INSERT INTO site_content (section, key_name, value, value_type, display_order) VALUES
 -- Home Hero
 ('home_hero', 'title', 'Transform Your Skin with Korean Beauty Secrets', 'text', 1),
-('home_hero', 'subtitle', 'Premium Treatment Kits by IA Skin Care', 'text', 2),
+('home_hero', 'subtitle', 'Premium Treatment Kits by KIA Skin Care', 'text', 2),
 ('home_hero', 'description', 'Experience the power of Korean glass skin treatments and advanced skincare solutions tailored for your unique beauty needs.', 'text', 3),
 ('home_hero', 'cta_text', 'Book Consultation', 'text', 4),
 ('home_hero', 'cta_link', '/contact', 'text', 5),
@@ -277,7 +277,7 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order) V
 ('home_referral', 'subtitle', 'Share your unique referral code and earn commissions', 'text', 2),
 
 -- About Page
-('about', 'title', 'About IA Skin Care', 'text', 1),
+('about', 'title', 'About KIA Skin Care', 'text', 1),
 ('about', 'description', 'We are dedicated to bringing you the best in Korean skincare technology combined with personalized care for radiant, healthy skin.', 'text', 2),
 ('about', 'mission', 'To provide world-class skincare treatments that are accessible, effective, and tailored to individual needs.', 'text', 3),
 ('about', 'vision', 'To become India''s leading destination for advanced Korean skincare treatments.', 'text', 4),

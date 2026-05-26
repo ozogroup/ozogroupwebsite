@@ -46,7 +46,7 @@ export default async function Hero() {
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
             <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-              IA Skin Care · Premium Division
+              KIA Skin Care - Premium Care
             </span>
           </div>
           
@@ -125,7 +125,7 @@ export default async function Hero() {
             <div className="relative aspect-[4/5] w-full rounded-[32px] border border-brand-border/50 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
               <Image
                 src={heroImage}
-                alt="Premium skincare treatment at IA Skin Care clinic"
+                alt="Premium skincare treatment at KIA Skin Care clinic"
                 fill
                 sizes="(max-width: 1024px) 90vw, 600px"
                 priority

@@ -44,7 +44,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">Admin</p>
-                <p className="text-xs text-slate-400 truncate">OZO Service</p>
+                <p className="text-xs text-slate-400 truncate">KIA Skin Care</p>
               </div>
               <LogoutButton />
             </div>
@@ -71,7 +71,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">Admin</p>
-                <p className="text-xs text-slate-400 truncate">OZO Service</p>
+                <p className="text-xs text-slate-400 truncate">KIA Skin Care</p>
               </div>
               <LogoutButton />
             </div>

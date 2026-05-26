@@ -1,4 +1,4 @@
-# OZO / IA Skin Care - Supabase Activation Guide
+# KIA Skin Care - Supabase Activation Guide
 
 ## Phase 4.5: Supabase Live Activation + Type Generation + First Admin Setup
 
@@ -18,7 +18,7 @@ This guide provides step-by-step instructions to activate the Supabase backend, 
 **Step 1: Execute SQL_SETUP.sql**
 
 1. Go to Supabase Dashboard: https://supabase.com/dashboard
-2. Select your OZO project
+2. Select your KIA Skin Care project
 3. Navigate to: SQL Editor (left sidebar)
 4. Click "New Query"
 5. Open file: `supabase/SQL_SETUP.sql` (copy entire content)

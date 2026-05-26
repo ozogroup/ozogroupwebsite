@@ -1,5 +1,5 @@
 ﻿-- ============================================================================
--- OZO Service - Partner System, KYC, Kit Tracking, and Booking Cleanup
+-- KIA Skin Care - Partner System, KYC, Kit Tracking, and Booking Cleanup
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

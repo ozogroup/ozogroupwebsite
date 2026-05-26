@@ -9,14 +9,14 @@ import type {
 } from "@/types";
 
 export const site = {
-  parent: "OZO Service",
-  brand: "IA SKIN CARE",
-  division: "IA Skin Care Division",
+  parent: "KIA Skin Care",
+  brand: "KIA Skin Care",
+  division: "KIA Skin Care Partner Program",
   tagline: "Glow Better. Earn Smarter.",
   phone: "+91 76986 17054",
   phoneRaw: "+917698617054",
   whatsapp:
-    "https://wa.me/917698617054?text=Hello%20IA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.",
+    "https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.",
   instagram:
     "https://www.instagram.com/ia_korean_gloh_tretment?igsh=bmZqOHc0bnU5OW95",
   membershipFee: 1199,
@@ -108,7 +108,7 @@ export const testimonials: Testimonial[] = [
     city: "Surat",
     treatment: "Advance Kit",
     quote:
-      "Pigmentation support has been easier with the guided Advance Kit. Highly recommend IA Skin Care.",
+      "Pigmentation support has been easier with the guided Advance Kit. Highly recommend KIA Skin Care.",
     rating: 5,
   },
   {
@@ -139,8 +139,8 @@ export const faqs: FAQItem[] = [
     a: "Online payment via Razorpay / Cashfree is being integrated. For now, our team will share a secure payment link after your booking is confirmed.",
   },
   {
-    q: "What is the OZO Referral Membership?",
-    a: "A ₹1,199 optional membership that unlocks commissions when you refer clients for IA Skin Care treatments. It is completely optional — you don't need it to book a treatment.",
+    q: "What is the KIA Skin Care Partner Program?",
+    a: "A ₹1,199 optional membership that unlocks commissions when you refer clients for KIA Skin Care treatments. It is completely optional — you don't need it to book a treatment.",
   },
   {
     q: "Do I have to buy a membership to take a treatment?",

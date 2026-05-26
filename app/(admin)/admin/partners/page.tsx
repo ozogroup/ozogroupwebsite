@@ -427,7 +427,7 @@ export default function AdminPartnersPage() {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-3">WhatsApp Share</h3>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Join OZO Skin Care referral program! Use my code: ${selectedPartner.partner_code}\n${getReferralLink(selectedPartner.partner_code)}`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Join KIA Skin Care Partner Program! Use my code: ${selectedPartner.partner_code}\n${getReferralLink(selectedPartner.partner_code)}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"

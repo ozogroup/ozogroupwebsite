@@ -111,7 +111,7 @@ export default function MembershipPage() {
                 </svg>
               </div>
               <h1 className="text-3xl md:text-4xl text-brand-ink mb-4">
-                Welcome to OZO Premium Partnership
+                Welcome to KIA Skin Care Partnership
               </h1>
               <p className="text-lg text-brand-muted mb-8 leading-relaxed">
                 Your membership request has been submitted successfully. Our team will contact you 
@@ -198,7 +198,7 @@ export default function MembershipPage() {
                 </span>
               </h1>
               <p className="mt-4 text-lg text-brand-muted max-w-2xl leading-relaxed">
-                Join the OZO Skin Care Premium Referral Partner Program for just ₹1,199 
+                Join the KIA Skin Care Partner Program for just ₹1,199 
                 and start earning commissions from your very first referral.
               </p>
             </div>

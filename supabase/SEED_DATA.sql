@@ -1,5 +1,5 @@
 ﻿-- ============================================================================
--- OZO / IA Skin Care - Seed Current Website Data into Supabase
+-- KIA Skin Care - Seed Current Website Data into Supabase
 -- ============================================================================
 -- This script seeds the hardcoded website data from lib/site.ts into Supabase
 -- Run this in Supabase SQL Editor to populate tables
@@ -149,7 +149,7 @@ INSERT INTO testimonials (
   'Riya M.',
   'Surat',
   'Advance Kit',
-  'Pigmentation support has been so much easier with the guided Advance Kit. Highly recommend IA Skin Care.',
+  'Pigmentation support has been so much easier with the guided Advance Kit. Highly recommend KIA Skin Care.',
   5,
   true,
   NOW(),
@@ -243,8 +243,8 @@ INSERT INTO faqs (
   NOW()
 ),
 (
-  'What is the OZO Referral Membership?',
-  'A ₹1,199 optional membership that unlocks commissions when you refer clients for IA Skin Care treatments. It is completely optional — you don''t need it to book a treatment.',
+  'What is the KIA Skin Care Partner Program?',
+  'A ₹1,199 optional membership that unlocks commissions when you refer clients for KIA Skin Care treatments. It is completely optional — you don''t need it to book a treatment.',
   'membership',
   5,
   true,
@@ -277,7 +277,7 @@ INSERT INTO contact_settings (
   '+91 76986 17054',
   'https://wa.me/917698617054?text=Hello%20IA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.',
   'contact@ia-skincare.com',
-  'OZO Group, IA Skin Care Division, Ahmedabad, Gujarat',
+  'KIA Skin Care, Ahmedabad, Gujarat',
   'Mon - Sat: 10:00 AM - 7:00 PM',
   'https://www.facebook.com/ia-skincare',
   'https://www.instagram.com/ia_korean_gloh_tretment?igsh=bmZqOHc0bnU5OW95',
@@ -299,7 +299,7 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order, c
 -- Home Hero
 ('home_hero', 'hero_title', 'Transform Your Skin with Korean Beauty Science', 'text', 1, NOW(), NOW()),
 ('home_hero', 'hero_subtitle', 'Premium clinical skincare treatments designed for visible, lasting results', 'text', 2, NOW(), NOW()),
-('home_hero', 'hero_description', 'Experience doctor-supervised Korean and Japanese skincare protocols at OZO / IA Skin Care. From glass skin treatments to advanced clinical transformations, we deliver premium results with safety and care.', 'text', 3, NOW(), NOW()),
+('home_hero', 'hero_description', 'Experience doctor-supervised Korean and Japanese skincare protocols at KIA Skin Care. From glass skin treatments to advanced clinical transformations, we deliver premium results with safety and care.', 'text', 3, NOW(), NOW()),
 ('home_hero', 'hero_image', 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80', 'image_url', 4, NOW(), NOW()),
 ('home_hero', 'primary_button_text', 'Book Free Consultation', 'text', 5, NOW(), NOW()),
 ('home_hero', 'primary_button_link', '/contact', 'text', 6, NOW(), NOW()),
@@ -313,12 +313,12 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order, c
 ('home_membership', 'membership_heading', 'Referral Membership Program', 'text', 11, NOW(), NOW()),
 ('home_membership', 'membership_description', 'Earn commissions by referring clients. Join our partner network and build a sustainable income stream.', 'text', 12, NOW(), NOW()),
 
-('home_referral', 'referral_heading', 'Grow with OZO', 'text', 13, NOW(), NOW()),
+('home_referral', 'referral_heading', 'Grow with KIA Skin Care', 'text', 13, NOW(), NOW()),
 ('home_referral', 'referral_description', 'Join our referral program and earn attractive commissions while helping others discover premium skincare.', 'text', 14, NOW(), NOW()),
 
 -- About Page
-('about', 'about_title', 'About OZO / IA Skin Care', 'text', 15, NOW(), NOW()),
-('about', 'about_description', 'OZO Group brings you IA Skin Care — a premium skincare division dedicated to delivering doctor-supervised Korean and Japanese skincare treatments. Our mission is to make clinical-grade skincare accessible, safe, and effective for everyone.', 'text', 16, NOW(), NOW()),
+('about', 'about_title', 'About KIA Skin Care', 'text', 15, NOW(), NOW()),
+('about', 'about_description', 'KIA Skin Care is a premium skincare brand dedicated to delivering doctor-supervised Korean and Japanese skincare treatments. Our mission is to make clinical-grade skincare accessible, safe, and effective for everyone.', 'text', 16, NOW(), NOW()),
 ('about', 'about_mission', 'To democratize premium skincare by making clinical-grade treatments accessible to everyone, delivered with safety, expertise, and genuine care.', 'text', 17, NOW(), NOW()),
 ('about', 'about_vision', 'To become India''s most trusted skincare destination, known for visible results, ethical practices, and customer-centric care.', 'text', 18, NOW(), NOW()),
 ('about', 'about_image', 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80', 'image_url', 19, NOW(), NOW());

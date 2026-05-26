@@ -1,5 +1,5 @@
 -- ============================================================================
--- OZO / IA Skin Care - Complete Database Schema
+-- KIA Skin Care - Complete Database Schema
 -- ============================================================================
 -- Version: 2.0.0 (Production Hardened)
 -- Date: 2025-01-08

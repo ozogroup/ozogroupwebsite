@@ -157,7 +157,7 @@ export default function ContactPage() {
                     rel="noopener noreferrer"
                     className="hover:text-brand-accent transition-colors"
                   >
-                    @ia_korean_gloh_tretment
+                    Visit Instagram
                   </a>
                 </p>
               </div>

@@ -23,7 +23,7 @@ export default async function FinalCTA() {
                 Ready when you are
               </span>
               <h2 className="mt-4 text-white">
-                Begin your skincare journey with IA Skin Care.
+                Begin your skincare journey with KIA Skin Care.
               </h2>
               <p className="mt-4 text-white/85 max-w-xl">
                 Personalised treatments, doctor-supervised protocols, and a

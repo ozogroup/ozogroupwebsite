@@ -1,11 +1,8 @@
-OZO Service logo assets:
+KIA Skin Care logo assets:
 
-  ozo-service-logo-source.png
-  ozo-service-logo.png
-  ozo-service-icon.png
+  kia-skin-care-logo.png
 
 Notes:
-- ozo-service-logo-source.png preserves the uploaded source PNG.
-- ozo-service-logo.png trims transparent padding for header/sidebar rendering.
-- ozo-service-icon.png is used for favicon and app icons.
+- kia-skin-care-logo.png is the active logo for website, admin, partner, favicon, and social metadata rendering.
 - Aspect ratio is preserved automatically by components/Logo.tsx.
+- Legacy source assets are retained in this folder only to avoid destructive cleanup.

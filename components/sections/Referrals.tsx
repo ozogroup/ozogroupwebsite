@@ -8,7 +8,7 @@ export default async function Referrals() {
   ]);
 
   const referralHeading = siteContent.referral_heading || "Earn Unlimited";
-  const referralDescription = siteContent.referral_description || "Active partners can share premium IA Skin Care treatments and earn commission when referrals are confirmed. Completely optional — our treatments remain accessible to everyone.";
+  const referralDescription = siteContent.referral_description || "Active partners can share premium KIA Skin Care treatments and earn commission when referrals are confirmed. Completely optional; our treatments remain accessible to everyone.";
   const referralLevels = commissionSettings.referralLevels;
   const salesBonuses = commissionSettings.salesBonuses;
   return (

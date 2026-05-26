@@ -5,7 +5,7 @@ import { getPublicTreatments } from "@/lib/data/public";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Treatments · OZO Skin Care Premium Skincare",
+  title: "Treatments | KIA Skin Care Premium Skincare",
   description: "Explore our premium skincare treatments including home kit programs and clinical glow experiences designed for visible, lasting results.",
 };
 

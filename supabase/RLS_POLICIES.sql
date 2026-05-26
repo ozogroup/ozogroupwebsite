@@ -1,5 +1,5 @@
 -- ============================================================================
--- OZO / IA Skin Care - Row Level Security (RLS) Policies
+-- KIA Skin Care - Row Level Security (RLS) Policies
 -- ============================================================================
 -- Version: 1.0.0
 -- Date: 2025-01-08

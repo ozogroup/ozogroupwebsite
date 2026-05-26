@@ -146,7 +146,7 @@ export default function AdminSettingsPage() {
                   value={contactData.email}
                   onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="contact@ozo.com"
+                  placeholder="contact@kiaskincare.com"
                 />
               </div>
               <div>
@@ -176,7 +176,7 @@ export default function AdminSettingsPage() {
                   value={contactData.instagram}
                   onChange={(e) => setContactData({ ...contactData, instagram: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="https://instagram.com/ozo"
+                  placeholder="https://instagram.com/kia_skincare"
                 />
               </div>
               <div>
@@ -186,7 +186,7 @@ export default function AdminSettingsPage() {
                   value={contactData.facebook}
                   onChange={(e) => setContactData({ ...contactData, facebook: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="https://facebook.com/ozo"
+                  placeholder="https://facebook.com/kia-skincare"
                 />
               </div>
               <div>
@@ -196,7 +196,7 @@ export default function AdminSettingsPage() {
                   value={contactData.youtube}
                   onChange={(e) => setContactData({ ...contactData, youtube: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="https://youtube.com/@ozo"
+                  placeholder="https://youtube.com/@kia-skincare"
                 />
               </div>
             </div>

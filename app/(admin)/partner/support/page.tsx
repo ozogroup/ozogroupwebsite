@@ -57,7 +57,7 @@ export default async function PartnerSupportPage() {
               <span className="text-2xl">📧</span>
               <div>
                 <p className="font-medium text-slate-900">Email</p>
-                <p className="text-sm text-slate-600">support@ozo.com</p>
+                <p className="text-sm text-slate-600">Partner support via WhatsApp</p>
               </div>
             </div>
             <div className="flex items-start gap-4">

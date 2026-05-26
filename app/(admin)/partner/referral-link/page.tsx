@@ -21,13 +21,13 @@ export default async function PartnerReferralLinkPage() {
 
   const partnerCode = (partner as any)?.partner_code || "N/A";
   const referralLink = getReferralUrl(partnerCode);
-  const whatsappMessage = encodeURIComponent(`Join OZO / IA Skin Care's referral program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`);
+  const whatsappMessage = encodeURIComponent(`Join KIA Skin Care's partner program and earn commissions! Use my referral code: ${partnerCode}\n\n${referralLink}`);
   const whatsappLink = `https://wa.me/?text=${whatsappMessage}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}`;
 
   // Social share URLs
   const facebookShare = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`;
-  const twitterShare = `https://twitter.com/intent/tweet?text=${encodeURIComponent('Join OZO Skin Care referral program!')}+url=${encodeURIComponent(referralLink)}`;
+  const twitterShare = `https://twitter.com/intent/tweet?text=${encodeURIComponent("Join KIA Skin Care's partner program!")}+url=${encodeURIComponent(referralLink)}`;
   const linkedinShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralLink)}`;
 
   return (

@@ -1,6 +1,6 @@
-# IA Skin Care · OZO Service
+# KIA Skin Care
 
-Premium skincare website + future referral platform.
+Premium skincare website and partner program.
 **Tagline:** Glow Better. Earn Smarter.
 
 ## Tech
@@ -18,11 +18,11 @@ npm run dev
 Then open: http://localhost:3000
 
 ## Logo
-Drop your logo PNG at:
+The active logo is:
 ```
-public/logos/ozo-service-logo.png
+public/logos/kia-skin-care-logo.png
 ```
-It is used in the header, footer, sidebars, and social preview metadata. The favicon/app icon uses `public/logos/ozo-service-icon.png`.
+It is used in the header, footer, admin and partner shells, browser/app icon configuration, and social preview metadata.
 
 ## Project Structure
 ```
@@ -43,13 +43,6 @@ styles/             Global CSS (Tailwind)
 | Background | `#FFFFFF` |
 
 Used as Tailwind classes: `text-brand-primary`, `bg-brand-accent`, `text-brand-light`, etc.
-
-## Status
-- [x] Step 1–6: Frontend foundation, header, footer, home page sections
-- [ ] Auth & membership
-- [ ] Dashboard
-- [ ] Admin panel
-- [ ] Supabase backend
 
 ---
 Developed by [The Gujarati Designer](https://www.thegujaratidesigner.in)

@@ -97,7 +97,7 @@ export default function PartnerResetPasswordPage() {
             </button>
           </form>
         </div>
-        <div className="text-center mt-8 text-sm text-slate-500">OZO Service. All rights reserved.</div>
+        <div className="text-center mt-8 text-sm text-slate-500">© 2026 KIA Skin Care. All rights reserved.</div>
       </div>
     </div>
   );

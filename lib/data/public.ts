@@ -26,6 +26,16 @@ function normalizeWhatsapp(value?: string | null) {
   return digits ? `https://wa.me/${digits}` : staticSite.whatsapp;
 }
 
+function replaceLegacyBranding(value?: string | null) {
+  return (value || "")
+    .replace(/OZO\s*\/\s*IA Skin Care/gi, "KIA Skin Care")
+    .replace(/OZO Skin Care/gi, "KIA Skin Care")
+    .replace(/OZO Services?/gi, "KIA Skin Care")
+    .replace(/OZO Group/gi, "KIA Skin Care")
+    .replace(/IA Skin Care Division/gi, "KIA Skin Care")
+    .replace(/IA Skin Care/gi, "KIA Skin Care");
+}
+
 /**
  * Fetch treatments from Supabase with fallback to the requested kit catalog.
  */
@@ -104,7 +114,7 @@ export async function getPublicTestimonials() {
       name: t.name,
       city: t.city,
       treatment: normalizePublicTreatmentName(t.treatment),
-      quote: t.quote,
+      quote: replaceLegacyBranding(t.quote),
       rating: t.rating,
     }));
   } catch (error) {
@@ -131,8 +141,8 @@ export async function getPublicFaqs() {
     }
 
     return data.map((f: any) => ({
-      q: f.question,
-      a: f.answer,
+      q: replaceLegacyBranding(f.question),
+      a: replaceLegacyBranding(f.answer),
     }));
   } catch (error) {
     console.error("Error fetching FAQs from Supabase:", error);
@@ -164,7 +174,7 @@ export async function getPublicSiteContent(section?: string) {
     // Convert to key-value object
     const content: Record<string, string> = {};
     data.forEach((item: any) => {
-      content[item.key_name] = item.value;
+      content[item.key_name] = replaceLegacyBranding(item.value);
     });
 
     return content;
@@ -201,8 +211,8 @@ export async function getPublicContactSettings() {
         phoneRaw: (content.phone || staticSite.phone).replace(/\s/g, ""),
         whatsapp: normalizeWhatsapp(content.whatsapp || staticSite.whatsapp),
         email: content.email || "",
-        address: content.address || "",
-        footerText: content.footer_text || "",
+        address: replaceLegacyBranding(content.address),
+        footerText: replaceLegacyBranding(content.footer_text),
       };
     }
 
@@ -214,8 +224,8 @@ export async function getPublicContactSettings() {
       phoneRaw: phone.replace(/\s/g, ""),
       whatsapp,
       email: content.email || (data as any).email || "",
-      address: content.address || (data as any).address || "",
-      footerText: content.footer_text || "",
+      address: replaceLegacyBranding(content.address || (data as any).address),
+      footerText: replaceLegacyBranding(content.footer_text),
       instagram: (data as any).instagram_url,
     };
   } catch (error) {

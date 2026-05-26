@@ -1,4 +1,4 @@
-# OZO / IA Skin Care - Authentication & Security Documentation
+# KIA Skin Care - Authentication & Security Documentation
 
 ## Phase 3: RLS + Authentication + Role Security
 

@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { site, referralLevels, salesBonuses } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Premium Referral Partner Program · OZO Skin Care",
-  description: "Become a Premium Referral Partner with OZO Skin Care. Earn commissions by sharing premium skincare experiences with your network.",
+  title: "KIA Skin Care Partner Program | Premium Referrals",
+  description: "Become a KIA Skin Care Partner and earn commissions by sharing premium skincare experiences with your network.",
 };
 
 export default function ReferralPage() {
@@ -215,7 +215,7 @@ export default function ReferralPage() {
                 Start Your Partnership Today
               </h2>
               <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
-                Join the OZO Skin Care Premium Referral Partner Program for just ₹1,199 
+                Join the KIA Skin Care Partner Program for just ₹1,199 
                 and start earning from your very first referral.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">

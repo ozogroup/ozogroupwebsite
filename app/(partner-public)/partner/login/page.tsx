@@ -69,7 +69,7 @@ export default function PartnerLoginPage() {
         <section className="order-2 space-y-7 lg:order-1">
           <div className="inline-flex items-center gap-2 rounded-full border border-brand-border bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-primary shadow-soft backdrop-blur">
             <Sparkles className="h-4 w-4 text-brand-accent" />
-            OZO Partner Suite
+            KIA Skin Care Partner Program
           </div>
 
           <div className="space-y-4">
@@ -88,7 +88,7 @@ export default function PartnerLoginPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-100">VIP Partner Card</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">OZO Growth Club</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">KIA Skin Care VIP</p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.15] text-amber-100 ring-1 ring-white/25">
                   <BadgeIndianRupee className="h-6 w-6" />

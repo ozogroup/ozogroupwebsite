@@ -57,7 +57,7 @@ export default function AdminContactSettingsPage() {
       phone: "+91 76986 17054",
       whatsapp: "+91 76986 17054",
       email: "contact@ia-skincare.com",
-      address: "OZO Service, IA Skin Care Division, Ahmedabad, Gujarat",
+      address: "KIA Skin Care, Ahmedabad, Gujarat",
       business_hours: "Mon - Sat: 10 AM - 7 PM",
       facebook_url: "",
       instagram_url: "",

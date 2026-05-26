@@ -1,5 +1,5 @@
 ﻿-- ============================================================================
--- OZO Service - Exact Treatment / Kit Pricing Update
+-- KIA Skin Care - Exact Treatment / Kit Pricing Update
 -- ============================================================================
 -- Run this in the Supabase SQL Editor for production.
 -- It keeps existing booking history intact by archiving old treatment rows

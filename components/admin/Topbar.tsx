@@ -123,7 +123,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-slate-900 leading-none">Admin</p>
-                <p className="text-xs text-slate-500 mt-0.5">OZO Service</p>
+                <p className="text-xs text-slate-500 mt-0.5">KIA Skin Care</p>
               </div>
               <svg className="w-4 h-4 text-slate-400 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -133,7 +133,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2">
                 <div className="px-4 py-3 border-b border-slate-100">
                   <p className="text-sm font-medium text-slate-900">Admin User</p>
-                  <p className="text-xs text-slate-500 mt-0.5">admin@ozoservices.com</p>
+                  <p className="text-xs text-slate-500 mt-0.5">KIA Skin Care Admin</p>
                 </div>
                 <a href="/admin/settings" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
                   Settings

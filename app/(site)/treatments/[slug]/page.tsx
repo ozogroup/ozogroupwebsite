@@ -10,14 +10,14 @@ type Params = { params: { slug: string } };
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const treatments = await getPublicTreatments();
   const t = treatments.find((x) => x.slug === params.slug);
-  if (!t) return { title: "Treatment not found · IA Skin Care" };
+  if (!t) return { title: "Treatment not found | KIA Skin Care" };
   
   return {
-    title: (t as any).seo_title || `${t.title} · IA Skin Care`,
+    title: (t as any).seo_title || `${t.title} | KIA Skin Care`,
     description: (t as any).seo_description || t.description,
     keywords: (t as any).seo_keywords?.split(",") || [],
     openGraph: {
-      title: (t as any).seo_title || `${t.title} · IA Skin Care`,
+      title: (t as any).seo_title || `${t.title} | KIA Skin Care`,
       description: (t as any).seo_description || t.description,
       images: [t.image],
     },
