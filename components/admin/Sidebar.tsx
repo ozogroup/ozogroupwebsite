@@ -22,7 +22,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-brand-light/30">
-            <Logo variant="light" showDivision={false} />
+            <Logo variant="light" showDivision={false} size="compact" />
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/75 hover:text-white"
@@ -57,7 +57,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 h-16 border-b border-brand-light/30">
-            <Logo variant="light" showDivision={false} />
+            <Logo variant="light" showDivision={false} size="compact" />
           </div>
 
           {/* Navigation */}

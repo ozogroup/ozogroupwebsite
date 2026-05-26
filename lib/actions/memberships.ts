@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
 import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
+import { generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-code";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -11,22 +12,28 @@ import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/action
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function generatePartnerCode(supabase: ReturnType<typeof getSupabaseServiceClient>) {
-  const { data: lastPartner } = await supabase
-    .from("partners" as any)
-    .select("partner_code")
-    .order("created_at", { ascending: false })
-    .limit(1);
+type PartnerInsertResult =
+  | { partnerCode: string; referralLink: string }
+  | { error: { message?: string } };
 
-  const lastPartners = lastPartner as any[];
-  let nextNumber = 1001;
-  if (lastPartners && lastPartners.length > 0) {
-    const lastCode = lastPartners[0].partner_code;
-    const num = parseInt(String(lastCode).replace("OZO", ""), 10);
-    if (!isNaN(num)) nextNumber = num + 1;
+async function insertPartnerWithKiaCode(
+  supabase: ReturnType<typeof getSupabaseServiceClient>,
+  partnerData: Record<string, unknown>
+): Promise<PartnerInsertResult> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const partnerCode = await generateKiaPartnerCode(supabase);
+    const referralLink = getReferralUrl(partnerCode);
+    const { error } = await supabase.from("partners" as any).insert({
+      ...partnerData,
+      partner_code: partnerCode,
+      referral_link: referralLink,
+    });
+
+    if (!error) return { partnerCode, referralLink };
+    if (!isPartnerCodeConflict(error)) return { error };
   }
 
-  return `OZO${nextNumber}`;
+  return { error: new Error("Unable to reserve a unique partner ID. Please try again.") };
 }
 
 function toIndianAuthPhone(mobile: string) {
@@ -163,9 +170,6 @@ export async function createMembership(data: {
   }
 
   const authUserId = authUser.user.id;
-  const partnerCode = await generatePartnerCode(serviceClient);
-  const referralLink = getReferralUrl(partnerCode);
-
   const { error: profileInsertError } = await serviceClient.from("profiles" as any).insert({
     id: authUserId,
     email: normalizedEmail,
@@ -181,10 +185,8 @@ export async function createMembership(data: {
     return { error: "Failed to create user profile. Please try again." };
   }
 
-  const { error: partnerInsertError } = await serviceClient.from("partners" as any).insert({
+  const pendingPartner = await insertPartnerWithKiaCode(serviceClient, {
     id: authUserId,
-    partner_code: partnerCode,
-    referral_link: referralLink,
     city: data.city.trim(),
     address: data.address.trim(),
     pin_code: data.pin_code.trim(),
@@ -195,8 +197,8 @@ export async function createMembership(data: {
     paid_earnings: 0,
   });
 
-  if (partnerInsertError) {
-    console.error("Error creating pending partner:", partnerInsertError);
+  if ("error" in pendingPartner) {
+    console.error("Error creating pending partner:", pendingPartner.error);
     await serviceClient.from("profiles" as any).delete().eq("id", authUserId);
     await serviceClient.auth.admin.deleteUser(authUserId);
     return { error: "Failed to create pending partner request. Please try again." };
@@ -356,14 +358,8 @@ export async function approveAndCreatePartner(membershipId: string) {
       })
       .eq("id", userId);
   } else {
-    partnerCode = await generatePartnerCode(serviceClient);
-    referralLink = getReferralUrl(partnerCode);
-
-    // 7. Create partner row
-    const { error: partnerError } = await serviceClient.from("partners" as any).insert({
+    const createdPartner = await insertPartnerWithKiaCode(serviceClient, {
       id: userId,
-      partner_code: partnerCode,
-      referral_link: referralLink,
       city,
       status: "active",
       wallet_balance: 0,
@@ -374,10 +370,13 @@ export async function approveAndCreatePartner(membershipId: string) {
       membership_expires_at: expiresAt.toISOString(),
     });
 
-    if (partnerError) {
-      console.error("Error creating partner:", partnerError);
-      return { error: "Failed to create partner: " + partnerError.message };
+    if ("error" in createdPartner) {
+      console.error("Error creating partner:", createdPartner.error);
+      return { error: "Failed to create partner: " + (createdPartner.error.message || "Unknown error") };
     }
+
+    partnerCode = createdPartner.partnerCode;
+    referralLink = createdPartner.referralLink;
   }
 
   // 8. Update membership

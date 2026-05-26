@@ -10,7 +10,7 @@ export default async function Footer() {
     <footer className="mt-20 bg-gradient-to-br from-brand-primaryDark via-brand-primaryDark to-brand-primary text-white relative overflow-hidden">
       <div className="container-x py-16 md:py-24 grid gap-12 md:grid-cols-12 relative z-10">
         <div className="md:col-span-5 space-y-6">
-          <Logo variant="light" />
+          <Logo variant="light" size="footer" />
           <p className="text-white/80 max-w-sm leading-relaxed">
             {footerText ||
               "KIA Skin Care offers advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions."}

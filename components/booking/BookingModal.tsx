@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBooking } from "@/lib/actions/bookings";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { site } from "@/lib/site";
+import { LEGACY_REFERRAL_STORAGE_KEY, REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
 import { useBooking } from "./BookingContext";
 
@@ -85,8 +86,10 @@ export default function BookingModal() {
     if (!isOpen) return;
 
     const urlCode = new URLSearchParams(window.location.search).get("ref");
-    const storedCode = localStorage.getItem("ozo_referral_code");
-    if (urlCode) localStorage.setItem("ozo_referral_code", urlCode.toUpperCase());
+    const storedCode =
+      localStorage.getItem(REFERRAL_STORAGE_KEY) ||
+      localStorage.getItem(LEGACY_REFERRAL_STORAGE_KEY);
+    if (urlCode) localStorage.setItem(REFERRAL_STORAGE_KEY, urlCode.toUpperCase());
     setForm((f) => ({
       ...f,
       referralCode: (urlCode || storedCode || f.referralCode).toUpperCase(),
@@ -311,12 +314,12 @@ export default function BookingModal() {
             />
           </FormField>
 
-          <FormField label="Referral Code">
+          <FormField label="Partner ID / Referral Code">
             <input
               type="text"
               value={form.referralCode}
               onChange={update("referralCode")}
-              placeholder="OZO1003"
+              placeholder="KIA1001"
               className="premium-input uppercase"
             />
           </FormField>

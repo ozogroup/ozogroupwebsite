@@ -64,7 +64,7 @@ export default function AdminLoginPage({
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Logo showDivision={false} />
+          <Logo showDivision={false} size="auth" />
         </div>
 
         {/* Login Card */}

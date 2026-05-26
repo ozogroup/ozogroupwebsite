@@ -74,6 +74,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   const treatmentSlug = clean(payload.treatment_slug);
   const referralCode =
     clean(payload.referral_code) ||
+    clean(cookies().get("kia_referral_code")?.value) ||
     clean(cookies().get("ozo_referral_code")?.value);
 
   if (!customerName) return { error: "Please enter your full name." };

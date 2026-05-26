@@ -200,7 +200,7 @@ export default async function PartnerDashboardPage() {
   const walletBalance = Number(partnerData?.wallet_balance || 0);
   const referralLink = getReferralUrl(partnerCode);
   const whatsappMessage = encodeURIComponent(
-    `Book KIA Skin Care with my referral code: ${partnerCode}\n\n${referralLink}`
+    `Book KIA Skin Care with my Partner ID: ${partnerCode}\n\n${referralLink}`
   );
   const nextLevelTarget = Math.max(10, Math.ceil(((directTeam.count || 0) + 1) / 10) * 10);
   const targetProgress = Math.min(100, Math.round(((directTeam.count || 0) / nextLevelTarget) * 100));

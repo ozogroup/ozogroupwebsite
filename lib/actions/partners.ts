@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getReferralUrl } from "@/lib/referral-url";
+import { generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-code";
 
 // =====================================================
 // PARTNERS ACTIONS
@@ -64,22 +66,31 @@ export async function updatePartnerStatus(id: string, status: string) {
 
 export async function createPartner(partner: any) {
   const supabase = getSupabaseServerClient();
-  
-  const { data, error } = await supabase
-    .from("partners" as any)
-    .insert({
-      ...partner,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error creating partner:", error);
-    throw error;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const partnerCode = await generateKiaPartnerCode(supabase);
+    const { data, error } = await supabase
+      .from("partners" as any)
+      .insert({
+        ...partner,
+        partner_code: partnerCode,
+        referral_link: getReferralUrl(partnerCode),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (!error) {
+      revalidatePath("/admin/partners");
+      return data;
+    }
+
+    if (!isPartnerCodeConflict(error)) {
+      console.error("Error creating partner:", error);
+      throw error;
+    }
   }
-  
-  revalidatePath("/admin/partners");
-  return data;
+
+  throw new Error("Unable to reserve a unique partner ID. Please try again.");
 }

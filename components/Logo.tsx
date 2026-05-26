@@ -7,11 +7,19 @@ import { useState } from "react";
 type Props = {
   showDivision?: boolean;
   variant?: "light" | "dark";
+  size?: "compact" | "default" | "auth" | "footer";
 };
 
 const LOGO_SRC = "/logos/kia-skin-care-logo.png";
 
-export default function Logo({ variant = "dark" }: Props) {
+const logoSizes = {
+  compact: "h-12 w-[98px] p-2",
+  default: "h-14 w-[112px] p-2 md:h-[68px] md:w-[136px] md:p-2.5",
+  auth: "h-[76px] w-[146px] p-3 sm:h-[84px] sm:w-[164px]",
+  footer: "h-[82px] w-[162px] p-3 md:h-[96px] md:w-[192px] md:p-3.5",
+};
+
+export default function Logo({ variant = "dark", size = "default" }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
 
   const wordmarkColor = variant === "light" ? "text-white" : "text-brand-ink";
@@ -24,19 +32,19 @@ export default function Logo({ variant = "dark" }: Props) {
     >
       {!imgFailed ? (
         <span
-          className={`relative block h-11 w-[82px] shrink-0 md:h-14 md:w-[104px] ${
-            variant === "light" ? "rounded-xl bg-brand-card px-2 py-1.5 shadow-sm" : ""
-          }`}
+          className={`block shrink-0 overflow-hidden rounded-xl border border-brand-border/65 bg-brand-card shadow-soft ${logoSizes[size]}`}
         >
-          <Image
-            src={LOGO_SRC}
-            alt="KIA Skin Care"
-            fill
-            sizes="(max-width: 768px) 82px, 104px"
-            className="object-contain"
-            priority
-            onError={() => setImgFailed(true)}
-          />
+          <span className="relative block h-full w-full">
+            <Image
+              src={LOGO_SRC}
+              alt="KIA Skin Care"
+              fill
+              sizes={size === "footer" ? "(max-width: 768px) 162px, 192px" : size === "auth" ? "(max-width: 640px) 146px, 164px" : size === "compact" ? "98px" : "(max-width: 768px) 112px, 136px"}
+              className="object-contain"
+              priority
+              onError={() => setImgFailed(true)}
+            />
+          </span>
         </span>
       ) : (
         <span className="flex shrink-0 items-center gap-2">

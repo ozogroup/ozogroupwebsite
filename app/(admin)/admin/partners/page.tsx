@@ -13,7 +13,6 @@ export default function AdminPartnersPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [formData, setFormData] = useState({
     partner_name: "",
-    partner_code: "",
     phone: "",
     email: "",
     city: "",
@@ -51,7 +50,7 @@ export default function AdminPartnersPage() {
       await createPartner(formData);
       await loadPartners();
       setShowModal(false);
-      setFormData({ partner_name: "", partner_code: "", phone: "", email: "", city: "", commission_rate: "" });
+      setFormData({ partner_name: "", phone: "", email: "", city: "", commission_rate: "" });
     } catch (error) {
       console.error("Error creating partner:", error);
       alert("Error creating partner");
@@ -164,7 +163,7 @@ export default function AdminPartnersPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Partner</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Code</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Partner ID</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">City</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Earnings</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
@@ -254,27 +253,9 @@ export default function AdminPartnersPage() {
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-4 sm:p-6">
             <h2 className="text-xl font-bold text-slate-900 mb-6">Add Partner</h2>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Partner Code *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.partner_code}
-                  onChange={(e) => setFormData({ ...formData, partner_code: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="Unique referral code"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Partner Code *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.partner_code}
-                  onChange={(e) => setFormData({ ...formData, partner_code: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="Unique referral code"
-                />
+              <div className="rounded-lg border border-brand-border bg-brand-surface px-4 py-3">
+                <p className="text-sm font-medium text-brand-ink">Partner ID</p>
+                <p className="mt-1 text-sm text-brand-muted">Generated automatically in the KIA1001 format when the partner is created.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
@@ -346,7 +327,7 @@ export default function AdminPartnersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">{selectedPartner.profiles?.full_name || "—"}</h2>
-                  <p className="text-sm text-slate-500 mt-1">Partner Code: <code className="bg-slate-100 px-2 py-0.5 rounded">{selectedPartner.partner_code}</code></p>
+                  <p className="text-sm text-slate-500 mt-1">Partner ID: <code className="bg-slate-100 px-2 py-0.5 rounded">{selectedPartner.partner_code}</code></p>
                 </div>
                 <button
                   onClick={() => setShowDetailModal(false)}
@@ -427,7 +408,7 @@ export default function AdminPartnersPage() {
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-3">WhatsApp Share</h3>
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`Join KIA Skin Care Partner Program! Use my code: ${selectedPartner.partner_code}\n${getReferralLink(selectedPartner.partner_code)}`)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(`Join KIA Skin Care Partner Program! Use my Partner ID: ${selectedPartner.partner_code}\n${getReferralLink(selectedPartner.partner_code)}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-primary text-white rounded-lg hover:bg-brand-primaryDark transition-colors font-medium"

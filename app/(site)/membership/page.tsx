@@ -7,7 +7,7 @@ import PasswordInput from "@/components/ui/PasswordInput";
 import { site } from "@/lib/site";
 import { createMembership } from "@/lib/actions/memberships";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
+import { LEGACY_REFERRAL_STORAGE_KEY, REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 
 export default function MembershipPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -29,7 +29,9 @@ export default function MembershipPage() {
 
   useEffect(() => {
     try {
-      const storedReferralCode = window.localStorage.getItem(REFERRAL_STORAGE_KEY);
+      const storedReferralCode =
+        window.localStorage.getItem(REFERRAL_STORAGE_KEY) ||
+        window.localStorage.getItem(LEGACY_REFERRAL_STORAGE_KEY);
       if (storedReferralCode) {
         setFormData((current) => ({
           ...current,
@@ -135,7 +137,7 @@ export default function MembershipPage() {
                         <path d="M20 6L9 17l-5-5" />
                       </svg>
                     </span>
-                    <span>Referral code will be generated after approval</span>
+                    <span>Your Partner ID and earning access activate after approval</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent mt-0.5 shrink-0">
@@ -358,7 +360,7 @@ export default function MembershipPage() {
 
                   <div>
                     <label htmlFor="referralCode" className="block text-sm font-medium text-brand-ink mb-2">
-                      Referral Code (Optional)
+                      Partner ID / Referral Code (Optional)
                     </label>
                     <input
                       type="text"

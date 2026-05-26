@@ -33,7 +33,8 @@ function replaceLegacyBranding(value?: string | null) {
     .replace(/OZO Services?/gi, "KIA Skin Care")
     .replace(/OZO Group/gi, "KIA Skin Care")
     .replace(/IA Skin Care Division/gi, "KIA Skin Care")
-    .replace(/IA Skin Care/gi, "KIA Skin Care");
+    .replace(/IA Skin Care/gi, "KIA Skin Care")
+    .replace(/\bOZO\b(?!\d)/gi, "KIA Skin Care");
 }
 
 /**

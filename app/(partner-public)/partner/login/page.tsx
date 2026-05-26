@@ -133,7 +133,7 @@ export default function PartnerLoginPage() {
             className="mx-auto w-full max-w-md rounded-[2rem] border border-brand-border bg-brand-card/[0.92] p-6 shadow-premium backdrop-blur-md sm:p-8"
           >
             <div className="flex justify-center">
-              <Logo showDivision={false} />
+              <Logo showDivision={false} size="auth" />
             </div>
 
             <div className="mt-8 text-center">

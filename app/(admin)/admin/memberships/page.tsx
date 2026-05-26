@@ -45,7 +45,7 @@ export default function AdminMembershipsPage() {
       } else if (result.data) {
         setMessage({
           type: "success",
-          text: `Partner created! Code: ${result.data.partner_code}. ${result.data.full_name} can now log in at /partner/login with email ${result.data.email} and the password they set while booking membership.`,
+          text: `Partner created! Partner ID: ${result.data.partner_code}. ${result.data.full_name} can now log in at /partner/login with email ${result.data.email} and the password they set while booking membership.`,
         });
       }
       await loadMemberships();

@@ -69,7 +69,7 @@ export default function PartnerResetPasswordPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8"><Logo /></div>
+        <div className="flex justify-center mb-8"><Logo size="auth" /></div>
         <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-brand-ink mb-2">Set New Password</h1>

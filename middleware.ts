@@ -32,7 +32,7 @@ export async function middleware(req: NextRequest) {
 
   const referralCode = req.nextUrl.searchParams.get("ref");
   if (referralCode) {
-    res.cookies.set("ozo_referral_code", referralCode.toUpperCase(), {
+    res.cookies.set("kia_referral_code", referralCode.toUpperCase(), {
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
       sameSite: "lax",

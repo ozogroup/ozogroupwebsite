@@ -67,7 +67,7 @@ export default function AdminReferralsPage() {
               {selectedPartner.profiles?.full_name}
             </h1>
             <p className="text-sm text-brand-muted">
-              Partner Code: {selectedPartner.partner_code} • {referralTree.totalReferrals} total referrals
+              Partner ID: {selectedPartner.partner_code} • {referralTree.totalReferrals} total referrals
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function AdminReferralsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Enter partner code or phone"
+            placeholder="Enter partner ID or phone"
             className="flex-1 px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
           />
           <button

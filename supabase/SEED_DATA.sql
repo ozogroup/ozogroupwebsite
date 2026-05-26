@@ -432,7 +432,7 @@ INSERT INTO partners (
 ) VALUES
 (
   'partner-user-1',
-  'OZO1001',
+  'KIA1001',
   'Kavita Mehta',
   'kavita.mehta@email.com',
   '+91 99887 76655',
@@ -446,7 +446,7 @@ INSERT INTO partners (
 ),
 (
   'partner-user-2',
-  'OZO1002',
+  'KIA1002',
   'Neha Joshi',
   'neha.joshi@email.com',
   '+91 88776 65544',
@@ -460,7 +460,7 @@ INSERT INTO partners (
 ),
 (
   'partner-user-3',
-  'OZO1003',
+  'KIA1003',
   'Sunita Agarwal',
   'sunita.agarwal@email.com',
   '+91 77665 54433',
@@ -485,7 +485,7 @@ INSERT INTO commissions (
   created_at, updated_at
 ) VALUES
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1001' LIMIT 1),
   (SELECT id FROM bookings WHERE name = 'Anjali Patel' LIMIT 1),
   1500,
   1,
@@ -495,7 +495,7 @@ INSERT INTO commissions (
   NOW()
 ),
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1001' LIMIT 1),
   NULL,
   1080,
   2,
@@ -505,7 +505,7 @@ INSERT INTO commissions (
   NOW()
 ),
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1002' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1002' LIMIT 1),
   (SELECT id FROM bookings WHERE name = 'Meera Sharma' LIMIT 1),
   1080,
   1,
@@ -515,7 +515,7 @@ INSERT INTO commissions (
   NOW()
 ),
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1003' LIMIT 1),
   NULL,
   1320,
   1,
@@ -525,7 +525,7 @@ INSERT INTO commissions (
   NOW()
 ),
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1003' LIMIT 1),
   NULL,
   612,
   2,
@@ -546,7 +546,7 @@ INSERT INTO payouts (
   partner_id, amount, method, payment_details, status, created_at, updated_at
 ) VALUES
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1001' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1001' LIMIT 1),
   25000,
   'upi',
   'kavita@upi',
@@ -555,7 +555,7 @@ INSERT INTO payouts (
   NOW()
 ),
 (
-  (SELECT id FROM partners WHERE referral_code = 'OZO1003' LIMIT 1),
+  (SELECT id FROM partners WHERE referral_code = 'KIA1003' LIMIT 1),
   50000,
   'bank',
   'HDFC Bank, Account: 50100234567890, IFSC: HDFC0001234',
