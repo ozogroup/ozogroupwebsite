@@ -62,11 +62,11 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
   }, {} as Record<string, typeof navigation>);
 
   return (
-    <nav className="flex-1 overflow-y-auto py-6">
+    <nav className="min-h-0 flex-1 overflow-y-auto py-6 [scrollbar-gutter:stable]">
       {Object.entries(groupedNav).map(([section, items]) => (
         <div key={section} className="mb-6">
           {!collapsed && (
-            <h3 className="px-6 mb-2 text-[10px] font-semibold text-white/55 uppercase tracking-wider">
+            <h3 className="px-6 mb-2 text-[10px] font-semibold text-white/70 uppercase tracking-wider">
               {sectionLabels[section] || section}
             </h3>
           )}
@@ -83,7 +83,7 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                   } ${
                     isActive
                       ? "bg-white/15 text-white border-l-2 border-brand-light pl-[10px]"
-                      : "text-white/72 hover:text-white hover:bg-white/10"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
                   }`}
                 >
                   <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />

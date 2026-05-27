@@ -279,7 +279,7 @@ export default async function PartnerDashboardPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Your referral engine</p>
               <h2 className="mt-2 text-2xl font-semibold text-white">Keep Sharing, Keep Earning</h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/90">
                 Send your referral link to clients and prospects. Every confirmed booking strengthens your income dashboard.
               </p>
             </div>

@@ -19,7 +19,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex min-h-0 flex-col h-full overflow-hidden">
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-brand-light/30">
             <Logo variant="light" showDivision={false} size="compact" />
@@ -54,7 +54,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-[260px] lg:bg-brand-ink lg:border-r lg:border-brand-light/30">
-        <div className="flex flex-col h-full">
+        <div className="flex min-h-0 flex-col h-full overflow-hidden">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 h-16 border-b border-brand-light/30">
             <Logo variant="light" showDivision={false} size="compact" />
