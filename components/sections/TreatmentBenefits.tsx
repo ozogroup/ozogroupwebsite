@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AutoSlider from "@/components/ui/AutoSlider";
 
 const benefitImages = [
   {
@@ -48,25 +49,32 @@ export default function TreatmentBenefits() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {benefitImages.map((image, index) => (
-            <article
-              key={image.src}
-              className="group overflow-hidden rounded-2xl border border-brand-border/80 bg-white p-3 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-brand-accent/30 hover:shadow-premium"
-            >
-              <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-gradient-to-br from-brand-surface to-white">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={image.width}
-                  height={image.height}
-                  sizes="(max-width: 640px) 92vw, (max-width: 1024px) 44vw, 280px"
-                  className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
-                  priority={index < 2}
-                />
-              </div>
-            </article>
-          ))}
+        <div className="mt-12">
+          <AutoSlider
+            ariaLabel="Treatment benefits"
+            tabletItems={2}
+            desktopItems={3}
+            itemClassName="basis-full md:basis-[calc((100%_-_1.25rem)/2)] lg:basis-[calc((100%_-_2.5rem)/3)]"
+          >
+            {benefitImages.map((image, index) => (
+              <article
+                key={image.src}
+                className="group h-full overflow-hidden rounded-2xl border border-brand-border/80 bg-white p-3 shadow-soft transition duration-300 hover:-translate-y-1 hover:border-brand-accent/30 hover:shadow-premium"
+              >
+                <div className="relative h-[min(85vw,21rem)] overflow-hidden rounded-xl bg-gradient-to-br from-brand-surface to-white md:h-auto md:aspect-[3/4]">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={image.width}
+                    height={image.height}
+                    sizes="(max-width: 767px) 92vw, (max-width: 1023px) 44vw, 30vw"
+                    className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.02]"
+                    priority={index < 2}
+                  />
+                </div>
+              </article>
+            ))}
+          </AutoSlider>
         </div>
 
         <div className="mt-10 text-center">

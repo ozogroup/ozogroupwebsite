@@ -13,14 +13,15 @@ import {
   LineChart,
   PackageCheck,
   Send,
-  Share2,
   Sparkles,
   TrendingUp,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
 import BookNowButton from "@/components/booking/BookNowButton";
 import PartnerDashboardCharts from "@/components/partner/PartnerDashboardCharts";
+import { getSponsoredMembershipRequests } from "@/lib/actions/memberships";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 import { getReferralUrl } from "@/lib/referral-url";
@@ -89,7 +90,7 @@ export default async function PartnerDashboardPage() {
     );
   }
 
-  const [referrals, directTeam, referralTreeData, commissionsData, payoutsData, bookingsData, salesData] =
+  const [referrals, directTeam, referralTreeData, commissionsData, payoutsData, bookingsData, salesData, sponsoredMemberships] =
     await Promise.all([
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id),
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
@@ -107,6 +108,7 @@ export default async function PartnerDashboardPage() {
         .select("kit_name,treatment_name,treatment_price,booking_status,commission_amount,created_at,customer_name,customer_phone")
         .eq("partner_id", user.id)
         .order("created_at", { ascending: false }),
+      getSponsoredMembershipRequests(100),
     ]);
 
   const commissions = (commissionsData as any)?.data || [];
@@ -114,6 +116,9 @@ export default async function PartnerDashboardPage() {
   const bookings = (bookingsData as any)?.data || [];
   const sales = (salesData as any)?.data || [];
   const referralRows = (referralTreeData as any)?.data || [];
+  const pendingRegistrations = (sponsoredMemberships as any[]).filter(
+    (membership: any) => !["active", "rejected"].includes(membership.membership_status)
+  );
 
   const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingEarnings = commissions
@@ -256,11 +261,11 @@ export default async function PartnerDashboardPage() {
               Book Service / Kit
             </BookNowButton>
             <Link
-              href="/partner/referral-link"
+              href="/partner/new-membership"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-white px-6 py-3.5 text-sm font-semibold text-brand-primary shadow-soft transition hover:border-brand-accent hover:text-brand-accent hover:shadow-card"
             >
-              Share Referral
-              <Share2 className="h-4 w-4" />
+              New Membership Registration
+              <UserPlus className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -335,6 +340,37 @@ export default async function PartnerDashboardPage() {
           </div>
         </div>
       </section>
+
+      <Panel
+        title="Membership Registrations"
+        eyebrow="Direct Team Pipeline"
+        action={
+          <Link href="/partner/new-membership" className="text-sm font-semibold text-brand-primary hover:text-brand-accent">
+            Add new member
+          </Link>
+        }
+      >
+        {pendingRegistrations.length === 0 ? (
+          <EmptyState title="No pending membership requests" text="New registrations submitted by you will appear here until admin approval." />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {pendingRegistrations.slice(0, 5).map((membership: any) => (
+              <div key={membership.id} className="rounded-2xl border border-brand-border bg-brand-surface/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-brand-ink">{membership.full_name}</p>
+                    <p className="mt-1 text-sm text-brand-muted">{membership.city || "City not provided"}</p>
+                  </div>
+                  <StatusBadge status={membership.payment_status || membership.membership_status} />
+                </div>
+                <p className="mt-4 font-mono text-sm font-semibold text-brand-primaryDark">
+                  {membership.partners?.partner_code || "KIA ID pending"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
@@ -449,6 +485,7 @@ export default async function PartnerDashboardPage() {
         <Panel title="Referral Performance" eyebrow="Conversion Pulse">
           <div className="space-y-4">
             <Metric label="Direct Team" value={directTeam.count || 0} helper="Level 1 partners" />
+            <Metric label="Pending Registrations" value={pendingRegistrations.length} helper="Awaiting admin review" />
             <Metric label="Booking Conversion" value={`${activeBookingRate}%`} helper="Confirmed from recent referred bookings" />
             <Metric label="This Month Earnings" value={formatCurrency(thisMonthEarnings)} helper="Fresh momentum this month" />
           </div>

@@ -113,7 +113,7 @@ export default function AdminMembershipsPage() {
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Phone</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">City</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Email</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Ref Code</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Linked Referrer</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Status</th>
               <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
             </tr>
@@ -121,7 +121,7 @@ export default function AdminMembershipsPage() {
           <tbody className="bg-white divide-y divide-brand-border">
             {memberships.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <span className="text-4xl">👥</span>
                     <p className="text-brand-muted">No membership requests found</p>
@@ -135,7 +135,14 @@ export default function AdminMembershipsPage() {
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.mobile}</td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.city}</td>
                   <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.email}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{membership.referral_code || "—"}</td>
+                  <td className="px-4 sm:px-6 py-4 text-sm">
+                    <p className="font-mono font-semibold text-brand-primaryDark">
+                      {membership.sponsor?.partner_code || membership.referral_code || "-"}
+                    </p>
+                    {membership.sponsor?.profiles?.full_name && (
+                      <p className="mt-1 text-xs text-brand-muted">{membership.sponsor.profiles.full_name}</p>
+                    )}
+                  </td>
                   <td className="px-4 sm:px-6 py-4">
                     {(() => {
                       const s = getActivationStatus(membership);

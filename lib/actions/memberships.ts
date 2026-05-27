@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
 import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
@@ -15,6 +16,19 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type PartnerInsertResult =
   | { partnerCode: string; referralLink: string }
   | { error: { message?: string } };
+
+export type MembershipRegistrationInput = {
+  full_name: string;
+  mobile: string;
+  email: string;
+  city: string;
+  address: string;
+  pin_code: string;
+  referral_code?: string;
+  notes?: string;
+  password: string;
+  confirm_password: string;
+};
 
 async function insertPartnerWithKiaCode(
   supabase: ReturnType<typeof getSupabaseServiceClient>,
@@ -48,7 +62,7 @@ export async function getMembershipRequests() {
   
   const { data, error } = await supabase
     .from("memberships" as any)
-    .select("*, partners:partner_id(partner_code, referral_link, status)")
+    .select("*, partners:partner_id(partner_code, referral_link, status), sponsor:partners!memberships_sponsor_id_fkey(partner_code, profiles(full_name))")
     .order("created_at", { ascending: false });
   
   if (error) {
@@ -56,6 +70,26 @@ export async function getMembershipRequests() {
     return [];
   }
   
+  return data || [];
+}
+
+export async function getSponsoredMembershipRequests(limit = 8) {
+  const profile = await requirePartner();
+  const serviceClient = getSupabaseServiceClient();
+  const safeLimit = Math.min(100, Math.max(1, Number.isFinite(limit) ? Math.floor(limit) : 8));
+
+  const { data, error } = await serviceClient
+    .from("memberships" as any)
+    .select("id, full_name, city, created_at, membership_status, payment_status, referral_code, partners:partner_id(partner_code, status)")
+    .eq("sponsor_id", profile.id)
+    .order("created_at", { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    console.error("Error fetching sponsored membership requests:", error);
+    return [];
+  }
+
   return data || [];
 }
 
@@ -98,18 +132,7 @@ export async function updateMembershipStatus(id: string, status: string) {
   return data;
 }
 
-export async function createMembership(data: {
-  full_name: string;
-  mobile: string;
-  email: string;
-  city: string;
-  address: string;
-  pin_code: string;
-  referral_code?: string;
-  notes?: string;
-  password: string;
-  confirm_password: string;
-}) {
+export async function createMembership(data: MembershipRegistrationInput) {
   // Validation
   if (!data.full_name?.trim()) return { error: "Full name is required" };
   if (!data.mobile?.trim()) return { error: "Mobile number is required" };
@@ -242,6 +265,39 @@ export async function createMembership(data: {
 
   revalidatePath("/admin/memberships");
   return { data: record };
+}
+
+export async function createSponsoredMembership(
+  data: Omit<MembershipRegistrationInput, "referral_code">
+) {
+  const profile = await requirePartner();
+  const serviceClient = getSupabaseServiceClient();
+  const { data: partner, error } = await serviceClient
+    .from("partners" as any)
+    .select("partner_code, status")
+    .eq("id", profile.id)
+    .maybeSingle();
+
+  if (error || !partner) {
+    return { error: "Partner account not found. Please contact support." };
+  }
+
+  if ((partner as any).status !== "active") {
+    return { error: "Only active partners can register new members." };
+  }
+
+  const result = await createMembership({
+    ...data,
+    referral_code: (partner as any).partner_code,
+  });
+
+  if (!result.error) {
+    revalidatePath("/partner/dashboard");
+    revalidatePath("/partner/direct-team");
+    revalidatePath("/partner/team");
+  }
+
+  return result;
 }
 
 export async function approveAndCreatePartner(membershipId: string) {

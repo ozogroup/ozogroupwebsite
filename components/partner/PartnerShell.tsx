@@ -13,7 +13,6 @@ import {
   Menu,
   Network,
   ShieldCheck,
-  Sparkles,
   Users,
   Wallet,
   X,
@@ -145,20 +144,6 @@ export default function PartnerShell({
               </div>
             </div>
           )}
-
-          <div className="mx-4 mt-4 rounded-2xl border border-brand-border bg-brand-surface/70 p-3">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-card text-brand-primaryDark shadow-soft">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-brand-ink">Keep Sharing, Keep Earning</p>
-                <p className="mt-1 text-xs leading-5 text-brand-muted">
-                  More bookings build stronger recurring income.
-                </p>
-              </div>
-            </div>
-          </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
             {navigation.map((item) => {

@@ -1,115 +1,176 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+const DEDUCTION_RATE = 0.15;
+const currency = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+
+function formatCurrency(value: number) {
+  return currency.format(value || 0);
+}
+
+function commissionAmount(commission: any) {
+  return Number(commission.amount || commission.commission_amount || 0);
+}
+
+function isBonusCommission(commission: any) {
+  return ["bonus", "milestone"].includes(
+    String(commission.commission_type || commission.source || "").toLowerCase()
+  );
+}
 
 export default async function PartnerIncomePage() {
   await requirePartner();
   const supabase = getSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!user) {
-    return <div>User not found</div>;
-  }
+  if (!user) return <div>User not found</div>;
 
-  // Fetch commissions data
-  const { data: commissions } = await supabase
-    .from("commissions" as any)
-    .select("*")
-    .eq("partner_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: commissions }, { data: payouts }, { data: partner }] = await Promise.all([
+    supabase
+      .from("commissions" as any)
+      .select("*")
+      .eq("partner_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("payouts" as any)
+      .select("*")
+      .eq("partner_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase.from("partners" as any).select("wallet_balance").eq("id", user.id).single(),
+  ]);
 
-  // Calculate earnings
-  const totalEarnings = (commissions || []).reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
-  const pendingEarnings = (commissions || []).filter((c: any) => c.status === "pending" || c.status === "approved").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
-  const paidEarnings = (commissions || []).filter((c: any) => c.status === "paid").reduce((sum: number, c: any) => sum + (c.amount || c.commission_amount || 0), 0);
+  const eligibleCommissions = (commissions || []).filter(
+    (commission: any) =>
+      commission.is_active !== false && !commission.reversed && commission.status !== "rejected"
+  );
+  const membershipIncome = eligibleCommissions
+    .filter((commission: any) => commission.source_type === "membership" && !isBonusCommission(commission))
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const productIncome = eligibleCommissions
+    .filter((commission: any) => commission.source_type === "booking" && !isBonusCommission(commission))
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const bonusIncome = eligibleCommissions
+    .filter(isBonusCommission)
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const grossIncome = membershipIncome + productIncome + bonusIncome;
+  const deduction = Math.round(grossIncome * DEDUCTION_RATE * 100) / 100;
+  const totalIncome = grossIncome - deduction;
+  const pendingIncome = eligibleCommissions
+    .filter((commission: any) => ["pending", "approved"].includes(commission.status))
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const paidIncome = eligibleCommissions
+    .filter((commission: any) => commission.status === "paid")
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const pendingPayout = (payouts || [])
+    .filter((payout: any) => ["pending", "requested", "processing"].includes(payout.status))
+    .reduce((sum: number, payout: any) => sum + Number(payout.amount || 0), 0);
+  const walletBalance = Number((partner as any)?.wallet_balance || 0);
 
-  // Fetch payout data
-  const { data: payouts } = await supabase
-    .from("payouts" as any)
-    .select("*")
-    .eq("partner_id", user.id)
-    .order("created_at", { ascending: false });
-
-  const pendingPayouts = (payouts || []).filter((p: any) => ["pending", "requested", "processing"].includes(p.status)).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+  const incomeCards = [
+    { label: "My Income", value: grossIncome, helper: "Gross recorded income", dark: true },
+    { label: "Membership Income", value: membershipIncome, helper: "Membership commissions", dark: false },
+    { label: "Product Income", value: productIncome, helper: "Kit and treatment bookings", dark: false },
+    { label: "Bonus Income", value: bonusIncome, helper: "Recorded bonus rewards", dark: false },
+    { label: "Total Income", value: totalIncome, helper: "After 15% deduction", dark: true },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">My Income</h1>
-        <p className="text-slate-600">View your earnings and income details</p>
+        <h1 className="text-2xl font-bold text-brand-ink">My Income</h1>
+        <p className="text-brand-muted">View your recorded earnings and final income calculation.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-brand-ink to-brand-muted rounded-xl shadow-card p-6 text-white">
-          <p className="text-sm font-medium mb-2 text-white/90">Total Earnings</p>
-          <p className="text-3xl font-bold text-white">₹{totalEarnings.toLocaleString()}</p>
-          <p className="text-xs mt-2 text-white/80">Lifetime earnings</p>
-        </div>
-        <div className="bg-gradient-to-br from-brand-light to-brand-primary rounded-xl shadow-card p-6 text-brand-ink">
-          <p className="text-sm font-medium mb-2">Pending Earnings</p>
-          <p className="text-3xl font-bold">₹{pendingEarnings.toLocaleString()}</p>
-          <p className="text-xs mt-2 opacity-80">Awaiting approval</p>
-        </div>
-        <div className="bg-gradient-to-br from-brand-ink to-brand-muted rounded-xl shadow-lg p-6 text-white">
-          <p className="text-sm font-medium mb-2 text-white/90">Paid Earnings</p>
-          <p className="text-3xl font-bold text-white">₹{paidEarnings.toLocaleString()}</p>
-          <p className="text-xs mt-2 text-white/80">Successfully paid</p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {incomeCards.map((card) => (
+          <div
+            key={card.label}
+            className={`rounded-xl p-5 shadow-card ${
+              card.dark
+                ? "bg-gradient-to-br from-brand-ink to-brand-muted text-white"
+                : "border border-brand-border bg-white text-brand-ink"
+            }`}
+          >
+            <p className={`mb-2 text-sm font-medium ${card.dark ? "text-white/90" : "text-brand-muted"}`}>{card.label}</p>
+            <p className={`text-2xl font-bold ${card.dark ? "text-white" : "text-brand-ink"}`}>{formatCurrency(card.value)}</p>
+            <p className={`mt-2 text-xs ${card.dark ? "text-white/80" : "text-brand-muted"}`}>{card.helper}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Wallet Balance */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Wallet Balance</h2>
-        <div className="flex flex-col gap-4 p-6 bg-brand-accent/10 rounded-lg sm:flex-row sm:items-center sm:justify-between">
+      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-lg font-semibold text-brand-ink">Income Calculation</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <IncomeMetric label="Gross Income" value={formatCurrency(grossIncome)} />
+          <IncomeMetric label="15% Deduction" value={`- ${formatCurrency(deduction)}`} />
+          <div className="rounded-lg bg-brand-ink p-4 text-white">
+            <p className="text-sm text-white/85">Final Total Income</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(totalIncome)}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-brand-muted">
+          Total Income = Membership Income + Product Income + Bonus Income - 15% deduction.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-brand-ink">Wallet Balance</h2>
+        <div className="flex flex-col gap-4 rounded-lg bg-brand-accent/10 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-slate-600 mb-1">Available Balance</p>
-            <p className="text-3xl font-bold text-brand-accent">₹{pendingEarnings.toLocaleString()}</p>
+            <p className="mb-1 text-sm text-brand-muted">Available Balance</p>
+            <p className="text-3xl font-bold text-brand-accent">{formatCurrency(walletBalance)}</p>
+            <p className="mt-2 text-xs text-brand-muted">
+              Pending income: {formatCurrency(pendingIncome)} | Paid income: {formatCurrency(paidIncome)} | Pending payout: {formatCurrency(pendingPayout)}
+            </p>
           </div>
           <a
             href="/partner/payouts"
-            className="px-6 py-3 bg-brand-accent text-center text-white rounded-lg font-medium hover:bg-brand-accent/90 transition-colors"
+            className="rounded-lg bg-brand-accent px-6 py-3 text-center font-medium text-white transition-colors hover:bg-brand-accent/90"
           >
             Request Payout
           </a>
         </div>
       </div>
 
-      {/* Commission History */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Commission History</h2>
+      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-brand-ink">Commission History</h2>
         {commissions && commissions.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px]">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Source</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Level</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
+                <tr className="border-b border-brand-border">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Source</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Level</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Amount</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {commissions.map((commission: any) => (
-                  <tr key={commission.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 text-sm text-slate-600">
-                      {new Date(commission.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <tr key={commission.id} className="border-b border-brand-border/60 hover:bg-brand-surface/35">
+                    <td className="px-4 py-3 text-sm text-brand-muted">
+                      {new Date(commission.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-900">{commission.source || 'Treatment booking'}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">Level {commission.level || 1}</td>
-                    <td className="py-3 px-4 text-sm font-semibold text-green-600">₹{(commission.amount || commission.commission_amount || 0).toLocaleString()}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        commission.status === 'paid' 
-                          ? 'bg-green-100 text-green-700' 
-                          : commission.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {commission.status?.toUpperCase() || 'PENDING'}
-                      </span>
+                    <td className="px-4 py-3 text-sm text-brand-ink">
+                      {isBonusCommission(commission)
+                        ? "Bonus Reward"
+                        : commission.source_type === "membership"
+                          ? "Membership"
+                          : "Product / Treatment Booking"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-brand-muted">Level {commission.level || 1}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-brand-primaryDark">{formatCurrency(commissionAmount(commission))}</td>
+                    <td className="px-4 py-3">
+                      <IncomeStatus status={commission.status || "pending"} />
                     </td>
                   </tr>
                 ))}
@@ -117,58 +178,65 @@ export default async function PartnerIncomePage() {
             </table>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-slate-500">No commissions yet. Start sharing your referral link to earn!</p>
-          </div>
+          <p className="py-12 text-center text-brand-muted">No commissions yet. Register members and share eligible bookings to grow income.</p>
         )}
       </div>
 
-      {/* Payout History */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout History</h2>
+      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-brand-ink">Payout History</h2>
         {payouts && payouts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px]">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Method</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
+                <tr className="border-b border-brand-border">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Amount</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Method</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-muted">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {payouts.map((payout: any) => (
-                  <tr key={payout.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 text-sm text-slate-600">
-                      {new Date(payout.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <tr key={payout.id} className="border-b border-brand-border/60 hover:bg-brand-surface/35">
+                    <td className="px-4 py-3 text-sm text-brand-muted">
+                      {new Date(payout.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
-                    <td className="py-3 px-4 text-sm font-semibold text-brand-ink">₹{(payout.amount || 0).toLocaleString()}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{payout.payment_method || payout.method || 'Bank Transfer'}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        payout.status === 'paid' 
-                          ? 'bg-green-100 text-green-700' 
-                          : payout.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : payout.status === 'rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {payout.status?.toUpperCase() || 'PENDING'}
-                      </span>
-                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-brand-ink">{formatCurrency(Number(payout.amount || 0))}</td>
+                    <td className="px-4 py-3 text-sm text-brand-muted">{payout.payment_method || payout.method || "Bank Transfer"}</td>
+                    <td className="px-4 py-3"><IncomeStatus status={payout.status || "pending"} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-slate-500">No payouts yet. Request a payout when you have available balance.</p>
-          </div>
+          <p className="py-12 text-center text-brand-muted">No payout requests found.</p>
         )}
       </div>
     </div>
+  );
+}
+
+function IncomeMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-brand-surface/50 p-4">
+      <p className="text-sm text-brand-muted">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-brand-ink">{value}</p>
+    </div>
+  );
+}
+
+function IncomeStatus({ status }: { status: string }) {
+  const color =
+    status === "paid"
+      ? "bg-green-100 text-green-700"
+      : status === "rejected"
+        ? "bg-red-100 text-red-700"
+        : "bg-brand-light text-brand-primaryDark";
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${color}`}>
+      {status}
+    </span>
   );
 }

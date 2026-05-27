@@ -1,4 +1,5 @@
 import { getPublicTestimonials } from "@/lib/data/public";
+import AutoSlider from "@/components/ui/AutoSlider";
 
 function Stars({ n }: { n: number }) {
   return (
@@ -37,11 +38,17 @@ export default async function Testimonials() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12">
+          <AutoSlider
+            ariaLabel="Client stories"
+            tabletItems={2}
+            desktopItems={3}
+            itemClassName="basis-full md:basis-[calc((100%_-_1.25rem)/2)] lg:basis-[calc((100%_-_2.5rem)/3)]"
+          >
           {testimonials.map((t, i) => (
             <figure
               key={t.name}
-              className="card flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
+              className="card flex h-full flex-col justify-between hover:-translate-y-1 transition-transform duration-300"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div>
@@ -67,6 +74,7 @@ export default async function Testimonials() {
               </figcaption>
             </figure>
           ))}
+          </AutoSlider>
         </div>
       </div>
     </section>

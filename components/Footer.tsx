@@ -88,7 +88,7 @@ export default async function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-x py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/70">
+        <div className="container-x py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs [&_p]:text-white/90">
           <p>© 2026 KIA Skin Care. All rights reserved.</p>
           <p>
             Developed by{" "}
@@ -96,7 +96,7 @@ export default async function Footer() {
               href={site.developer.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white hover:text-brand-accent transition-colors"
+              className="text-white font-medium hover:text-brand-light transition-colors"
             >
               {site.developer.name}
             </a>
