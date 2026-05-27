@@ -159,7 +159,7 @@ export default function ReferralPage() {
                     </div>
                     <p className="mt-6 text-5xl md:text-6xl font-semibold text-white">{bonus.bonus}</p>
                     <p className="mt-2 text-white/80">
-                      {bonus.bookings} confirmed referrals
+                      {bonus.bookings} Skincare Kits Confirmed
                     </p>
                   </div>
                 </div>

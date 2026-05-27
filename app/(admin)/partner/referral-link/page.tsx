@@ -168,15 +168,15 @@ export default async function PartnerReferralLinkPage() {
         <p className="text-sm text-slate-600 mb-4">Reach these milestones to earn additional bonuses:</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-gradient-to-br from-brand-accent/10 to-brand-light/10 rounded-lg border border-brand-accent/20">
-            <p className="text-2xl font-bold text-brand-accent">10 Bookings</p>
+            <p className="text-2xl font-bold text-brand-accent">10 Skincare Kits Confirmed</p>
             <p className="text-sm text-slate-700 mt-1">Bonus: ₹5,000</p>
           </div>
           <div className="p-4 bg-gradient-to-br from-brand-accent/10 to-brand-light/10 rounded-lg border border-brand-accent/20">
-            <p className="text-2xl font-bold text-brand-accent">20 Bookings</p>
+            <p className="text-2xl font-bold text-brand-accent">20 Skincare Kits Confirmed</p>
             <p className="text-sm text-slate-700 mt-1">Bonus: ₹10,000</p>
           </div>
           <div className="p-4 bg-gradient-to-br from-brand-accent/10 to-brand-light/10 rounded-lg border border-brand-accent/20">
-            <p className="text-2xl font-bold text-brand-accent">30 Bookings</p>
+            <p className="text-2xl font-bold text-brand-accent">30 Skincare Kits Confirmed</p>
             <p className="text-sm text-slate-700 mt-1">Bonus: ₹15,000</p>
           </div>
         </div>

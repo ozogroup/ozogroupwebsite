@@ -8,7 +8,7 @@ export default function EarningsHighlight() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-              Direct Sales Bonus
+              Monthly Milestone
             </span>
           </div>
           <h2 className="mt-6">
@@ -18,7 +18,7 @@ export default function EarningsHighlight() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            Unlock additional bonus rewards as you achieve confirmed referral milestones.
+            Unlock additional bonus rewards as you achieve confirmed skincare kit milestones.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default function EarningsHighlight() {
                   {bonus.bonus}
                 </p>
                 <p className="mt-1.5 md:mt-2 text-[10px] md:text-base text-white/90 font-medium leading-tight">
-                  {bonus.bookings} confirmed referrals
+                  {bonus.bookings} Skincare Kits Confirmed
                 </p>
               </div>
             </div>
@@ -53,7 +53,7 @@ export default function EarningsHighlight() {
 
         <div className="mt-10 text-center">
           <p className="text-base text-brand-muted">
-            Achieve milestones to unlock additional bonus rewards on top of your referral commissions.
+            Achieve confirmed skincare kit milestones to unlock additional bonus rewards on top of your commissions.
           </p>
         </div>
       </div>

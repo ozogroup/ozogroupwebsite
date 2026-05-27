@@ -11,7 +11,7 @@ export default function SalesBonus() {
     <section id="bonus" className="section">
       <div className="container-x">
         <div className="max-w-2xl">
-          <span className="eyebrow">Direct Sales Bonus</span>
+          <span className="eyebrow">Monthly Milestone</span>
           <h2 className="mt-3">Hit your milestones, unlock bigger rewards</h2>
           <p className="mt-4">
             Beyond referrals, you earn lump-sum bonuses every time you cross a
@@ -33,7 +33,7 @@ export default function SalesBonus() {
                 Tier {i + 1}
               </p>
               <p className="relative mt-2 text-2xl font-semibold text-brand-ink">
-                {t.bookings} Bookings
+                {t.bookings} Skincare Kits Confirmed
               </p>
               <div className="relative mt-4 flex items-baseline gap-2">
                 <span className="text-3xl md:text-4xl font-semibold text-brand-primary">
@@ -42,7 +42,7 @@ export default function SalesBonus() {
                 <span className="text-sm text-brand-muted">bonus</span>
               </div>
               <p className="relative mt-3 text-sm text-brand-muted">
-                Achieve {t.bookings} confirmed bookings to unlock this reward.
+                Confirm {t.bookings} skincare kits to unlock this reward.
               </p>
             </div>
           ))}

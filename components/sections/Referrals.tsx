@@ -86,9 +86,14 @@ export default async function Referrals() {
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                 </div>
-                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent">
-                  Milestone Bonus Rewards
-                </p>
+                <div>
+                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-brand-muted">
+                    Monthly Milestone
+                  </p>
+                  <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent">
+                    Milestone Bonus Rewards
+                  </p>
+                </div>
               </div>
               <ul className="mt-5 space-y-3 flex-1">
                 {salesBonuses.map((b: any, index: number) => (
@@ -99,7 +104,7 @@ export default async function Referrals() {
                     <div>
                       <p className="text-sm text-brand-ink">
                         <span className="font-bold text-brand-primary text-lg">{b.bookings}</span>
-                        <span className="text-brand-muted ml-1">successful referrals</span>
+                        <span className="text-brand-muted ml-1">Skincare Kits Confirmed</span>
                       </p>
                     </div>
                     <span className="text-xl font-bold text-brand-accent">

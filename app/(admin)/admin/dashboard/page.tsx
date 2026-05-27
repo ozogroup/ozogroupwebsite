@@ -316,7 +316,7 @@ export default async function AdminDashboardPage() {
           <div className="mt-6 pt-6 border-t border-white/[0.08]">
             <div className="flex items-center gap-2 text-white/75 mb-3">
               <Award className="w-3.5 h-3.5" />
-              <span className="text-[11px] uppercase tracking-wider font-medium">Bonus Milestones</span>
+              <span className="text-[11px] uppercase tracking-wider font-medium">Monthly Milestone</span>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -325,7 +325,7 @@ export default async function AdminDashboardPage() {
                 { count: 30, bonus: "₹15,000" },
               ].map((m) => (
                 <div key={m.count} className="bg-gradient-to-br from-brand-accent/15 to-brand-accent/5 border border-brand-accent/20 rounded-xl p-4">
-                  <div className="text-xs text-white/75">{m.count} referrals</div>
+                  <div className="text-xs text-white/75">{m.count} Skincare Kits Confirmed</div>
                   <div className="text-xl font-semibold text-white mt-1 tabular-nums">{m.bonus}</div>
                 </div>
               ))}
