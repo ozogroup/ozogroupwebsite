@@ -42,20 +42,20 @@ export default async function PartnerIncomePage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-brand-primary to-brand-primaryDark rounded-xl shadow-card p-6 text-white">
-          <p className="text-sm font-medium mb-2">Total Earnings</p>
-          <p className="text-3xl font-bold">₹{totalEarnings.toLocaleString()}</p>
-          <p className="text-xs mt-2 opacity-80">Lifetime earnings</p>
+        <div className="bg-gradient-to-br from-brand-ink to-brand-muted rounded-xl shadow-card p-6 text-white">
+          <p className="text-sm font-medium mb-2 text-white/90">Total Earnings</p>
+          <p className="text-3xl font-bold text-white">₹{totalEarnings.toLocaleString()}</p>
+          <p className="text-xs mt-2 text-white/80">Lifetime earnings</p>
         </div>
         <div className="bg-gradient-to-br from-brand-light to-brand-primary rounded-xl shadow-card p-6 text-brand-ink">
           <p className="text-sm font-medium mb-2">Pending Earnings</p>
           <p className="text-3xl font-bold">₹{pendingEarnings.toLocaleString()}</p>
           <p className="text-xs mt-2 opacity-80">Awaiting approval</p>
         </div>
-        <div className="bg-gradient-to-br from-brand-primary to-brand-primaryDark rounded-xl shadow-lg p-6 text-white">
-          <p className="text-sm font-medium mb-2">Paid Earnings</p>
-          <p className="text-3xl font-bold">₹{paidEarnings.toLocaleString()}</p>
-          <p className="text-xs mt-2 opacity-80">Successfully paid</p>
+        <div className="bg-gradient-to-br from-brand-ink to-brand-muted rounded-xl shadow-lg p-6 text-white">
+          <p className="text-sm font-medium mb-2 text-white/90">Paid Earnings</p>
+          <p className="text-3xl font-bold text-white">₹{paidEarnings.toLocaleString()}</p>
+          <p className="text-xs mt-2 text-white/80">Successfully paid</p>
         </div>
       </div>
 

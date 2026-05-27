@@ -57,7 +57,7 @@ body {
            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2;
   }
   .btn-primary {
-    @apply btn bg-brand-primary text-white hover:bg-brand-primaryDark shadow-soft;
+    @apply btn bg-brand-ink text-white hover:bg-brand-muted shadow-soft;
   }
   .btn-secondary {
     @apply btn bg-brand-card text-brand-primaryDark border border-brand-border hover:border-brand-primaryDark hover:text-brand-primaryDark;

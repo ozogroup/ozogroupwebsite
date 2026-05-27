@@ -223,7 +223,7 @@ export default function AdminMediaLibraryPage() {
         </div>
         <button
           onClick={() => document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-ink to-brand-muted text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -442,7 +442,7 @@ export default function AdminMediaLibraryPage() {
             <p className="text-sm text-slate-500 mb-4">Upload your first image to get started</p>
             <button
               onClick={() => document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-4 py-2 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
+              className="px-4 py-2 bg-gradient-to-r from-brand-ink to-brand-muted text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all"
             >
               Upload Image
             </button>

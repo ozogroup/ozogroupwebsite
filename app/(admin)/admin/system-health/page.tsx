@@ -261,7 +261,7 @@ export default async function SystemHealthPage() {
       )}
 
       {/* Collapsible Debug Panel */}
-      <details className="bg-brand-primaryDark rounded-xl border border-brand-primary">
+      <details className="bg-brand-ink rounded-xl border border-brand-primary">
         <summary className="px-6 py-4 cursor-pointer text-white font-medium flex items-center justify-between">
           <span>🔧 Advanced Debug Information</span>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

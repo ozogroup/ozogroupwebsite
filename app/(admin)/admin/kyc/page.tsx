@@ -130,7 +130,7 @@ export default function AdminKycPage() {
                           <button
                             onClick={() => review(item.id, "verified")}
                             disabled={busy === item.id}
-                            className="px-3 py-1.5 text-xs rounded-lg bg-brand-primary text-white border border-brand-primary hover:bg-brand-primaryDark disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs rounded-lg bg-brand-ink text-white border border-brand-ink hover:bg-brand-muted disabled:opacity-50"
                           >
                             Approve
                           </button>

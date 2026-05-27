@@ -136,7 +136,7 @@ export default function AdminTestimonialsPage() {
         </div>
         <button
           onClick={handleAdd}
-          className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
+          className="px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors"
         >
           Add Testimonial
         </button>
@@ -172,7 +172,7 @@ export default function AdminTestimonialsPage() {
                     <p className="text-sm text-brand-muted">Run SEED_DATA.sql or add your first testimonial</p>
                     <button
                       onClick={handleAdd}
-                      className="mt-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors"
+                      className="mt-2 px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors"
                     >
                       Add Testimonial
                     </button>
@@ -340,7 +340,7 @@ export default function AdminTestimonialsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors disabled:opacity-50"
                 >
                   {saving ? "Saving..." : editingTestimonial ? "Update" : "Create"}
                 </button>

@@ -143,7 +143,7 @@ export default function ReferralPage() {
               {salesBonuses.map((bonus, i) => (
                 <div
                   key={bonus.bookings}
-                  className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-primary to-brand-accent text-white p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
+                  className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-ink to-brand-muted text-white p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
                   <div
@@ -157,7 +157,7 @@ export default function ReferralPage() {
                       </svg>
                       Bonus
                     </div>
-                    <p className="mt-6 text-5xl md:text-6xl font-semibold">{bonus.bonus}</p>
+                    <p className="mt-6 text-5xl md:text-6xl font-semibold text-white">{bonus.bonus}</p>
                     <p className="mt-2 text-white/80">
                       {bonus.bookings} confirmed referrals
                     </p>
@@ -208,10 +208,10 @@ export default function ReferralPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="section bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white">
+        <section className="section bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white">
           <div className="container-x text-center">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl">
+              <h2 className="text-3xl md:text-4xl text-white">
                 Start Your Partnership Today
               </h2>
               <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
@@ -221,7 +221,7 @@ export default function ReferralPage() {
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/membership"
-                  className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-8 py-4 text-sm font-semibold hover:bg-brand-surface transition-colors shadow-soft"
+                  className="inline-flex items-center justify-center rounded-full bg-white text-brand-ink px-8 py-4 text-sm font-semibold hover:bg-brand-surface transition-colors shadow-soft"
                 >
                   Book Membership · ₹1,199
                 </Link>

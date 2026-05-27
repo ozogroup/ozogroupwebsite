@@ -30,7 +30,7 @@ export default function DirectSelectTest() {
   }
 
   return (
-    <div className="bg-brand-primaryDark text-brand-card rounded-xl p-6 font-mono text-sm space-y-4">
+    <div className="bg-brand-ink text-brand-card rounded-xl p-6 font-mono text-sm space-y-4">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-semibold text-white">Direct Select Test</h2>
         <button

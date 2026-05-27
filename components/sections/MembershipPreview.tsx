@@ -29,7 +29,7 @@ export default async function MembershipPreview() {
         </div>
 
         <div className="mt-12 max-w-4xl mx-auto">
-          <div className="rounded-3xl bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-8 md:p-12 shadow-premium">
+          <div className="rounded-3xl bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-8 md:p-12 shadow-premium">
             <div className="grid gap-8 md:grid-cols-2 items-center">
               <div>
                 <p className="text-sm font-semibold tracking-[0.18em] uppercase text-white mb-2">
@@ -45,7 +45,7 @@ export default async function MembershipPreview() {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href={ctaLink}
-                    className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-6 py-3 text-sm font-semibold hover:bg-brand-surface transition-colors"
+                    className="inline-flex items-center justify-center rounded-full bg-white text-brand-ink px-6 py-3 text-sm font-semibold hover:bg-brand-surface transition-colors"
                   >
                     {ctaText}
                   </Link>

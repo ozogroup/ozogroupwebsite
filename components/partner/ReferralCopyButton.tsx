@@ -19,7 +19,7 @@ export default function ReferralCopyButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="px-5 py-2.5 bg-white text-brand-primary rounded-lg font-semibold hover:bg-white/90 transition-colors"
+      className="px-5 py-2.5 bg-white text-brand-ink rounded-lg font-semibold hover:bg-white/90 transition-colors"
     >
       {copied ? "Copied" : "Copy Link"}
     </button>

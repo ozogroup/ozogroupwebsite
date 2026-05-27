@@ -33,9 +33,10 @@ export default function MembershipPage() {
         window.localStorage.getItem(REFERRAL_STORAGE_KEY) ||
         window.localStorage.getItem(LEGACY_REFERRAL_STORAGE_KEY);
       if (storedReferralCode) {
+        const normalizedReferralCode = storedReferralCode.toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
         setFormData((current) => ({
           ...current,
-          referralCode: current.referralCode || storedReferralCode,
+          referralCode: current.referralCode || normalizedReferralCode,
         }));
       }
     } catch {}

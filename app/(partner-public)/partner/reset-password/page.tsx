@@ -92,7 +92,7 @@ export default function PartnerResetPasswordPage() {
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>
               <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Re-enter password" />
             </div>
-            <button type="submit" disabled={loading} className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
+            <button type="submit" disabled={loading} className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
               {loading ? "Setting Password..." : "Set Password"}
             </button>
           </form>

@@ -56,7 +56,7 @@ export default async function Membership() {
           </div>
 
           {/* Right — premium price card */}
-          <div className="md:col-span-5 bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-6 md:p-10 lg:p-12 flex flex-col relative overflow-hidden">
+          <div className="md:col-span-5 bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-6 md:p-10 lg:p-12 flex flex-col relative overflow-hidden">
             {/* Decorative elements */}
             <div
               aria-hidden
@@ -100,7 +100,7 @@ export default async function Membership() {
             <div className="mt-auto pt-6 grid gap-2 relative">
               <Link
                 href="/membership"
-                className="inline-flex justify-center items-center gap-2 rounded-full bg-white text-brand-primary px-6 py-3 text-xs md:text-sm font-semibold hover:bg-brand-surface transition-all shadow-soft hover:shadow-card"
+                className="inline-flex justify-center items-center gap-2 rounded-full bg-white text-brand-ink px-6 py-3 text-xs md:text-sm font-semibold hover:bg-brand-surface transition-all shadow-soft hover:shadow-card"
               >
                 Book Your Membership Now
               </Link>

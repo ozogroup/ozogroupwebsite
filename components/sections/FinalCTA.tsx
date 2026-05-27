@@ -6,7 +6,7 @@ export default async function FinalCTA() {
   return (
     <section id="contact" className="section">
       <div className="container-x">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-8 md:p-14 shadow-card">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-8 md:p-14 shadow-card">
           <div
             aria-hidden
             className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-white/10 blur-3xl"
@@ -34,7 +34,7 @@ export default async function FinalCTA() {
             <div className="md:col-span-5 flex flex-col gap-3">
               <BookNowButton
                 variant="secondary"
-                className="bg-white text-brand-primary border-transparent hover:text-brand-accent hover:bg-white justify-center"
+                className="bg-white text-brand-ink border-transparent hover:text-brand-muted hover:bg-white justify-center"
               >
                 Book Consultation
               </BookNowButton>

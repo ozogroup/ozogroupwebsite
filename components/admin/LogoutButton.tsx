@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { logoutAction } from "@/lib/auth/actions";
 
-export default function LogoutButton() {
+export default function LogoutButton({ inverse = false }: { inverse?: boolean }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
@@ -16,7 +16,9 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="w-full flex items-center px-4 py-2.5 rounded-lg text-brand-ink hover:bg-brand-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+      className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium ${
+        inverse ? "text-white/90 hover:bg-white/10 hover:text-white" : "text-brand-ink hover:bg-brand-surface"
+      }`}
     >
       {loading ? (
         <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">

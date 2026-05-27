@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
+import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 
 // =====================================================
 // BOOKINGS ACTIONS
@@ -72,10 +73,11 @@ export async function createBooking(payload: CreateBookingPayload) {
   const address = clean(payload.address);
   const pinCode = clean(payload.pin_code);
   const treatmentSlug = clean(payload.treatment_slug);
-  const referralCode =
+  const referralCode = normalizeKiaPartnerCode(
     clean(payload.referral_code) ||
     clean(cookies().get("kia_referral_code")?.value) ||
-    clean(cookies().get("ozo_referral_code")?.value);
+    clean(cookies().get("ozo_referral_code")?.value)
+  );
 
   if (!customerName) return { error: "Please enter your full name." };
   if (!/^[0-9+\-\s]{10,15}$/.test(customerPhone)) return { error: "Please enter a valid mobile number." };

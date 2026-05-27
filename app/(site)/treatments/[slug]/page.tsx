@@ -522,7 +522,7 @@ export default async function TreatmentDetail({ params }: Params) {
       {/* FINAL CTA */}
       <section className="section pt-0">
         <div className="container-x">
-          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white p-8 md:p-14 shadow-premium">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-8 md:p-14 shadow-premium">
             <div
               aria-hidden
               className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-white/10 blur-3xl"
@@ -548,7 +548,7 @@ export default async function TreatmentDetail({ params }: Params) {
                 <BookNowButton
                   treatmentSlug={t.slug}
                   variant="secondary"
-                  className="bg-white text-brand-primary border-transparent hover:text-brand-accent hover:bg-white justify-center shadow-soft hover:shadow-card transition-shadow"
+                  className="bg-white text-brand-ink border-transparent hover:text-brand-muted hover:bg-white justify-center shadow-soft hover:shadow-card transition-shadow"
                 >
                   Book Now · {t.priceLabel}
                 </BookNowButton>

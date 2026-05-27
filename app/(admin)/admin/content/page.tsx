@@ -552,7 +552,7 @@ export default function AdminContentPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-accent transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors disabled:opacity-50"
                 >
                   {saving ? "Saving..." : "Save Content"}
                 </button>

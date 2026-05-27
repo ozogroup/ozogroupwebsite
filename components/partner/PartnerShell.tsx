@@ -169,7 +169,7 @@ export default function PartnerShell({
                   href={item.href}
                   className={`group relative flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all ${
                     isActive
-                      ? "bg-brand-primary text-white shadow-card"
+                      ? "bg-brand-ink text-white shadow-card"
                       : "text-brand-muted hover:bg-brand-surface hover:text-brand-primary"
                   }`}
                 >
@@ -180,7 +180,7 @@ export default function PartnerShell({
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${
                       isActive
                         ? "bg-white/[0.15] text-white"
-                        : "bg-brand-card text-brand-primaryDark shadow-soft group-hover:bg-brand-primary group-hover:text-white"
+                        : "bg-brand-card text-brand-primaryDark shadow-soft group-hover:bg-brand-ink group-hover:text-white"
                     }`}
                   >
                     <item.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />

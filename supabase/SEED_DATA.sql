@@ -275,11 +275,11 @@ INSERT INTO contact_settings (
 ) VALUES
 (
   '+91 76986 17054',
-  'https://wa.me/917698617054?text=Hello%20IA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.',
-  'contact@ia-skincare.com',
+  'https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.',
+  'contact@kiaskincare.com',
   'KIA Skin Care, Ahmedabad, Gujarat',
   'Mon - Sat: 10:00 AM - 7:00 PM',
-  'https://www.facebook.com/ia-skincare',
+  'https://www.facebook.com/kia-skincare',
   'https://www.instagram.com/ia_korean_gloh_tretment?igsh=bmZqOHc0bnU5OW95',
   NULL,
   NULL,

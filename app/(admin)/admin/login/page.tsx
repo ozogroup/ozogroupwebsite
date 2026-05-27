@@ -122,7 +122,7 @@ export default function AdminLoginPage({
 
             <button
               type="submit"
-              className="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark hover:shadow-glow focus:ring-4 focus:ring-brand-primary/30 transition-all"
+              className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted hover:shadow-glow focus:ring-4 focus:ring-brand-primary/30 transition-all"
             >
               Sign In
             </button>

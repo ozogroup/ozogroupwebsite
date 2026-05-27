@@ -118,7 +118,7 @@ export default function PartnerLoginPage() {
                 key={item.title}
                 className="group flex items-center gap-3 rounded-2xl border border-white/80 bg-white/[0.78] p-4 shadow-soft backdrop-blur transition hover:-translate-y-1 hover:border-brand-accent/40 hover:shadow-card"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-surface text-brand-primary transition group-hover:bg-brand-primary group-hover:text-white">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-surface text-brand-primary transition group-hover:bg-brand-ink group-hover:text-white">
                   <item.icon className="h-5 w-5" />
                 </span>
                 <p className="text-sm font-semibold text-brand-ink">{item.title}</p>
@@ -201,7 +201,7 @@ export default function PartnerLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-primary px-6 py-3.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-brand-accent hover:shadow-glow disabled:translate-y-0 disabled:opacity-60"
+              className="group mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-ink px-6 py-3.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:bg-brand-muted hover:shadow-glow disabled:translate-y-0 disabled:opacity-60"
             >
               {loading ? "Logging in..." : "Login"}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />

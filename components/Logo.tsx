@@ -50,7 +50,7 @@ export default function Logo({ variant = "dark", size = "default" }: Props) {
         <span className="flex shrink-0 items-center gap-2">
           <span
             aria-hidden
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-bold tracking-wider text-white shadow-soft md:h-9 md:w-9"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-ink to-brand-muted text-xs font-bold tracking-wider text-white shadow-soft md:h-9 md:w-9"
           >
             KIA
           </span>

@@ -56,7 +56,7 @@ export default function AdminContactSettingsPage() {
     const defaultData = {
       phone: "+91 76986 17054",
       whatsapp: "+91 76986 17054",
-      email: "contact@ia-skincare.com",
+      email: "contact@kiaskincare.com",
       address: "KIA Skin Care, Ahmedabad, Gujarat",
       business_hours: "Mon - Sat: 10 AM - 7 PM",
       facebook_url: "",
@@ -247,7 +247,7 @@ export default function AdminContactSettingsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2.5 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-brand-accent transition-colors disabled:opacity-50"
+              className="px-6 py-2.5 bg-brand-ink text-white text-sm font-medium rounded-lg hover:bg-brand-muted transition-colors disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

@@ -1038,7 +1038,7 @@ END$$;
 
 -- Insert default contact settings (only if table is empty)
 INSERT INTO contact_settings (whatsapp_number, whatsapp_url, email, phone, address)
-SELECT '+919876543210', 'https://wa.me/919876543210', 'contact@ozo.com', '+91-9876543210', 'Mumbai, Maharashtra, India'
+SELECT '+919876543210', 'https://wa.me/919876543210', 'contact@kiaskincare.com', '+91-9876543210', 'Mumbai, Maharashtra, India'
 WHERE NOT EXISTS (SELECT 1 FROM contact_settings);
 
 -- Insert default commission settings (only if table is empty)

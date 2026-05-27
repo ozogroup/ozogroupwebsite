@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
 import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
-import { generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-code";
+import { generateKiaPartnerCode, isPartnerCodeConflict, normalizeKiaPartnerCode } from "@/lib/partner-code";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -131,7 +131,7 @@ export async function createMembership(data: {
 
   const supabase = getSupabaseServerClient();
   const serviceClient = getSupabaseServiceClient();
-  const referralCode = data.referral_code?.trim().toUpperCase() || null;
+  const referralCode = normalizeKiaPartnerCode(data.referral_code) || null;
   const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
 
   const { data: existingProfile, error: existingProfileError } = await serviceClient

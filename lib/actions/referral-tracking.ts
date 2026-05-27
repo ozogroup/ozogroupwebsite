@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 
 const COMMISSION_PERCENTAGES: Record<number, number> = {
   1: 6,
@@ -8,7 +9,7 @@ const COMMISSION_PERCENTAGES: Record<number, number> = {
 };
 
 export async function resolvePartnerByCode(supabase: any, referralCode?: string | null) {
-  const code = referralCode?.trim().toUpperCase();
+  const code = normalizeKiaPartnerCode(referralCode);
   if (!code) return null;
 
   const { data, error } = await supabase

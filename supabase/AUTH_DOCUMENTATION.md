@@ -188,7 +188,7 @@ INSERT INTO auth.users (
 )
 VALUES (
   gen_random_uuid(),
-  'admin@ozo.com',
+  'admin@kiaskincare.com',
   crypt('YourSecurePassword123', gen_salt('bf')),
   NOW(),
   '{"full_name":"Super Admin"}',
@@ -205,7 +205,7 @@ VALUES (
 INSERT INTO profiles (id, email, full_name, role, created_at, updated_at)
 VALUES (
   '<user_id>',
-  'admin@ozo.com',
+  'admin@kiaskincare.com',
   'Super Admin',
   'super_admin',
   NOW(),
@@ -240,12 +240,12 @@ SELECT
   a.is_active
 FROM profiles p
 LEFT JOIN admins a ON a.id = p.id
-WHERE p.email = 'admin@ozo.com';
+WHERE p.email = 'admin@kiaskincare.com';
 ```
 
 **Step 5: Test Login**
 1. Visit `/admin/login`
-2. Enter email: `admin@ozo.com`
+2. Enter email: `admin@kiaskincare.com`
 3. Enter password: `YourSecurePassword123`
 4. Should redirect to `/admin/dashboard`
 
@@ -253,7 +253,7 @@ WHERE p.email = 'admin@ozo.com';
 
 1. Go to Supabase Dashboard → Authentication
 2. Click "Create New User"
-3. Enter email: `admin@ozo.com`
+3. Enter email: `admin@kiaskincare.com`
 4. Set password
 5. Confirm email automatically (development mode)
 6. Get user ID from user details

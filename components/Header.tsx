@@ -73,7 +73,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => openBooking()}
-            className="inline-flex items-center rounded-full bg-brand-primary text-white px-4 py-2.5 text-xs font-semibold shadow-soft hover:bg-brand-primaryDark hover:shadow-card transition-all"
+            className="inline-flex items-center rounded-full bg-brand-ink text-white px-4 py-2.5 text-xs font-semibold shadow-soft hover:bg-brand-muted hover:shadow-card transition-all"
           >
             Book Now
           </button>

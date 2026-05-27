@@ -167,7 +167,7 @@ export default function AdminReferralsPage() {
           <button
             type="submit"
             disabled={searching}
-            className="px-6 py-2.5 bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
+            className="px-6 py-2.5 bg-gradient-to-r from-brand-ink to-brand-muted text-white text-sm font-medium rounded-lg hover:shadow-glow transition-all disabled:opacity-60"
           >
             {searching ? "Searching..." : "Search"}
           </button>

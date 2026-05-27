@@ -1,12 +1,18 @@
 import "server-only";
 
 const NEW_PARTNER_PREFIX = "KIA";
+const LEGACY_PARTNER_PREFIX = "OZO";
 const FIRST_PARTNER_NUMBER = 1001;
-const KIA_CODE_PATTERN = /^KIA(\d+)$/i;
+const PARTNER_CODE_PATTERN = /^(?:KIA|OZO)(\d+)$/i;
+const LEGACY_CODE_PATTERN = /^OZO(?=\d+$)/i;
+
+export function normalizeKiaPartnerCode(code?: string | null) {
+  return String(code || "").trim().toUpperCase().replace(LEGACY_CODE_PATTERN, NEW_PARTNER_PREFIX);
+}
 
 export function getNextKiaPartnerCode(existingCodes: Array<string | null | undefined>) {
   const highestNumber = existingCodes.reduce((highest, code) => {
-    const match = KIA_CODE_PATTERN.exec(String(code || "").trim());
+    const match = PARTNER_CODE_PATTERN.exec(String(code || "").trim());
     if (!match) return highest;
 
     const value = Number.parseInt(match[1], 10);
@@ -20,7 +26,7 @@ export async function generateKiaPartnerCode(supabase: any) {
   const { data, error } = await supabase
     .from("partners")
     .select("partner_code")
-    .ilike("partner_code", `${NEW_PARTNER_PREFIX}%`);
+    .or(`partner_code.ilike.${NEW_PARTNER_PREFIX}%,partner_code.ilike.${LEGACY_PARTNER_PREFIX}%`);
 
   if (error) {
     console.error("Error generating partner ID:", error);

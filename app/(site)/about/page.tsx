@@ -165,10 +165,10 @@ export default async function AboutPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="section bg-gradient-to-br from-brand-primary via-brand-primary to-brand-accent text-white">
+        <section className="section bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white">
           <div className="container-x text-center">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl md:text-4xl">
+              <h2 className="text-3xl md:text-4xl text-white">
                 Ready to Transform Your Skin?
               </h2>
               <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto leading-relaxed">
@@ -178,7 +178,7 @@ export default async function AboutPage() {
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <a
                   href="/treatments"
-                  className="inline-flex items-center justify-center rounded-full bg-white text-brand-primary px-8 py-4 text-sm font-semibold hover:bg-brand-surface transition-colors"
+                  className="inline-flex items-center justify-center rounded-full bg-white text-brand-ink px-8 py-4 text-sm font-semibold hover:bg-brand-surface transition-colors"
                 >
                   Explore Treatments
                 </a>

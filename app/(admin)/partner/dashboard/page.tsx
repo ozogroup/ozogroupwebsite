@@ -273,7 +273,7 @@ export default async function PartnerDashboardPage() {
       )}
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-primary via-brand-primaryDark to-brand-accent p-5 text-white shadow-premium md:p-7">
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted p-5 text-white shadow-premium md:p-7">
           <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/[0.14] blur-3xl" />
           <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
@@ -286,7 +286,7 @@ export default async function PartnerDashboardPage() {
             <Link
               href={`https://wa.me/?text=${whatsappMessage}`}
               target="_blank"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-brand-primary shadow-soft transition hover:-translate-y-0.5 hover:bg-brand-surface"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-brand-ink shadow-soft transition hover:-translate-y-0.5 hover:bg-brand-surface"
             >
               WhatsApp Share
               <Send className="h-4 w-4" />
@@ -300,7 +300,7 @@ export default async function PartnerDashboardPage() {
             />
             <Link
               href="/partner/referral-link"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/95 px-4 py-3 text-sm font-semibold text-brand-primary transition hover:bg-white"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/95 px-4 py-3 text-sm font-semibold text-brand-ink transition hover:bg-white"
             >
               Copy Tools
               <Copy className="h-4 w-4" />
@@ -452,7 +452,7 @@ export default async function PartnerDashboardPage() {
             <Metric label="Booking Conversion" value={`${activeBookingRate}%`} helper="Confirmed from recent referred bookings" />
             <Metric label="This Month Earnings" value={formatCurrency(thisMonthEarnings)} helper="Fresh momentum this month" />
           </div>
-          <div className="mt-5 rounded-2xl bg-brand-primary p-5 text-white">
+          <div className="mt-5 rounded-2xl bg-brand-ink p-5 text-white">
             <p className="text-sm font-semibold text-white">Your Next Level Target</p>
             <p className="mt-2 text-sm leading-6 text-white/78">
               Grow direct referrals first. A stronger Level 1 creates better Level 2, Level 3, and Level 4 income potential.
@@ -488,7 +488,7 @@ export default async function PartnerDashboardPage() {
             className="group rounded-[1.5rem] border border-brand-border bg-white/90 p-5 shadow-soft transition hover:-translate-y-1 hover:border-brand-accent/50 hover:shadow-card"
           >
             <div className="flex items-start justify-between gap-4">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-surface text-brand-primary transition group-hover:bg-brand-primary group-hover:text-white">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-surface text-brand-primary transition group-hover:bg-brand-ink group-hover:text-white">
                 <item.icon className="h-6 w-6" />
               </span>
               <ArrowUpRight className="h-5 w-5 text-brand-accent transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

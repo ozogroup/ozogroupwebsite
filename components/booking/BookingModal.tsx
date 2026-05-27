@@ -89,10 +89,11 @@ export default function BookingModal() {
     const storedCode =
       localStorage.getItem(REFERRAL_STORAGE_KEY) ||
       localStorage.getItem(LEGACY_REFERRAL_STORAGE_KEY);
-    if (urlCode) localStorage.setItem(REFERRAL_STORAGE_KEY, urlCode.toUpperCase());
+    const normalizedCode = (urlCode || storedCode || "").toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
+    if (urlCode) localStorage.setItem(REFERRAL_STORAGE_KEY, normalizedCode);
     setForm((f) => ({
       ...f,
-      referralCode: (urlCode || storedCode || f.referralCode).toUpperCase(),
+      referralCode: normalizedCode || f.referralCode.toUpperCase().replace(/^OZO(?=\d+$)/, "KIA"),
     }));
 
     async function loadTreatments() {

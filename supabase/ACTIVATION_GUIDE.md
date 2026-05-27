@@ -199,7 +199,7 @@ This guide provides the safest method to create the first super admin user.
 **Step 1: Create Auth User via Dashboard**
 1. Go to Supabase Dashboard → Authentication → Users
 2. Click "Add user" → "Create new user"
-3. Enter email: `admin@ozo.com` (or your preferred email)
+3. Enter email: `admin@kiaskincare.com` (or your preferred email)
 4. Enter password: Use a strong password
 5. Set "Auto Confirm User" to ON (for development)
 6. Click "Create user"
@@ -216,7 +216,7 @@ This guide provides the safest method to create the first super admin user.
 INSERT INTO profiles (id, email, full_name, role, created_at, updated_at)
 VALUES (
   '<user-id>',
-  'admin@ozo.com',
+  'admin@kiaskincare.com',
   'Super Admin',
   'super_admin',
   NOW(),
@@ -247,7 +247,7 @@ SELECT
   a.is_active
 FROM profiles p
 LEFT JOIN admins a ON a.id = p.id
-WHERE p.email = 'admin@ozo.com';
+WHERE p.email = 'admin@kiaskincare.com';
 ```
 
 Expected output: One row with role 'super_admin' and is_active true
@@ -270,7 +270,7 @@ INSERT INTO auth.users (
 )
 VALUES (
   gen_random_uuid(),
-  'admin@ozo.com',
+  'admin@kiaskincare.com',
   crypt('YourSecurePassword123', gen_salt('bf')),
   NOW(),
   '{"full_name":"Super Admin"}',
@@ -281,7 +281,7 @@ VALUES (
 
 **Step 2: Get User ID**
 ```sql
-SELECT id, email FROM auth.users WHERE email = 'admin@ozo.com';
+SELECT id, email FROM auth.users WHERE email = 'admin@kiaskincare.com';
 ```
 Copy the id (UUID) from the result
 
@@ -292,7 +292,7 @@ Copy the id (UUID) from the result
 INSERT INTO profiles (id, email, full_name, role, created_at, updated_at)
 VALUES (
   '<user-id>',
-  'admin@ozo.com',
+  'admin@kiaskincare.com',
   'Super Admin',
   'super_admin',
   NOW(),
@@ -323,7 +323,7 @@ SELECT
   a.is_active
 FROM profiles p
 LEFT JOIN admins a ON a.id = p.id
-WHERE p.email = 'admin@ozo.com';
+WHERE p.email = 'admin@kiaskincare.com';
 ```
 
 ---
@@ -342,7 +342,7 @@ npm run dev
 - Should see login page with "Admin Panel" heading
 
 **Step 3: Enter Credentials**
-- Email: `admin@ozo.com` (or your admin email)
+- Email: `admin@kiaskincare.com` (or your admin email)
 - Password: Your password
 - Click "Sign In"
 

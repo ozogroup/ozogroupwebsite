@@ -157,7 +157,7 @@ export default function AdminMembershipsPage() {
                         <button
                           onClick={() => handleApproveAndCreatePartner(membership)}
                           disabled={actionLoading === membership.id}
-                          className="px-3 py-1.5 text-xs font-medium bg-brand-primary text-white border border-brand-primary rounded-lg hover:bg-brand-primaryDark disabled:opacity-50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-brand-ink text-white border border-brand-ink rounded-lg hover:bg-brand-muted disabled:opacity-50 transition-colors"
                         >
                           {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
                         </button>

@@ -285,7 +285,7 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order) V
 -- Contact
 ('contact', 'phone', '+91 98765 43210', 'text', 1),
 ('contact', 'whatsapp', '+91 98765 43210', 'text', 2),
-('contact', 'email', 'contact@ia-skincare.com', 'text', 3),
+('contact', 'email', 'contact@kiaskincare.com', 'text', 3),
 ('contact', 'address', '123 Beauty Street, Mumbai, Maharashtra 400001', 'text', 4),
 ('contact', 'business_hours', 'Mon - Sat: 10:00 AM - 7:00 PM', 'text', 5)
 ON CONFLICT (section, key_name) DO NOTHING;
@@ -333,7 +333,7 @@ ON CONFLICT (slug) DO UPDATE SET
 -- INITIAL CONTACT SETTINGS SEED DATA
 -- =====================================================
 INSERT INTO contact_settings (phone, whatsapp, email, address, business_hours, facebook_url, instagram_url) VALUES
-('+91 98765 43210', '+91 98765 43210', 'contact@ia-skincare.com', '123 Beauty Street, Mumbai, Maharashtra 400001', 'Mon - Sat: 10:00 AM - 7:00 PM', 'https://facebook.com/ia-skincare', 'https://instagram.com/ia-skincare')
+('+91 98765 43210', '+91 98765 43210', 'contact@kiaskincare.com', '123 Beauty Street, Mumbai, Maharashtra 400001', 'Mon - Sat: 10:00 AM - 7:00 PM', 'https://facebook.com/kia-skincare', 'https://instagram.com/kia-skincare')
 ON CONFLICT DO NOTHING;
 
 

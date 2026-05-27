@@ -13,7 +13,7 @@ export default function ReferralTracker() {
   useEffect(() => {
     const ref = searchParams.get("ref")?.trim();
     if (ref) {
-      const code = ref.toUpperCase();
+      const code = ref.toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
       window.localStorage.setItem(REFERRAL_STORAGE_KEY, code);
       const deviceType = window.matchMedia("(max-width: 768px)").matches ? "mobile" : "desktop";
       void trackReferralClick(code, deviceType);

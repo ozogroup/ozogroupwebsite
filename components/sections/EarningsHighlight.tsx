@@ -26,7 +26,7 @@ export default function EarningsHighlight() {
           {salesBonuses.map((bonus, i) => (
             <div
               key={bonus.bookings}
-              className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-brand-primary to-brand-accent text-white p-4 md:p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
+              className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-brand-ink to-brand-muted text-white p-4 md:p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
               <div

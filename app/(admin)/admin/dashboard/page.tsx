@@ -122,7 +122,7 @@ export default async function AdminDashboardPage() {
         title="Dashboard"
         description="Welcome back. Here's what's happening with KIA Skin Care today."
         actions={
-          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-brand-primary text-white rounded-lg hover:bg-brand-primaryDark transition-colors">
+          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors">
             <Plus className="w-4 h-4" /> Add Treatment
           </Link>
         }
@@ -261,17 +261,17 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Referral Program Summary - premium dark hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-brand-primaryDark via-brand-primaryDark to-brand-primary rounded-2xl border border-brand-primary text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted rounded-2xl border border-brand-primary text-white">
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-brand-accent/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-brand-primary/10 rounded-full blur-3xl" />
         <div className="relative p-8">
           <div className="flex items-start justify-between gap-4 mb-8">
             <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-brand-accent/15 border border-brand-accent/20 rounded-full text-xs font-medium text-brand-accent">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 border border-white/20 rounded-full text-xs font-medium text-white/90">
                 <TrendingUp className="w-3.5 h-3.5" /> Referral Program
               </div>
-              <h2 className="text-2xl font-semibold mt-3 tracking-tight">Partner & Membership Overview</h2>
-              <p className="text-sm text-slate-400 mt-1">Multi-level commission structure with milestone bonuses.</p>
+              <h2 className="text-2xl font-semibold mt-3 tracking-tight text-white">Partner & Membership Overview</h2>
+              <p className="text-sm text-white/75 mt-1">Multi-level commission structure with milestone bonuses.</p>
             </div>
             <Link href="/admin/partners" className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg transition-colors">
               Manage Partners <ArrowRight className="w-3.5 h-3.5" />
@@ -280,41 +280,41 @@ export default async function AdminDashboardPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-white/75">
                 <IndianRupee className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wider font-medium">Membership</span>
               </div>
               <div className="text-2xl font-semibold mt-2 tabular-nums">₹1,199</div>
-              <div className="text-xs text-slate-500 mt-1">One-time payment</div>
+              <div className="text-xs text-white/65 mt-1">One-time payment</div>
             </div>
             <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-white/75">
                 <BadgeIndianRupee className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wider font-medium">Min. earning</span>
               </div>
               <div className="text-2xl font-semibold mt-2 tabular-nums">₹500</div>
-              <div className="text-xs text-slate-500 mt-1">Per direct referral</div>
+              <div className="text-xs text-white/65 mt-1">Per direct referral</div>
             </div>
             <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-white/75">
                 <Users className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wider font-medium">Partners</span>
               </div>
               <div className="text-2xl font-semibold mt-2 tabular-nums">{partnersCount}</div>
-              <div className="text-xs text-slate-500 mt-1">Total enrolled</div>
+              <div className="text-xs text-white/65 mt-1">Total enrolled</div>
             </div>
             <div className="bg-white/[0.04] backdrop-blur rounded-xl p-4 border border-white/[0.08]">
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-white/75">
                 <Wallet className="w-3.5 h-3.5" />
                 <span className="text-[11px] uppercase tracking-wider font-medium">Pending payouts</span>
               </div>
               <div className="text-2xl font-semibold mt-2 tabular-nums">{pendingPayouts.length}</div>
-              <div className="text-xs text-slate-500 mt-1">Awaiting approval</div>
+              <div className="text-xs text-white/65 mt-1">Awaiting approval</div>
             </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-white/[0.08]">
-            <div className="flex items-center gap-2 text-slate-400 mb-3">
+            <div className="flex items-center gap-2 text-white/75 mb-3">
               <Award className="w-3.5 h-3.5" />
               <span className="text-[11px] uppercase tracking-wider font-medium">Bonus Milestones</span>
             </div>
@@ -325,8 +325,8 @@ export default async function AdminDashboardPage() {
                 { count: 30, bonus: "₹15,000" },
               ].map((m) => (
                 <div key={m.count} className="bg-gradient-to-br from-brand-accent/15 to-brand-accent/5 border border-brand-accent/20 rounded-xl p-4">
-                  <div className="text-xs text-slate-300">{m.count} referrals</div>
-                  <div className="text-xl font-semibold text-brand-accent mt-1 tabular-nums">{m.bonus}</div>
+                  <div className="text-xs text-white/75">{m.count} referrals</div>
+                  <div className="text-xl font-semibold text-white mt-1 tabular-nums">{m.bonus}</div>
                 </div>
               ))}
             </div>

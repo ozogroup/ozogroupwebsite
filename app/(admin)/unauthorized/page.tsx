@@ -42,7 +42,7 @@ export default function UnauthorizedPage() {
           {/* Button */}
           <Link
             href="/"
-            className="inline-flex items-center justify-center w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-primaryDark focus:ring-4 focus:ring-brand-primary/20 transition-all"
+            className="inline-flex items-center justify-center w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted focus:ring-4 focus:ring-brand-primary/20 transition-all"
           >
             Return Home
           </Link>

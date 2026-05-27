@@ -28,12 +28,13 @@ function normalizeWhatsapp(value?: string | null) {
 
 function replaceLegacyBranding(value?: string | null) {
   return (value || "")
+    .replace(/\bKKIA Skin Care\b/gi, "KIA Skin Care")
     .replace(/OZO\s*\/\s*IA Skin Care/gi, "KIA Skin Care")
     .replace(/OZO Skin Care/gi, "KIA Skin Care")
     .replace(/OZO Services?/gi, "KIA Skin Care")
     .replace(/OZO Group/gi, "KIA Skin Care")
-    .replace(/IA Skin Care Division/gi, "KIA Skin Care")
-    .replace(/IA Skin Care/gi, "KIA Skin Care")
+    .replace(/\bIA Skin Care Division\b/gi, "KIA Skin Care")
+    .replace(/\bIA Skin Care\b/gi, "KIA Skin Care")
     .replace(/\bOZO\b(?!\d)/gi, "KIA Skin Care");
 }
 
