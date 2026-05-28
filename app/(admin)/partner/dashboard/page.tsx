@@ -39,6 +39,18 @@ function formatCurrency(value: number) {
   return currency.format(value || 0);
 }
 
+function formatDisplayDate(value?: string | null) {
+  if (!value) return "Pending";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Pending";
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
@@ -285,6 +297,8 @@ export default async function PartnerDashboardPage() {
         walletBalance={walletBalance}
         status={partnerStatus}
         kycStatus={partnerData?.kyc_status || "not_submitted"}
+        dateOfJoining={membershipStart}
+        dateOfExpiry={membershipExpiry}
         initials={partnerInitials}
       />
 
@@ -562,6 +576,8 @@ function PartnerVipCard({
   walletBalance,
   status,
   kycStatus,
+  dateOfJoining,
+  dateOfExpiry,
   initials,
 }: {
   name: string;
@@ -569,33 +585,58 @@ function PartnerVipCard({
   walletBalance: number;
   status: string;
   kycStatus: string;
+  dateOfJoining?: string | null;
+  dateOfExpiry?: string | null;
   initials: string;
 }) {
+  const stats = [
+    { label: "Wallet", value: formatCurrency(walletBalance) },
+    { label: "Status", value: status || "pending" },
+    { label: "KYC", value: (kycStatus || "not_submitted").replace("_", " ") },
+    { label: "DOI", value: formatDisplayDate(dateOfJoining) },
+    { label: "DOE", value: formatDisplayDate(dateOfExpiry) },
+  ];
+
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-[#ead38b]/70 bg-gradient-to-br from-[#fff9df] via-white to-[#edf4e9] p-[1px] shadow-premium">
-      <div className="relative overflow-hidden rounded-[1.7rem] bg-white/88 p-5 backdrop-blur md:p-6">
-        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-brand-accent/15 blur-3xl" />
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-ink to-brand-primaryDark text-lg font-bold text-[#fff5d5] shadow-card">
-              {initials || "P"}
+    <section className="group relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#f6e7b6_0%,#9c7126_30%,#2a1b13_62%,#f0d894_100%)] p-[1px] shadow-[0_28px_70px_rgba(36,24,16,0.24)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_34px_90px_rgba(36,24,16,0.32)]">
+      <div className="relative overflow-hidden rounded-[1.95rem] bg-[radial-gradient(circle_at_16%_0%,rgba(231,196,113,0.26),transparent_32%),radial-gradient(circle_at_96%_8%,rgba(156,175,146,0.16),transparent_30%),linear-gradient(135deg,#17100c_0%,#2a1b13_48%,#0f0b09_100%)] px-5 py-6 text-[#fff4d7] md:px-7 md:py-7">
+        <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#fff2bd]/80 to-transparent" />
+        <div className="pointer-events-none absolute -right-28 -top-28 h-64 w-64 rounded-full bg-[#d8ad4a]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-12 h-56 w-56 rounded-full bg-[#9caf92]/12 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.18] transition duration-500 group-hover:opacity-[0.26]">
+          <div className="absolute -left-32 top-0 h-full w-40 rotate-12 bg-gradient-to-r from-transparent via-white/35 to-transparent blur-sm" />
+        </div>
+
+        <div className="relative flex flex-col gap-7 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f4df9c,#9f762a_48%,#4b3218)] p-[1px] shadow-[0_18px_35px_rgba(0,0,0,0.32)]">
+              <div className="flex h-full w-full items-center justify-center rounded-full border border-white/15 bg-[radial-gradient(circle_at_35%_25%,#6e522b,#1a110d_68%)] text-xl font-bold tracking-[0.12em] text-[#fff1bf]">
+                {initials || "P"}
+              </div>
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">
+              <p className="inline-flex rounded-full border border-[#e4c877]/30 bg-[#f6e7b6]/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#f6e7b6] shadow-inner">
                 VIP Partner
               </p>
-              <h2 className="mt-1 truncate text-2xl font-semibold text-brand-ink">{name}</h2>
-              <p className="mt-1 font-mono text-sm font-semibold text-brand-primaryDark">
+              <h2 className="mt-3 truncate text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                {name}
+              </h2>
+              <p className="mt-2 font-mono text-sm font-semibold tracking-[0.18em] text-[#e8cf88]">
                 {partnerCode || "-"}
               </p>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
-            <VipMetric label="Wallet" value={formatCurrency(walletBalance)} />
-            <VipMetric label="Status" value={status || "pending"} />
-            <VipMetric label="KYC" value={(kycStatus || "not_submitted").replace("_", " ")} />
+          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[690px] xl:grid-cols-5">
+            {stats.map((stat) => (
+              <VipMetric key={stat.label} label={stat.label} value={stat.value} />
+            ))}
           </div>
+        </div>
+
+        <div className="relative mt-6 flex flex-col gap-2 border-t border-[#f6e7b6]/12 pt-4 text-[10px] uppercase tracking-[0.24em] text-[#c8b074] sm:flex-row sm:items-center sm:justify-between">
+          <span>KIA Skin Care Elite Membership</span>
+          <span className="text-[#f6e7b6]/80">Premium Partner Identity</span>
         </div>
       </div>
     </section>
@@ -604,9 +645,9 @@ function PartnerVipCard({
 
 function VipMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-brand-border bg-brand-surface/70 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">{label}</p>
-      <p className="mt-2 text-base font-semibold capitalize text-brand-ink">{value}</p>
+    <div className="rounded-2xl border border-[#f6e7b6]/14 bg-white/[0.075] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur transition duration-300 group-hover:border-[#f6e7b6]/24 group-hover:bg-white/[0.095]">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#cbb477]">{label}</p>
+      <p className="mt-2 break-words text-sm font-semibold capitalize leading-5 text-[#fff4d7]">{value}</p>
     </div>
   );
 }
