@@ -262,6 +262,7 @@ export default async function PartnerDashboardPage() {
             </BookNowButton>
             <Link
               href="/partner/new-membership"
+              data-testid="new-membership-registration-link"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-brand-border bg-white px-6 py-3.5 text-sm font-semibold text-brand-primary shadow-soft transition hover:border-brand-accent hover:text-brand-accent hover:shadow-card"
             >
               New Membership Registration

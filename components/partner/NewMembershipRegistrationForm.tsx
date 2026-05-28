@@ -77,7 +77,11 @@ export default function NewMembershipRegistrationForm({ partnerCode }: { partner
     "w-full rounded-2xl border border-brand-border bg-white px-4 py-3 text-brand-ink outline-none transition focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20";
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-[2rem] border border-brand-border bg-white/90 p-5 shadow-premium sm:p-8">
+    <form
+      onSubmit={handleSubmit}
+      data-testid="partner-new-membership-form"
+      className="rounded-[2rem] border border-brand-border bg-white/90 p-5 shadow-premium sm:p-8"
+    >
       <div className="mb-7 flex items-start gap-4 rounded-2xl bg-brand-surface/65 p-4">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-ink text-white">
           <UserPlus className="h-5 w-5" />
