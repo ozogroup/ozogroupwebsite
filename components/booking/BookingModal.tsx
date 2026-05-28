@@ -109,7 +109,7 @@ export default function BookingModal() {
         const supabase = getSupabaseBrowserClient();
         const { data, error } = await supabase
           .from("treatments" as any)
-          .select("slug,title,kit_name,price,price_label,unit,treatment_type,cta_text")
+          .select("*")
           .eq("active", true)
           .is("deleted_at", null)
           .order("featured", { ascending: false })
@@ -121,7 +121,9 @@ export default function BookingModal() {
             return index === -1 ? Number.MAX_SAFE_INTEGER : index;
           };
           const sorted = [...data].sort((a: any, b: any) => orderIndex(a.slug) - orderIndex(b.slug));
-          const options = sorted.map((t: any) => ({
+          const optionsBySlug = new Map(defaultBookingTreatments.map((treatment) => [treatment.slug, treatment]));
+          sorted.forEach((t: any) => {
+            optionsBySlug.set(t.slug, {
               slug: t.slug,
               title: t.title,
               kitName: t.kit_name || t.title,
@@ -131,7 +133,11 @@ export default function BookingModal() {
               unit: t.unit || "",
               treatmentType: t.treatment_type || "",
               note: t.cta_text || "",
-            }));
+            });
+          });
+          const options = Array.from(optionsBySlug.values()).sort(
+            (a, b) => orderIndex(a.slug) - orderIndex(b.slug)
+          );
           setAvailableTreatments(options);
           setForm((f) => {
             const normalizedTreatmentSlug = normalizeBookingTreatmentSlug(treatmentSlug || f.treatment);

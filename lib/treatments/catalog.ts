@@ -219,3 +219,15 @@ export function normalizeBookingTreatmentSlug(slug?: string | null) {
   const cleanSlug = String(slug || "").trim();
   return bookingTreatmentSlugAliases[cleanSlug] || cleanSlug;
 }
+
+export function getBookingTreatmentCatalogItem(slug?: string | null) {
+  const cleanSlug = String(slug || "").trim();
+  const normalizedSlug = normalizeBookingTreatmentSlug(cleanSlug);
+
+  return treatmentKitCatalog.find(
+    (treatment) =>
+      treatment.slug === cleanSlug ||
+      treatment.slug === normalizedSlug ||
+      normalizeBookingTreatmentSlug(treatment.slug) === normalizedSlug
+  );
+}
