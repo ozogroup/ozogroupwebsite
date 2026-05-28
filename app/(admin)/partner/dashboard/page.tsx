@@ -138,6 +138,9 @@ export default async function PartnerDashboardPage() {
   const pendingRegistrations = (sponsoredMemberships as any[]).filter(
     (membership: any) => !["active", "rejected"].includes(membership.membership_status)
   );
+  const approvedRegistrations = (sponsoredMemberships as any[]).filter(
+    (membership: any) => membership.membership_status === "active"
+  );
 
   const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingEarnings = commissions
@@ -381,18 +384,18 @@ export default async function PartnerDashboardPage() {
           </Link>
         }
       >
-        {pendingRegistrations.length === 0 ? (
-          <EmptyState title="No pending membership requests" text="New registrations submitted by you will appear here until admin approval." />
+        {(sponsoredMemberships as any[]).length === 0 ? (
+          <EmptyState title="No membership requests" text="New registrations submitted by you will remain linked here before and after admin approval." />
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {pendingRegistrations.slice(0, 5).map((membership: any) => (
+            {(sponsoredMemberships as any[]).slice(0, 6).map((membership: any) => (
               <div key={membership.id} className="rounded-2xl border border-brand-border bg-brand-surface/45 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-brand-ink">{membership.full_name}</p>
                     <p className="mt-1 text-sm text-brand-muted">{membership.city || "City not provided"}</p>
                   </div>
-                  <StatusBadge status={membership.payment_status || membership.membership_status} />
+                  <StatusBadge status={membership.membership_status || membership.payment_status} />
                 </div>
                 <p className="mt-4 font-mono text-sm font-semibold text-brand-primaryDark">
                   {membership.partners?.partner_code || "KIA ID pending"}
@@ -517,6 +520,7 @@ export default async function PartnerDashboardPage() {
           <div className="space-y-4">
             <Metric label="Direct Team" value={directTeam.count || 0} helper="Level 1 partners" />
             <Metric label="Pending Registrations" value={pendingRegistrations.length} helper="Awaiting admin review" />
+            <Metric label="Approved Direct Members" value={approvedRegistrations.length} helper="Still linked under your ID" />
             <Metric label="Booking Conversion" value={`${activeBookingRate}%`} helper="Confirmed from recent referred bookings" />
             <Metric label="This Month Earnings" value={formatCurrency(thisMonthEarnings)} helper="Fresh momentum this month" />
           </div>

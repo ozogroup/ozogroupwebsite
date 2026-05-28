@@ -80,7 +80,7 @@ export async function getSponsoredMembershipRequests(limit = 8) {
 
   const { data, error } = await serviceClient
     .from("memberships" as any)
-    .select("id, full_name, city, created_at, membership_status, payment_status, referral_code, partners:partner_id(partner_code, status)")
+    .select("id, full_name, mobile, email, city, created_at, membership_status, payment_status, referral_code, partner_id, partners:partner_id(partner_code, status, created_at, membership_expires_at)")
     .eq("sponsor_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(safeLimit);
@@ -387,7 +387,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   // 5. Check if partner row already exists
   const { data: existingPartner } = await supabase
     .from("partners" as any)
-    .select("id, partner_code, referral_link")
+    .select("id, partner_code, referral_link, sponsor_id, status")
     .eq("id", userId)
     .maybeSingle();
 
@@ -402,21 +402,27 @@ export async function approveAndCreatePartner(membershipId: string) {
   if (partner) {
     partnerCode = partner.partner_code;
     referralLink = getReferralUrl(partnerCode);
-    // Ensure status is approved
+    const partnerUpdate: Record<string, unknown> = {
+      status: "active",
+      membership_started_at: startedAt.toISOString(),
+      membership_expires_at: expiresAt.toISOString(),
+      membership_purchased_at: startedAt.toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    if (!partner.sponsor_id && (membership as any).sponsor_id) {
+      partnerUpdate.sponsor_id = (membership as any).sponsor_id;
+    }
+
+    // Preserve the sponsor relationship while activating the existing pending partner.
     await serviceClient
       .from("partners" as any)
-      .update({
-        status: "active",
-        membership_started_at: startedAt.toISOString(),
-        membership_expires_at: expiresAt.toISOString(),
-        membership_purchased_at: startedAt.toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(partnerUpdate)
       .eq("id", userId);
   } else {
     const createdPartner = await insertPartnerWithKiaCode(serviceClient, {
       id: userId,
       city,
+      sponsor_id: (membership as any).sponsor_id || null,
       status: "active",
       wallet_balance: 0,
       total_earnings: 0,
