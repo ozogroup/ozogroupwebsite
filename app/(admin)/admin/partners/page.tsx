@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getPartners, updatePartnerStatus, createPartner } from "@/lib/actions/partners";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import PartnerPasswordManager from "@/components/admin/PartnerPasswordManager";
 import { getReferralUrl } from "@/lib/referral-url";
 
 export default function AdminPartnersPage() {
@@ -159,11 +160,12 @@ export default function AdminPartnersPage() {
       {/* Partners Table */}
       <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[1120px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Partner</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Partner ID</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Password</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">City</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Earnings</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
@@ -200,6 +202,9 @@ export default function AdminPartnersPage() {
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-slate-100 px-2 py-1 rounded font-mono">{partner.partner_code}</code>
                     </div>
+                  </td>
+                  <td className="px-4 sm:px-6 py-4">
+                    <PartnerPasswordManager partnerId={partner.id} compact />
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-sm text-slate-600">{partner.city}</td>
                   <td className="px-4 sm:px-6 py-4">
@@ -354,6 +359,13 @@ export default function AdminPartnersPage() {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-sm text-slate-600 mb-1">Paid Earnings</p>
                   <p className="text-xl font-bold text-slate-900">₹{(selectedPartner.paid_earnings || 0).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-brand-border bg-brand-surface/50 p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-900">Password Management</h3>
+                <div className="mt-3 max-w-md">
+                  <PartnerPasswordManager partnerId={selectedPartner.id} />
                 </div>
               </div>
 

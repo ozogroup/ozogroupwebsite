@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
 import { getReferralUrl } from "@/lib/referral-url";
 import { generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-code";
 
@@ -93,4 +94,48 @@ export async function createPartner(partner: any) {
   }
 
   throw new Error("Unable to reserve a unique partner ID. Please try again.");
+}
+
+export async function updatePartnerAuthPassword(partnerId: string, password: string) {
+  await requireAdmin();
+
+  const cleanPartnerId = String(partnerId || "").trim();
+  const cleanPassword = String(password || "").trim();
+
+  if (!cleanPartnerId) {
+    return { success: false, error: "Partner ID is required." };
+  }
+
+  if (cleanPassword.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters." };
+  }
+
+  const serviceClient = getSupabaseServiceClient();
+  const { data: partner, error: partnerError } = await serviceClient
+    .from("partners" as any)
+    .select("id")
+    .eq("id", cleanPartnerId)
+    .maybeSingle();
+
+  if (partnerError) {
+    console.error("Error verifying partner before password reset:", partnerError);
+    return { success: false, error: "Could not verify partner before reset." };
+  }
+
+  if (!partner) {
+    return { success: false, error: "Partner record was not found." };
+  }
+
+  const { error } = await serviceClient.auth.admin.updateUserById(cleanPartnerId, {
+    password: cleanPassword,
+  });
+
+  if (error) {
+    console.error("Error updating partner auth password:", error);
+    return { success: false, error: error.message || "Failed to update partner password." };
+  }
+
+  revalidatePath("/admin/memberships");
+  revalidatePath("/admin/partners");
+  return { success: true, message: "Partner password updated successfully." };
 }

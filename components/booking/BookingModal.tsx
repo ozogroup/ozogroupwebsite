@@ -6,7 +6,11 @@ import { createBooking } from "@/lib/actions/bookings";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { site } from "@/lib/site";
 import { LEGACY_REFERRAL_STORAGE_KEY, REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
-import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
+import {
+  bookingTreatmentOrder,
+  normalizeBookingTreatmentSlug,
+  treatmentKitCatalog,
+} from "@/lib/treatments/catalog";
 import { useBooking } from "./BookingContext";
 
 type FormState = {
@@ -45,7 +49,7 @@ const initial: FormState = {
 };
 
 const defaultBookingTreatments: TreatmentOption[] = treatmentKitCatalog.map((treatment) => ({
-  slug: treatment.slug,
+  slug: normalizeBookingTreatmentSlug(treatment.slug),
   title: treatment.title,
   kitName: treatment.kitName,
   price: treatment.price,
@@ -65,8 +69,12 @@ export default function BookingModal() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    if (isOpen && treatmentSlug) {
-      setForm((f) => ({ ...f, treatment: treatmentSlug }));
+    if (isOpen) {
+      const normalizedTreatmentSlug = normalizeBookingTreatmentSlug(treatmentSlug || "");
+      setForm((f) => ({
+        ...f,
+        treatment: normalizedTreatmentSlug || f.treatment || defaultBookingTreatments[0]?.slug || "",
+      }));
     }
     if (!isOpen) {
       setError("");
@@ -104,17 +112,16 @@ export default function BookingModal() {
           .select("slug,title,kit_name,price,price_label,unit,treatment_type,cta_text")
           .eq("active", true)
           .is("deleted_at", null)
-          .in("slug", treatmentKitSlugs as unknown as string[])
           .order("featured", { ascending: false })
           .order("created_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
-          const sorted = [...data].sort(
-            (a: any, b: any) =>
-              treatmentKitSlugs.indexOf(a.slug) - treatmentKitSlugs.indexOf(b.slug)
-          );
-          setAvailableTreatments(
-            sorted.map((t: any) => ({
+          const orderIndex = (slug: string) => {
+            const index = bookingTreatmentOrder.indexOf(slug as any);
+            return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+          };
+          const sorted = [...data].sort((a: any, b: any) => orderIndex(a.slug) - orderIndex(b.slug));
+          const options = sorted.map((t: any) => ({
               slug: t.slug,
               title: t.title,
               kitName: t.kit_name || t.title,
@@ -124,8 +131,16 @@ export default function BookingModal() {
               unit: t.unit || "",
               treatmentType: t.treatment_type || "",
               note: t.cta_text || "",
-            }))
-          );
+            }));
+          setAvailableTreatments(options);
+          setForm((f) => {
+            const normalizedTreatmentSlug = normalizeBookingTreatmentSlug(treatmentSlug || f.treatment);
+            const hasSelected = options.some((option) => option.slug === normalizedTreatmentSlug);
+            return {
+              ...f,
+              treatment: hasSelected ? normalizedTreatmentSlug : options[0]?.slug || normalizedTreatmentSlug || "",
+            };
+          });
         }
       } catch (e) {
         console.error("Unable to load treatments", e);
@@ -133,7 +148,7 @@ export default function BookingModal() {
     }
 
     loadTreatments();
-  }, [isOpen]);
+  }, [isOpen, treatmentSlug]);
 
   const update =
     (key: keyof FormState) =>
@@ -149,7 +164,7 @@ export default function BookingModal() {
     if (!form.fullName.trim()) return setError("Please enter your full name.");
     if (!/^[0-9+\-\s]{10,15}$/.test(form.mobile.trim()))
       return setError("Please enter a valid mobile number.");
-    if (!form.treatment) return setError("Please select a treatment.");
+    if (!form.treatment) return setError("Please select a service or kit before booking.");
     if (!form.city.trim()) return setError("Please enter your city.");
     if (!form.address.trim()) return setError("Please enter your address.");
     if (!form.pinCode.trim()) return setError("Please enter your pin code.");

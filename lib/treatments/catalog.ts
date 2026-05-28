@@ -197,3 +197,25 @@ export const treatmentKitCatalog = [
 ] as const;
 
 export const treatmentKitSlugs = treatmentKitCatalog.map((treatment) => treatment.slug);
+
+export const bookingTreatmentSlugAliases: Record<string, string> = {
+  "advance-kit": "advanced-skin-treatment",
+  "japanese-kit": "japanese-skin-treatment",
+  "korean-glass-kit": "korean-glass-skin",
+  "basic-kit": "basic-skin-treatment",
+  "korean-glass-treatment": "korean-glass-skin",
+};
+
+export const bookingTreatmentOrder = [
+  "advanced-skin-treatment",
+  "japanese-skin-treatment",
+  "korean-glass-skin",
+  "skin-lightening",
+  "basic-skin-treatment",
+  ...treatmentKitSlugs,
+] as const;
+
+export function normalizeBookingTreatmentSlug(slug?: string | null) {
+  const cleanSlug = String(slug || "").trim();
+  return bookingTreatmentSlugAliases[cleanSlug] || cleanSlug;
+}

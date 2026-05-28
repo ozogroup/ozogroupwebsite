@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
-import { treatmentKitSlugs } from "@/lib/treatments/catalog";
+import { normalizeBookingTreatmentSlug } from "@/lib/treatments/catalog";
 import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 
@@ -72,7 +72,8 @@ export async function createBooking(payload: CreateBookingPayload) {
   const city = clean(payload.city);
   const address = clean(payload.address);
   const pinCode = clean(payload.pin_code);
-  const treatmentSlug = clean(payload.treatment_slug);
+  const requestedTreatmentSlug = clean(payload.treatment_slug);
+  const treatmentSlug = normalizeBookingTreatmentSlug(requestedTreatmentSlug);
   const referralCode = normalizeKiaPartnerCode(
     clean(payload.referral_code) ||
     clean(cookies().get("kia_referral_code")?.value) ||
@@ -84,16 +85,21 @@ export async function createBooking(payload: CreateBookingPayload) {
   if (!city) return { error: "Please enter your city." };
   if (!address) return { error: "Please enter your address." };
   if (!pinCode) return { error: "Please enter your pin code." };
-  if (!treatmentSlug) return { error: "Please select a treatment." };
-  if (!treatmentKitSlugs.includes(treatmentSlug as any)) return { error: "Selected treatment is not available." };
+  if (!requestedTreatmentSlug) return { error: "Please select a service or kit before booking." };
 
-  const { data: treatment, error: treatmentError } = await serviceClient
+  const treatmentSlugCandidates = Array.from(
+    new Set([requestedTreatmentSlug, treatmentSlug].filter(Boolean))
+  );
+
+  const { data: treatments, error: treatmentError } = await serviceClient
     .from("treatments" as any)
-    .select("id, title, kit_name, price, price_label, type")
-    .eq("slug", treatmentSlug)
+    .select("id, title, kit_name, price, price_label, type, treatment_type, slug")
+    .in("slug", treatmentSlugCandidates)
     .eq("active", true)
     .is("deleted_at", null)
-    .maybeSingle();
+    .limit(1);
+
+  const treatment = Array.isArray(treatments) ? treatments[0] : null;
 
   if (treatmentError || !treatment) {
     return { error: "Selected treatment is not available." };
@@ -102,7 +108,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   const partner = await findPartnerByCode(serviceClient, referralCode);
   const partnerIsEligible = isMembershipActive(partner);
   const treatmentPrice = Number((treatment as any).price || 0);
-  const treatmentType = (treatment as any).type;
+  const treatmentType = (treatment as any).type || (treatment as any).treatment_type;
   const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * COMMISSION_RATE) / 100) : 0;
 
   const { data: booking, error: bookingError } = await serviceClient

@@ -32,22 +32,7 @@ const navigation = [
   { name: "Support", href: "/partner/support", icon: Headphones },
 ];
 
-type PartnerInfo = {
-  full_name: string | null;
-  partner_code: string | null;
-  wallet_balance: number;
-  total_earnings?: number;
-  status: string | null;
-  kyc_status?: string | null;
-} | null;
-
-export default function PartnerShell({
-  children,
-  partnerInfo,
-}: {
-  children: React.ReactNode;
-  partnerInfo?: PartnerInfo;
-}) {
+export default function PartnerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -61,13 +46,6 @@ export default function PartnerShell({
       document.body.style.overflow = "";
     };
   }, [sidebarOpen]);
-
-  const initials = (partnerInfo?.full_name || "Partner")
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#F4EBDC_0%,#DCE6D6_46%,#FFFDF8_100%)]">
@@ -95,55 +73,6 @@ export default function PartnerShell({
               <X className="h-5 w-5" />
             </button>
           </div>
-
-          {partnerInfo && (
-            <div className="mx-4 mt-4 overflow-hidden rounded-[1.35rem] border border-[#ead38b]/80 bg-gradient-to-br from-[#f8e59d] via-[#d5a935] to-[#7b520e] p-[1px] shadow-premium">
-              <div className="relative overflow-hidden rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(20,20,18,0.95),rgba(91,64,14,0.9))] p-4 text-white">
-                <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-white/[0.18] blur-2xl" />
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-                <div className="relative flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f8e9b4]/90">
-                      VIP Partner
-                    </p>
-                    <p className="mt-1 truncate text-base font-semibold text-white">
-                      {partnerInfo.full_name || "Partner"}
-                    </p>
-                    <p className="mt-0.5 font-mono text-xs text-[#f8e9b4]">
-                      {partnerInfo.partner_code || "-"}
-                    </p>
-                  </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.14] text-sm font-bold text-[#f8e9b4] ring-1 ring-white/25">
-                    {initials}
-                  </div>
-                </div>
-
-                <div className="relative mt-5 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
-                    <p className="text-[#f8e9b4]/75">Wallet</p>
-                    <p className="mt-1 text-sm font-semibold text-white">
-                      ₹{(partnerInfo.wallet_balance || 0).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/[0.15]">
-                    <p className="text-[#f8e9b4]/75">Status</p>
-                    <p className="mt-1 text-sm font-semibold capitalize text-white">
-                      {partnerInfo.status || "pending"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="relative mt-2 rounded-2xl bg-white/10 p-3 text-xs ring-1 ring-white/[0.15]">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[#f8e9b4]/75">KYC</span>
-                    <span className="font-semibold capitalize text-[#fff5d5]">
-                      {(partnerInfo.kyc_status || "not_submitted").replace("_", " ")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
             {navigation.map((item) => {

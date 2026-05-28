@@ -44,7 +44,7 @@ function monthKey(date: Date) {
 }
 
 export default async function PartnerDashboardPage() {
-  await requirePartner();
+  const profile = await requirePartner();
   const supabase = getSupabaseServerClient();
   const {
     data: { user },
@@ -61,6 +61,13 @@ export default async function PartnerDashboardPage() {
   const partnerData = partner as any;
   const partnerCode = partnerData?.partner_code || "N/A";
   const partnerStatus = partnerData?.status || "pending";
+  const partnerName = String(profile.full_name || partnerData?.full_name || "Partner");
+  const partnerInitials = partnerName
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   const membershipStart =
     partnerData?.membership_started_at || partnerData?.membership_purchased_at || partnerData?.created_at;
   const fallbackExpiry = membershipStart
@@ -249,7 +256,7 @@ export default async function PartnerDashboardPage() {
               Partner Growth Command Center
             </div>
             <h1 className="mt-5 text-3xl font-semibold tracking-tight text-brand-ink md:text-5xl">
-              Welcome back, {partnerData?.full_name || "Partner"}
+              Welcome back, {partnerName}
             </h1>
             <p className="mt-3 max-w-2xl text-base text-brand-muted md:text-lg">
               Grow your team, share premium skincare, and watch every booking move your income forward.
@@ -271,6 +278,15 @@ export default async function PartnerDashboardPage() {
           </div>
         </div>
       </section>
+
+      <PartnerVipCard
+        name={partnerName}
+        partnerCode={partnerCode}
+        walletBalance={walletBalance}
+        status={partnerStatus}
+        kycStatus={partnerData?.kyc_status || "not_submitted"}
+        initials={partnerInitials}
+      />
 
       {!membershipActive && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 shadow-soft">
@@ -536,6 +552,61 @@ export default async function PartnerDashboardPage() {
           </Link>
         ))}
       </section>
+    </div>
+  );
+}
+
+function PartnerVipCard({
+  name,
+  partnerCode,
+  walletBalance,
+  status,
+  kycStatus,
+  initials,
+}: {
+  name: string;
+  partnerCode: string;
+  walletBalance: number;
+  status: string;
+  kycStatus: string;
+  initials: string;
+}) {
+  return (
+    <section className="overflow-hidden rounded-[1.75rem] border border-[#ead38b]/70 bg-gradient-to-br from-[#fff9df] via-white to-[#edf4e9] p-[1px] shadow-premium">
+      <div className="relative overflow-hidden rounded-[1.7rem] bg-white/88 p-5 backdrop-blur md:p-6">
+        <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-brand-accent/15 blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-ink to-brand-primaryDark text-lg font-bold text-[#fff5d5] shadow-card">
+              {initials || "P"}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                VIP Partner
+              </p>
+              <h2 className="mt-1 truncate text-2xl font-semibold text-brand-ink">{name}</h2>
+              <p className="mt-1 font-mono text-sm font-semibold text-brand-primaryDark">
+                {partnerCode || "-"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
+            <VipMetric label="Wallet" value={formatCurrency(walletBalance)} />
+            <VipMetric label="Status" value={status || "pending"} />
+            <VipMetric label="KYC" value={(kycStatus || "not_submitted").replace("_", " ")} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VipMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-brand-border bg-brand-surface/70 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-muted">{label}</p>
+      <p className="mt-2 text-base font-semibold capitalize text-brand-ink">{value}</p>
     </div>
   );
 }
