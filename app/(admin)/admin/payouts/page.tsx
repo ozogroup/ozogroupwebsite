@@ -40,6 +40,10 @@ export default function AdminPayoutsPage() {
         return "bg-brand-light text-brand-primaryDark";
       case "paid":
         return "bg-emerald-100 text-emerald-700";
+      case "available":
+        return "bg-brand-light text-brand-primaryDark";
+      case "settled":
+        return "bg-emerald-50 text-emerald-700";
       case "rejected":
         return "bg-red-100 text-red-700";
       default:
@@ -48,7 +52,7 @@ export default function AdminPayoutsPage() {
   }
 
   function money(value: number) {
-    return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+    return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
   }
 
   return (
@@ -90,14 +94,23 @@ export default function AdminPayoutsPage() {
                       <p className="text-xs text-red-600">15% Deduction: -{money(payout.deduction_amount)}</p>
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted">
+                      <p>Membership: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.membershipIncome)}</span></p>
+                      <p>Product: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.productIncome)}</span></p>
+                      <p>Bonus: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.bonusIncome)}</span></p>
                       <p>Gross income: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.grossIncome)}</span></p>
                       <p>Net payable: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.netPayable)}</span></p>
-                      <p>Paid: {money(payout.partner_summary?.paidAmount)} | Pending: {money(payout.partner_summary?.pendingPayout)}</p>
+                      <p>Paid: {money(payout.partner_summary?.paidAmount)} | Pending payout: {money(payout.partner_summary?.pendingPayout)}</p>
+                      <p>Requested: {money(payout.partner_summary?.requestedPayout)}</p>
                       <p className="capitalize">Status: {payout.partner_summary?.payoutStatus || payout.status}</p>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted max-w-xs">
                       <p>{payout.payment_details || "-"}</p>
                       <p className="mt-1 text-xs">Method: {payout.payment_method || "-"}</p>
+                      {payout.is_summary && (
+                        <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                          No payout request yet. Summary generated from commissions.
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
@@ -110,6 +123,11 @@ export default function AdminPayoutsPage() {
                       <p>Paid: {payout.paid_at ? new Date(payout.paid_at).toLocaleDateString() : "-"}</p>
                     </td>
                     <td className="px-4 py-4">
+                      {payout.is_summary ? (
+                        <div className="min-w-[240px] rounded-lg border border-brand-border bg-brand-surface/50 px-3 py-2 text-xs text-brand-muted">
+                          Waiting for partner payout request.
+                        </div>
+                      ) : (
                       <div className="space-y-2 min-w-[240px]">
                         <input
                           value={refs[payout.id] || payout.transaction_reference || ""}
@@ -136,6 +154,7 @@ export default function AdminPayoutsPage() {
                           <option value="rejected">Reject</option>
                         </select>
                       </div>
+                      )}
                     </td>
                   </tr>
                 ))

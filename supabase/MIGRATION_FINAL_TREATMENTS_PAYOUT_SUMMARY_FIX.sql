@@ -1,0 +1,146 @@
+-- KIA Skin Care critical data fix: final treatments + payout summary support
+-- Safe to run multiple times.
+
+ALTER TABLE treatments
+  ADD COLUMN IF NOT EXISTS kit_name TEXT,
+  ADD COLUMN IF NOT EXISTS treatment_type TEXT,
+  ADD COLUMN IF NOT EXISTS overview TEXT,
+  ADD COLUMN IF NOT EXISTS process JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS icon TEXT,
+  ADD COLUMN IF NOT EXISTS cta_text TEXT,
+  ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0;
+
+ALTER TABLE payouts
+  ADD COLUMN IF NOT EXISTS gross_amount NUMERIC(15, 2),
+  ADD COLUMN IF NOT EXISTS deduction_rate NUMERIC(5, 4) DEFAULT 0.15,
+  ADD COLUMN IF NOT EXISTS deduction_amount NUMERIC(15, 2),
+  ADD COLUMN IF NOT EXISTS net_amount NUMERIC(15, 2),
+  ADD COLUMN IF NOT EXISTS transaction_reference TEXT,
+  ADD COLUMN IF NOT EXISTS transaction_note TEXT,
+  ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+
+INSERT INTO treatments (
+  slug, title, kit_name, type, treatment_type, price, price_label, unit,
+  tagline, subtitle, description, overview, benefits, process, process_steps,
+  who_for, safety, faqs, duration, sessions, badge, image, image_alt, tone,
+  active, is_active, deleted_at, featured, requires_slots, available_cities,
+  icon, cta_text, display_order, updated_at
+) VALUES
+(
+  'advanced-skin-treatment', 'Advance Kit', 'Advance Kit', 'home_kit', 'home-kit', 18000, 'Rs. 18,000', 'complete kit',
+  'Advanced Home Kit', 'Advanced Home Kit',
+  'Advanced skincare kit designed for enhanced glow and visible skin improvement.',
+  'Doctor-supervised advanced treatment for visible skin transformation.',
+  '["Anti-aging","Skin repair","Deep hydration","Pigmentation control","Collagen boost"]'::jsonb,
+  '[{"step":"Advanced Assessment","detail":"Comprehensive skin analysis."},{"step":"Active Infusion","detail":"High-potency serum support."}]'::jsonb,
+  '[{"step":"Advanced Assessment","detail":"Comprehensive skin analysis."},{"step":"Active Infusion","detail":"High-potency serum support."}]'::jsonb,
+  '["Deep pigmentation","Advanced aging","Texture issues"]',
+  'Doctor-supervised with clinical-grade actives.',
+  '[{"q":"Is there downtime?","a":"Mild redness or peeling may happen."}]'::jsonb,
+  '4-6 weeks', 'Complete kit program', 'Advanced',
+  'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80',
+  'Advance skincare kit', 'primaryDark', TRUE, TRUE, NULL, TRUE, FALSE, '["Mumbai","Delhi"]'::jsonb,
+  'award', 'Book Advance Kit', 1, NOW()
+),
+(
+  'japanese-skin-treatment', 'Japanese Skin Treatment', 'Japanese Skin Treatment', 'clinic', 'clinic', 22000, 'Rs. 22,000', 'per session',
+  'Refined Purity & Timeless Beauty', 'Refined Purity & Timeless Beauty',
+  'Japanese-inspired purification treatment for refined skin.',
+  'Gentle Japanese skincare-inspired treatment for pore refinement, calm skin, and radiance.',
+  '["Texture refinement","Calm skin","Natural radiance","Balanced hydration"]'::jsonb,
+  '[{"step":"Ritual Cleanse","detail":"Gentle cleansing."},{"step":"Essence Infusion","detail":"Hydration and refinement."}]'::jsonb,
+  '[{"step":"Ritual Cleanse","detail":"Gentle cleansing."},{"step":"Essence Infusion","detail":"Hydration and refinement."}]'::jsonb,
+  '["Visible pores","Rough texture","Sensitive skin"]',
+  'Gentle and suitable for sensitive skin.',
+  '[{"q":"Is it suitable for sensitive skin?","a":"Yes, it is gentle and customizable."}]'::jsonb,
+  '60-75 min', 'Recommended 4-6 sessions', 'Refined',
+  'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80',
+  'Japanese Skin Treatment', 'light', TRUE, TRUE, NULL, FALSE, FALSE, '["Mumbai","Delhi","Bangalore"]'::jsonb,
+  'sparkle', 'Book Consultation', 2, NOW()
+),
+(
+  'korean-glass-skin', 'Korean Glass Treatment', 'Korean Glass Treatment', 'clinic', 'clinic', 25000, 'Rs. 25,000', 'per session',
+  'Premium Clinical Glow Experience', 'Premium Clinical Glow Experience',
+  'Premium Korean glass skin treatment for a fresh, radiant glow.',
+  'Premium Korean glass skin treatment for a fresh, radiant glow.',
+  '["Deep hydration glow","Glass skin finish","Skin texture refinement","Premium clinical care"]'::jsonb,
+  '[]'::jsonb, NULL,
+  '["Pre-event glow seekers","Dry or dull skin","Premium clinical care clients"]',
+  'Doctor-supervised and delivered in premium clinical settings.',
+  '[]'::jsonb,
+  '75-90 min', 'Event-based sessions', 'Premium',
+  'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80',
+  'Korean Glass Treatment', 'accent', TRUE, TRUE, NULL, TRUE, TRUE, '["Mumbai","Delhi","Bangalore","Ahmedabad"]'::jsonb,
+  'sparkle', 'Book Consultation', 3, NOW()
+),
+(
+  'skin-lightening', 'Skin Lightening Treatment', 'Skin Lightening Treatment', 'home_kit', 'home-kit', 18000, 'Rs. 18,000', 'one-time',
+  'Home Kit Treatment Program', 'Home Kit Treatment Program',
+  'Professional skin brightening and pigmentation care program with a premium home-care kit.',
+  'Home-based skincare program with a premium kit delivered to your home for pigmentation and brightening support.',
+  '["Reduces pigmentation","Improves uneven skin tone","Enhances glow","Safe for Indian skin types"]'::jsonb,
+  '[{"step":"Kit Delivery","detail":"Home care kit delivered to your doorstep."},{"step":"Video Consultation","detail":"Expert guidance for treatment use."},{"step":"Progress Tracking","detail":"Weekly check-ins and support."}]'::jsonb,
+  '[{"step":"Kit Delivery","detail":"Home care kit delivered to your doorstep."},{"step":"Video Consultation","detail":"Expert guidance for treatment use."},{"step":"Progress Tracking","detail":"Weekly check-ins and support."}]'::jsonb,
+  '["Pigmentation","Tan","Uneven tone","Dullness"]',
+  'Doctor-supervised and patch-tested.',
+  '[{"q":"What is included?","a":"Premium home kit with guided routine."}]'::jsonb,
+  '4-6 weeks', 'Complete home program', 'Home Program',
+  'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80',
+  'Premium skincare home kit', 'accent', TRUE, TRUE, NULL, TRUE, FALSE, '["All India"]'::jsonb,
+  'droplet', 'Book Home Kit Program', 4, NOW()
+),
+(
+  'basic-skin-treatment', 'Basic Skin Treatment', 'Basic Skin Treatment', 'clinic', 'clinic', 12000, 'Rs. 12,000', 'per session',
+  'Essential Skin Care', 'Essential Skin Care',
+  'Essential starter treatment for cleansing, hydration, and glow maintenance.',
+  'Essential starter treatment for cleansing, hydration, and glow maintenance.',
+  '["Beginner friendly","Glow maintenance","Hydration support","All-skin support"]'::jsonb,
+  '[]'::jsonb, NULL,
+  '["First-time skincare clients","Maintenance care","All skin types"]',
+  'Gentle, simple, and designed for guided care.',
+  '[]'::jsonb,
+  '45-60 min', 'Recommended 3-4 sessions', 'Essential',
+  'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80',
+  'Basic Skin Treatment', 'primary', TRUE, TRUE, NULL, FALSE, FALSE, '["Mumbai","Delhi","Bangalore"]'::jsonb,
+  'droplet', 'Book Consultation', 5, NOW()
+)
+ON CONFLICT (slug) DO UPDATE SET
+  title = EXCLUDED.title,
+  kit_name = EXCLUDED.kit_name,
+  type = EXCLUDED.type,
+  treatment_type = EXCLUDED.treatment_type,
+  price = EXCLUDED.price,
+  price_label = EXCLUDED.price_label,
+  unit = EXCLUDED.unit,
+  tagline = EXCLUDED.tagline,
+  subtitle = EXCLUDED.subtitle,
+  description = EXCLUDED.description,
+  overview = EXCLUDED.overview,
+  benefits = EXCLUDED.benefits,
+  process = EXCLUDED.process,
+  process_steps = EXCLUDED.process_steps,
+  who_for = EXCLUDED.who_for,
+  safety = EXCLUDED.safety,
+  faqs = EXCLUDED.faqs,
+  duration = EXCLUDED.duration,
+  sessions = EXCLUDED.sessions,
+  badge = EXCLUDED.badge,
+  image = EXCLUDED.image,
+  image_alt = EXCLUDED.image_alt,
+  tone = EXCLUDED.tone,
+  active = TRUE,
+  is_active = TRUE,
+  deleted_at = NULL,
+  featured = EXCLUDED.featured,
+  requires_slots = EXCLUDED.requires_slots,
+  available_cities = EXCLUDED.available_cities,
+  icon = EXCLUDED.icon,
+  cta_text = EXCLUDED.cta_text,
+  display_order = EXCLUDED.display_order,
+  updated_at = NOW();
+
+CREATE INDEX IF NOT EXISTS idx_treatments_final_slug ON treatments(slug);
+CREATE INDEX IF NOT EXISTS idx_payouts_partner_status ON payouts(partner_id, status);

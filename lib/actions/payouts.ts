@@ -22,7 +22,7 @@ export async function getPayouts() {
     .from("payouts" as any)
     .select(`
       *,
-      partner:partners(partner_code, profiles(full_name))
+      partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name))
     `)
     .order("created_at", { ascending: false });
   
@@ -32,20 +32,25 @@ export async function getPayouts() {
   }
   
   const payouts = data || [];
-  const partnerIds = Array.from(new Set(payouts.map((p: any) => p.partner_id).filter(Boolean)));
-
-  if (partnerIds.length === 0) return payouts;
-
-  const [{ data: commissions }, { data: allPayouts }] = await Promise.all([
+  const [{ data: commissions }, { data: allPayouts }, { data: partners }] = await Promise.all([
     supabase
       .from("commissions" as any)
-      .select("partner_id, amount, source_type, source, commission_type, status, reversed, is_active")
-      .in("partner_id", partnerIds),
+      .select("partner_id, amount, source_type, status, reversed, is_active"),
     supabase
       .from("payouts" as any)
-      .select("partner_id, amount, gross_amount, status")
-      .in("partner_id", partnerIds),
+      .select("partner_id, amount, gross_amount, status"),
+    supabase
+      .from("partners" as any)
+      .select("id, partner_code, wallet_balance, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name)")
   ]);
+
+  const partnerIds = Array.from(
+    new Set([
+      ...payouts.map((p: any) => p.partner_id),
+      ...(commissions || []).map((c: any) => c.partner_id),
+      ...(partners || []).filter((p: any) => Number(p.wallet_balance || 0) > 0).map((p: any) => p.id),
+    ].filter(Boolean))
+  );
 
   const summaryByPartner = new Map<string, any>();
   for (const partnerId of partnerIds) {
@@ -56,10 +61,10 @@ export async function getPayouts() {
       .filter((c: any) => c.source_type === "membership")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
     const productIncome = partnerCommissions
-      .filter((c: any) => c.source_type === "booking")
+      .filter((c: any) => ["booking", "product", "kit", "treatment"].includes(String(c.source_type || "").toLowerCase()))
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
     const bonusIncome = partnerCommissions
-      .filter((c: any) => ["bonus", "milestone"].includes(String(c.commission_type || c.source || "").toLowerCase()))
+      .filter((c: any) => ["bonus", "milestone"].includes(String(c.source_type || "").toLowerCase()))
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
     const grossIncome = membershipIncome + productIncome + bonusIncome;
     const deductionAmount = roundMoney(grossIncome * PAYOUT_DEDUCTION_RATE);
@@ -68,9 +73,10 @@ export async function getPayouts() {
     const paidAmount = partnerPayouts
       .filter((p: any) => p.status === "paid")
       .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-    const pendingPayout = partnerPayouts
+    const requestedPayout = partnerPayouts
       .filter((p: any) => ["requested", "processing"].includes(p.status))
       .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const pendingPayout = Math.max(0, roundMoney(netPayable - paidAmount));
 
     summaryByPartner.set(partnerId, {
       membershipIncome,
@@ -82,11 +88,12 @@ export async function getPayouts() {
       netPayable,
       paidAmount,
       pendingPayout,
-      payoutStatus: pendingPayout > 0 ? "pending" : paidAmount >= netPayable && netPayable > 0 ? "paid" : "open",
+      requestedPayout,
+      payoutStatus: requestedPayout > 0 ? "pending" : pendingPayout > 0 ? "available" : paidAmount >= netPayable && netPayable > 0 ? "paid" : "open",
     });
   }
 
-  return payouts.map((payout: any) => {
+  const rows = payouts.map((payout: any) => {
     const grossAmount = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
     const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE));
     const netAmount = Number(payout.net_amount || payout.amount || roundMoney(grossAmount - deductionAmount));
@@ -98,6 +105,42 @@ export async function getPayouts() {
       net_amount: netAmount,
       partner_summary: summaryByPartner.get(payout.partner_id),
     };
+  });
+
+  const payoutPartnerIds = new Set(payouts.map((p: any) => p.partner_id));
+  for (const partnerId of partnerIds) {
+    if (payoutPartnerIds.has(partnerId)) continue;
+    const summary = summaryByPartner.get(partnerId);
+    if (!summary || summary.grossIncome <= 0) continue;
+    const partner = (partners || []).find((p: any) => p.id === partnerId) as any;
+    rows.push({
+      id: `summary-${partnerId}`,
+      partner_id: partnerId,
+      partner,
+      amount: Math.max(0, summary.netPayable - summary.paidAmount),
+      gross_amount: summary.grossIncome,
+      deduction_rate: PAYOUT_DEDUCTION_RATE,
+      deduction_amount: summary.deductionAmount,
+      net_amount: summary.netPayable,
+      available_balance: Number(partner?.wallet_balance || 0),
+      payment_method: partner?.upi_id ? "upi" : "bank",
+      payment_details: [
+        partner?.bank_account_holder,
+        partner?.bank_name,
+        partner?.bank_account_number,
+        partner?.bank_ifsc,
+        partner?.upi_id ? `UPI: ${partner.upi_id}` : null,
+      ].filter(Boolean).join(" | "),
+      status: summary.netPayable - summary.paidAmount > 0 ? "available" : "settled",
+      created_at: null,
+      is_summary: true,
+      partner_summary: summary,
+    });
+  }
+
+  return rows.sort((a: any, b: any) => {
+    if (a.is_summary !== b.is_summary) return a.is_summary ? 1 : -1;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
   });
 }
 
@@ -239,8 +282,8 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   if (p.kyc_status !== "verified") return { error: "KYC approval is required before withdrawal." };
   if (!p.bank_verified) return { error: "Bank details must be verified before withdrawal." };
   if (!membershipActive) return { error: "Membership must be active before withdrawal." };
-  if (wallet < 1000) return { error: "Minimum wallet balance for payout is ₹1000." };
-  if (!Number.isFinite(amount) || amount < 1000) return { error: "Minimum payout amount is ₹1000." };
+  if (wallet < 1000) return { error: "Minimum wallet balance for payout is Rs. 1000." };
+  if (!Number.isFinite(amount) || amount < 1000) return { error: "Minimum payout amount is Rs. 1000." };
   if (amount > wallet) return { error: "Insufficient wallet balance." };
   if (method === "bank" && !hasBank) return { error: "Bank details are required for bank transfer." };
   if (method === "upi" && !hasUpi) return { error: "UPI details are required for UPI payout." };

@@ -376,7 +376,7 @@ export default function BookingModal() {
             </div>
           )}
 
-          {selected?.slug === "korean-glass-treatment" && (
+          {selected?.slug === "korean-glass-skin" && (
             <div className="rounded-2xl border border-brand-accent/20 bg-brand-accent/10 px-4 py-3 text-sm font-medium text-brand-ink">
               Our team will contact you on WhatsApp for campaign location and schedule.
             </div>

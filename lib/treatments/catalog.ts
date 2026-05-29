@@ -1,10 +1,10 @@
 export const treatmentKitCatalog = [
   {
-    slug: "advance-kit",
+    slug: "advanced-skin-treatment",
     title: "Advance Kit",
     kitName: "Advance Kit",
     price: 18000,
-    priceLabel: "₹18,000",
+    priceLabel: "Rs. 18,000",
     unit: "complete kit",
     type: "home_kit",
     treatmentType: "home-kit",
@@ -13,20 +13,24 @@ export const treatmentKitCatalog = [
     description:
       "Advanced skincare kit designed for enhanced glow and visible skin improvement.",
     overview:
-      "Advanced skincare kit designed for enhanced glow and visible skin improvement.",
+      "Doctor-supervised advanced treatment for visible skin transformation.",
     benefits: [
-      "Advanced skin repair",
-      "Pigmentation support",
-      "Premium guided home care",
-      "Visible radiance",
+      "Anti-aging",
+      "Skin repair",
+      "Deep hydration",
+      "Pigmentation control",
+      "Collagen boost",
     ],
-    process: [],
-    whoFor: ["Advanced home-care clients", "Pigmentation and repair focused users"],
-    safety: "Doctor-guided and patch-tested for responsible home use.",
-    faqs: [],
+    process: [
+      { step: "Advanced Assessment", detail: "Comprehensive skin analysis." },
+      { step: "Active Infusion", detail: "High-potency serum support." },
+    ],
+    whoFor: ["Deep pigmentation", "Advanced aging", "Texture issues"],
+    safety: "Doctor-supervised with clinical-grade actives.",
+    faqs: [{ q: "Is there downtime?", a: "Mild redness or peeling may happen." }],
     duration: "4-6 weeks",
     sessions: "Complete kit program",
-    badge: "Premium Kit",
+    badge: "Advanced",
     icon: "award",
     tone: "primaryDark",
     image:
@@ -36,146 +40,58 @@ export const treatmentKitCatalog = [
     ctaText: "Book Advance Kit",
     featured: true,
     requiresSlots: false,
-    availableCities: ["All India"],
+    availableCities: ["Mumbai", "Delhi"],
   },
   {
-    slug: "japanese-kit",
-    title: "Japanese Kit",
-    kitName: "Japanese Kit",
+    slug: "japanese-skin-treatment",
+    title: "Japanese Skin Treatment",
+    kitName: "Japanese Skin Treatment",
     price: 22000,
-    priceLabel: "₹22,000",
-    unit: "complete kit",
-    type: "home_kit",
-    treatmentType: "home-kit",
-    tagline: "Japanese Ritual Kit",
-    subtitle: "Japanese Ritual Kit",
-    description:
-      "Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.",
+    priceLabel: "Rs. 22,000",
+    unit: "per session",
+    type: "clinic",
+    treatmentType: "clinic",
+    tagline: "Refined Purity & Timeless Beauty",
+    subtitle: "Refined Purity & Timeless Beauty",
+    description: "Japanese-inspired purification treatment for refined skin.",
     overview:
-      "Premium Japanese-inspired skincare kit for refined texture and smooth skin appearance.",
-    benefits: [
-      "Texture refinement",
-      "Calm clear skin",
-      "Balanced glow",
-      "Gentle home ritual",
+      "Gentle Japanese skincare-inspired treatment for pore refinement, calm skin, and radiance.",
+    benefits: ["Texture refinement", "Calm skin", "Natural radiance", "Balanced hydration"],
+    process: [
+      { step: "Ritual Cleanse", detail: "Gentle cleansing." },
+      { step: "Essence Infusion", detail: "Hydration and refinement." },
     ],
-    process: [],
-    whoFor: ["Sensitive skin", "Texture refinement", "Refined glow seekers"],
-    safety: "Gentle, guided, and suitable for premium home-care routines.",
-    faqs: [],
-    duration: "4-6 weeks",
-    sessions: "Complete kit program",
-    badge: "Japanese Care",
+    whoFor: ["Visible pores", "Rough texture", "Sensitive skin"],
+    safety: "Gentle and suitable for sensitive skin.",
+    faqs: [{ q: "Is it suitable for sensitive skin?", a: "Yes, it is gentle and customizable." }],
+    duration: "60-75 min",
+    sessions: "Recommended 4-6 sessions",
+    badge: "Refined",
     icon: "sparkle",
     tone: "light",
     image:
       "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Japanese skincare kit",
-    note: "Includes Japanese-inspired skincare kit.",
-    ctaText: "Book Japanese Kit",
+    imageAlt: "Japanese Skin Treatment",
+    note: "Japanese-inspired purification treatment for refined skin.",
+    ctaText: "Book Consultation",
     featured: false,
     requiresSlots: false,
-    availableCities: ["All India"],
+    availableCities: ["Mumbai", "Delhi", "Bangalore"],
   },
   {
-    slug: "korean-glass-kit",
-    title: "Korean Glass Kit",
-    kitName: "Korean Glass Kit",
-    price: 15000,
-    priceLabel: "₹15,000",
-    unit: "complete kit",
-    type: "home_kit",
-    treatmentType: "home-kit",
-    tagline: "Glass Glow Home Kit",
-    subtitle: "Glass Glow Home Kit",
-    description:
-      "Kit-based Korean glass skin care option for a fresh, radiant look.",
-    overview:
-      "Kit-based Korean glass skin care option for a fresh, radiant look.",
-    benefits: [
-      "Glass-skin glow",
-      "Hydration support",
-      "Dewy finish",
-      "K-beauty inspired care",
-    ],
-    process: [],
-    whoFor: ["Dull skin", "Hydration seekers", "K-beauty glow lovers"],
-    safety: "Patch-tested, guided home care for visible glow.",
-    faqs: [],
-    duration: "4-6 weeks",
-    sessions: "Complete kit program",
-    badge: "Glass Kit",
-    icon: "sparkle",
-    tone: "accent",
-    image:
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Korean glass skincare kit",
-    note: "Includes Korean glass glow kit.",
-    ctaText: "Book Korean Glass Kit",
-    featured: true,
-    requiresSlots: false,
-    availableCities: ["All India"],
-  },
-  {
-    slug: "basic-kit",
-    title: "Basic Kit",
-    kitName: "Basic Kit",
-    price: 14000,
-    priceLabel: "₹14,000",
-    unit: "complete kit",
-    type: "home_kit",
-    treatmentType: "home-kit",
-    tagline: "Essential Skin Kit",
-    subtitle: "Essential Skin Kit",
-    description:
-      "Essential skincare kit for regular care and beginner-level treatment support.",
-    overview:
-      "Essential skincare kit for regular care and beginner-level treatment support.",
-    benefits: [
-      "Beginner friendly",
-      "Glow maintenance",
-      "Hydration and cleansing",
-      "All-skin support",
-    ],
-    process: [],
-    whoFor: ["First-time skincare clients", "Maintenance care", "All skin types"],
-    safety: "Gentle, simple, and designed for guided everyday use.",
-    faqs: [],
-    duration: "4-6 weeks",
-    sessions: "Complete kit program",
-    badge: "Essential",
-    icon: "droplet",
-    tone: "primary",
-    image:
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Basic skincare kit",
-    note: "Includes essential skincare kit.",
-    ctaText: "Book Basic Kit",
-    featured: false,
-    requiresSlots: false,
-    availableCities: ["All India"],
-  },
-  {
-    slug: "korean-glass-treatment",
-    title: "Korean Glass Treatment Campaign",
-    kitName: "Korean Glass Treatment Campaign",
+    slug: "korean-glass-skin",
+    title: "Korean Glass Treatment",
+    kitName: "Korean Glass Treatment",
     price: 25000,
-    priceLabel: "₹25,000",
+    priceLabel: "Rs. 25,000",
     unit: "per session",
-    type: "campaign",
-    treatmentType: "camp",
+    type: "clinic",
+    treatmentType: "clinic",
     tagline: "Premium Clinical Glow Experience",
     subtitle: "Premium Clinical Glow Experience",
-    description:
-      "Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.",
-    overview:
-      "Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.",
-    benefits: [
-      "Deep hydration glow",
-      "Glass skin finish",
-      "Skin texture refinement",
-      "Premium clinical care",
-    ],
+    description: "Premium Korean glass skin treatment for a fresh, radiant glow.",
+    overview: "Premium Korean glass skin treatment for a fresh, radiant glow.",
+    benefits: ["Deep hydration glow", "Glass skin finish", "Skin texture refinement", "Premium clinical care"],
     process: [],
     whoFor: ["Pre-event glow seekers", "Dry or dull skin", "Premium clinical care clients"],
     safety: "Doctor-supervised and delivered in premium clinical settings.",
@@ -187,12 +103,87 @@ export const treatmentKitCatalog = [
     tone: "accent",
     image:
       "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Korean Glass Treatment Campaign",
-    note: "Our team will contact you on WhatsApp for campaign location and schedule.",
-    ctaText: "Enquire Now",
+    imageAlt: "Korean Glass Treatment",
+    note: "Our team will contact you on WhatsApp for schedule confirmation.",
+    ctaText: "Book Consultation",
     featured: true,
     requiresSlots: true,
     availableCities: ["Mumbai", "Delhi", "Bangalore", "Ahmedabad"],
+  },
+  {
+    slug: "skin-lightening",
+    title: "Skin Lightening Treatment",
+    kitName: "Skin Lightening Treatment",
+    price: 18000,
+    priceLabel: "Rs. 18,000",
+    unit: "one-time",
+    type: "home_kit",
+    treatmentType: "home-kit",
+    tagline: "Home Kit Treatment Program",
+    subtitle: "Home Kit Treatment Program",
+    description:
+      "Professional skin brightening and pigmentation care program with a premium home-care kit.",
+    overview:
+      "Home-based skincare program with a premium kit delivered to your home for pigmentation and brightening support.",
+    benefits: [
+      "Reduces pigmentation",
+      "Improves uneven skin tone",
+      "Enhances glow",
+      "Safe for Indian skin types",
+    ],
+    process: [
+      { step: "Kit Delivery", detail: "Home care kit delivered to your doorstep." },
+      { step: "Video Consultation", detail: "Expert guidance for treatment use." },
+      { step: "Progress Tracking", detail: "Weekly check-ins and support." },
+    ],
+    whoFor: ["Pigmentation", "Tan", "Uneven tone", "Dullness"],
+    safety: "Doctor-supervised and patch-tested.",
+    faqs: [{ q: "What is included?", a: "Premium home kit with guided routine." }],
+    duration: "4-6 weeks",
+    sessions: "Complete home program",
+    badge: "Home Program",
+    icon: "droplet",
+    tone: "accent",
+    image:
+      "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+    imageAlt: "Premium skincare home kit",
+    note: "Premium home kit with guided routine.",
+    ctaText: "Book Home Kit Program",
+    featured: true,
+    requiresSlots: false,
+    availableCities: ["All India"],
+  },
+  {
+    slug: "basic-skin-treatment",
+    title: "Basic Skin Treatment",
+    kitName: "Basic Skin Treatment",
+    price: 12000,
+    priceLabel: "Rs. 12,000",
+    unit: "per session",
+    type: "clinic",
+    treatmentType: "clinic",
+    tagline: "Essential Skin Care",
+    subtitle: "Essential Skin Care",
+    description: "Essential starter treatment for cleansing, hydration, and glow maintenance.",
+    overview: "Essential starter treatment for cleansing, hydration, and glow maintenance.",
+    benefits: ["Beginner friendly", "Glow maintenance", "Hydration support", "All-skin support"],
+    process: [],
+    whoFor: ["First-time skincare clients", "Maintenance care", "All skin types"],
+    safety: "Gentle, simple, and designed for guided care.",
+    faqs: [],
+    duration: "45-60 min",
+    sessions: "Recommended 3-4 sessions",
+    badge: "Essential",
+    icon: "droplet",
+    tone: "primary",
+    image:
+      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
+    imageAlt: "Basic Skin Treatment",
+    note: "Essential skincare treatment.",
+    ctaText: "Book Consultation",
+    featured: false,
+    requiresSlots: false,
+    availableCities: ["Mumbai", "Delhi", "Bangalore"],
   },
 ] as const;
 
@@ -202,22 +193,11 @@ export const bookingTreatmentSlugAliases: Record<string, string> = {
   "advance-kit": "advanced-skin-treatment",
   "japanese-kit": "japanese-skin-treatment",
   "korean-glass-kit": "korean-glass-skin",
-  "basic-kit": "basic-skin-treatment",
   "korean-glass-treatment": "korean-glass-skin",
+  "basic-kit": "basic-skin-treatment",
 };
 
-const legacyToKitSlug = Object.fromEntries(
-  Object.entries(bookingTreatmentSlugAliases).map(([kitSlug, legacySlug]) => [legacySlug, kitSlug])
-) as Record<string, string>;
-
-export const bookingTreatmentOrder = [
-  "advanced-skin-treatment",
-  "japanese-skin-treatment",
-  "korean-glass-skin",
-  "skin-lightening",
-  "basic-skin-treatment",
-  ...treatmentKitSlugs,
-] as const;
+export const bookingTreatmentOrder = treatmentKitSlugs;
 
 export function normalizeBookingTreatmentSlug(slug?: string | null) {
   const cleanSlug = String(slug || "").trim();
@@ -225,27 +205,24 @@ export function normalizeBookingTreatmentSlug(slug?: string | null) {
 }
 
 export function getCanonicalBookingTreatmentSlug(slug?: string | null) {
-  const cleanSlug = String(slug || "").trim();
-  return legacyToKitSlug[cleanSlug] || cleanSlug;
+  return normalizeBookingTreatmentSlug(slug);
 }
 
 export function getBookingTreatmentSlugCandidates(slug?: string | null) {
   const cleanSlug = String(slug || "").trim();
   const canonicalSlug = getCanonicalBookingTreatmentSlug(cleanSlug);
-  const legacySlug = normalizeBookingTreatmentSlug(canonicalSlug);
+  const aliases = Object.entries(bookingTreatmentSlugAliases)
+    .filter(([, value]) => value === canonicalSlug)
+    .map(([key]) => key);
 
-  return Array.from(new Set([cleanSlug, canonicalSlug, legacySlug].filter(Boolean)));
+  return Array.from(new Set([cleanSlug, canonicalSlug, ...aliases].filter(Boolean)));
 }
 
 export function getBookingTreatmentCatalogItem(slug?: string | null) {
   const cleanSlug = String(slug || "").trim();
   const canonicalSlug = getCanonicalBookingTreatmentSlug(cleanSlug);
-  const normalizedSlug = normalizeBookingTreatmentSlug(canonicalSlug);
 
   return treatmentKitCatalog.find(
-    (treatment) =>
-      treatment.slug === cleanSlug ||
-      treatment.slug === canonicalSlug ||
-      normalizeBookingTreatmentSlug(treatment.slug) === normalizedSlug
+    (treatment) => treatment.slug === cleanSlug || treatment.slug === canonicalSlug
   );
 }

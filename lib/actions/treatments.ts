@@ -45,7 +45,6 @@ export async function createTreatment(formData: FormData) {
   const slug = formData.get("slug") as string;
   const type = formData.get("type") as string;
   const price = formData.get("price") as string;
-  const kitName = formData.get("kit_name") as string;
   const tagline = formData.get("tagline") as string;
   const description = formData.get("description") as string;
   const benefits = formData.get("benefits") as string;
@@ -62,7 +61,6 @@ export async function createTreatment(formData: FormData) {
     slug,
     type: type as "home_kit" | "clinic" | "campaign",
     price: parseFloat(price) || 0,
-    kit_name: kitName || title,
     tagline,
     description,
     benefits: benefits ? JSON.parse(benefits) : [],
@@ -94,7 +92,6 @@ export async function updateTreatment(formData: FormData) {
   const slug = formData.get("slug") as string;
   const type = formData.get("type") as string;
   const price = formData.get("price") as string;
-  const kitName = formData.get("kit_name") as string;
   const tagline = formData.get("tagline") as string;
   const description = formData.get("description") as string;
   const benefits = formData.get("benefits") as string;
@@ -113,7 +110,6 @@ export async function updateTreatment(formData: FormData) {
       slug,
       type: type as "home_kit" | "clinic" | "campaign",
       price: parseFloat(price) || 0,
-      kit_name: kitName || title,
       tagline,
       description,
       benefits: benefits ? JSON.parse(benefits) : [],
@@ -161,7 +157,7 @@ export async function toggleTreatmentActive(id: string, active: boolean) {
 
   const { error } = await supabase
     .from("treatments" as any)
-    .update({ active })
+    .update({ active, is_active: active, deleted_at: active ? null : new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
@@ -198,9 +194,7 @@ export async function ensureFinalTreatmentCatalog() {
   const rows = treatmentKitCatalog.map((treatment) => ({
     slug: treatment.slug,
     title: treatment.title,
-    kit_name: treatment.kitName,
     type: treatment.type,
-    treatment_type: treatment.treatmentType,
     price: treatment.price,
     price_label: treatment.priceLabel,
     unit: treatment.unit,
@@ -210,7 +204,10 @@ export async function ensureFinalTreatmentCatalog() {
     overview: treatment.overview,
     benefits: treatment.benefits,
     process: treatment.process,
+    process_steps: treatment.process,
+    who_for: JSON.stringify(treatment.whoFor),
     safety: treatment.safety,
+    faqs: treatment.faqs,
     duration: treatment.duration,
     sessions: treatment.sessions,
     badge: treatment.badge,

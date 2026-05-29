@@ -67,7 +67,6 @@ export default function AdminTreatmentsPage() {
     const { data, error } = await supabase
       .from("treatments" as any)
       .select("*")
-      .is("deleted_at", null)
       .in("slug", treatmentKitSlugs as unknown as string[])
       .order("created_at", { ascending: false });
     if (error) {
@@ -127,9 +126,7 @@ export default function AdminTreatmentsPage() {
         price: parseFloat(formData.price),
         price_label:
           formData.price_label ||
-          `₹${Number(parseFloat(formData.price) || 0).toLocaleString("en-IN")}`,
-        kit_name: formData.kit_name || formData.title,
-        treatment_type: formData.type === "home_kit" ? "home-kit" : "camp",
+          `Rs. ${Number(parseFloat(formData.price) || 0).toLocaleString("en-IN")}`,
         unit: formData.unit,
         subtitle: formData.subtitle,
         description: formData.description,
@@ -144,6 +141,8 @@ export default function AdminTreatmentsPage() {
         available_cities: availableCitiesArray,
         cta_text: formData.cta_text,
         active: formData.active,
+        is_active: formData.active,
+        deleted_at: formData.active ? null : new Date().toISOString(),
         featured: formData.featured,
       };
 
