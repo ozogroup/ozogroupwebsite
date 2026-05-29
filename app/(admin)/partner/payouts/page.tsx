@@ -22,9 +22,9 @@ export default function PartnerPayoutsPage() {
     setLoading(true);
     const data = await getPartnerPayoutContext();
     setPartner(data.partner);
-    setKyc(data.kyc);
+    setKyc(data.kyc as any);
     setPayouts(data.payouts);
-    if (!data.partner?.bank_account_number && (data.kyc?.upi_id || data.partner?.upi_id)) {
+    if (!data.partner?.bank_account_number && data.partner?.upi_id) {
       setPaymentMethod("upi");
     }
     setLoading(false);
@@ -41,10 +41,10 @@ export default function PartnerPayoutsPage() {
     partner?.kyc_status !== "verified" ? "KYC must be approved" : null,
     !partner?.bank_verified ? "Bank details must be verified" : null,
     !membershipActive ? "Membership must be active" : null,
-    wallet < 1000 ? "Minimum wallet balance is ₹1000" : null,
+    wallet < 1000 ? "Minimum wallet balance is Rs. 1000" : null,
   ].filter(Boolean);
   const hasBank = Boolean(partner?.bank_account_holder && partner?.bank_name && partner?.bank_account_number && partner?.bank_ifsc);
-  const hasUpi = Boolean(kyc?.upi_id || partner?.upi_id);
+  const hasUpi = Boolean(partner?.upi_id);
   const canRequest = restrictions.length === 0;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -90,8 +90,8 @@ export default function PartnerPayoutsPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Wallet</h2>
           <div className="p-6 bg-brand-accent/10 rounded-lg text-center">
-            <p className="text-4xl font-bold text-brand-accent">₹{wallet.toLocaleString("en-IN")}</p>
-            <p className="text-sm text-slate-600 mt-2">Minimum payout: ₹1000</p>
+            <p className="text-4xl font-bold text-brand-accent">Rs. {wallet.toLocaleString("en-IN")}</p>
+            <p className="text-sm text-slate-600 mt-2">Minimum payout: Rs. 1000</p>
           </div>
           <div className="mt-4 text-sm text-slate-600 space-y-1">
             <p>KYC: <span className="font-semibold capitalize">{partner?.kyc_status || "not_submitted"}</span></p>
@@ -104,7 +104,7 @@ export default function PartnerPayoutsPage() {
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Request Payout</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Amount (₹)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Amount (Rs.)</label>
               <input
                 type="number"
                 value={amount}
@@ -121,15 +121,15 @@ export default function PartnerPayoutsPage() {
               <div className="rounded-xl border border-brand-border bg-brand-surface/60 p-4 text-sm">
                 <div className="flex justify-between gap-3">
                   <span className="text-slate-600">Gross request</span>
-                  <span className="font-semibold text-slate-900">₹{requestedGross.toLocaleString("en-IN")}</span>
+                  <span className="font-semibold text-slate-900">Rs. {requestedGross.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="mt-2 flex justify-between gap-3 text-red-700">
                   <span>15% deduction</span>
-                  <span className="font-semibold">-₹{payoutDeduction.toLocaleString("en-IN")}</span>
+                  <span className="font-semibold">-Rs. {payoutDeduction.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="mt-3 flex justify-between gap-3 border-t border-brand-border pt-3">
                   <span className="font-semibold text-brand-ink">Net payable</span>
-                  <span className="font-bold text-brand-accent">₹{netPayable.toLocaleString("en-IN")}</span>
+                  <span className="font-bold text-brand-accent">Rs. {netPayable.toLocaleString("en-IN")}</span>
                 </div>
               </div>
             )}
@@ -160,7 +160,7 @@ export default function PartnerPayoutsPage() {
                     className="mr-2"
                   />
                   UPI
-                  <span className="block pl-5 text-xs text-slate-500">{hasUpi ? kyc?.upi_id || partner?.upi_id : "UPI details missing"}</span>
+                  <span className="block pl-5 text-xs text-slate-500">{hasUpi ? partner?.upi_id : "UPI details missing"}</span>
                 </label>
               </div>
             </div>
@@ -190,10 +190,7 @@ export default function PartnerPayoutsPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-3">Saved UPI Details</h2>
           <div className="space-y-1 text-sm text-slate-600">
-            <p><span className="font-medium text-slate-800">Holder:</span> {kyc?.upi_holder_name || "-"}</p>
-            <p><span className="font-medium text-slate-800">Mobile:</span> {kyc?.upi_mobile || "-"}</p>
-            <p><span className="font-medium text-slate-800">UPI ID:</span> {kyc?.upi_id || partner?.upi_id || "-"}</p>
-            <p><span className="font-medium text-slate-800">App:</span> {kyc?.upi_app || "-"}</p>
+            <p><span className="font-medium text-slate-800">UPI ID:</span> {partner?.upi_id || "-"}</p>
           </div>
         </div>
       </div>
@@ -220,11 +217,11 @@ export default function PartnerPayoutsPage() {
                 payouts.map((payout) => (
                   <tr key={payout.id}>
                     <td className="px-4 py-4 text-sm text-slate-600">{new Date(payout.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">₹{Number(payout.net_amount || payout.amount || 0).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">Rs. {Number(payout.net_amount || payout.amount || 0).toLocaleString("en-IN")}</td>
                     <td className="px-4 py-4 text-xs text-slate-600">
-                      Gross ₹{Number(payout.gross_amount || payout.available_balance || payout.amount || 0).toLocaleString("en-IN")}
+                      Gross Rs. {Number(payout.gross_amount || payout.available_balance || payout.amount || 0).toLocaleString("en-IN")}
                       <br />
-                      15% -₹{Number(payout.deduction_amount || 0).toLocaleString("en-IN")}
+                      15% -Rs. {Number(payout.deduction_amount || 0).toLocaleString("en-IN")}
                     </td>
                     <td className="px-4 py-4 text-sm capitalize">{payout.status}</td>
                     <td className="px-4 py-4 text-sm text-slate-600">{payout.transaction_reference || "-"}</td>

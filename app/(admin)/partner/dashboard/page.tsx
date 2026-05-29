@@ -124,7 +124,7 @@ export default async function PartnerDashboardPage() {
         .limit(8),
       supabase
         .from("partner_sales" as any)
-        .select("kit_name,treatment_name,treatment_price,booking_status,commission_amount,created_at,customer_name,customer_phone")
+        .select("treatment_name,treatment_price,booking_status,commission_amount,created_at,customer_name,customer_phone")
         .eq("partner_id", user.id)
         .order("created_at", { ascending: false }),
       getSponsoredMembershipRequests(100),
@@ -167,7 +167,7 @@ export default async function PartnerDashboardPage() {
     .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
 
   const kitStats = sales.reduce((acc: Record<string, { count: number; sales: number }>, s: any) => {
-    const kit = s.kit_name || s.treatment_name || "Unknown";
+    const kit = s.treatment_name || "Unknown";
     acc[kit] = acc[kit] || { count: 0, sales: 0 };
     acc[kit].count += 1;
     acc[kit].sales += Number(s.treatment_price || 0);

@@ -60,7 +60,6 @@ export async function submitPartnerKyc(formData: FormData) {
     "bank_name",
     "account_number",
     "bank_ifsc",
-    "branch_name",
   ];
 
   for (const key of required) {
@@ -86,67 +85,21 @@ export async function submitPartnerKyc(formData: FormData) {
   }
 
   try {
-    const existing = await supabase
-      .from("partner_kyc" as any)
-      .select("pan_card_path,aadhaar_front_path,aadhaar_back_path")
-      .eq("partner_id", profile.id)
-      .maybeSingle();
-
-    const panPath =
-      (await uploadKycFile(profile.id, formData.get("pan_card") as File | null, "PAN Card")) ||
-      (existing.data as any)?.pan_card_path;
-    const aadhaarFrontPath =
-      (await uploadKycFile(profile.id, formData.get("aadhaar_front") as File | null, "Aadhaar Front")) ||
-      (existing.data as any)?.aadhaar_front_path;
-    const aadhaarBackPath =
-      (await uploadKycFile(profile.id, formData.get("aadhaar_back") as File | null, "Aadhaar Back")) ||
-      (existing.data as any)?.aadhaar_back_path;
-
-    if (!panPath || !aadhaarFrontPath || !aadhaarBackPath) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Please upload PAN and both Aadhaar images")}`);
-    }
-
-    const payload = {
-      partner_id: profile.id,
-      full_name: value(formData, "full_name"),
-      mobile_number: mobileNumber,
-      email: value(formData, "email"),
-      account_holder_name: value(formData, "account_holder_name"),
-      bank_name: value(formData, "bank_name"),
-      account_number: accountNumber,
-      bank_ifsc: bankIfsc,
-      branch_name: value(formData, "branch_name"),
-      upi_holder_name: value(formData, "upi_holder_name") || null,
-      upi_mobile: upiMobile || null,
-      upi_id: upiId || null,
-      upi_app: value(formData, "upi_app") || null,
-      pan_card_path: panPath,
-      aadhaar_front_path: aadhaarFrontPath,
-      aadhaar_back_path: aadhaarBackPath,
-      status: "pending",
-      rejection_reason: null,
-    };
-
-    const { error } = await supabase
-      .from("partner_kyc" as any)
-      .upsert(payload, { onConflict: "partner_id" });
-
-    if (error) throw error;
+    await Promise.all([
+      uploadKycFile(profile.id, formData.get("pan_card") as File | null, "PAN Card"),
+      uploadKycFile(profile.id, formData.get("aadhaar_front") as File | null, "Aadhaar Front"),
+      uploadKycFile(profile.id, formData.get("aadhaar_back") as File | null, "Aadhaar Back"),
+    ]);
 
     await supabase
       .from("partners" as any)
       .update({
         kyc_status: "pending",
-        kyc_submitted_at: new Date().toISOString(),
-        bank_account_holder: payload.account_holder_name,
-        bank_account_number: payload.account_number,
-        bank_ifsc: payload.bank_ifsc,
-        bank_name: payload.bank_name,
-        bank_branch_name: payload.branch_name,
-        upi_holder_name: payload.upi_holder_name,
-        upi_mobile: payload.upi_mobile,
-        upi_id: payload.upi_id,
-        upi_app: payload.upi_app,
+        bank_account_holder: value(formData, "account_holder_name"),
+        bank_account_number: accountNumber,
+        bank_ifsc: bankIfsc,
+        bank_name: value(formData, "bank_name"),
+        upi_id: upiId || null,
         bank_verified: false,
         updated_at: new Date().toISOString(),
       })
@@ -164,12 +117,9 @@ export async function getPartnerKycStatus() {
   const profile = await requirePartner();
   const supabase = getSupabaseServiceClient();
 
-  const [{ data: partner }, { data: kyc }] = await Promise.all([
-    supabase.from("partners" as any).select("*").eq("id", profile.id).single(),
-    supabase.from("partner_kyc" as any).select("*").eq("partner_id", profile.id).maybeSingle(),
-  ]);
+  const { data: partner } = await supabase.from("partners" as any).select("*").eq("id", profile.id).single();
 
-  return { partner: partner as any, kyc: kyc as any, profile };
+  return { partner: partner as any, kyc: null, profile };
 }
 
 async function signedUrl(path?: string | null) {
@@ -184,8 +134,9 @@ export async function getKycSubmissions() {
   const supabase = getSupabaseServiceClient();
 
   const { data, error } = await supabase
-    .from("partner_kyc" as any)
-    .select("*, partner:partners(partner_code,status,profiles(full_name,email,phone))")
+    .from("partners" as any)
+    .select("id, partner_code, status, kyc_status, bank_verified, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, created_at, updated_at, profiles(full_name,email,phone)")
+    .neq("kyc_status", "not_submitted")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -193,55 +144,45 @@ export async function getKycSubmissions() {
     return [];
   }
 
-  return Promise.all(
-    (data || []).map(async (row: any) => ({
-      ...row,
-      pan_card_url: await signedUrl(row.pan_card_path),
-      aadhaar_front_url: await signedUrl(row.aadhaar_front_path),
-      aadhaar_back_url: await signedUrl(row.aadhaar_back_path),
-    }))
-  );
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    partner_id: row.id,
+    full_name: row.profiles?.full_name,
+    mobile_number: row.profiles?.phone,
+    email: row.profiles?.email,
+    account_holder_name: row.bank_account_holder,
+    bank_name: row.bank_name,
+    account_number: row.bank_account_number,
+    bank_ifsc: row.bank_ifsc,
+    upi_id: row.upi_id,
+    status: row.kyc_status,
+    created_at: row.updated_at || row.created_at,
+    partner: {
+      partner_code: row.partner_code,
+      status: row.status,
+      profiles: row.profiles,
+    },
+  }));
 }
 
 export async function reviewKycSubmission(id: string, status: "verified" | "rejected" | "pending", reason?: string) {
-  const admin = await requireAdmin();
+  await requireAdmin();
   const supabase = getSupabaseServiceClient();
-
-  const { data: kyc, error: fetchError } = await supabase
-    .from("partner_kyc" as any)
-    .select("partner_id")
-    .eq("id", id)
-    .single();
-
-  if (fetchError || !kyc) throw new Error("KYC submission not found");
 
   const now = new Date().toISOString();
   const rejectionReason = status === "rejected" ? reason?.trim() || "Please resubmit clearer/valid documents." : null;
 
   const { error } = await supabase
-    .from("partner_kyc" as any)
+    .from("partners" as any)
     .update({
-      status,
-      rejection_reason: rejectionReason,
-      reviewed_by: admin.id,
-      reviewed_at: now,
+      kyc_status: status,
+      bank_verified: status === "verified",
+      payout_hold_reason: status === "verified" ? null : rejectionReason,
       updated_at: now,
     })
     .eq("id", id);
 
   if (error) throw error;
-
-  await supabase
-    .from("partners" as any)
-    .update({
-      kyc_status: status,
-      kyc_reviewed_at: now,
-      kyc_rejection_reason: rejectionReason,
-      bank_verified: status === "verified",
-      payout_hold_reason: status === "verified" ? null : rejectionReason,
-      updated_at: now,
-    })
-    .eq("id", (kyc as any).partner_id);
 
   revalidatePath("/admin/kyc");
   revalidatePath("/partner/kyc");

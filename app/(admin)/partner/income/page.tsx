@@ -20,7 +20,7 @@ function commissionAmount(commission: any) {
 
 function isBonusCommission(commission: any) {
   return ["bonus", "milestone"].includes(
-    String(commission.commission_type || commission.source || "").toLowerCase()
+    String(commission.source_type || "").toLowerCase()
   );
 }
 
@@ -55,7 +55,10 @@ export default async function PartnerIncomePage() {
     .filter((commission: any) => commission.source_type === "membership" && !isBonusCommission(commission))
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const productIncome = eligibleCommissions
-    .filter((commission: any) => commission.source_type === "booking" && !isBonusCommission(commission))
+    .filter((commission: any) =>
+      ["booking", "product", "kit", "treatment"].includes(String(commission.source_type || "").toLowerCase()) &&
+      !isBonusCommission(commission)
+    )
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const bonusIncome = eligibleCommissions
     .filter(isBonusCommission)

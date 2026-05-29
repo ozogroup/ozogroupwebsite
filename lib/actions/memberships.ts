@@ -533,6 +533,28 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
   return data;
 }
 
+export async function updateMembershipAdminNotes(id: string, adminNotes: string) {
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("memberships" as any)
+    .update({
+      admin_notes: adminNotes?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating membership admin notes:", error);
+    throw error;
+  }
+
+  revalidatePath("/admin/memberships");
+  return data;
+}
+
 export async function repairPartnerAuthUser(email: string) {
   "use server";
   const serviceClient = getSupabaseServiceClient();

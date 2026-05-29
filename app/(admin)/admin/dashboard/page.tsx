@@ -86,7 +86,7 @@ export default async function AdminDashboardPage() {
       return r.count ?? 0;
     })(),
     (async () => {
-      const r = await (supabase as any).from("partner_kyc").select("*", { count: "exact", head: true }).eq("status", "pending");
+      const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).eq("kyc_status", "pending");
       return r.count ?? 0;
     })(),
     (async () => {
@@ -95,20 +95,20 @@ export default async function AdminDashboardPage() {
     })(),
     safeQuery(() => (supabase as any).from("bookings").select("payment_amount,treatment_name,treatment_price,created_at").gte("created_at", monthStart.toISOString())),
     safeQuery(() => (supabase as any).from("payouts").select("amount,status")),
-    safeQuery(() => (supabase as any).from("partner_sales").select("treatment_name,kit_name,treatment_price,partner_id,partner:partners(partner_code,profiles(full_name))")),
+    safeQuery(() => (supabase as any).from("partner_sales").select("treatment_name,treatment_price,partner_id")),
   ]);
 
   const monthlyRevenue = monthlyBookings.reduce((sum: number, b: any) => sum + Number(b.payment_amount || b.treatment_price || 0), 0);
   const totalPayoutAmount = allPayouts.filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
   const treatmentRanking = allSales.reduce((acc: Record<string, number>, s: any) => {
-    const name = s.kit_name || s.treatment_name || "Unknown";
+    const name = s.treatment_name || "Unknown";
     acc[name] = (acc[name] || 0) + 1;
     return acc;
   }, {});
   const topSellingTreatment = Object.entries(treatmentRanking).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || "No sales yet";
   const partnerRanking = allSales.reduce((acc: Record<string, { name: string; count: number }>, s: any) => {
     const id = s.partner_id || "unknown";
-    acc[id] = acc[id] || { name: s.partner?.profiles?.full_name || s.partner?.partner_code || "Unknown", count: 0 };
+    acc[id] = acc[id] || { name: id === "unknown" ? "Unknown" : `Partner ${String(id).slice(0, 8)}`, count: 0 };
     acc[id].count += 1;
     return acc;
   }, {});

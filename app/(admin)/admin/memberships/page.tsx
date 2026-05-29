@@ -7,6 +7,7 @@ import {
   approveAndCreatePartner,
   getMembershipRequests,
   repairPartnerAuthUser,
+  updateMembershipAdminNotes,
   updateMembershipStatus,
   updatePaymentStatus,
 } from "@/lib/actions/memberships";
@@ -16,6 +17,7 @@ export default function AdminMembershipsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadMemberships();
@@ -25,6 +27,7 @@ export default function AdminMembershipsPage() {
     setLoading(true);
     const data = await getMembershipRequests();
     setMemberships(data);
+    setAdminNotes(Object.fromEntries(data.map((item: any) => [item.id, item.admin_notes || ""])));
     setLoading(false);
   }
 
@@ -95,6 +98,20 @@ export default function AdminMembershipsPage() {
     }
   }
 
+  async function handleSaveNotes(id: string) {
+    setActionLoading(id);
+    setMessage(null);
+    try {
+      await updateMembershipAdminNotes(id, adminNotes[id] || "");
+      setMessage({ type: "success", text: "Admin notes saved" });
+      await loadMemberships();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to save admin notes" });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   function getActivationStatus(m: any): { label: string; color: string } {
     if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
     if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
@@ -132,7 +149,7 @@ export default function AdminMembershipsPage() {
 
       <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-soft">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1060px]">
+          <table className="w-full min-w-[1320px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Name</th>
@@ -141,13 +158,14 @@ export default function AdminMembershipsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Linked Referrer</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Security / Notes</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border bg-white">
               {memberships.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <p className="text-brand-muted">No membership requests found</p>
                   </td>
                 </tr>
@@ -171,6 +189,31 @@ export default function AdminMembershipsPage() {
                         const s = getActivationStatus(membership);
                         return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.color}`}>{s.label}</span>;
                       })()}
+                      <div className="mt-2 text-[11px] leading-5 text-brand-muted">
+                        <p>Created: {membership.created_at ? new Date(membership.created_at).toLocaleDateString("en-IN") : "-"}</p>
+                        <p>Updated: {membership.updated_at ? new Date(membership.updated_at).toLocaleDateString("en-IN") : "-"}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <div className="min-w-[260px] space-y-2">
+                        <p className="text-xs text-brand-muted">
+                          Passwords are masked by Supabase Auth. Use reset with visibility toggle after approval.
+                        </p>
+                        <textarea
+                          value={adminNotes[membership.id] || ""}
+                          onChange={(e) => setAdminNotes((notes) => ({ ...notes, [membership.id]: e.target.value }))}
+                          rows={2}
+                          placeholder="Admin notes"
+                          className="w-full rounded-lg border border-brand-border px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-accent"
+                        />
+                        <button
+                          onClick={() => handleSaveNotes(membership.id)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded border border-brand-border bg-white px-2 py-1 text-[10px] font-medium text-brand-ink hover:bg-brand-surface disabled:opacity-50"
+                        >
+                          Save Notes
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-4 sm:px-6">
                       <div className="flex flex-wrap items-center gap-2">

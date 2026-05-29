@@ -9,6 +9,7 @@ export default async function PartnerKycPage({
   searchParams: { error?: string; success?: string };
 }) {
   const { partner, kyc, profile } = await getPartnerKycStatus();
+  const kycData = kyc as any;
   const status = partner?.kyc_status || "not_submitted";
 
   return (
@@ -53,9 +54,9 @@ export default async function PartnerKycPage({
             {status === "verified" ? "Approved" : status.replace("_", " ")}
           </span>
         </div>
-        {(partner?.kyc_rejection_reason || kyc?.rejection_reason) && (
+        {(partner?.payout_hold_reason || kycData?.rejection_reason) && (
           <p className="mt-4 text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg p-3">
-            {partner?.kyc_rejection_reason || kyc?.rejection_reason}
+            {partner?.payout_hold_reason || kycData?.rejection_reason}
           </p>
         )}
       </div>
@@ -67,21 +68,21 @@ export default async function PartnerKycPage({
         <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Personal Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Full Name" name="full_name" defaultValue={kyc?.full_name || profile.full_name || ""} required />
-            <Field label="Mobile Number" name="mobile_number" defaultValue={kyc?.mobile_number || profile.phone || ""} inputMode="numeric" placeholder="10 digit mobile number" required />
-            <Field label="Email" name="email" type="email" defaultValue={kyc?.email || profile.email || ""} required />
+            <Field label="Full Name" name="full_name" defaultValue={kycData?.full_name || profile.full_name || ""} required />
+            <Field label="Mobile Number" name="mobile_number" defaultValue={kycData?.mobile_number || profile.phone || ""} inputMode="numeric" placeholder="10 digit mobile number" required />
+            <Field label="Email" name="email" type="email" defaultValue={kycData?.email || profile.email || ""} required />
           </div>
         </section>
 
         <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Bank Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Account Holder Name" name="account_holder_name" defaultValue={kyc?.account_holder_name || partner?.bank_account_holder || ""} required />
-            <Field label="Bank Name" name="bank_name" defaultValue={kyc?.bank_name || partner?.bank_name || ""} required />
-            <Field label="Account Number" name="account_number" defaultValue={kyc?.account_number || partner?.bank_account_number || ""} inputMode="numeric" required />
-            <Field label="Confirm Account Number" name="confirm_account_number" defaultValue={kyc?.account_number || partner?.bank_account_number || ""} inputMode="numeric" required />
-            <Field label="IFSC Code" name="bank_ifsc" defaultValue={kyc?.bank_ifsc || partner?.bank_ifsc || ""} placeholder="ABCD0123456" required />
-            <Field label="Branch Name" name="branch_name" defaultValue={kyc?.branch_name || partner?.bank_branch_name || ""} required />
+            <Field label="Account Holder Name" name="account_holder_name" defaultValue={kycData?.account_holder_name || partner?.bank_account_holder || ""} required />
+            <Field label="Bank Name" name="bank_name" defaultValue={kycData?.bank_name || partner?.bank_name || ""} required />
+            <Field label="Account Number" name="account_number" defaultValue={kycData?.account_number || partner?.bank_account_number || ""} inputMode="numeric" required />
+            <Field label="Confirm Account Number" name="confirm_account_number" defaultValue={kycData?.account_number || partner?.bank_account_number || ""} inputMode="numeric" required />
+            <Field label="IFSC Code" name="bank_ifsc" defaultValue={kycData?.bank_ifsc || partner?.bank_ifsc || ""} placeholder="ABCD0123456" required />
+            <Field label="Branch Name" name="branch_name" defaultValue={kycData?.branch_name || ""} />
           </div>
         </section>
 
@@ -91,19 +92,19 @@ export default async function PartnerKycPage({
             <p className="text-sm text-slate-600">Optional when bank details are complete. Add UPI for faster payout choices.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="UPI Holder Name" name="upi_holder_name" defaultValue={kyc?.upi_holder_name || ""} />
-            <Field label="UPI Mobile Number" name="upi_mobile" defaultValue={kyc?.upi_mobile || ""} inputMode="numeric" placeholder="10 digit mobile number" />
-            <Field label="UPI ID" name="upi_id" defaultValue={kyc?.upi_id || partner?.upi_id || ""} placeholder="name@bank" />
-            <SelectField label="Preferred UPI App" name="upi_app" defaultValue={kyc?.upi_app || ""} />
+            <Field label="UPI Holder Name" name="upi_holder_name" defaultValue={kycData?.upi_holder_name || ""} />
+            <Field label="UPI Mobile Number" name="upi_mobile" defaultValue={kycData?.upi_mobile || ""} inputMode="numeric" placeholder="10 digit mobile number" />
+            <Field label="UPI ID" name="upi_id" defaultValue={kycData?.upi_id || partner?.upi_id || ""} placeholder="name@bank" />
+            <SelectField label="Preferred UPI App" name="upi_app" defaultValue={kycData?.upi_app || ""} />
           </div>
         </section>
 
         <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Documents</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FileField label="PAN Card Upload" name="pan_card" required={!kyc?.pan_card_path} />
-            <FileField label="Aadhaar Front Upload" name="aadhaar_front" required={!kyc?.aadhaar_front_path} />
-            <FileField label="Aadhaar Back Upload" name="aadhaar_back" required={!kyc?.aadhaar_back_path} />
+            <FileField label="PAN Card Upload" name="pan_card" />
+            <FileField label="Aadhaar Front Upload" name="aadhaar_front" />
+            <FileField label="Aadhaar Back Upload" name="aadhaar_back" />
           </div>
           <p className="mt-3 text-xs text-slate-500">
             JPG, PNG, WebP, or PDF. Files are stored privately and reviewed only by admins.

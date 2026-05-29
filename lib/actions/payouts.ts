@@ -230,17 +230,12 @@ export async function getPartnerPayoutContext() {
   const profile = await requirePartner();
   const supabase = getSupabaseServerClient();
 
-  const [{ data: partner }, { data: kyc }, { data: payouts }] = await Promise.all([
+  const [{ data: partner }, { data: payouts }] = await Promise.all([
     supabase
       .from("partners" as any)
       .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,bank_name,upi_id")
       .eq("id", profile.id)
       .single(),
-    supabase
-      .from("partner_kyc" as any)
-      .select("*")
-      .eq("partner_id", profile.id)
-      .maybeSingle(),
     supabase
       .from("payouts" as any)
       .select("*")
@@ -248,34 +243,26 @@ export async function getPartnerPayoutContext() {
       .order("created_at", { ascending: false }),
   ]);
 
-  return { partner: partner as any, kyc: kyc as any, payouts: payouts || [] };
+  return { partner: partner as any, kyc: null, payouts: payouts || [] };
 }
 
 export async function requestPartnerPayout(amount: number, paymentMethod?: "bank" | "upi") {
   const profile = await requirePartner();
   const supabase = getSupabaseServerClient();
 
-  const [{ data: partner, error }, { data: kyc }] = await Promise.all([
-    supabase
-      .from("partners" as any)
-      .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,bank_name,upi_id")
-      .eq("id", profile.id)
-      .single(),
-    supabase
-      .from("partner_kyc" as any)
-      .select("*")
-      .eq("partner_id", profile.id)
-      .maybeSingle(),
-  ]);
+  const { data: partner, error } = await supabase
+    .from("partners" as any)
+    .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,bank_name,upi_id")
+    .eq("id", profile.id)
+    .single();
 
   if (error || !partner) return { error: "Partner profile not found." };
 
   const p = partner as any;
-  const k = kyc as any;
   const wallet = Number(p.wallet_balance || 0);
   const membershipActive = p.status === "active" && (!p.membership_expires_at || new Date(p.membership_expires_at).getTime() >= Date.now());
   const hasBank = Boolean(p.bank_account_holder && p.bank_name && p.bank_account_number && p.bank_ifsc);
-  const upiId = k?.upi_id || p.upi_id;
+  const upiId = p.upi_id;
   const hasUpi = Boolean(upiId);
   const method = paymentMethod || (hasBank ? "bank" : hasUpi ? "upi" : "bank");
 
@@ -291,10 +278,7 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   const paymentDetails =
     method === "upi"
       ? [
-          k?.upi_holder_name ? `Holder: ${k.upi_holder_name}` : null,
-          k?.upi_mobile ? `Mobile: ${k.upi_mobile}` : null,
           `UPI: ${upiId}`,
-          k?.upi_app ? `App: ${k.upi_app}` : null,
         ].filter(Boolean).join(" | ")
       : [
           p.bank_account_holder,

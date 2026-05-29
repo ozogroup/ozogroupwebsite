@@ -91,7 +91,7 @@ function toBookingTreatment(row: any) {
     title: row.title,
     kitName: row.kit_name || row.title,
     price: Number(row.price || 0),
-    priceLabel: row.price_label || `₹${Number(row.price || 0).toLocaleString("en-IN")}`,
+    priceLabel: row.price_label || `Rs. ${Number(row.price || 0).toLocaleString("en-IN")}`,
     type: row.type || row.treatment_type || "home_kit",
     slug: row.slug,
   };
@@ -283,16 +283,13 @@ export async function createBooking(payload: CreateBookingPayload) {
     const { error: saleError } = await serviceClient.from("partner_sales" as any).insert({
       partner_id: partner.id,
       partner_code: partner.partner_code,
-      treatment_id: treatment.id,
       treatment_name: treatment.title,
-      kit_name: treatment.kitName || treatment.title,
       treatment_price: treatmentPrice,
       booking_id: (booking as any).id,
       customer_name: customerName,
       customer_phone: customerPhone,
       booking_status: "pending",
       commission_amount: commissionAmount,
-      commission_id: null,
     });
 
     if (saleError) console.error("Error creating partner sale:", saleError);
