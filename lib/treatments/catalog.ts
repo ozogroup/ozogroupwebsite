@@ -206,6 +206,10 @@ export const bookingTreatmentSlugAliases: Record<string, string> = {
   "korean-glass-treatment": "korean-glass-skin",
 };
 
+const legacyToKitSlug = Object.fromEntries(
+  Object.entries(bookingTreatmentSlugAliases).map(([kitSlug, legacySlug]) => [legacySlug, kitSlug])
+) as Record<string, string>;
+
 export const bookingTreatmentOrder = [
   "advanced-skin-treatment",
   "japanese-skin-treatment",
@@ -220,14 +224,28 @@ export function normalizeBookingTreatmentSlug(slug?: string | null) {
   return bookingTreatmentSlugAliases[cleanSlug] || cleanSlug;
 }
 
+export function getCanonicalBookingTreatmentSlug(slug?: string | null) {
+  const cleanSlug = String(slug || "").trim();
+  return legacyToKitSlug[cleanSlug] || cleanSlug;
+}
+
+export function getBookingTreatmentSlugCandidates(slug?: string | null) {
+  const cleanSlug = String(slug || "").trim();
+  const canonicalSlug = getCanonicalBookingTreatmentSlug(cleanSlug);
+  const legacySlug = normalizeBookingTreatmentSlug(canonicalSlug);
+
+  return Array.from(new Set([cleanSlug, canonicalSlug, legacySlug].filter(Boolean)));
+}
+
 export function getBookingTreatmentCatalogItem(slug?: string | null) {
   const cleanSlug = String(slug || "").trim();
-  const normalizedSlug = normalizeBookingTreatmentSlug(cleanSlug);
+  const canonicalSlug = getCanonicalBookingTreatmentSlug(cleanSlug);
+  const normalizedSlug = normalizeBookingTreatmentSlug(canonicalSlug);
 
   return treatmentKitCatalog.find(
     (treatment) =>
       treatment.slug === cleanSlug ||
-      treatment.slug === normalizedSlug ||
+      treatment.slug === canonicalSlug ||
       normalizeBookingTreatmentSlug(treatment.slug) === normalizedSlug
   );
 }

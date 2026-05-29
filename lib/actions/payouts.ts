@@ -8,6 +8,12 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // PAYOUTS ACTIONS
 // =====================================================
 
+const PAYOUT_DEDUCTION_RATE = 0.15;
+
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 export async function getPayouts() {
   await requireAdmin();
   const supabase = getSupabaseServerClient();
@@ -25,7 +31,74 @@ export async function getPayouts() {
     return [];
   }
   
-  return data || [];
+  const payouts = data || [];
+  const partnerIds = Array.from(new Set(payouts.map((p: any) => p.partner_id).filter(Boolean)));
+
+  if (partnerIds.length === 0) return payouts;
+
+  const [{ data: commissions }, { data: allPayouts }] = await Promise.all([
+    supabase
+      .from("commissions" as any)
+      .select("partner_id, amount, source_type, source, commission_type, status, reversed, is_active")
+      .in("partner_id", partnerIds),
+    supabase
+      .from("payouts" as any)
+      .select("partner_id, amount, gross_amount, status")
+      .in("partner_id", partnerIds),
+  ]);
+
+  const summaryByPartner = new Map<string, any>();
+  for (const partnerId of partnerIds) {
+    const partnerCommissions = (commissions || []).filter(
+      (c: any) => c.partner_id === partnerId && c.is_active !== false && !c.reversed && c.status !== "rejected"
+    );
+    const membershipIncome = partnerCommissions
+      .filter((c: any) => c.source_type === "membership")
+      .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const productIncome = partnerCommissions
+      .filter((c: any) => c.source_type === "booking")
+      .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const bonusIncome = partnerCommissions
+      .filter((c: any) => ["bonus", "milestone"].includes(String(c.commission_type || c.source || "").toLowerCase()))
+      .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const grossIncome = membershipIncome + productIncome + bonusIncome;
+    const deductionAmount = roundMoney(grossIncome * PAYOUT_DEDUCTION_RATE);
+    const netPayable = roundMoney(grossIncome - deductionAmount);
+    const partnerPayouts = (allPayouts || []).filter((p: any) => p.partner_id === partnerId);
+    const paidAmount = partnerPayouts
+      .filter((p: any) => p.status === "paid")
+      .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+    const pendingPayout = partnerPayouts
+      .filter((p: any) => ["requested", "processing"].includes(p.status))
+      .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+    summaryByPartner.set(partnerId, {
+      membershipIncome,
+      productIncome,
+      bonusIncome,
+      grossIncome,
+      deductionRate: PAYOUT_DEDUCTION_RATE,
+      deductionAmount,
+      netPayable,
+      paidAmount,
+      pendingPayout,
+      payoutStatus: pendingPayout > 0 ? "pending" : paidAmount >= netPayable && netPayable > 0 ? "paid" : "open",
+    });
+  }
+
+  return payouts.map((payout: any) => {
+    const grossAmount = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
+    const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE));
+    const netAmount = Number(payout.net_amount || payout.amount || roundMoney(grossAmount - deductionAmount));
+    return {
+      ...payout,
+      gross_amount: grossAmount,
+      deduction_rate: Number(payout.deduction_rate ?? PAYOUT_DEDUCTION_RATE),
+      deduction_amount: deductionAmount,
+      net_amount: netAmount,
+      partner_summary: summaryByPartner.get(payout.partner_id),
+    };
+  });
 }
 
 export async function updatePayoutStatus(id: string, status: string, transactionReference?: string, note?: string) {
@@ -60,6 +133,27 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   if (error) {
     console.error("Error updating payout status:", error);
     throw error;
+  }
+
+  if (status === "paid" && data) {
+    const payout = data as any;
+    const grossDebit = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
+    const { data: partner } = await supabase
+      .from("partners" as any)
+      .select("wallet_balance, paid_earnings")
+      .eq("id", payout.partner_id)
+      .maybeSingle();
+
+    if (partner) {
+      await supabase
+        .from("partners" as any)
+        .update({
+          wallet_balance: Math.max(0, Number((partner as any).wallet_balance || 0) - grossDebit),
+          paid_earnings: Number((partner as any).paid_earnings || 0) + Number(payout.amount || 0),
+          updated_at: now,
+        })
+        .eq("id", payout.partner_id);
+    }
   }
   
   revalidatePath("/admin/payouts");
@@ -166,14 +260,36 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
           p.bank_ifsc,
         ].filter(Boolean).join(" | ");
 
-  const { error: insertError } = await supabase.from("payouts" as any).insert({
+  const grossAmount = roundMoney(amount);
+  const deductionAmount = roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE);
+  const netAmount = roundMoney(grossAmount - deductionAmount);
+  const payoutPayload: Record<string, unknown> = {
     partner_id: profile.id,
-    amount,
+    amount: netAmount,
+    gross_amount: grossAmount,
+    deduction_rate: PAYOUT_DEDUCTION_RATE,
+    deduction_amount: deductionAmount,
+    net_amount: netAmount,
     available_balance: wallet,
     payment_method: method,
     payment_details: paymentDetails,
     status: "requested",
-  });
+  };
+
+  let { error: insertError } = await supabase.from("payouts" as any).insert(payoutPayload);
+
+  if (insertError && /gross_amount|deduction_rate|deduction_amount|net_amount/i.test(insertError.message || "")) {
+    const fallbackPayload = {
+      partner_id: profile.id,
+      amount: netAmount,
+      available_balance: wallet,
+      payment_method: method,
+      payment_details: `${paymentDetails} | Gross: Rs. ${grossAmount.toLocaleString("en-IN")} | 15% deduction: Rs. ${deductionAmount.toLocaleString("en-IN")}`,
+      status: "requested",
+    };
+    const fallbackResult = await supabase.from("payouts" as any).insert(fallbackPayload);
+    insertError = fallbackResult.error;
+  }
 
   if (insertError) return { error: insertError.message };
 

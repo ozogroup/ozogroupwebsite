@@ -6,7 +6,7 @@ import Logo from "./Logo";
 import { site } from "@/lib/site";
 import { useBooking } from "./booking/BookingContext";
 
-export default function Header() {
+export default function Header({ whatsappUrl = site.whatsapp }: { whatsappUrl?: string }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { open: openBooking } = useBooking();
@@ -166,7 +166,7 @@ export default function Header() {
               </Link>
             </div>
             <a
-              href={site.whatsapp}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 text-sm text-brand-muted flex items-center gap-2 hover:text-brand-accent transition-colors"

@@ -31,6 +31,9 @@ export default function PartnerPayoutsPage() {
   }
 
   const wallet = Number(partner?.wallet_balance || 0);
+  const requestedGross = Number(amount || 0);
+  const payoutDeduction = Math.round(requestedGross * 0.15 * 100) / 100;
+  const netPayable = Math.max(0, requestedGross - payoutDeduction);
   const membershipActive =
     partner?.status === "active" &&
     (!partner?.membership_expires_at || new Date(partner.membership_expires_at).getTime() >= Date.now());
@@ -114,6 +117,22 @@ export default function PartnerPayoutsPage() {
                 disabled={!canRequest}
               />
             </div>
+            {requestedGross > 0 && (
+              <div className="rounded-xl border border-brand-border bg-brand-surface/60 p-4 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-600">Gross request</span>
+                  <span className="font-semibold text-slate-900">₹{requestedGross.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="mt-2 flex justify-between gap-3 text-red-700">
+                  <span>15% deduction</span>
+                  <span className="font-semibold">-₹{payoutDeduction.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="mt-3 flex justify-between gap-3 border-t border-brand-border pt-3">
+                  <span className="font-semibold text-brand-ink">Net payable</span>
+                  <span className="font-bold text-brand-accent">₹{netPayable.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Payout Method</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -186,7 +205,8 @@ export default function PartnerPayoutsPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Net Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Deduction</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Reference</th>
               </tr>
@@ -194,13 +214,18 @@ export default function PartnerPayoutsPage() {
             <tbody className="divide-y divide-slate-200">
               {payouts.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-slate-500">No payout requests found</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">No payout requests found</td>
                 </tr>
               ) : (
                 payouts.map((payout) => (
                   <tr key={payout.id}>
                     <td className="px-4 py-4 text-sm text-slate-600">{new Date(payout.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">₹{Number(payout.amount || 0).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">₹{Number(payout.net_amount || payout.amount || 0).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-4 text-xs text-slate-600">
+                      Gross ₹{Number(payout.gross_amount || payout.available_balance || payout.amount || 0).toLocaleString("en-IN")}
+                      <br />
+                      15% -₹{Number(payout.deduction_amount || 0).toLocaleString("en-IN")}
+                    </td>
                     <td className="px-4 py-4 text-sm capitalize">{payout.status}</td>
                     <td className="px-4 py-4 text-sm text-slate-600">{payout.transaction_reference || "-"}</td>
                   </tr>

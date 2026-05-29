@@ -9,7 +9,7 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ozogroupwebsite.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in";
 const title = "KIA Skin Care | Premium Skincare & Partner Program";
 const description =
   "Premium skincare kits, Korean glass treatment campaign, and partner referral program by KIA Skin Care.";

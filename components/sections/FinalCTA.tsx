@@ -1,8 +1,17 @@
 import BookNowButton from "@/components/booking/BookNowButton";
-import { getPublicContactSettings } from "@/lib/data/public";
+import { getPublicContactSettings, getPublicSiteContent } from "@/lib/data/public";
 
 export default async function FinalCTA() {
-  const contactSettings = await getPublicContactSettings();
+  const [contactSettings, siteContent] = await Promise.all([
+    getPublicContactSettings(),
+    getPublicSiteContent("final_cta"),
+  ]);
+  const eyebrow = siteContent.final_cta_eyebrow || "Ready when you are";
+  const heading = siteContent.final_cta_heading || "Begin your skincare journey with KIA Skin Care.";
+  const description =
+    siteContent.final_cta_description ||
+    "Personalised treatments, doctor-supervised protocols, and a premium clinic experience designed around your skin goals.";
+  const primaryCta = siteContent.final_cta_primary_text || "Book Consultation";
   return (
     <section id="contact" className="section">
       <div className="container-x">
@@ -20,14 +29,13 @@ export default async function FinalCTA() {
             <div className="md:col-span-7">
               <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-white/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                Ready when you are
+                {eyebrow}
               </span>
               <h2 className="mt-4 text-white">
-                Begin your skincare journey with KIA Skin Care.
+                {heading}
               </h2>
               <p className="mt-4 text-white/85 max-w-xl">
-                Personalised treatments, doctor-supervised protocols, and a
-                premium clinic experience designed around your skin goals.
+                {description}
               </p>
             </div>
 
@@ -36,7 +44,7 @@ export default async function FinalCTA() {
                 variant="secondary"
                 className="bg-white text-brand-ink border-transparent hover:text-brand-muted hover:bg-white justify-center"
               >
-                Book Consultation
+                {primaryCta}
               </BookNowButton>
               <a
                 href={`tel:${contactSettings.phoneRaw}`}

@@ -219,7 +219,13 @@ export async function getPublicContactSettings() {
     }
 
     const phone = content.phone || (data as any).phone || staticSite.phone;
-    const whatsapp = normalizeWhatsapp(content.whatsapp || (data as any).whatsapp || staticSite.whatsapp);
+    const whatsapp = normalizeWhatsapp(
+      content.whatsapp ||
+        (data as any).whatsapp ||
+        (data as any).whatsapp_url ||
+        (data as any).whatsapp_number ||
+        staticSite.whatsapp
+    );
 
     return {
       phone,
@@ -228,7 +234,7 @@ export async function getPublicContactSettings() {
       email: content.email || (data as any).email || "",
       address: replaceLegacyBranding(content.address || (data as any).address),
       footerText: replaceLegacyBranding(content.footer_text),
-      instagram: (data as any).instagram_url,
+      instagram: (data as any).instagram_url || staticSite.instagram,
     };
   } catch (error) {
     console.error("Error fetching contact settings from Supabase:", error);

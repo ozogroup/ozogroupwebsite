@@ -1,4 +1,5 @@
 import type { SalesBonus as SalesBonusType } from "@/types";
+import { getPublicSiteContent } from "@/lib/data/public";
 
 const tiers: SalesBonusType[] = [
   { bookings: 10, bonus: "₹5,000" },
@@ -6,16 +7,22 @@ const tiers: SalesBonusType[] = [
   { bookings: 30, bonus: "₹15,000" },
 ];
 
-export default function SalesBonus() {
+export default async function SalesBonus() {
+  const siteContent = await getPublicSiteContent("home_bonus");
+  const eyebrow = siteContent.bonus_eyebrow || "Monthly Milestone";
+  const heading = siteContent.bonus_heading || "Hit your milestones, unlock bigger rewards";
+  const description =
+    siteContent.bonus_description ||
+    "Beyond referrals, you earn lump-sum bonuses every time you cross a booking milestone. The more you grow, the more you earn.";
+
   return (
     <section id="bonus" className="section">
       <div className="container-x">
         <div className="max-w-2xl">
-          <span className="eyebrow">Monthly Milestone</span>
-          <h2 className="mt-3">Hit your milestones, unlock bigger rewards</h2>
+          <span className="eyebrow">{eyebrow}</span>
+          <h2 className="mt-3">{heading}</h2>
           <p className="mt-4">
-            Beyond referrals, you earn lump-sum bonuses every time you cross a
-            booking milestone. The more you grow, the more you earn.
+            {description}
           </p>
         </div>
 

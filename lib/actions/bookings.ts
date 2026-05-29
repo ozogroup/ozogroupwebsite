@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
-import { getBookingTreatmentCatalogItem, normalizeBookingTreatmentSlug } from "@/lib/treatments/catalog";
+import {
+  getBookingTreatmentCatalogItem,
+  getBookingTreatmentSlugCandidates,
+} from "@/lib/treatments/catalog";
 import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 
@@ -98,20 +101,30 @@ async function findActiveTreatment(
   serviceClient: ReturnType<typeof getSupabaseServiceClient>,
   treatmentSlugCandidates: string[]
 ) {
-  const { data: rows, error } = await serviceClient
-    .from("treatments" as any)
-    .select("*")
-    .in("slug", treatmentSlugCandidates)
-    .or("active.eq.true,is_active.eq.true")
-    .is("deleted_at", null)
-    .limit(1);
+  const baseQuery = () =>
+    serviceClient
+      .from("treatments" as any)
+      .select("*")
+      .in("slug", treatmentSlugCandidates)
+      .is("deleted_at", null)
+      .limit(1);
+
+  const { data: rows, error } = await baseQuery().eq("active", true);
 
   if (error) {
     console.error("Error resolving active treatment:", error);
     return null;
   }
 
-  return toBookingTreatment(Array.isArray(rows) ? rows[0] : null);
+  if (Array.isArray(rows) && rows[0]) return toBookingTreatment(rows[0]);
+
+  const { data: fallbackRows, error: fallbackError } = await baseQuery().eq("is_active", true);
+  if (fallbackError) {
+    console.error("Error resolving is_active treatment:", fallbackError);
+    return null;
+  }
+
+  return toBookingTreatment(Array.isArray(fallbackRows) ? fallbackRows[0] : null);
 }
 
 async function restoreCatalogTreatment(
@@ -121,7 +134,7 @@ async function restoreCatalogTreatment(
   const catalogItem = getBookingTreatmentCatalogItem(requestedTreatmentSlug);
   if (!catalogItem) return null;
 
-  const slug = normalizeBookingTreatmentSlug(catalogItem.slug);
+  const slug = catalogItem.slug;
   const payload = {
     title: catalogItem.title,
     slug,
@@ -177,7 +190,6 @@ export async function createBooking(payload: CreateBookingPayload) {
   const address = clean(payload.address);
   const pinCode = clean(payload.pin_code);
   const requestedTreatmentSlug = clean(payload.treatment_slug);
-  const treatmentSlug = normalizeBookingTreatmentSlug(requestedTreatmentSlug);
   let referralCode = normalizeKiaPartnerCode(
     clean(payload.referral_code) ||
     clean(cookies().get("kia_referral_code")?.value) ||
@@ -191,9 +203,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   if (!pinCode) return { error: "Please enter your pin code." };
   if (!requestedTreatmentSlug) return { error: "Please select a service or kit before booking." };
 
-  const treatmentSlugCandidates = Array.from(
-    new Set([requestedTreatmentSlug, treatmentSlug].filter(Boolean))
-  );
+  const treatmentSlugCandidates = getBookingTreatmentSlugCandidates(requestedTreatmentSlug);
 
   const treatment =
     (await findActiveTreatment(serviceClient, treatmentSlugCandidates)) ||
@@ -213,34 +223,56 @@ export async function createBooking(payload: CreateBookingPayload) {
   const treatmentType = treatment.type;
   const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * COMMISSION_RATE) / 100) : 0;
 
-  const { data: booking, error: bookingError } = await serviceClient
+  const bookingPayload: Record<string, unknown> = {
+    customer_name: customerName,
+    customer_phone: customerPhone,
+    customer_email: clean(payload.customer_email) || null,
+    city,
+    address,
+    pin_code: pinCode,
+    treatment_id: treatment.id,
+    treatment_name: treatment.title,
+    treatment_price: treatmentPrice,
+    booking_type:
+      treatmentType === "home_kit"
+        ? "home_kit"
+        : treatmentType === "campaign"
+          ? "campaign"
+          : "consultation",
+    referral_code: referralCode || null,
+    partner_code: partner?.partner_code || (referralCode ? referralCode.toUpperCase() : null),
+    referred_by: partnerIsEligible ? partner.id : null,
+    payment_status: "pending_payment",
+    payment_gateway: "manual",
+    razorpay_order_id: null,
+    razorpay_payment_id: null,
+    booking_status: "pending",
+    payment_amount: treatmentPrice,
+    notes: clean(payload.notes) || null,
+  };
+
+  let bookingResult = await serviceClient
     .from("bookings" as any)
-    .insert({
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      customer_email: clean(payload.customer_email) || null,
-      city,
-      address,
-      pin_code: pinCode,
-      treatment_id: treatment.id,
-      treatment_name: treatment.title,
-      treatment_price: treatmentPrice,
-      booking_type:
-        treatmentType === "home_kit"
-          ? "home_kit"
-          : treatmentType === "campaign"
-            ? "campaign"
-            : "consultation",
-      referral_code: referralCode || null,
-      partner_code: partner?.partner_code || (referralCode ? referralCode.toUpperCase() : null),
-      referred_by: partnerIsEligible ? partner.id : null,
-      payment_status: "pending_payment",
-      booking_status: "pending",
-      payment_amount: treatmentPrice,
-      notes: clean(payload.notes) || null,
-    })
+    .insert(bookingPayload)
     .select("id")
     .single();
+
+  if (
+    bookingResult.error &&
+    /payment_gateway|razorpay_order_id|razorpay_payment_id/i.test(bookingResult.error.message || "")
+  ) {
+    const fallbackPayload = { ...bookingPayload };
+    delete fallbackPayload.payment_gateway;
+    delete fallbackPayload.razorpay_order_id;
+    delete fallbackPayload.razorpay_payment_id;
+    bookingResult = await serviceClient
+      .from("bookings" as any)
+      .insert(fallbackPayload)
+      .select("id")
+      .single();
+  }
+
+  const { data: booking, error: bookingError } = bookingResult;
 
   if (bookingError || !booking) {
     console.error("Error creating booking:", bookingError);

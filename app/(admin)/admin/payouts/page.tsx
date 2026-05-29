@@ -47,6 +47,10 @@ export default function AdminPayoutsPage() {
     }
   }
 
+  function money(value: number) {
+    return `₹${Number(value || 0).toLocaleString("en-IN")}`;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -56,11 +60,12 @@ export default function AdminPayoutsPage() {
 
       <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px]">
+          <table className="w-full min-w-[1280px]">
             <thead className="bg-brand-surface/50 border-b border-brand-border">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Payout Math</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner Summary</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Bank / UPI</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Dates</th>
@@ -69,9 +74,9 @@ export default function AdminPayoutsPage() {
             </thead>
             <tbody className="divide-y divide-brand-border">
               {loading ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-brand-muted">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-brand-muted">Loading...</td></tr>
               ) : payouts.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-brand-muted">No payouts found</td></tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-brand-muted">No payouts found</td></tr>
               ) : (
                 payouts.map((payout) => (
                   <tr key={payout.id} className="align-top hover:bg-brand-surface/30 transition-colors">
@@ -79,8 +84,16 @@ export default function AdminPayoutsPage() {
                       <p className="font-medium text-brand-ink">{payout.partner?.profiles?.full_name || "Unknown"}</p>
                       <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
                     </td>
-                    <td className="px-4 py-4 text-brand-ink font-semibold">
-                      ₹{Number(payout.amount || 0).toLocaleString("en-IN")}
+                    <td className="px-4 py-4 text-sm">
+                      <p className="font-semibold text-brand-ink">Net: {money(payout.net_amount || payout.amount)}</p>
+                      <p className="text-xs text-brand-muted">Gross: {money(payout.gross_amount || payout.available_balance || payout.amount)}</p>
+                      <p className="text-xs text-red-600">15% Deduction: -{money(payout.deduction_amount)}</p>
+                    </td>
+                    <td className="px-4 py-4 text-xs text-brand-muted">
+                      <p>Gross income: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.grossIncome)}</span></p>
+                      <p>Net payable: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.netPayable)}</span></p>
+                      <p>Paid: {money(payout.partner_summary?.paidAmount)} | Pending: {money(payout.partner_summary?.pendingPayout)}</p>
+                      <p className="capitalize">Status: {payout.partner_summary?.payoutStatus || payout.status}</p>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted max-w-xs">
                       <p>{payout.payment_details || "-"}</p>

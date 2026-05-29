@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 import { LEGACY_REFERRAL_STORAGE_KEY, REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 import {
   bookingTreatmentOrder,
-  normalizeBookingTreatmentSlug,
+  getCanonicalBookingTreatmentSlug,
   treatmentKitCatalog,
 } from "@/lib/treatments/catalog";
 import { useBooking } from "./BookingContext";
@@ -49,7 +49,7 @@ const initial: FormState = {
 };
 
 const defaultBookingTreatments: TreatmentOption[] = treatmentKitCatalog.map((treatment) => ({
-  slug: normalizeBookingTreatmentSlug(treatment.slug),
+  slug: treatment.slug,
   title: treatment.title,
   kitName: treatment.kitName,
   price: treatment.price,
@@ -70,7 +70,7 @@ export default function BookingModal() {
 
   useEffect(() => {
     if (isOpen) {
-      const normalizedTreatmentSlug = normalizeBookingTreatmentSlug(treatmentSlug || "");
+      const normalizedTreatmentSlug = getCanonicalBookingTreatmentSlug(treatmentSlug || "");
       setForm((f) => ({
         ...f,
         treatment: normalizedTreatmentSlug || f.treatment || defaultBookingTreatments[0]?.slug || "",
@@ -123,8 +123,9 @@ export default function BookingModal() {
           const sorted = [...data].sort((a: any, b: any) => orderIndex(a.slug) - orderIndex(b.slug));
           const optionsBySlug = new Map(defaultBookingTreatments.map((treatment) => [treatment.slug, treatment]));
           sorted.forEach((t: any) => {
-            optionsBySlug.set(t.slug, {
-              slug: t.slug,
+            const optionSlug = getCanonicalBookingTreatmentSlug(t.slug);
+            optionsBySlug.set(optionSlug, {
+              slug: optionSlug,
               title: t.title,
               kitName: t.kit_name || t.title,
               price: Number(t.price || 0),
@@ -140,7 +141,7 @@ export default function BookingModal() {
           );
           setAvailableTreatments(options);
           setForm((f) => {
-            const normalizedTreatmentSlug = normalizeBookingTreatmentSlug(treatmentSlug || f.treatment);
+            const normalizedTreatmentSlug = getCanonicalBookingTreatmentSlug(treatmentSlug || f.treatment);
             const hasSelected = options.some((option) => option.slug === normalizedTreatmentSlug);
             return {
               ...f,

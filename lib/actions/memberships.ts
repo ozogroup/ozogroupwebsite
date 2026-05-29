@@ -57,6 +57,16 @@ function toIndianAuthPhone(mobile: string) {
   return mobile.trim().startsWith("+") ? mobile.trim() : undefined;
 }
 
+async function getMembershipAmount(supabase: ReturnType<typeof getSupabaseServiceClient>) {
+  const { data } = await supabase
+    .from("system_settings" as any)
+    .select("membership_price")
+    .limit(1)
+    .maybeSingle();
+
+  return Number((data as any)?.membership_price || 1199);
+}
+
 export async function getMembershipRequests() {
   const supabase = getSupabaseServerClient();
   
@@ -156,6 +166,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
   const serviceClient = getSupabaseServiceClient();
   const referralCode = normalizeKiaPartnerCode(data.referral_code) || null;
   const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
+  const membershipAmount = await getMembershipAmount(serviceClient);
 
   const { data: existingProfile, error: existingProfileError } = await serviceClient
     .from("profiles" as any)
@@ -227,25 +238,49 @@ export async function createMembership(data: MembershipRegistrationInput) {
     return { error: "Failed to create pending partner request. Please try again." };
   }
 
-  const { data: record, error } = await supabase
+  const membershipPayload: Record<string, unknown> = {
+    full_name: data.full_name.trim(),
+    mobile: data.mobile.trim(),
+    email: normalizedEmail,
+    partner_id: authUserId,
+    city: data.city.trim(),
+    address: data.address.trim(),
+    pin_code: data.pin_code.trim(),
+    amount: membershipAmount,
+    referral_code: referralCode,
+    sponsor_id: (sponsor as any)?.id || null,
+    notes: data.notes?.trim() || null,
+    membership_status: "pending_payment",
+    payment_status: "pending_payment",
+    payment_gateway: "manual",
+    payment_amount: membershipAmount,
+    razorpay_order_id: null,
+    razorpay_payment_id: null,
+  };
+
+  let membershipResult = await supabase
     .from("memberships" as any)
-    .insert({
-      full_name: data.full_name.trim(),
-      mobile: data.mobile.trim(),
-      email: normalizedEmail,
-      partner_id: authUserId,
-      city: data.city.trim(),
-      address: data.address.trim(),
-      pin_code: data.pin_code.trim(),
-      amount: 1199,
-      referral_code: referralCode,
-      sponsor_id: (sponsor as any)?.id || null,
-      notes: data.notes?.trim() || null,
-      membership_status: "pending_payment",
-      payment_status: "pending_payment",
-    })
+    .insert(membershipPayload)
     .select()
     .single();
+
+  if (
+    membershipResult.error &&
+    /payment_gateway|payment_amount|razorpay_order_id|razorpay_payment_id/i.test(membershipResult.error.message || "")
+  ) {
+    const fallbackPayload = { ...membershipPayload };
+    delete fallbackPayload.payment_gateway;
+    delete fallbackPayload.payment_amount;
+    delete fallbackPayload.razorpay_order_id;
+    delete fallbackPayload.razorpay_payment_id;
+    membershipResult = await supabase
+      .from("memberships" as any)
+      .insert(fallbackPayload)
+      .select()
+      .single();
+  }
+
+  const { data: record, error } = membershipResult;
 
   if (error) {
     console.error("Error creating membership:", error);

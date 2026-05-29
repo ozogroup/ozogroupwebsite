@@ -78,6 +78,42 @@ const contentGroups: ContentGroup[] = [
     ],
   },
   {
+    title: "Referral Rewards",
+    description: "Referral program heading, description, and reward positioning.",
+    page: "home",
+    section: "home_referral",
+    fields: [
+      { label: "Referral Heading", page: "home", section: "home_referral", key: "referral_heading", aliases: ["heading"], type: "text" },
+      { label: "Referral Description", page: "home", section: "home_referral", key: "referral_description", aliases: ["description"], type: "textarea", rows: 3 },
+    ],
+  },
+  {
+    title: "Milestone Bonus",
+    description: "Monthly milestone bonus copy shown on the public website.",
+    page: "home",
+    section: "home_bonus",
+    fields: [
+      { label: "Eyebrow", page: "home", section: "home_bonus", key: "bonus_eyebrow", aliases: ["eyebrow"], type: "text" },
+      { label: "Heading", page: "home", section: "home_bonus", key: "bonus_heading", aliases: ["heading"], type: "text" },
+      { label: "Description", page: "home", section: "home_bonus", key: "bonus_description", aliases: ["description"], type: "textarea", rows: 3 },
+    ],
+  },
+  {
+    title: "CTA Sections",
+    description: "Bottom and contact CTA copy on public pages.",
+    page: "home",
+    section: "final_cta",
+    fields: [
+      { label: "Final CTA Eyebrow", page: "home", section: "final_cta", key: "final_cta_eyebrow", aliases: ["eyebrow"], type: "text" },
+      { label: "Final CTA Heading", page: "home", section: "final_cta", key: "final_cta_heading", aliases: ["heading"], type: "text" },
+      { label: "Final CTA Description", page: "home", section: "final_cta", key: "final_cta_description", aliases: ["description"], type: "textarea", rows: 3 },
+      { label: "Final CTA Button", page: "home", section: "final_cta", key: "final_cta_primary_text", aliases: ["cta_text"], type: "text" },
+      { label: "Contact CTA Eyebrow", page: "contact", section: "contact_cta", key: "contact_cta_eyebrow", aliases: ["eyebrow"], type: "text" },
+      { label: "Contact CTA Heading", page: "contact", section: "contact_cta", key: "contact_cta_heading", aliases: ["heading"], type: "text" },
+      { label: "Contact CTA Description", page: "contact", section: "contact_cta", key: "contact_cta_description", aliases: ["description"], type: "textarea", rows: 3 },
+    ],
+  },
+  {
     title: "About Section",
     description: "About page copy, mission, vision, and supporting image.",
     page: "about",

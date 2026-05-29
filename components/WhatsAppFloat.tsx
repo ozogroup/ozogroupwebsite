@@ -1,9 +1,10 @@
-import { site } from "@/lib/site";
+import { getPublicContactSettings } from "@/lib/data/public";
 
-export default function WhatsAppFloat() {
+export default async function WhatsAppFloat() {
+  const contactSettings = await getPublicContactSettings();
   return (
     <a
-      href={site.whatsapp}
+      href={contactSettings.whatsapp}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
