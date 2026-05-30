@@ -4,7 +4,9 @@ import { useRef, useState, useTransition } from "react";
 import { submitFranchiseLead } from "@/lib/actions/franchise-leads";
 
 const inputClass =
-  "w-full rounded-xl border border-[#EDE5D8] bg-white px-4 py-3 text-sm text-[#5B4C46] outline-none transition focus:border-[#9CAF88] focus:ring-2 focus:ring-[#9CAF88]/25";
+  "w-full rounded-2xl border border-[#EDE5D8] bg-[#F8F4EC]/80 px-4 py-3.5 text-sm text-[#5B4C46] shadow-inner outline-none transition placeholder:text-[#6A5A53]/45 focus:border-[#9CAF88] focus:bg-white focus:ring-4 focus:ring-[#9CAF88]/15";
+
+const benefits = ["Brand Support", "Training Guidance", "City Growth Opportunity"];
 
 export default function FranchiseInquiry() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -27,20 +29,48 @@ export default function FranchiseInquiry() {
   return (
     <section className="section bg-[#F8F4EC]">
       <div className="container-x">
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#5B4C46] to-[#6A5A53] shadow-premium">
+        <div className="overflow-hidden rounded-[2rem] border border-[#EDE5D8] bg-white shadow-[0_28px_90px_rgba(91,76,70,0.18)]">
           <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="p-8 md:p-12 lg:p-14">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#EDE5D8]/25 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#EDE5D8]">
-                Franchise
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#4C3F3A] via-[#5B4C46] to-[#6A5A53] p-8 md:p-12 lg:p-14">
+              <div
+                aria-hidden
+                className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#EDE5D8]/20 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="absolute bottom-8 left-8 h-32 w-32 rounded-full bg-[#9CAF88]/20 blur-2xl"
+              />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#EDE5D8]/30 bg-[#F8F4EC]/12 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#F8F4EC] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                  FRANCHISE OPPORTUNITY
+                </div>
+                <h2 className="mt-7 max-w-lg text-white">Start Your KIA Skin Care Franchise</h2>
+                <p className="mt-5 max-w-md text-base leading-7 text-[#EDE5D8]">
+                  Build your skincare business with KIA Korean Skin Care.
+                </p>
+                <div className="mt-9 h-px w-full max-w-sm bg-gradient-to-r from-[#EDE5D8]/80 via-[#9CAF88] to-transparent" />
+
+                <div className="mt-8 space-y-3">
+                  {benefits.map((benefit) => (
+                    <div
+                      key={benefit}
+                      className="flex items-center gap-3 rounded-2xl border border-[#EDE5D8]/18 bg-white/[0.08] px-4 py-3 text-sm font-medium text-[#F8F4EC] backdrop-blur"
+                    >
+                      <span className="h-2 w-2 rounded-full bg-[#9CAF88] shadow-[0_0_18px_rgba(156,175,136,0.75)]" />
+                      {benefit}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <MiniStat value="Premium" label="Brand Position" />
+                  <MiniStat value="Guided" label="Setup Support" />
+                  <MiniStat value="Local" label="Market Focus" />
+                </div>
               </div>
-              <h2 className="mt-6 text-white">Start Your KIA Skin Care Franchise</h2>
-              <p className="mt-4 max-w-md text-base text-[#EDE5D8]">
-                Build your skincare business with KIA Korean Skin Care.
-              </p>
-              <div className="mt-8 h-px w-full max-w-xs bg-gradient-to-r from-[#9CAF88] to-transparent" />
             </div>
 
-            <div className="bg-white p-6 md:p-8 lg:p-10">
+            <div className="bg-gradient-to-br from-white to-[#F8F4EC] p-6 md:p-8 lg:p-10">
               {message && (
                 <div
                   className={`mb-5 rounded-xl border px-4 py-3 text-sm ${
@@ -69,7 +99,7 @@ export default function FranchiseInquiry() {
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full rounded-full bg-[#5B4C46] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#6A5A53] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-full bg-gradient-to-r from-[#5B4C46] to-[#6A5A53] px-6 py-4 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(91,76,70,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(91,76,70,0.34)] focus:outline-none focus:ring-4 focus:ring-[#9CAF88]/25 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
                   >
                     {isPending ? "Submitting..." : "Submit Franchise Inquiry"}
                   </button>
@@ -80,6 +110,15 @@ export default function FranchiseInquiry() {
         </div>
       </div>
     </section>
+  );
+}
+
+function MiniStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-2xl border border-[#EDE5D8]/18 bg-[#F8F4EC]/10 px-4 py-3">
+      <p className="text-sm font-semibold leading-none text-white">{value}</p>
+      <p className="mt-1 text-[11px] leading-4 text-[#EDE5D8]/80">{label}</p>
+    </div>
   );
 }
 
