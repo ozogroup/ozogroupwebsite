@@ -17,9 +17,14 @@ export const site = {
   phoneRaw: "+917698617054",
   whatsapp:
     "https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.",
-  instagram:
-    "https://www.instagram.com/ia_korean_gloh_tretment?igsh=bmZqOHc0bnU5OW95",
+  email: "",
+  instagram: "",
+  address: "KIA Korean Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
+  businessHours: "10:00 AM to 6:00 PM",
+  weeklyOff: "Sunday Off",
   membershipFee: 1199,
+  // TODO: Future franchise inquiry form fields: Name, Phone, City, Investment Budget, Message.
+  franchiseRequirementFields: ["Name", "Phone", "City", "Investment Budget", "Message"],
   developer: {
     name: "The Gujarati Designer",
     url: "https://www.thegujaratidesigner.in",

@@ -126,7 +126,7 @@ export default function AdminSettingsPage() {
                   value={contactData.contactNumber}
                   onChange={(e) => setContactData({ ...contactData, contactNumber: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="+91 12345 67890"
+                  placeholder="+91 76986 17054"
                 />
               </div>
               <div>
@@ -146,7 +146,7 @@ export default function AdminSettingsPage() {
                   value={contactData.email}
                   onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="contact@kiaskincare.com"
+                  placeholder="Leave blank if no email exists"
                 />
               </div>
               <div>
@@ -156,7 +156,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setContactData({ ...contactData, address: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
                   rows={3}
-                  placeholder="Enter address"
+                  placeholder="KIA Korean Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
                 />
               </div>
             </div>
@@ -176,7 +176,7 @@ export default function AdminSettingsPage() {
                   value={contactData.instagram}
                   onChange={(e) => setContactData({ ...contactData, instagram: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="https://instagram.com/kia_skincare"
+                  placeholder="Leave blank if no Instagram handle exists"
                 />
               </div>
               <div>
@@ -186,7 +186,7 @@ export default function AdminSettingsPage() {
                   value={contactData.facebook}
                   onChange={(e) => setContactData({ ...contactData, facebook: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
-                  placeholder="https://facebook.com/kia-skincare"
+                  placeholder="Leave blank if no Facebook page exists"
                 />
               </div>
               <div>

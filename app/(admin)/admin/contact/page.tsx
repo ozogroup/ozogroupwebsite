@@ -16,6 +16,7 @@ export default function AdminContactSettingsPage() {
     email: "",
     address: "",
     business_hours: "",
+    weekly_off: "",
     facebook_url: "",
     instagram_url: "",
     youtube_url: "",
@@ -44,6 +45,7 @@ export default function AdminContactSettingsPage() {
         email: settingsData.email || "",
         address: settingsData.address || "",
         business_hours: settingsData.business_hours || "",
+        weekly_off: settingsData.weekly_off || "",
         facebook_url: settingsData.facebook_url || "",
         instagram_url: settingsData.instagram_url || "",
         youtube_url: settingsData.youtube_url || "",
@@ -56,9 +58,10 @@ export default function AdminContactSettingsPage() {
     const defaultData = {
       phone: "+91 76986 17054",
       whatsapp: "+91 76986 17054",
-      email: "contact@kiaskincare.com",
-      address: "KIA Skin Care, Ahmedabad, Gujarat",
-      business_hours: "Mon - Sat: 10 AM - 7 PM",
+      email: "",
+      address: "KIA Korean Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
+      business_hours: "10:00 AM to 6:00 PM",
+      weekly_off: "Sunday Off",
       facebook_url: "",
       instagram_url: "",
       youtube_url: "",
@@ -88,6 +91,7 @@ export default function AdminContactSettingsPage() {
         email: formData.email,
         address: formData.address,
         business_hours: formData.business_hours,
+        weekly_off: formData.weekly_off,
         facebook_url: formData.facebook_url,
         instagram_url: formData.instagram_url,
         youtube_url: formData.youtube_url,
@@ -157,7 +161,7 @@ export default function AdminContactSettingsPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 76986 17054"
                 />
               </div>
               <div>
@@ -167,7 +171,7 @@ export default function AdminContactSettingsPage() {
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="+91 98765 43210 or https://wa.me/..."
+                  placeholder="+91 76986 17054 or https://wa.me/..."
                 />
               </div>
               <div className="md:col-span-2">
@@ -187,7 +191,7 @@ export default function AdminContactSettingsPage() {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                   rows={3}
-                  placeholder="123 Beauty Street, Mumbai, Maharashtra 400001"
+                  placeholder="KIA Korean Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
                 />
               </div>
               <div className="md:col-span-2">
@@ -197,7 +201,17 @@ export default function AdminContactSettingsPage() {
                   value={formData.business_hours}
                   onChange={(e) => setFormData({ ...formData, business_hours: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  placeholder="Mon - Sat: 10 AM - 7 PM"
+                  placeholder="10:00 AM to 6:00 PM"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-brand-ink mb-1">Weekly Off</label>
+                <input
+                  type="text"
+                  value={formData.weekly_off}
+                  onChange={(e) => setFormData({ ...formData, weekly_off: e.target.value })}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  placeholder="Sunday Off"
                 />
               </div>
             </div>

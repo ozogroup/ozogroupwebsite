@@ -661,6 +661,9 @@ CREATE TABLE IF NOT EXISTS contact_settings (
   email TEXT,
   phone TEXT,
   address TEXT,
+  business_hours TEXT,
+  weekly_off TEXT,
+  instagram_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -1037,8 +1040,11 @@ END$$;
 -- ============================================================================
 
 -- Insert default contact settings (only if table is empty)
-INSERT INTO contact_settings (whatsapp_number, whatsapp_url, email, phone, address)
-SELECT '+919876543210', 'https://wa.me/919876543210', 'contact@kiaskincare.com', '+91-9876543210', 'Mumbai, Maharashtra, India'
+INSERT INTO contact_settings (whatsapp_number, whatsapp_url, email, phone, address, business_hours, weekly_off, instagram_url)
+SELECT '+917698617054', 'https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.', '', '+91 76986 17054', 'KIA Korean Skin Care
+D-25, 1st Floor, New Bus Port, Palanpur
+Dist. B.K
+PIN Code: 385001', '10:00 AM to 6:00 PM', 'Sunday Off', ''
 WHERE NOT EXISTS (SELECT 1 FROM contact_settings);
 
 -- Insert default commission settings (only if table is empty)

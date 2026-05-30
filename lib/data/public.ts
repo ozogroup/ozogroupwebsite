@@ -212,9 +212,12 @@ export async function getPublicContactSettings() {
         phone: content.phone || staticSite.phone,
         phoneRaw: (content.phone || staticSite.phone).replace(/\s/g, ""),
         whatsapp: normalizeWhatsapp(content.whatsapp || staticSite.whatsapp),
-        email: content.email || "",
-        address: replaceLegacyBranding(content.address),
+        email: content.email || staticSite.email,
+        address: replaceLegacyBranding(content.address || staticSite.address),
+        businessHours: content.business_hours || staticSite.businessHours,
+        weeklyOff: content.weekly_off || staticSite.weeklyOff,
         footerText: replaceLegacyBranding(content.footer_text),
+        instagram: content.instagram || staticSite.instagram,
       };
     }
 
@@ -231,10 +234,12 @@ export async function getPublicContactSettings() {
       phone,
       phoneRaw: phone.replace(/\s/g, ""),
       whatsapp,
-      email: content.email || (data as any).email || "",
-      address: replaceLegacyBranding(content.address || (data as any).address),
+      email: content.email || (data as any).email || staticSite.email,
+      address: replaceLegacyBranding(content.address || (data as any).address || staticSite.address),
+      businessHours: content.business_hours || (data as any).business_hours || staticSite.businessHours,
+      weeklyOff: content.weekly_off || (data as any).weekly_off || staticSite.weeklyOff,
       footerText: replaceLegacyBranding(content.footer_text),
-      instagram: (data as any).instagram_url || staticSite.instagram,
+      instagram: content.instagram || (data as any).instagram_url || staticSite.instagram,
     };
   } catch (error) {
     console.error("Error fetching contact settings from Supabase:", error);

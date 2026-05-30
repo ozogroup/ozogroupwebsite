@@ -118,7 +118,7 @@ UPDATE contact_settings
 SET
   email = CASE
     WHEN lower(email) IN ('contact@ozo.com', 'contact@ia-skincare.com')
-      THEN 'contact@kiaskincare.com'
+      THEN ''
     ELSE email
   END,
   address = pg_temp.kia_brand_text(

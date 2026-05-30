@@ -115,7 +115,7 @@ export default function ContactPage() {
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 8.92z" />
                   </svg>
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-brand-ink">Phone</h3>
+                <h3 className="mt-5 text-lg font-semibold text-brand-ink">Office Phone</h3>
                 <p className="mt-2 text-sm text-brand-muted">
                   <a href={`tel:${site.phoneRaw}`} className="hover:text-brand-accent transition-colors">
                     {site.phone}
@@ -149,16 +149,41 @@ export default function ContactPage() {
                     <polyline points="22,6 12,13 2,6" />
                   </svg>
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-brand-ink">Instagram</h3>
+                <h3 className="mt-5 text-lg font-semibold text-brand-ink">Office Address</h3>
                 <p className="mt-2 text-sm text-brand-muted">
-                  <a
-                    href={site.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-brand-accent transition-colors"
-                  >
-                    Visit Instagram
-                  </a>
+                  {site.address.split("\n").map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-8 md:grid-cols-3">
+              <div className="card">
+                <h3 className="text-lg font-semibold text-brand-ink">Office Time</h3>
+                <p className="mt-2 text-sm text-brand-muted">{site.businessHours}</p>
+              </div>
+              <div className="card">
+                <h3 className="text-lg font-semibold text-brand-ink">Weekly Off</h3>
+                <p className="mt-2 text-sm text-brand-muted">{site.weeklyOff}</p>
+              </div>
+              <div className="card">
+                <h3 className="text-lg font-semibold text-brand-ink">Instagram</h3>
+                <p className="mt-2 text-sm text-brand-muted">
+                  {site.instagram ? (
+                    <a
+                      href={site.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-brand-accent transition-colors"
+                    >
+                      Visit Instagram
+                    </a>
+                  ) : (
+                    "Coming soon"
+                  )}
                 </p>
               </div>
             </div>

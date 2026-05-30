@@ -25,19 +25,21 @@ export default async function Footer() {
               <span>Chat on WhatsApp</span>
               <span aria-hidden>-&gt;</span>
             </a>
-            <a
-              href={contactSettings.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Follow KIA Skin Care on Instagram"
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 transition"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-              </svg>
-            </a>
+            {contactSettings.instagram ? (
+              <a
+                href={contactSettings.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Follow KIA Skin Care on Instagram"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 transition"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                </svg>
+              </a>
+            ) : null}
           </div>
         </div>
 
@@ -65,17 +67,39 @@ export default async function Footer() {
                 {contactSettings.phone}
               </a>
             </li>
+            {contactSettings.email ? (
+              <li>
+                <span className="text-white/60">Email:</span>{" "}
+                <a href={`mailto:${contactSettings.email}`} className="font-medium text-white hover:text-brand-accent transition-colors">
+                  {contactSettings.email}
+                </a>
+              </li>
+            ) : null}
             <li>
-              <span className="text-white/60">Instagram:</span>{" "}
-              <a
-                href={contactSettings.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-white hover:text-brand-accent transition-colors"
-              >
-                Visit Instagram
-              </a>
+              <span className="text-white/60">Address:</span>{" "}
+              <span className="whitespace-pre-line">{contactSettings.address || site.address}</span>
             </li>
+            <li>
+              <span className="text-white/60">Office Time:</span>{" "}
+              {(contactSettings as any).businessHours || site.businessHours}
+            </li>
+            <li>
+              <span className="text-white/60">Weekly Off:</span>{" "}
+              {(contactSettings as any).weeklyOff || site.weeklyOff}
+            </li>
+            {contactSettings.instagram ? (
+              <li>
+                <span className="text-white/60">Instagram:</span>{" "}
+                <a
+                  href={contactSettings.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-white hover:text-brand-accent transition-colors"
+                >
+                  Visit Instagram
+                </a>
+              </li>
+            ) : null}
             <li>
               <span className="text-white/60">Brand:</span> {site.brand}
             </li>

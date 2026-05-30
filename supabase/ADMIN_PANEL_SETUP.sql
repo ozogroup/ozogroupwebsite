@@ -206,6 +206,7 @@ CREATE TABLE IF NOT EXISTS contact_settings (
   email VARCHAR(255),
   address TEXT,
   business_hours TEXT,
+  weekly_off TEXT,
   facebook_url TEXT,
   instagram_url TEXT,
   twitter_url TEXT,
@@ -283,11 +284,16 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order) V
 ('about', 'vision', 'To become India''s leading destination for advanced Korean skincare treatments.', 'text', 4),
 
 -- Contact
-('contact', 'phone', '+91 98765 43210', 'text', 1),
-('contact', 'whatsapp', '+91 98765 43210', 'text', 2),
-('contact', 'email', 'contact@kiaskincare.com', 'text', 3),
-('contact', 'address', '123 Beauty Street, Mumbai, Maharashtra 400001', 'text', 4),
-('contact', 'business_hours', 'Mon - Sat: 10:00 AM - 7:00 PM', 'text', 5)
+('contact', 'phone', '+91 76986 17054', 'text', 1),
+('contact', 'whatsapp', '+91 76986 17054', 'text', 2),
+('contact', 'email', '', 'text', 3),
+('contact', 'address', 'KIA Korean Skin Care
+D-25, 1st Floor, New Bus Port, Palanpur
+Dist. B.K
+PIN Code: 385001', 'text', 4),
+('contact', 'business_hours', '10:00 AM to 6:00 PM', 'text', 5),
+('contact', 'weekly_off', 'Sunday Off', 'text', 6),
+('contact', 'instagram', '', 'text', 7)
 ON CONFLICT (section, key_name) DO NOTHING;
 
 -- =====================================================
@@ -332,8 +338,11 @@ ON CONFLICT (slug) DO UPDATE SET
 -- =====================================================
 -- INITIAL CONTACT SETTINGS SEED DATA
 -- =====================================================
-INSERT INTO contact_settings (phone, whatsapp, email, address, business_hours, facebook_url, instagram_url) VALUES
-('+91 98765 43210', '+91 98765 43210', 'contact@kiaskincare.com', '123 Beauty Street, Mumbai, Maharashtra 400001', 'Mon - Sat: 10:00 AM - 7:00 PM', 'https://facebook.com/kia-skincare', 'https://instagram.com/kia-skincare')
+INSERT INTO contact_settings (phone, whatsapp, email, address, business_hours, weekly_off, facebook_url, instagram_url) VALUES
+('+91 76986 17054', '+91 76986 17054', '', 'KIA Korean Skin Care
+D-25, 1st Floor, New Bus Port, Palanpur
+Dist. B.K
+PIN Code: 385001', '10:00 AM to 6:00 PM', 'Sunday Off', '', '')
 ON CONFLICT DO NOTHING;
 
 
