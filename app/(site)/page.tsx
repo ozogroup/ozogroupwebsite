@@ -13,6 +13,7 @@ import Referrals from "@/components/sections/Referrals";
 import Membership from "@/components/sections/Membership";
 import Testimonials from "@/components/sections/Testimonials";
 import FAQ from "@/components/sections/FAQ";
+import FranchiseInquiry from "@/components/sections/FranchiseInquiry";
 import FinalCTA from "@/components/sections/FinalCTA";
 import { site } from "@/lib/site";
 
@@ -38,6 +39,7 @@ export default function HomePage() {
       <Membership />
       <Testimonials />
       <FAQ />
+      <FranchiseInquiry />
       <FinalCTA />
     </>
   );
