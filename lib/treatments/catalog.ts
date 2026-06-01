@@ -44,8 +44,8 @@ export const treatmentKitCatalog = [
   },
   {
     slug: "japanese-skin-treatment",
-    title: "Japanese Skin Treatment",
-    kitName: "Japanese Skin Treatment",
+    title: "Japanese Skin Care Kit",
+    kitName: "Japanese Skin Care Kit",
     price: 22000,
     priceLabel: "Rs. 22,000",
     unit: "per session",
@@ -71,7 +71,7 @@ export const treatmentKitCatalog = [
     tone: "light",
     image:
       "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Japanese Skin Treatment",
+    imageAlt: "Japanese Skin Care Kit",
     note: "Japanese-inspired purification treatment for refined skin.",
     ctaText: "Book Consultation",
     featured: false,
@@ -112,8 +112,8 @@ export const treatmentKitCatalog = [
   },
   {
     slug: "skin-lightening",
-    title: "Skin Lightening Treatment",
-    kitName: "Skin Lightening Treatment",
+    title: "Skin Lightening Kit",
+    kitName: "Skin Lightening Kit",
     price: 18000,
     priceLabel: "Rs. 18,000",
     unit: "one-time",
@@ -155,8 +155,8 @@ export const treatmentKitCatalog = [
   },
   {
     slug: "basic-skin-treatment",
-    title: "Basic Skin Treatment",
-    kitName: "Basic Skin Treatment",
+    title: "Basic Skin Care Kit",
+    kitName: "Basic Skin Care Kit",
     price: 12000,
     priceLabel: "Rs. 12,000",
     unit: "per session",
@@ -178,7 +178,7 @@ export const treatmentKitCatalog = [
     tone: "primary",
     image:
       "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
-    imageAlt: "Basic Skin Treatment",
+    imageAlt: "Basic Skin Care Kit",
     note: "Essential skincare treatment.",
     ctaText: "Book Consultation",
     featured: false,

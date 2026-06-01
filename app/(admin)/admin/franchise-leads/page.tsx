@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getFranchiseLeads, updateFranchiseLead } from "@/lib/actions/franchise-leads";
 
 const statuses = ["new", "contacted", "interested", "converted", "rejected"];
 
@@ -31,7 +31,6 @@ function statusLabel(value?: string | null) {
 }
 
 export default function AdminFranchiseLeadsPage() {
-  const supabase = getSupabaseBrowserClient();
   const [leads, setLeads] = useState<FranchiseLead[]>([]);
   const [selectedLead, setSelectedLead] = useState<FranchiseLead | null>(null);
   const [adminNote, setAdminNote] = useState("");
@@ -47,17 +46,13 @@ export default function AdminFranchiseLeadsPage() {
   async function loadLeads() {
     setLoading(true);
     setError("");
-    const { data, error } = await supabase
-      .from("franchise_leads" as any)
-      .select("id,full_name,mobile,city,current_business,investment_budget,message,status,created_at")
-      .order("created_at", { ascending: false });
+    const result = await getFranchiseLeads();
 
-    if (error) {
-      console.error("Error loading franchise leads:", error);
-      setError("Unable to load franchise leads. Please confirm the franchise_leads table exists.");
+    if (!result.success) {
+      setError(result.error || "Unable to load franchise leads.");
       setLeads([]);
     } else {
-      setLeads((data || []) as unknown as FranchiseLead[]);
+      setLeads((result.data || []) as FranchiseLead[]);
     }
     setLoading(false);
   }
@@ -66,18 +61,10 @@ export default function AdminFranchiseLeadsPage() {
     setSavingId(lead.id);
     setError("");
 
-    const payload: Record<string, string> = { status };
-    if (note?.trim()) payload.admin_note = note.trim();
+    const result = await updateFranchiseLead({ id: lead.id, status, adminNote: note });
 
-    let result = await (supabase as any).from("franchise_leads").update(payload).eq("id", lead.id);
-
-    if (result.error && "admin_note" in payload) {
-      result = await (supabase as any).from("franchise_leads").update({ status }).eq("id", lead.id);
-    }
-
-    if (result.error) {
-      console.error("Error updating franchise lead:", result.error);
-      setError("Unable to update franchise lead status.");
+    if (!result.success) {
+      setError(result.error || "Unable to update franchise lead status.");
     } else {
       setLeads((current) =>
         current.map((item) => (item.id === lead.id ? { ...item, status } : item))

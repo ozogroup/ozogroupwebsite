@@ -46,7 +46,7 @@ INSERT INTO treatments (
   'award', 'Book Advance Kit', 1, NOW()
 ),
 (
-  'japanese-skin-treatment', 'Japanese Skin Treatment', 'Japanese Skin Treatment', 'clinic', 'clinic', 22000, 'Rs. 22,000', 'per session',
+  'japanese-skin-treatment', 'Japanese Skin Care Kit', 'Japanese Skin Care Kit', 'home_kit', 'home-kit', 22000, 'Rs. 22,000', 'complete kit',
   'Refined Purity & Timeless Beauty', 'Refined Purity & Timeless Beauty',
   'Japanese-inspired purification treatment for refined skin.',
   'Gentle Japanese skincare-inspired treatment for pore refinement, calm skin, and radiance.',
@@ -58,7 +58,7 @@ INSERT INTO treatments (
   '[{"q":"Is it suitable for sensitive skin?","a":"Yes, it is gentle and customizable."}]'::jsonb,
   '60-75 min', 'Recommended 4-6 sessions', 'Refined',
   'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80',
-  'Japanese Skin Treatment', 'light', TRUE, TRUE, NULL, FALSE, FALSE, '["Mumbai","Delhi","Bangalore"]'::jsonb,
+  'Japanese Skin Care Kit', 'light', TRUE, TRUE, NULL, FALSE, FALSE, '["All India"]'::jsonb,
   'sparkle', 'Book Consultation', 2, NOW()
 ),
 (
@@ -77,7 +77,7 @@ INSERT INTO treatments (
   'sparkle', 'Book Consultation', 3, NOW()
 ),
 (
-  'skin-lightening', 'Skin Lightening Treatment', 'Skin Lightening Treatment', 'home_kit', 'home-kit', 18000, 'Rs. 18,000', 'one-time',
+  'skin-lightening', 'Skin Lightening Kit', 'Skin Lightening Kit', 'home_kit', 'home-kit', 18000, 'Rs. 18,000', 'one-time',
   'Home Kit Treatment Program', 'Home Kit Treatment Program',
   'Professional skin brightening and pigmentation care program with a premium home-care kit.',
   'Home-based skincare program with a premium kit delivered to your home for pigmentation and brightening support.',
@@ -93,7 +93,7 @@ INSERT INTO treatments (
   'droplet', 'Book Kit', 4, NOW()
 ),
 (
-  'basic-skin-treatment', 'Basic Skin Treatment', 'Basic Skin Treatment', 'clinic', 'clinic', 12000, 'Rs. 12,000', 'per session',
+  'basic-skin-treatment', 'Basic Skin Care Kit', 'Basic Skin Care Kit', 'home_kit', 'home-kit', 12000, 'Rs. 12,000', 'complete kit',
   'Essential Skin Care', 'Essential Skin Care',
   'Essential starter treatment for cleansing, hydration, and glow maintenance.',
   'Essential starter treatment for cleansing, hydration, and glow maintenance.',
@@ -104,7 +104,7 @@ INSERT INTO treatments (
   '[]'::jsonb,
   '45-60 min', 'Recommended 3-4 sessions', 'Essential',
   'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80',
-  'Basic Skin Treatment', 'primary', TRUE, TRUE, NULL, FALSE, FALSE, '["Mumbai","Delhi","Bangalore"]'::jsonb,
+  'Basic Skin Care Kit', 'primary', TRUE, TRUE, NULL, FALSE, FALSE, '["All India"]'::jsonb,
   'droplet', 'Book Consultation', 5, NOW()
 )
 ON CONFLICT (slug) DO UPDATE SET
