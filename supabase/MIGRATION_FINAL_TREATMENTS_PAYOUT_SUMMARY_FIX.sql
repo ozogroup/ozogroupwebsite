@@ -90,7 +90,7 @@ INSERT INTO treatments (
   '4-6 weeks', 'Complete home program', 'Home Program',
   'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80',
   'Premium skincare home kit', 'accent', TRUE, TRUE, NULL, TRUE, FALSE, '["All India"]'::jsonb,
-  'droplet', 'Book Home Kit Program', 4, NOW()
+  'droplet', 'Book Kit', 4, NOW()
 ),
 (
   'basic-skin-treatment', 'Basic Skin Treatment', 'Basic Skin Treatment', 'clinic', 'clinic', 12000, 'Rs. 12,000', 'per session',

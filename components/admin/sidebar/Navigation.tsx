@@ -19,6 +19,7 @@ import {
   BadgeIndianRupee,
   Image as ImageIcon,
   ShieldCheck,
+  Store,
 } from "lucide-react";
 
 const navigation = [
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Testimonials", href: "/admin/testimonials", icon: Star, section: "content" },
   { name: "FAQs", href: "/admin/faqs", icon: MessageCircleQuestion, section: "content" },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar, section: "operations" },
+  { name: "Franchise Leads", href: "/admin/franchise-leads", icon: Store, section: "operations" },
   { name: "Membership Requests", href: "/admin/memberships", icon: CreditCard, section: "operations" },
   { name: "Referral Partners", href: "/admin/partners", icon: Users, section: "referral" },
   { name: "Referral Network", href: "/admin/referrals", icon: Network, section: "referral" },

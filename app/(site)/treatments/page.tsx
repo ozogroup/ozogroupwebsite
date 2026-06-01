@@ -3,6 +3,7 @@ import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicTreatments } from "@/lib/data/public";
 import type { Metadata } from "next";
+import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
 
 export const metadata: Metadata = {
   title: "Treatments | KIA Skin Care Premium Skincare",
@@ -64,7 +65,7 @@ export default async function TreatmentsPage() {
 
                 <div className="mt-6 flex-1 flex flex-col">
                   <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent mb-2">
-                    {treatment.tagline}
+                    {getOfferingTypeLabel(treatment.treatmentType)} · {treatment.tagline}
                   </p>
                   <h3 className="text-xl font-semibold text-brand-ink mb-3">
                     {treatment.title}
@@ -107,14 +108,14 @@ export default async function TreatmentsPage() {
                           href={`/treatments/${treatment.slug}`}
                           className="btn-primary justify-center text-sm"
                         >
-                          Book Home Kit Program
+                          {getOfferingCtaLabel(treatment.treatmentType)}
                         </Link>
                       ) : (
                         <a
                           href="#consultation"
                           className="btn-primary justify-center text-sm"
                         >
-                          Book Consultation
+                          {getOfferingCtaLabel(treatment.treatmentType)}
                         </a>
                       )}
                       <Link

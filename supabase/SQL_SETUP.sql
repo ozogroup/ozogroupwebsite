@@ -1041,7 +1041,7 @@ END$$;
 
 -- Insert default contact settings (only if table is empty)
 INSERT INTO contact_settings (whatsapp_number, whatsapp_url, email, phone, address, business_hours, weekly_off, instagram_url)
-SELECT '+917698617054', 'https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.', '', '+91 76986 17054', 'KIA Korean Skin Care
+SELECT '+917698617054', 'https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.', '', '+91 76986 17054', 'KIA Skin Care
 D-25, 1st Floor, New Bus Port, Palanpur
 Dist. B.K
 PIN Code: 385001', '10:00 AM to 6:00 PM', 'Sunday Off', ''

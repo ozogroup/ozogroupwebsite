@@ -59,7 +59,7 @@ export default function AdminContactSettingsPage() {
       phone: "+91 76986 17054",
       whatsapp: "+91 76986 17054",
       email: "",
-      address: "KIA Korean Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
+      address: "KIA Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
       business_hours: "10:00 AM to 6:00 PM",
       weekly_off: "Sunday Off",
       facebook_url: "",
@@ -191,7 +191,7 @@ export default function AdminContactSettingsPage() {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                   rows={3}
-                  placeholder="KIA Korean Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
+                  placeholder="KIA Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
                 />
               </div>
               <div className="md:col-span-2">

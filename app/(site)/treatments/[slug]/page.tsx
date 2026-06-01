@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublicTreatments, getPublicContactSettings } from "@/lib/data/public";
 import BookNowButton from "@/components/booking/BookNowButton";
+import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
 
 type Params = { params: { slug: string } };
 
@@ -32,6 +33,8 @@ export default async function TreatmentDetail({ params }: Params) {
   
   const t = treatments.find((x) => x.slug === params.slug);
   if (!t) notFound();
+  const offeringLabel = getOfferingTypeLabel(t.treatmentType);
+  const ctaLabel = getOfferingCtaLabel(t.treatmentType);
 
   const hasBeforeAfter = (t as any).before_image && (t as any).after_image;
   const hasGallery = (t as any).gallery && (t as any).gallery.length > 0;
@@ -80,7 +83,7 @@ export default async function TreatmentDetail({ params }: Params) {
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               {t.treatmentType === "home-kit" ? (
                 <BookNowButton treatmentSlug={t.slug} className="justify-center shadow-soft hover:shadow-card transition-shadow">
-                  Book Home Kit Program
+                  {ctaLabel}
                 </BookNowButton>
               ) : (
                 <a
@@ -89,7 +92,7 @@ export default async function TreatmentDetail({ params }: Params) {
                   rel="noopener noreferrer"
                   className="btn-primary justify-center shadow-soft hover:shadow-card transition-shadow"
                 >
-                  Book Consultation
+                  {ctaLabel}
                 </a>
               )}
               <a
@@ -190,9 +193,9 @@ export default async function TreatmentDetail({ params }: Params) {
                   Gallery
                 </span>
               </div>
-              <h2 className="mt-6">Treatment Gallery</h2>
+              <h2 className="mt-6">{offeringLabel} Gallery</h2>
               <p className="mt-4 text-base text-brand-muted">
-                Browse through our treatment results and clinic atmosphere.
+                Browse through our {offeringLabel.toLowerCase()} results and clinic atmosphere.
               </p>
             </div>
 
@@ -278,7 +281,7 @@ export default async function TreatmentDetail({ params }: Params) {
             </div>
             <h2 className="mt-6">Step-by-Step, Doctor-Supervised</h2>
             <p className="mt-4 text-base text-brand-muted">
-              Every session is delivered by trained skincare experts using clinical-grade products.
+              Every {offeringLabel.toLowerCase()} is delivered by trained skincare experts using clinical-grade products.
             </p>
           </div>
           <ol className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
@@ -318,7 +321,7 @@ export default async function TreatmentDetail({ params }: Params) {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               {t.treatmentType === "home-kit" ? (
-                <BookNowButton treatmentSlug={t.slug}>Book Home Kit Program</BookNowButton>
+                <BookNowButton treatmentSlug={t.slug}>{ctaLabel}</BookNowButton>
               ) : (
                 <a
                   href={contactSettings.whatsapp}
@@ -326,7 +329,7 @@ export default async function TreatmentDetail({ params }: Params) {
                   rel="noopener noreferrer"
                   className="btn-primary"
                 >
-                  Book Consultation
+                  {ctaLabel}
                 </a>
               )}
               <a

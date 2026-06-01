@@ -277,7 +277,7 @@ INSERT INTO contact_settings (
   '+91 76986 17054',
   'https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.',
   '',
-  'KIA Korean Skin Care
+  'KIA Skin Care
 D-25, 1st Floor, New Bus Port, Palanpur
 Dist. B.K
 PIN Code: 385001',

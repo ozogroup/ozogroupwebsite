@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicSiteContent, getPublicTreatments } from "@/lib/data/public";
+import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
 
 export default async function Treatments() {
   const [treatments, siteContent] = await Promise.all([
@@ -59,7 +60,7 @@ export default async function Treatments() {
 
               <div className="mt-6 flex-1 flex flex-col">
                 <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent mb-2">
-                  {treatment.tagline}
+                  {getOfferingTypeLabel(treatment.treatmentType)} · {treatment.tagline}
                 </p>
                 <h3 className="text-xl font-semibold text-brand-ink mb-3">
                   {treatment.title}
@@ -101,7 +102,7 @@ export default async function Treatments() {
                       treatmentSlug={treatment.slug}
                       className="justify-center text-sm"
                     >
-                      {treatment.treatmentType === "camp" ? "Enquire Now" : "Book Now"}
+                      {getOfferingCtaLabel(treatment.treatmentType)}
                     </BookNowButton>
                     <Link
                       href={`/treatments/${treatment.slug}`}

@@ -31,6 +31,21 @@ export async function middleware(req: NextRequest) {
   });
 
   const referralCode = req.nextUrl.searchParams.get("ref");
+  const pathReferralCode = pathname.match(/^\/((?:KIA|OZO)\d+)$/i)?.[1];
+  if (pathReferralCode) {
+    const normalizedPathReferralCode = pathReferralCode.trim().toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
+    const redirectUrl = new URL("/membership", req.url);
+    redirectUrl.searchParams.set("ref", normalizedPathReferralCode);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.cookies.set("kia_referral_code", normalizedPathReferralCode, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    return redirectResponse;
+  }
+
   if (referralCode) {
     const normalizedReferralCode = referralCode.trim().toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
     res.cookies.set("kia_referral_code", normalizedReferralCode, {

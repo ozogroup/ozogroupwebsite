@@ -19,7 +19,7 @@ export const site = {
     "https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.",
   email: "",
   instagram: "",
-  address: "KIA Korean Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
+  address: "KIA Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
   businessHours: "10:00 AM to 6:00 PM",
   weeklyOff: "Sunday Off",
   membershipFee: 1199,

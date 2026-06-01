@@ -287,7 +287,7 @@ INSERT INTO site_content (section, key_name, value, value_type, display_order) V
 ('contact', 'phone', '+91 76986 17054', 'text', 1),
 ('contact', 'whatsapp', '+91 76986 17054', 'text', 2),
 ('contact', 'email', '', 'text', 3),
-('contact', 'address', 'KIA Korean Skin Care
+('contact', 'address', 'KIA Skin Care
 D-25, 1st Floor, New Bus Port, Palanpur
 Dist. B.K
 PIN Code: 385001', 'text', 4),
@@ -339,7 +339,7 @@ ON CONFLICT (slug) DO UPDATE SET
 -- INITIAL CONTACT SETTINGS SEED DATA
 -- =====================================================
 INSERT INTO contact_settings (phone, whatsapp, email, address, business_hours, weekly_off, facebook_url, instagram_url) VALUES
-('+91 76986 17054', '+91 76986 17054', '', 'KIA Korean Skin Care
+('+91 76986 17054', '+91 76986 17054', '', 'KIA Skin Care
 D-25, 1st Floor, New Bus Port, Palanpur
 Dist. B.K
 PIN Code: 385001', '10:00 AM to 6:00 PM', 'Sunday Off', '', '')

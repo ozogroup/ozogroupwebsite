@@ -17,5 +17,5 @@ function getPublicSiteUrl() {
 }
 
 export function getReferralUrl(partnerCode: string) {
-  return `${getPublicSiteUrl()}/?ref=${encodeURIComponent(partnerCode)}`;
+  return `${getPublicSiteUrl()}/${encodeURIComponent(partnerCode)}`;
 }

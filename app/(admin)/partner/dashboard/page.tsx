@@ -229,6 +229,9 @@ export default async function PartnerDashboardPage() {
   const whatsappMessage = encodeURIComponent(
     `Book KIA Skin Care with my Partner ID: ${partnerCode}\n\n${referralLink}`
   );
+  const telegramMessage = encodeURIComponent(`Book KIA Skin Care with my Partner ID: ${partnerCode}`);
+  const telegramShareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${telegramMessage}`;
+  const referralQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(referralLink)}`;
   const nextLevelTarget = Math.max(10, Math.ceil(((directTeam.count || 0) + 1) / 10) * 10);
   const targetProgress = Math.min(100, Math.round(((directTeam.count || 0) / nextLevelTarget) * 100));
   const activeBookingRate = bookings.length > 0 ? Math.round((confirmedTreatments / bookings.length) * 100) : 0;
@@ -312,7 +315,7 @@ export default async function PartnerDashboardPage() {
       )}
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted p-5 text-white shadow-premium md:p-7">
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#4F4542] via-[#5B4C46] to-[#6F625C] p-5 text-white shadow-premium md:p-7">
           <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/[0.14] blur-3xl" />
           <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
@@ -322,28 +325,46 @@ export default async function PartnerDashboardPage() {
                 Send your referral link to clients and prospects. Every confirmed booking strengthens your income dashboard.
               </p>
             </div>
-            <Link
-              href={`https://wa.me/?text=${whatsappMessage}`}
-              target="_blank"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-brand-ink shadow-soft transition hover:-translate-y-0.5 hover:bg-brand-surface"
-            >
-              WhatsApp Share
-              <Send className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                href={`https://wa.me/?text=${whatsappMessage}`}
+                target="_blank"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-[#20BD5A]"
+              >
+                WhatsApp Share
+                <Send className="h-4 w-4" />
+              </Link>
+              <Link
+                href={telegramShareLink}
+                target="_blank"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-white/20"
+              >
+                Telegram
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
-          <div className="relative mt-5 flex flex-col gap-3 rounded-2xl border border-white/20 bg-white/[0.12] p-3 backdrop-blur sm:flex-row">
-            <input
-              readOnly
-              value={referralLink}
-              className="min-w-0 flex-1 rounded-xl border border-white/20 bg-white/[0.14] px-4 py-3 text-sm text-white outline-none placeholder:text-white/60"
-            />
-            <Link
-              href="/partner/referral-link"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/95 px-4 py-3 text-sm font-semibold text-brand-ink transition hover:bg-white"
-            >
-              Copy Tools
-              <Copy className="h-4 w-4" />
-            </Link>
+          <div className="relative mt-5 grid gap-4 rounded-2xl border border-white/20 bg-white/[0.12] p-3 backdrop-blur md:grid-cols-[1fr_auto]">
+            <div className="min-w-0">
+              <input
+                readOnly
+                value={referralLink}
+                className="w-full rounded-xl border border-white/20 bg-white/[0.14] px-4 py-3 text-sm text-white outline-none placeholder:text-white/60"
+              />
+              <p className="mt-3 text-xs text-white/75">Scan this code to quickly register under your network.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-white p-2 shadow-soft">
+                <img src={referralQrCodeUrl} alt={`Referral QR code for ${partnerCode}`} className="h-24 w-24 rounded-lg" />
+              </div>
+              <Link
+                href="/partner/referral-link"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/95 px-4 py-3 text-sm font-semibold text-brand-ink transition hover:bg-white"
+              >
+                Copy Tools
+                <Copy className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
 

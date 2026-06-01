@@ -6,6 +6,7 @@ import Breadcrumb from "@/components/admin/Breadcrumb";
 import ImageUpload from "@/components/admin/ImageUpload";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 import { ensureFinalTreatmentCatalog } from "@/lib/actions/treatments";
+import { getOfferingTypeLabel } from "@/lib/treatment-labels";
 
 type Treatment = {
   id: string;
@@ -344,7 +345,7 @@ export default function AdminTreatmentsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-1 text-xs rounded bg-brand-light/55 text-brand-primaryDark">
-                      {treatment.type === "home_kit" ? "Kit" : treatment.type === "campaign" ? "Campaign" : treatment.type}
+                      {getOfferingTypeLabel(treatment.type || treatment.treatment_type)}
                     </span>
                     <p className="text-xs text-brand-muted mt-1">{treatment.kit_name || treatment.title}</p>
                   </td>
@@ -453,8 +454,8 @@ export default function AdminTreatmentsPage() {
                     required
                     className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                   >
-                    <option value="clinic">Clinic</option>
-                    <option value="home_kit">Home Kit</option>
+                    <option value="clinic">Treatment</option>
+                    <option value="home_kit">Kit</option>
                     <option value="campaign">Campaign</option>
                   </select>
                 </div>

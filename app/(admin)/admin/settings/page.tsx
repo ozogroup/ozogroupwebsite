@@ -156,7 +156,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setContactData({ ...contactData, address: e.target.value })}
                   className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all resize-none"
                   rows={3}
-                  placeholder="KIA Korean Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
+                  placeholder="KIA Skin Care, D-25, 1st Floor, New Bus Port, Palanpur"
                 />
               </div>
             </div>
