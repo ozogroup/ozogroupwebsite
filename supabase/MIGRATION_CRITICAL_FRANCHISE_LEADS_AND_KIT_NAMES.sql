@@ -7,9 +7,14 @@ CREATE TABLE IF NOT EXISTS franchise_leads (
   investment_budget TEXT,
   message TEXT,
   status TEXT DEFAULT 'new',
-  admin_note TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE franchise_leads
+  ADD COLUMN IF NOT EXISTS admin_notes TEXT,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_franchise_leads_created_at ON franchise_leads(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_franchise_leads_status ON franchise_leads(status);

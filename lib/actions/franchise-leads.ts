@@ -83,11 +83,11 @@ export async function updateFranchiseLead(input: { id: string; status: string; a
   try {
     const supabase = getSupabaseServiceClient();
     const payload: Record<string, string> = { status: input.status };
-    if (input.adminNote?.trim()) payload.admin_note = input.adminNote.trim();
+    if (input.adminNote?.trim()) payload.admin_notes = input.adminNote.trim();
 
     let result = await supabase.from("franchise_leads" as any).update(payload).eq("id", input.id);
 
-    if (result.error && "admin_note" in payload) {
+    if (result.error && "admin_notes" in payload) {
       result = await supabase.from("franchise_leads" as any).update({ status: input.status }).eq("id", input.id);
     }
 

@@ -24,6 +24,15 @@ export default function AdminContactSettingsPage() {
 
   const supabase = getSupabaseBrowserClient();
 
+  function withoutWeeklyOff<T extends Record<string, any>>(data: T) {
+    const { weekly_off, ...rest } = data;
+    return rest;
+  }
+
+  function isMissingWeeklyOffColumn(error: any) {
+    return /weekly_off/i.test(error?.message || "") || /weekly_off/i.test(error?.details || "");
+  }
+
   useEffect(() => {
     loadSettings();
   }, []);
@@ -67,7 +76,11 @@ export default function AdminContactSettingsPage() {
       youtube_url: "",
     };
 
-    const { data, error } = await (supabase as any).from("contact_settings").insert(defaultData).select().single();
+    let result = await (supabase as any).from("contact_settings").insert(defaultData).select().single();
+    if (result.error && isMissingWeeklyOffColumn(result.error)) {
+      result = await (supabase as any).from("contact_settings").insert(withoutWeeklyOff(defaultData)).select().single();
+    }
+    const { data, error } = result;
     
     if (error) {
       console.error("Error creating default settings:", error);
@@ -98,11 +111,17 @@ export default function AdminContactSettingsPage() {
       };
 
       if (settings) {
-        const { error } = await (supabase as any).from("contact_settings").update(data).eq("id", settings.id);
-        if (error) throw error;
+        let result = await (supabase as any).from("contact_settings").update(data).eq("id", settings.id);
+        if (result.error && isMissingWeeklyOffColumn(result.error)) {
+          result = await (supabase as any).from("contact_settings").update(withoutWeeklyOff(data)).eq("id", settings.id);
+        }
+        if (result.error) throw result.error;
       } else {
-        const { error } = await (supabase as any).from("contact_settings").insert(data);
-        if (error) throw error;
+        let result = await (supabase as any).from("contact_settings").insert(data);
+        if (result.error && isMissingWeeklyOffColumn(result.error)) {
+          result = await (supabase as any).from("contact_settings").insert(withoutWeeklyOff(data));
+        }
+        if (result.error) throw result.error;
       }
 
       setSuccess(true);

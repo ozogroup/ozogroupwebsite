@@ -208,7 +208,7 @@ export default function AdminFranchiseLeadsPage() {
                   onChange={(event) => setAdminNote(event.target.value)}
                   rows={3}
                   className="w-full resize-none rounded-xl border border-brand-border bg-brand-surface/40 px-4 py-3 text-sm text-brand-ink outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20"
-                  placeholder="Optional note. Saves when admin_note column exists."
+                  placeholder="Optional note for internal follow-up."
                 />
               </div>
               <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
