@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
 // =====================================================
 // PAYOUTS ACTIONS
@@ -16,7 +16,7 @@ function roundMoney(value: number) {
 
 export async function getPayouts() {
   await requireAdmin();
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("payouts" as any)
@@ -41,7 +41,7 @@ export async function getPayouts() {
       .select("partner_id, amount, gross_amount, status"),
     supabase
       .from("partners" as any)
-      .select("id, partner_code, wallet_balance, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name)")
+      .select("id, partner_code, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name)")
   ]);
 
   const partnerIds = Array.from(
@@ -77,12 +77,15 @@ export async function getPayouts() {
       .filter((p: any) => ["requested", "processing"].includes(p.status))
       .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
     const pendingPayout = Math.max(0, roundMoney(netPayable - paidAmount));
+    const partner = (partners || []).find((p: any) => p.id === partnerId) as any;
 
     summaryByPartner.set(partnerId, {
       membershipIncome,
       productIncome,
       bonusIncome,
       grossIncome,
+      walletBalance: Number(partner?.wallet_balance || 0),
+      paidEarnings: Number(partner?.paid_earnings || 0),
       deductionRate: PAYOUT_DEDUCTION_RATE,
       deductionAmount,
       netPayable,
@@ -94,7 +97,7 @@ export async function getPayouts() {
   }
 
   const rows = payouts.map((payout: any) => {
-    const grossAmount = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
+    const grossAmount = Number(payout.gross_amount || payout.amount || 0);
     const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE));
     const netAmount = Number(payout.net_amount || payout.amount || roundMoney(grossAmount - deductionAmount));
     return {
@@ -107,22 +110,29 @@ export async function getPayouts() {
     };
   });
 
-  const payoutPartnerIds = new Set(payouts.map((p: any) => p.partner_id));
+  const openPayoutPartnerIds = new Set(
+    payouts
+      .filter((p: any) => ["requested", "processing"].includes(String(p.status || "")))
+      .map((p: any) => p.partner_id)
+  );
   for (const partnerId of partnerIds) {
-    if (payoutPartnerIds.has(partnerId)) continue;
+    if (openPayoutPartnerIds.has(partnerId)) continue;
     const summary = summaryByPartner.get(partnerId);
-    if (!summary || summary.grossIncome <= 0) continue;
     const partner = (partners || []).find((p: any) => p.id === partnerId) as any;
+    const walletBalance = Number(partner?.wallet_balance || 0);
+    if (!summary || walletBalance <= 0) continue;
+    const walletDeduction = roundMoney(walletBalance * PAYOUT_DEDUCTION_RATE);
+    const walletNet = roundMoney(walletBalance - walletDeduction);
     rows.push({
       id: `summary-${partnerId}`,
       partner_id: partnerId,
       partner,
-      amount: Math.max(0, summary.netPayable - summary.paidAmount),
-      gross_amount: summary.grossIncome,
+      amount: walletNet,
+      gross_amount: walletBalance,
       deduction_rate: PAYOUT_DEDUCTION_RATE,
-      deduction_amount: summary.deductionAmount,
-      net_amount: summary.netPayable,
-      available_balance: Number(partner?.wallet_balance || 0),
+      deduction_amount: walletDeduction,
+      net_amount: walletNet,
+      available_balance: walletBalance,
       payment_method: partner?.upi_id ? "upi" : "bank",
       payment_details: [
         partner?.bank_account_holder,
@@ -131,7 +141,7 @@ export async function getPayouts() {
         partner?.bank_ifsc,
         partner?.upi_id ? `UPI: ${partner.upi_id}` : null,
       ].filter(Boolean).join(" | "),
-      status: summary.netPayable - summary.paidAmount > 0 ? "available" : "settled",
+      status: "available",
       created_at: null,
       is_summary: true,
       partner_summary: summary,
@@ -146,7 +156,7 @@ export async function getPayouts() {
 
 export async function updatePayoutStatus(id: string, status: string, transactionReference?: string, note?: string) {
   await requireAdmin();
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
   const now = new Date().toISOString();
   
   const updateData: any = { 
@@ -205,7 +215,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
 
 export async function createPayout(payout: any) {
   await requireAdmin();
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("payouts" as any)
