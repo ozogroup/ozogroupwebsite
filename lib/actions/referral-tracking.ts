@@ -191,7 +191,7 @@ async function getSponsorAncestors(supabase: any, partnerId: string) {
   let currentPartnerId: string | null = partnerId;
 
   for (let level = 1; level <= 3 && currentPartnerId; level += 1) {
-    const { data, error } = await supabase
+    const { data, error }: { data: { sponsor_id?: string | null } | null; error: any } = await supabase
       .from("partners")
       .select("sponsor_id")
       .eq("id", currentPartnerId)
@@ -202,7 +202,7 @@ async function getSponsorAncestors(supabase: any, partnerId: string) {
       break;
     }
 
-    const sponsorId = data?.sponsor_id || null;
+    const sponsorId: string | null = data?.sponsor_id || null;
     if (!sponsorId || sponsorId === partnerId) break;
 
     ancestors.push({ ancestor_id: sponsorId, level });

@@ -31,6 +31,9 @@ export default function PartnerPayoutsPage() {
   }
 
   const wallet = Number(partner?.wallet_balance || 0);
+  const grossAvailable = wallet;
+  const availableDeduction = Math.round(grossAvailable * 0.15 * 100) / 100;
+  const availableNetPayable = Math.max(0, grossAvailable - availableDeduction);
   const requestedGross = Number(amount || 0);
   const payoutDeduction = Math.round(requestedGross * 0.15 * 100) / 100;
   const netPayable = Math.max(0, requestedGross - payoutDeduction);
@@ -43,7 +46,7 @@ export default function PartnerPayoutsPage() {
     !membershipActive ? "Membership must be active" : null,
     wallet < 1000 ? "Minimum wallet balance is Rs. 1000" : null,
   ].filter(Boolean);
-  const hasBank = Boolean(partner?.bank_account_holder && partner?.bank_name && partner?.bank_account_number && partner?.bank_ifsc);
+  const hasBank = Boolean(partner?.bank_account_holder && partner?.bank_account_number && partner?.bank_ifsc);
   const hasUpi = Boolean(partner?.upi_id);
   const canRequest = restrictions.length === 0;
 
@@ -85,6 +88,19 @@ export default function PartnerPayoutsPage() {
           </ul>
         </div>
       )}
+
+      {wallet === 0 && (
+        <div className="rounded-xl border border-brand-border bg-white p-4 text-sm font-medium text-brand-muted shadow-sm">
+          No payout available yet.
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <PayoutMetric label="Wallet Balance" value={`Rs. ${wallet.toLocaleString("en-IN")}`} />
+        <PayoutMetric label="Gross Available" value={`Rs. ${grossAvailable.toLocaleString("en-IN")}`} />
+        <PayoutMetric label="15% Deduction" value={`-Rs. ${availableDeduction.toLocaleString("en-IN")}`} danger />
+        <PayoutMetric label="Net Payable" value={`Rs. ${availableNetPayable.toLocaleString("en-IN")}`} accent />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
@@ -147,7 +163,7 @@ export default function PartnerPayoutsPage() {
                     className="mr-2"
                   />
                   Bank Transfer
-                  <span className="block pl-5 text-xs text-slate-500">{hasBank ? partner?.bank_name || "Bank details saved" : "Bank details missing"}</span>
+                  <span className="block pl-5 text-xs text-slate-500">{hasBank ? "Bank details saved" : "Bank details missing"}</span>
                 </label>
                 <label className={`rounded-xl border p-3 text-sm ${paymentMethod === "upi" ? "border-brand-accent bg-brand-accent/10" : "border-slate-200 bg-white"}`}>
                   <input
@@ -182,7 +198,6 @@ export default function PartnerPayoutsPage() {
           <h2 className="text-lg font-semibold text-slate-900 mb-3">Saved Bank Details</h2>
           <div className="space-y-1 text-sm text-slate-600">
             <p><span className="font-medium text-slate-800">Holder:</span> {partner?.bank_account_holder || "-"}</p>
-            <p><span className="font-medium text-slate-800">Bank:</span> {partner?.bank_name || "-"}</p>
             <p><span className="font-medium text-slate-800">Account:</span> {partner?.bank_account_number || "-"}</p>
             <p><span className="font-medium text-slate-800">IFSC:</span> {partner?.bank_ifsc || "-"}</p>
           </div>
@@ -232,6 +247,27 @@ export default function PartnerPayoutsPage() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PayoutMetric({
+  label,
+  value,
+  accent,
+  danger,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-sm text-slate-600">{label}</p>
+      <p className={`mt-2 text-2xl font-bold ${accent ? "text-brand-accent" : danger ? "text-red-700" : "text-slate-900"}`}>
+        {value}
+      </p>
     </div>
   );
 }

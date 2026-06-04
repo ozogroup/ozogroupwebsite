@@ -22,7 +22,7 @@ export async function getPayouts() {
     .from("payouts" as any)
     .select(`
       *,
-      partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name))
+      partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name))
     `)
     .order("created_at", { ascending: false });
   
@@ -41,7 +41,7 @@ export async function getPayouts() {
       .select("partner_id, amount, gross_amount, status"),
     supabase
       .from("partners" as any)
-      .select("id, partner_code, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, bank_name, upi_id, profiles(full_name)")
+      .select("id, partner_code, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name)")
   ]);
 
   const partnerIds = Array.from(
@@ -136,7 +136,6 @@ export async function getPayouts() {
       payment_method: partner?.upi_id ? "upi" : "bank",
       payment_details: [
         partner?.bank_account_holder,
-        partner?.bank_name,
         partner?.bank_account_number,
         partner?.bank_ifsc,
         partner?.upi_id ? `UPI: ${partner.upi_id}` : null,
@@ -243,7 +242,7 @@ export async function getPartnerPayoutContext() {
   const [{ data: partner }, { data: payouts }] = await Promise.all([
     supabase
       .from("partners" as any)
-      .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,bank_name,upi_id")
+      .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,upi_id")
       .eq("id", profile.id)
       .single(),
     supabase
@@ -262,7 +261,7 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
 
   const { data: partner, error } = await supabase
     .from("partners" as any)
-    .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,bank_name,upi_id")
+    .select("wallet_balance,kyc_status,bank_verified,membership_expires_at,status,bank_account_holder,bank_account_number,bank_ifsc,upi_id")
     .eq("id", profile.id)
     .single();
 
@@ -271,7 +270,7 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   const p = partner as any;
   const wallet = Number(p.wallet_balance || 0);
   const membershipActive = p.status === "active" && (!p.membership_expires_at || new Date(p.membership_expires_at).getTime() >= Date.now());
-  const hasBank = Boolean(p.bank_account_holder && p.bank_name && p.bank_account_number && p.bank_ifsc);
+  const hasBank = Boolean(p.bank_account_holder && p.bank_account_number && p.bank_ifsc);
   const upiId = p.upi_id;
   const hasUpi = Boolean(upiId);
   const method = paymentMethod || (hasBank ? "bank" : hasUpi ? "upi" : "bank");
@@ -292,7 +291,6 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
         ].filter(Boolean).join(" | ")
       : [
           p.bank_account_holder,
-          p.bank_name,
           p.bank_account_number,
           p.bank_ifsc,
         ].filter(Boolean).join(" | ");

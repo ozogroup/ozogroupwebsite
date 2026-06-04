@@ -67,20 +67,21 @@ export default function AdminPayoutsPage() {
           <table className="w-full min-w-[1280px]">
             <thead className="bg-brand-surface/50 border-b border-brand-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Payout Math</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner Summary</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner Name / ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Gross Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">15% Deduction</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Net Payable</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Wallet / Paid</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Bank / UPI</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Dates</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border">
               {loading ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-brand-muted">Loading...</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-brand-muted">Loading...</td></tr>
               ) : payouts.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-brand-muted">No payouts found</td></tr>
+                <tr><td colSpan={8} className="px-6 py-12 text-center text-brand-muted">No payouts found</td></tr>
               ) : (
                 payouts.map((payout) => (
                   <tr key={payout.id} className="align-top hover:bg-brand-surface/30 transition-colors">
@@ -89,26 +90,25 @@ export default function AdminPayoutsPage() {
                       <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
                     </td>
                     <td className="px-4 py-4 text-sm">
-                      <p className="font-semibold text-brand-ink">Net: {money(payout.net_amount || payout.amount)}</p>
-                      <p className="text-xs text-brand-muted">Gross: {money(payout.gross_amount || payout.available_balance || payout.amount)}</p>
-                      <p className="text-xs text-red-600">15% Deduction: -{money(payout.deduction_amount)}</p>
+                      <p className="font-semibold text-brand-ink">{money(payout.gross_amount || payout.amount)}</p>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-red-600">
+                      -{money(payout.deduction_amount)}
+                    </td>
+                    <td className="px-4 py-4 text-sm">
+                      <p className="font-semibold text-brand-ink">{money(payout.net_amount || payout.amount)}</p>
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted">
-                      <p>Membership: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.membershipIncome)}</span></p>
-                      <p>Product: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.productIncome)}</span></p>
-                      <p>Bonus: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.bonusIncome)}</span></p>
-                      <p>Gross income: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.grossIncome)}</span></p>
-                      <p>Net payable: <span className="font-semibold text-brand-ink">{money(payout.partner_summary?.netPayable)}</span></p>
-                      <p>Paid: {money(payout.partner_summary?.paidAmount)} | Pending payout: {money(payout.partner_summary?.pendingPayout)}</p>
+                      <p>Wallet Balance: <span className="font-semibold text-brand-ink">{money(payout.available_balance ?? payout.partner_summary?.walletBalance)}</span></p>
+                      <p>Paid Earnings: <span className="font-semibold text-brand-ink">{money(payout.partner?.paid_earnings ?? payout.partner_summary?.paidEarnings)}</span></p>
                       <p>Requested: {money(payout.partner_summary?.requestedPayout)}</p>
-                      <p className="capitalize">Status: {payout.partner_summary?.payoutStatus || payout.status}</p>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted max-w-xs">
                       <p>{payout.payment_details || "-"}</p>
                       <p className="mt-1 text-xs">Method: {payout.payment_method || "-"}</p>
                       {payout.is_summary && (
                         <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
-                          No payout request yet. Summary generated from commissions.
+                          Available for payout. No request yet.
                         </p>
                       )}
                     </td>
@@ -116,11 +116,6 @@ export default function AdminPayoutsPage() {
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
                         {payout.status}
                       </span>
-                    </td>
-                    <td className="px-4 py-4 text-xs text-brand-muted space-y-1">
-                      <p>Requested: {payout.created_at ? new Date(payout.created_at).toLocaleDateString() : "-"}</p>
-                      <p>Approved: {payout.approved_at ? new Date(payout.approved_at).toLocaleDateString() : "-"}</p>
-                      <p>Paid: {payout.paid_at ? new Date(payout.paid_at).toLocaleDateString() : "-"}</p>
                     </td>
                     <td className="px-4 py-4">
                       {payout.is_summary ? (
