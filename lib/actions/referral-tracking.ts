@@ -84,33 +84,54 @@ export async function generateBookingCommissions(
   supabase: any,
   booking: {
     id: string;
-    referred_by: string | null;
+    referred_by?: string | null;
+    referral_code?: string | null;
+    partner_code?: string | null;
     payment_amount: number | null;
     booking_status: string;
   }
 ) {
-  if (!booking.referred_by || !["confirmed", "completed"].includes(booking.booking_status)) {
+  if (!["confirmed", "completed"].includes(booking.booking_status)) {
     return;
   }
 
   const sourceAmount = Number(booking.payment_amount ?? 0) || 0;
   if (sourceAmount <= 0) return;
 
+  let referredBy = booking.referred_by || null;
+  if (!referredBy) {
+    const partner = await resolvePartnerByCode(supabase, booking.referral_code || booking.partner_code);
+    referredBy = partner?.id || null;
+  }
+
+  if (!referredBy) {
+    console.error("Booking commission skipped: referral partner not found", {
+      bookingId: booking.id,
+      referralCode: booking.referral_code,
+      partnerCode: booking.partner_code,
+    });
+    return;
+  }
+
   const commissionPartners = [
-    { partner_id: booking.referred_by, level: 1 },
+    { partner_id: referredBy, level: 1 },
   ];
 
   const { data: ancestors, error } = await supabase
     .from("referral_tree")
     .select("ancestor_id, level")
-    .eq("descendant_id", booking.referred_by)
+    .eq("descendant_id", referredBy)
     .lte("level", 3);
 
   if (error) {
     console.error("Error fetching booking commission ancestors:", error);
   }
 
-  for (const row of ancestors || []) {
+  const ancestorRows = Array.isArray(ancestors) && ancestors.length > 0
+    ? ancestors
+    : await getSponsorAncestors(supabase, referredBy);
+
+  for (const row of ancestorRows || []) {
     const level = Number(row.level) + 1;
     if (level <= 4) {
       commissionPartners.push({ partner_id: row.ancestor_id, level });
@@ -163,4 +184,30 @@ export async function generateBookingCommissions(
       })
       .eq("id", item.partner_id);
   }
+}
+
+async function getSponsorAncestors(supabase: any, partnerId: string) {
+  const ancestors: Array<{ ancestor_id: string; level: number }> = [];
+  let currentPartnerId: string | null = partnerId;
+
+  for (let level = 1; level <= 3 && currentPartnerId; level += 1) {
+    const { data, error } = await supabase
+      .from("partners")
+      .select("sponsor_id")
+      .eq("id", currentPartnerId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching sponsor hierarchy:", error);
+      break;
+    }
+
+    const sponsorId = data?.sponsor_id || null;
+    if (!sponsorId || sponsorId === partnerId) break;
+
+    ancestors.push({ ancestor_id: sponsorId, level });
+    currentPartnerId = sponsorId;
+  }
+
+  return ancestors;
 }

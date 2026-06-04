@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
 import {
   getBookingTreatmentCatalogItem,
   getBookingTreatmentSlugCandidates,
@@ -319,7 +320,8 @@ export async function getBookingById(id: string) {
 }
 
 export async function updateBookingStatus(id: string, status: string, adminNote?: string) {
-  const supabase = getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const updateData: any = { booking_status: status, updated_at: new Date().toISOString() };
   if (adminNote) {
@@ -342,16 +344,27 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     await generateBookingCommissions(supabase, {
       id: (data as any).id,
       referred_by: (data as any).referred_by,
+      referral_code: (data as any).referral_code,
+      partner_code: (data as any).partner_code,
       payment_amount:
         (data as any).payment_amount ?? (data as any).treatment_price ?? 0,
       booking_status: (data as any).booking_status,
     });
   }
+
+  await supabase
+    .from("partner_sales" as any)
+    .update({ booking_status: status, updated_at: new Date().toISOString() })
+    .eq("booking_id", id);
   
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/commissions");
+  revalidatePath("/admin/payouts");
+  revalidatePath("/admin/reports");
   revalidatePath("/partner/dashboard");
   revalidatePath("/partner/commissions");
+  revalidatePath("/partner/income");
+  revalidatePath("/partner/payouts");
   return data;
 }
 

@@ -80,7 +80,9 @@ export default function AdminReferralsPage() {
           </h2>
 
           <div className="space-y-6">
-            {Object.entries(referralTree.tree).map(([level, partners]: [string, any]) => (
+            {[1, 2, 3, 4].map((level) => {
+              const partners = referralTree.tree?.[level] || [];
+              return (
               <div key={level}>
                 <h3 className="font-medium text-brand-ink mb-3">Level {level}</h3>
                 <div className="bg-brand-surface rounded-lg p-4">
@@ -112,9 +114,35 @@ export default function AdminReferralsPage() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {referralTree.pendingMembers?.length > 0 && (
+          <div className="bg-white rounded-xl shadow-soft border border-brand-border p-6">
+            <h2 className="font-display text-lg font-semibold text-brand-ink mb-4">
+              Pending Members
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {referralTree.pendingMembers.map((member: any) => (
+                <div key={member.id} className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="font-medium text-brand-ink">{member.full_name || "Pending member"}</p>
+                  <p className="text-xs text-brand-muted">{member.mobile || "-"}</p>
+                  <p className="text-xs text-brand-muted">{member.city || "-"}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-amber-700">
+                      {member.membership_status || "pending"}
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-amber-700">
+                      {member.payment_status || "payment pending"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
