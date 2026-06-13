@@ -16,7 +16,7 @@ export default async function ReferralPage() {
   const heroDescription =
     content.partner_description ||
     "Transform your network into rewards by sharing premium skincare experiences with people who trust your recommendation.";
-  const heroImage = content.partner_image || "/images/client-approved/franchise-opportunity.jpeg";
+  const heroImage = "/images/client-approved/professional-product-kit-pricing.png";
   return (
     <>
       {/* Hero Section */}

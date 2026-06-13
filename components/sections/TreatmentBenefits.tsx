@@ -27,6 +27,12 @@ const benefitImages = [
     height: 1284,
     alt: "Japanese skin care kit benefits and daily routine for cleansing, hydration, glow, anti-aging and sun protection",
   },
+  {
+    src: "/images/client-approved/franchise-opportunity.jpeg",
+    width: 1352,
+    height: 1600,
+    alt: "KIA Skin Care franchise opportunity with premium products, training and marketing support",
+  },
 ];
 
 export default function TreatmentBenefits() {

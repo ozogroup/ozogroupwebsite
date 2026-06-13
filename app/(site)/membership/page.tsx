@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { site } from "@/lib/site";
@@ -186,7 +187,7 @@ export default function MembershipPage() {
                 "radial-gradient(ellipse at 80% 0%, rgba(156,175,146,0.20) 0%, rgba(244,235,220,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(220,230,214,0.58) 0%, rgba(244,235,220,0) 50%)",
             }}
           />
-          <div className="container-x pt-12 md:pt-16 pb-16 md:pb-20">
+          <div className="container-x grid items-center gap-10 pt-12 pb-16 md:pt-16 md:pb-20 lg:grid-cols-2">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
@@ -204,6 +205,16 @@ export default function MembershipPage() {
                 Join the KIA Skin Care Partner Program for just ₹1,199 
                 and start earning commissions from your very first referral.
               </p>
+            </div>
+            <div className="relative aspect-[16/9] overflow-hidden rounded-[28px] border border-brand-border bg-[#F8F4EC] shadow-premium">
+              <Image
+                src="/images/client-approved/professional-product-kit-pricing.png"
+                alt="KIA Skin Care professional product kit pricing"
+                fill
+                priority
+                sizes="(max-width: 1024px) 90vw, 640px"
+                className="object-contain"
+              />
             </div>
           </div>
         </section>
