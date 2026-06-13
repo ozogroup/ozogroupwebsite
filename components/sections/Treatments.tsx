@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicSiteContent, getPublicTreatments } from "@/lib/data/public";
 import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
+import TreatmentGallery from "@/components/ui/TreatmentGallery";
 
 export default async function Treatments() {
   const [treatments, siteContent] = await Promise.all([
@@ -39,17 +39,11 @@ export default async function Treatments() {
               className="card hover:-translate-y-1 transition-transform duration-300 flex flex-col"
               style={{ animationDelay: `${i * 0.1}s` }}
             >
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-surface to-white">
-                <Image
-                  src={treatment.image}
+              <div className="relative">
+                <TreatmentGallery
+                  images={(treatment as any).gallery?.length ? (treatment as any).gallery : [treatment.image]}
                   alt={treatment.imageAlt}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-cover"
-                />
-                <div
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-tr from-brand-primary/20 via-transparent to-brand-accent/10"
+                  compact
                 />
                 {treatment.badge && (
                   <span className="absolute top-4 left-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white bg-brand-primary/95 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-glass">

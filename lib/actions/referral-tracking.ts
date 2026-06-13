@@ -89,9 +89,13 @@ export async function generateBookingCommissions(
     partner_code?: string | null;
     payment_amount: number | null;
     booking_status: string;
+    payment_status?: string | null;
   }
 ) {
-  if (!["confirmed", "completed"].includes(booking.booking_status)) {
+  if (
+    !["confirmed", "completed"].includes(booking.booking_status) ||
+    booking.payment_status !== "paid"
+  ) {
     return;
   }
 
@@ -142,6 +146,27 @@ export async function generateBookingCommissions(
     const percentage = COMMISSION_PERCENTAGES[item.level] || 0;
     const amount = Math.round(sourceAmount * percentage) / 100;
 
+    const { data: currentPartner, error: partnerError } = await supabase
+      .from("partners")
+      .select("wallet_balance, total_earnings, status, membership_expires_at")
+      .eq("id", item.partner_id)
+      .maybeSingle();
+
+    if (
+      partnerError ||
+      !currentPartner ||
+      currentPartner.status !== "active" ||
+      (currentPartner.membership_expires_at &&
+        new Date(currentPartner.membership_expires_at).getTime() < Date.now())
+    ) {
+      console.error("Booking commission skipped: partner is not eligible", {
+        bookingId: booking.id,
+        partnerId: item.partner_id,
+        level: item.level,
+      });
+      continue;
+    }
+
     const { data: existing } = await supabase
       .from("commissions")
       .select("id")
@@ -153,36 +178,53 @@ export async function generateBookingCommissions(
 
     if (existing) continue;
 
-    const { error: insertError } = await supabase.from("commissions").insert({
-      partner_id: item.partner_id,
-      source_type: "booking",
-      source_id: booking.id,
-      source_amount: sourceAmount,
-      level: item.level,
-      percentage,
-      amount,
-      status: "approved",
-    });
+    const { data: insertedCommission, error: insertError } = await supabase
+      .from("commissions")
+      .insert({
+        partner_id: item.partner_id,
+        source_type: "booking",
+        source_id: booking.id,
+        source_amount: sourceAmount,
+        level: item.level,
+        percentage,
+        amount,
+        status: "approved",
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       console.error("Error creating booking commission:", insertError);
       continue;
     }
 
-    const { data: currentPartner } = await supabase
-      .from("partners")
-      .select("wallet_balance, total_earnings")
-      .eq("id", item.partner_id)
-      .maybeSingle();
-
-    await supabase
+    const balanceBefore = Number(currentPartner.wallet_balance ?? 0) || 0;
+    const balanceAfter = balanceBefore + amount;
+    const { error: walletError } = await supabase
       .from("partners")
       .update({
-        wallet_balance: (Number(currentPartner?.wallet_balance ?? 0) || 0) + amount,
-        total_earnings: (Number(currentPartner?.total_earnings ?? 0) || 0) + amount,
+        wallet_balance: balanceAfter,
+        total_earnings: (Number(currentPartner.total_earnings ?? 0) || 0) + amount,
         updated_at: new Date().toISOString(),
       })
       .eq("id", item.partner_id);
+
+    if (walletError) {
+      console.error("Error crediting booking commission wallet:", walletError);
+      await supabase.from("commissions").delete().eq("id", insertedCommission.id);
+      continue;
+    }
+
+    await supabase.from("wallet_transactions").insert({
+      partner_id: item.partner_id,
+      transaction_type: "commission_credit",
+      amount,
+      balance_before: balanceBefore,
+      balance_after: balanceAfter,
+      reference_type: "commission",
+      reference_id: insertedCommission.id,
+      notes: `Booking commission level ${item.level}`,
+    });
   }
 }
 

@@ -29,7 +29,7 @@ function statusClass(status: string) {
 
 export default async function PartnerTeamPage() {
   await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

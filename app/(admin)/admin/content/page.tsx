@@ -41,6 +41,28 @@ type ContentGroup = {
 
 const contentGroups: ContentGroup[] = [
   {
+    title: "Partner Program",
+    description: "Referral and partner page hero content.",
+    page: "referral",
+    section: "partner_program",
+    fields: [
+      { label: "Partner Page Heading", page: "referral", section: "partner_program", key: "partner_title", type: "text" },
+      { label: "Partner Page Description", page: "referral", section: "partner_program", key: "partner_description", type: "textarea", rows: 3 },
+      { label: "Partner Page Image", page: "referral", section: "partner_program", key: "partner_image", type: "image_url" },
+    ],
+  },
+  {
+    title: "Franchise Opportunity",
+    description: "Homepage franchise lead section copy and approved campaign image.",
+    page: "home",
+    section: "franchise",
+    fields: [
+      { label: "Franchise Heading", page: "home", section: "franchise", key: "franchise_title", type: "text" },
+      { label: "Franchise Subtitle", page: "home", section: "franchise", key: "franchise_subtitle", type: "textarea", rows: 2 },
+      { label: "Franchise Image", page: "home", section: "franchise", key: "franchise_image", type: "image_url" },
+    ],
+  },
+  {
     title: "Home Hero",
     description: "Main first-screen copy, primary CTA, and hero image.",
     page: "home",

@@ -8,7 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // =====================================================
 
 export async function getFaqs() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -24,7 +24,7 @@ export async function getFaqs() {
 }
 
 export async function getFaqById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -41,7 +41,7 @@ export async function getFaqById(id: string) {
 }
 
 export async function createFaq(faq: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -63,7 +63,7 @@ export async function createFaq(faq: any) {
 }
 
 export async function updateFaq(id: string, faq: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -85,7 +85,7 @@ export async function updateFaq(id: string, faq: any) {
 }
 
 export async function deleteFaq(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { error } = await supabase
     .from("faqs" as any)
@@ -102,7 +102,7 @@ export async function deleteFaq(id: string) {
 }
 
 export async function toggleFaqActive(id: string, isActive: boolean) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)

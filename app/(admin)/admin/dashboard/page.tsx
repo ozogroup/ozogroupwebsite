@@ -7,12 +7,19 @@ import {
   ArrowRight, TrendingUp, Award, IndianRupee, Plus,
 } from "lucide-react";
 import { Card, CardHeader, PageHeader, StatCard, Badge, EmptyState, Button } from "@/components/admin/ui";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { resolveDateRange } from "@/lib/date-range";
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ range?: string; from?: string; to?: string }>;
+}) {
   await requireAdmin();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
+  const resolvedSearchParams = await searchParams;
 
   // Fetch real counts from Supabase (gracefully fall back to 0 if a table is missing)
   const safeCount = async (table: string) => {
@@ -116,6 +123,40 @@ export default async function AdminDashboardPage() {
     (Object.values(partnerRanking) as Array<{ name: string; count: number }>).sort((a, b) => b.count - a.count)[0]?.name ||
     "No sales yet";
 
+  const range = resolveDateRange(resolvedSearchParams);
+  const [{ data: periodBookings }, { data: periodCommissions }, { data: periodPayoutRows }, { data: walletPartners }, { data: periodSales }] =
+    await Promise.all([
+      (supabase as any).from("bookings").select("payment_amount,treatment_price,payment_status,created_at"),
+      (supabase as any).from("commissions").select("amount,level,status,created_at"),
+      (supabase as any).from("payouts").select("amount,status,created_at"),
+      (supabase as any).from("partners").select("id,partner_code,wallet_balance,profiles(full_name)"),
+      (supabase as any).from("partner_sales").select("partner_id,treatment_price,booking_status,created_at"),
+    ]);
+  const filteredBookings = (periodBookings || []).filter((row: any) => range.includes(row.created_at));
+  const filteredCommissions = (periodCommissions || []).filter((row: any) => range.includes(row.created_at) && row.status !== "rejected");
+  const filteredPayouts = (periodPayoutRows || []).filter((row: any) => range.includes(row.created_at));
+  const filteredSales = (periodSales || []).filter((row: any) => range.includes(row.created_at) && ["confirmed", "completed"].includes(row.booking_status));
+  const paidBookingSales = filteredBookings
+    .filter((row: any) => row.payment_status === "paid")
+    .reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.treatment_price || 0), 0);
+  const totalWalletBalance = (walletPartners || []).reduce((sum: number, row: any) => sum + Number(row.wallet_balance || 0), 0);
+  const periodPendingPayouts = filteredPayouts.filter((row: any) => ["requested", "processing"].includes(row.status));
+  const periodPaidPayouts = filteredPayouts.filter((row: any) => row.status === "paid");
+  const partnerSales = filteredSales.reduce((acc: Record<string, number>, row: any) => {
+    acc[row.partner_id || "direct"] = (acc[row.partner_id || "direct"] || 0) + Number(row.treatment_price || 0);
+    return acc;
+  }, {});
+  const partnerLookup = new Map<string, string>(
+    (walletPartners || []).map((row: any) => [String(row.id), String(row.profiles?.full_name || row.partner_code)])
+  );
+  const topPeriodPartners: Array<{ name: string; amount: number }> = Object.entries(partnerSales)
+    .map(([id, amount]) => ({
+      name: id === "direct" ? "Direct sales" : partnerLookup.get(id) || id,
+      amount: Number(amount),
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -127,6 +168,38 @@ export default async function AdminDashboardPage() {
           </Link>
         }
       />
+
+      <DateRangeFilter range={range.range} from={resolvedSearchParams?.from} to={resolvedSearchParams?.to} />
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Paid Booking Sales" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} icon={Calendar} tone="sage" />
+        {[1, 2, 3, 4].map((level) => (
+          <StatCard
+            key={level}
+            label={`Level ${level} Income`}
+            value={`Rs. ${filteredCommissions.filter((row: any) => Number(row.level) === level).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0).toLocaleString("en-IN")}`}
+            icon={BadgeIndianRupee}
+            tone="purple"
+          />
+        ))}
+        <StatCard label="Wallet Balance" value={`Rs. ${totalWalletBalance.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="amber" />
+        <StatCard label="Pending Payouts" value={periodPendingPayouts.length} icon={Wallet} href="/admin/payouts" tone="rose" />
+        <StatCard label="Paid Payouts" value={periodPaidPayouts.length} icon={Wallet} href="/admin/payouts" tone="green" />
+      </div>
+
+      <Card>
+        <CardHeader title="Partner-wise Sales" subtitle="Confirmed and completed sales in the selected period" />
+        <div className="mt-4 space-y-2">
+          {topPeriodPartners.length === 0 ? (
+            <p className="text-sm text-brand-muted">No partner sales in this period.</p>
+          ) : topPeriodPartners.map((partner) => (
+            <div key={partner.name} className="flex items-center justify-between rounded-lg bg-brand-surface/60 px-4 py-3 text-sm">
+              <span className="font-medium text-brand-ink">{partner.name}</span>
+              <span className="font-semibold text-brand-primary">Rs. {partner.amount.toLocaleString("en-IN")}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Content Stats */}
       <div>

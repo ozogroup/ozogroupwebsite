@@ -1,13 +1,22 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { site, referralLevels, salesBonuses } from "@/lib/site";
+import { getPublicSiteContent } from "@/lib/data/public";
 
 export const metadata: Metadata = {
   title: "KIA Skin Care Partner Program | Premium Referrals",
   description: "Become a KIA Skin Care Partner and earn commissions by sharing premium skincare experiences with your network.",
+  alternates: { canonical: "/referral" },
 };
 
-export default function ReferralPage() {
+export default async function ReferralPage() {
+  const content = await getPublicSiteContent("partner_program");
+  const heroTitle = content.partner_title || "Become a Premium Referral Partner";
+  const heroDescription =
+    content.partner_description ||
+    "Transform your network into rewards by sharing premium skincare experiences with people who trust your recommendation.";
+  const heroImage = content.partner_image || "/images/client-approved/franchise-opportunity.jpeg";
   return (
     <>
       {/* Hero Section */}
@@ -20,23 +29,17 @@ export default function ReferralPage() {
                 "radial-gradient(ellipse at 80% 0%, rgba(156,175,146,0.20) 0%, rgba(244,235,220,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(220,230,214,0.58) 0%, rgba(244,235,220,0) 50%)",
             }}
           />
-          <div className="container-x pt-12 md:pt-16 pb-16 md:pb-20">
-            <div className="max-w-3xl">
+          <div className="container-x grid items-center gap-10 pt-12 pb-16 md:pt-16 md:pb-20 lg:grid-cols-2">
+            <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
                 <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
                   Premium Referral Partner Program
                 </span>
               </div>
-              <h1 className="mt-6">
-                Become a{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-                  Premium Referral Partner
-                </span>
-              </h1>
+              <h1 className="mt-6">{heroTitle}</h1>
               <p className="mt-4 text-lg text-brand-muted max-w-2xl leading-relaxed">
-                Transform your network into rewards by sharing premium skincare experiences 
-                with people who trust your recommendation.
+                {heroDescription}
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -55,6 +58,16 @@ export default function ReferralPage() {
                   Chat on WhatsApp
                 </a>
               </div>
+            </div>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] border border-brand-border bg-[#F8F4EC] shadow-premium">
+              <Image
+                src={heroImage}
+                alt="KIA Skin Care partner and franchise opportunity"
+                fill
+                priority
+                sizes="(max-width: 1024px) 90vw, 560px"
+                className="object-contain"
+              />
             </div>
           </div>
         </section>

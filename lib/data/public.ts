@@ -38,12 +38,49 @@ function replaceLegacyBranding(value?: string | null) {
     .replace(/\bOZO\b(?!\d)/gi, "KIA Skin Care");
 }
 
+function normalizeImageList(value: unknown, fallback?: string | null) {
+  let images: string[] = [];
+  if (Array.isArray(value)) {
+    images = value.filter((item): item is string => typeof item === "string");
+  } else if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      images = Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === "string")
+        : [];
+    } catch {
+      images = value.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+  }
+
+  const cleanFallback = fallback?.trim();
+  if (cleanFallback && !images.includes(cleanFallback)) images.unshift(cleanFallback);
+  return Array.from(new Set(images.filter(Boolean)));
+}
+
+function normalizeList<T = string>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value !== "string" || !value.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed as T[];
+  } catch {
+    // Existing admin data may be stored as newline or comma-separated text.
+  }
+
+  return value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean) as T[];
+}
+
 /**
  * Fetch treatments from Supabase with fallback to the requested kit catalog.
  */
 export async function getPublicTreatments() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("treatments" as any)
       .select("*")
@@ -73,17 +110,20 @@ export async function getPublicTreatments() {
       subtitle: t.subtitle || t.tagline || "",
       description: t.description || "",
       overview: t.overview || t.description || "",
-      benefits: t.benefits || [],
-      process: t.process || t.process_steps || [],
-      whoFor: t.who_for || [],
+      benefits: normalizeList<string>(t.benefits),
+      process: normalizeList<{ step: string; detail: string }>(t.process || t.process_steps),
+      whoFor: normalizeList<string>(t.who_for),
       safety: t.safety || "",
-      faqs: t.faqs || [],
+      faqs: normalizeList<{ q: string; a: string }>(t.faqs),
       duration: t.duration || "",
       sessions: t.sessions || "",
       badge: t.badge || t.kit_name || "",
       icon: t.icon,
       tone: t.tone,
       image: t.image || "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+      gallery: normalizeImageList(t.gallery, t.image || t.image_url),
+      beforeImage: t.before_image_url || null,
+      afterImage: t.after_image_url || null,
       imageAlt: t.image_alt || t.title,
       treatmentType: t.treatment_type || (t.type === "home_kit" ? "home-kit" : "camp"),
       note: t.cta_text || (t.kit_name ? `Includes ${t.kit_name}.` : ""),
@@ -100,7 +140,7 @@ export async function getPublicTreatments() {
  */
 export async function getPublicTestimonials() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("testimonials" as any)
       .select("*")
@@ -130,7 +170,7 @@ export async function getPublicTestimonials() {
  */
 export async function getPublicFaqs() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("faqs" as any)
       .select("*")
@@ -157,7 +197,7 @@ export async function getPublicFaqs() {
  */
 export async function getPublicSiteContent(section?: string) {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     let query = supabase
       .from("site_content" as any)
       .select("*")
@@ -191,7 +231,7 @@ export async function getPublicSiteContent(section?: string) {
  */
 export async function getPublicContactSettings() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const [{ data, error }, { data: contentRows }] = await Promise.all([
       supabase.from("contact_settings" as any).select("*").single(),
       supabase
@@ -252,7 +292,7 @@ export async function getPublicContactSettings() {
  */
 export async function getPublicCommissionSettings() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("commission_settings" as any)
       .select("*")
@@ -284,7 +324,7 @@ export async function getPublicCommissionSettings() {
  */
 export async function getPublicSystemSettings() {
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("system_settings" as any)
       .select("*")

@@ -22,6 +22,21 @@ import { cookies } from "next/headers";
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
+  const hostname = req.nextUrl.hostname.toLowerCase();
+  const officialUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in").replace(/\/$/, "");
+  const officialHost = new URL(officialUrl).hostname.toLowerCase();
+  const legacyHosts = (process.env.LEGACY_DOMAINS || "ozo-group.vercel.app")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    hostname !== officialHost &&
+    (hostname.endsWith(".vercel.app") || legacyHosts.includes(hostname))
+  ) {
+    return NextResponse.redirect(new URL(`${pathname}${req.nextUrl.search}`, officialUrl), 308);
+  }
 
   // Set x-pathname as request header so layouts can read the current path
   const requestHeaders = new Headers(req.headers);
@@ -29,6 +44,9 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next({
     request: { headers: requestHeaders },
   });
+  if (hostname !== officialHost && process.env.NODE_ENV === "production") {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
 
   const referralCode = req.nextUrl.searchParams.get("ref");
   const pathReferralCode = pathname.match(/^\/((?:KIA|OZO)\d+)$/i)?.[1];
@@ -64,7 +82,7 @@ export async function middleware(req: NextRequest) {
   // Allow login and password reset pages without any check
   if (pathname === "/admin/login" || pathname === "/partner/login" || pathname === "/partner/forgot-password" || pathname === "/partner/reset-password") return res;
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -92,10 +110,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(loginPath, req.url));
   }
 
-  // Admin routes: allow any authenticated user for now
-  if (isAdmin) return res;
-
-  // Partner routes: verify role
+  // Verify role for protected admin and partner routes.
   try {
     const { data: profile } = await supabase
       .from("profiles")
@@ -103,7 +118,10 @@ export async function middleware(req: NextRequest) {
       .eq("id", session.user.id)
       .single();
 
-    if (!profile || profile.role !== "partner") {
+    const allowed = isAdmin
+      ? ["super_admin", "admin"].includes(profile?.role || "")
+      : profile?.role === "partner";
+    if (!allowed) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
   } catch (e: any) {

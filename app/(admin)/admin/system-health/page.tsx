@@ -10,7 +10,7 @@ async function refreshHealth() {
 }
 
 export default async function SystemHealthPage() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   // Check authentication
   const { data: { user } } = await supabase.auth.getUser();

@@ -35,6 +35,7 @@ export const treatmentKitCatalog = [
     tone: "primaryDark",
     image:
       "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+    gallery: [],
     imageAlt: "Advance skincare kit",
     note: "Includes premium home-care kit delivery.",
     ctaText: "Book Advance Kit",
@@ -69,8 +70,8 @@ export const treatmentKitCatalog = [
     badge: "Refined",
     icon: "sparkle",
     tone: "light",
-    image:
-      "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
+    image: "/images/client-approved/japanese-skin-care-kit.jpeg",
+    gallery: ["/images/client-approved/japanese-skin-care-kit.jpeg"],
     imageAlt: "Japanese Skin Care Kit",
     note: "Japanese-inspired purification treatment for refined skin.",
     ctaText: "Book Kit",
@@ -101,8 +102,8 @@ export const treatmentKitCatalog = [
     badge: "Premium",
     icon: "sparkle",
     tone: "accent",
-    image:
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
+    image: "/images/client-approved/korean-glass-treatment-kit.jpeg",
+    gallery: ["/images/client-approved/korean-glass-treatment-kit.jpeg"],
     imageAlt: "Korean Glass Treatment",
     note: "Our team will contact you on WhatsApp for schedule confirmation.",
     ctaText: "Book Kit",
@@ -144,8 +145,8 @@ export const treatmentKitCatalog = [
     badge: "Home Program",
     icon: "droplet",
     tone: "accent",
-    image:
-      "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+    image: "/images/client-approved/skin-lightening-kit.jpeg",
+    gallery: ["/images/client-approved/skin-lightening-kit.jpeg"],
     imageAlt: "Premium skincare home kit",
     note: "Premium home kit with guided routine.",
     ctaText: "Book Kit",
@@ -178,6 +179,7 @@ export const treatmentKitCatalog = [
     tone: "primary",
     image:
       "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
+    gallery: [],
     imageAlt: "Basic Skin Care Kit",
     note: "Essential skincare treatment.",
     ctaText: "Book Consultation",

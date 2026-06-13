@@ -5,12 +5,14 @@ import type { Metadata } from "next";
 import { getPublicTreatments, getPublicContactSettings } from "@/lib/data/public";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
+import TreatmentGallery from "@/components/ui/TreatmentGallery";
 
-type Params = { params: { slug: string } };
+type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { slug } = await params;
   const treatments = await getPublicTreatments();
-  const t = treatments.find((x) => x.slug === params.slug);
+  const t = treatments.find((x) => x.slug === slug);
   if (!t) return { title: "Treatment not found | KIA Skin Care" };
   
   return {
@@ -22,22 +24,24 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description: (t as any).seo_description || t.description,
       images: [t.image],
     },
+    alternates: { canonical: `/treatments/${slug}` },
   };
 }
 
 export default async function TreatmentDetail({ params }: Params) {
+  const { slug } = await params;
   const [treatments, contactSettings] = await Promise.all([
     getPublicTreatments(),
     getPublicContactSettings(),
   ]);
   
-  const t = treatments.find((x) => x.slug === params.slug);
+  const t = treatments.find((x) => x.slug === slug);
   if (!t) notFound();
   const offeringLabel = getOfferingTypeLabel(t.treatmentType);
   const ctaLabel = getOfferingCtaLabel(t.treatmentType);
 
-  const hasBeforeAfter = (t as any).before_image && (t as any).after_image;
-  const hasGallery = (t as any).gallery && (t as any).gallery.length > 0;
+  const galleryImages = (t as any).gallery?.length ? (t as any).gallery : [t.image];
+  const hasBeforeAfter = (t as any).beforeImage && (t as any).afterImage;
 
   return (
     <>
@@ -108,28 +112,8 @@ export default async function TreatmentDetail({ params }: Params) {
 
           {/* Image with glassmorphism */}
           <div className="lg:col-span-6 animate-fadeUp" style={{ animationDelay: "0.15s" }}>
-            <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-[32px] overflow-hidden border border-brand-border/60 shadow-premium bg-gradient-to-br from-brand-surface to-white">
-              <Image
-                src={t.image}
-                alt={t.imageAlt}
-                fill
-                sizes="(max-width: 1024px) 90vw, 600px"
-                priority
-                className="object-cover"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-tr from-brand-primary/20 via-transparent to-brand-accent/10"
-              />
-              <div
-                aria-hidden
-                className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/80 via-white/40 to-transparent backdrop-blur-xs"
-              />
-              {t.badge && (
-                <span className="absolute top-5 left-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-brand-border/50 shadow-glass">
-                  {t.badge}
-                </span>
-              )}
+            <div className="mx-auto w-full max-w-md lg:max-w-none">
+              <TreatmentGallery images={galleryImages} alt={t.imageAlt} priority />
             </div>
           </div>
         </div>
@@ -155,7 +139,7 @@ export default async function TreatmentDetail({ params }: Params) {
             <div className="mt-12 grid md:grid-cols-2 gap-8">
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-premium">
                 <Image
-                  src={(t as any).before_image}
+                  src={(t as any).beforeImage}
                   alt="Before treatment"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -167,7 +151,7 @@ export default async function TreatmentDetail({ params }: Params) {
               </div>
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-premium">
                 <Image
-                  src={(t as any).after_image}
+                  src={(t as any).afterImage}
                   alt="After treatment"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -177,40 +161,6 @@ export default async function TreatmentDetail({ params }: Params) {
                   After
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Gallery */}
-      {hasGallery && (
-        <section className="section">
-          <div className="container-x">
-            <div className="max-w-3xl text-center mx-auto">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
-                <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-                  Gallery
-                </span>
-              </div>
-              <h2 className="mt-6">{offeringLabel} Gallery</h2>
-              <p className="mt-4 text-base text-brand-muted">
-                Browse through our {offeringLabel.toLowerCase()} results and clinic atmosphere.
-              </p>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {(t as any).gallery.map((url: string, index: number) => (
-                <div key={index} className="relative aspect-square rounded-xl overflow-hidden shadow-soft hover:shadow-card transition-shadow">
-                  <Image
-                    src={url}
-                    alt={`Gallery image ${index + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              ))}
             </div>
           </div>
         </section>

@@ -11,7 +11,7 @@ type UserRole = "super_admin" | "admin" | "staff" | "content_manager" | "partner
  * Get current authenticated user
  */
 export async function getCurrentUser() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   try {
     const {
       data: { user },
@@ -39,7 +39,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     return null;
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   try {
     const { data: profile, error } = await supabase
       .from("profiles")
@@ -198,7 +198,7 @@ export async function isPartner(): Promise<boolean> {
 export async function getCurrentPartner() {
   const profile = await requirePartner();
   
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: partner, error } = await supabase
     .from("partners")
     .select("*")
@@ -218,7 +218,7 @@ export async function getCurrentPartner() {
 export async function getCurrentAdmin() {
   const profile = await requireAdmin();
   
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: admin, error } = await supabase
     .from("admins")
     .select("*")

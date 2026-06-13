@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
  */
 export async function logoutAction() {
   "use server";
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
 }
@@ -24,7 +24,7 @@ export async function adminLogin(formData: FormData) {
     return { error: "Email and password are required" };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -69,7 +69,7 @@ export async function partnerLogin(formData: FormData) {
     return { error: "Email and password are required" };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,

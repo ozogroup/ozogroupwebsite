@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewMembershipRegistrationPage() {
   const profile = await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: partner } = await supabase
     .from("partners" as any)
     .select("partner_code")

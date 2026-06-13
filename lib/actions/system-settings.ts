@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function getSystemSettings() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("system_settings")
@@ -20,7 +20,7 @@ export async function getSystemSettings() {
 }
 
 export async function updateSystemSettings(formData: FormData) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const maintenance_mode = formData.get("maintenance_mode") === "true";
   const payouts_enabled = formData.get("payouts_enabled") === "true";

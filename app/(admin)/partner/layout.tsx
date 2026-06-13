@@ -9,7 +9,7 @@ export default async function PartnerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const {
     data: { user },

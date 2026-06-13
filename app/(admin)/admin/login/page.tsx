@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
@@ -19,7 +20,7 @@ async function handleLogin(formData: FormData) {
   }
 
   console.log("[ADMIN LOGIN] Getting Supabase server client");
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   console.log("[ADMIN LOGIN] Supabase client initialized");
 
   console.log("[ADMIN LOGIN] Attempting Supabase auth with signInWithPassword");
@@ -54,11 +55,12 @@ async function handleLogin(formData: FormData) {
   redirect("/admin/dashboard");
 }
 
-export default function AdminLoginPage({
+export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/40 to-brand-card flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
@@ -80,12 +82,12 @@ export default function AdminLoginPage({
           </div>
 
           {/* Error Message */}
-          {searchParams.error && (
+          {resolvedSearchParams.error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
               <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <p className="text-sm text-red-700">{searchParams.error}</p>
+              <p className="text-sm text-red-700">{resolvedSearchParams.error}</p>
             </div>
           )}
 
@@ -129,7 +131,7 @@ export default function AdminLoginPage({
           </form>
 
           <div className="mt-8 pt-6 border-t border-brand-border text-center">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center gap-2 text-sm text-brand-muted hover:text-brand-accent transition-colors"
             >
@@ -137,7 +139,7 @@ export default function AdminLoginPage({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back to website
-            </a>
+            </Link>
           </div>
         </div>
       </div>

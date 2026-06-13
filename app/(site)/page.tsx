@@ -16,13 +16,16 @@ import FAQ from "@/components/sections/FAQ";
 import FranchiseInquiry from "@/components/sections/FranchiseInquiry";
 import FinalCTA from "@/components/sections/FinalCTA";
 import { site } from "@/lib/site";
+import { getPublicSiteContent } from "@/lib/data/public";
 
 export const metadata: Metadata = {
   title: "KIA Skin Care | Premium Skincare & Partner Program",
   description: "Premium skincare kits, Korean glass treatment campaign, and partner referral program by KIA Skin Care.",
+  alternates: { canonical: "/" },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const franchiseContent = await getPublicSiteContent("franchise");
   return (
     <>
       <Hero />
@@ -39,7 +42,11 @@ export default function HomePage() {
       <Membership />
       <Testimonials />
       <FAQ />
-      <FranchiseInquiry />
+      <FranchiseInquiry
+        title={franchiseContent.franchise_title}
+        subtitle={franchiseContent.franchise_subtitle}
+        image={franchiseContent.franchise_image}
+      />
       <FinalCTA />
     </>
   );

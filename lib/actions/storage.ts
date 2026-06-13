@@ -1,6 +1,7 @@
 "use server";
 
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 const BUCKET = "media";
 
@@ -9,6 +10,7 @@ const BUCKET = "media";
  * Bucket "media" must exist (public). Auto-creates if missing.
  */
 export async function uploadImage(formData: FormData): Promise<{ url?: string; error?: string }> {
+  await requireAdmin();
   const file = formData.get("file") as File | null;
   const folder = (formData.get("folder") as string) || "general";
 
@@ -24,7 +26,7 @@ export async function uploadImage(formData: FormData): Promise<{ url?: string; e
     return { error: "Only image files are allowed" };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
 
   // Generate unique filename
   const ext = file.name.split(".").pop() || "jpg";
@@ -57,7 +59,8 @@ export async function uploadImage(formData: FormData): Promise<{ url?: string; e
  * List all images in the media bucket
  */
 export async function listImages() {
-  const supabase = getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase.storage.from(BUCKET).list("", {
     limit: 100,
@@ -76,7 +79,8 @@ export async function listImages() {
  * Delete an image from storage
  */
 export async function deleteImage(path: string): Promise<{ error?: string }> {
-  const supabase = getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase.storage.from(BUCKET).remove([path]);
 
@@ -86,4 +90,12 @@ export async function deleteImage(path: string): Promise<{ error?: string }> {
   }
 
   return {};
+}
+
+export async function deleteImageByUrl(url: string): Promise<{ error?: string }> {
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const markerIndex = url.indexOf(marker);
+  if (markerIndex === -1) return {};
+  const path = decodeURIComponent(url.slice(markerIndex + marker.length));
+  return deleteImage(path);
 }

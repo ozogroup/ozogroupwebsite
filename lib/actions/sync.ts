@@ -12,7 +12,7 @@ import { treatments as siteTreatments, testimonials as siteTestimonials, faqs as
  * - Inserts contact_settings (only if no row exists)
  */
 export async function syncWebsiteData() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const result = { treatments: 0, testimonials: 0, faqs: 0, contact: 0, errors: [] as string[] };
 
   // ==========================

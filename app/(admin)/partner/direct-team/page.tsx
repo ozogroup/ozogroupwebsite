@@ -41,7 +41,7 @@ function toTeamMemberFromMembership(membership: any) {
 
 export default async function PartnerDirectTeamPage() {
   await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -3,6 +3,7 @@ node_modules
 out
 .env
 .env.local
+.env.local.bak
 .DS_Store
 *.log
 tsconfig.tsbuildinfo

@@ -8,7 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // =====================================================
 
 export async function getCommissions() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("commissions" as any)
@@ -27,7 +27,7 @@ export async function getCommissions() {
 }
 
 export async function updateCommissionStatus(id: string, status: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("commissions" as any)

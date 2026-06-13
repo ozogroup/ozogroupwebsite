@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState, useTransition } from "react";
 import { submitFranchiseLead } from "@/lib/actions/franchise-leads";
 
@@ -8,7 +9,15 @@ const inputClass =
 
 const benefits = ["Brand Support", "Training Guidance", "City Growth Opportunity"];
 
-export default function FranchiseInquiry() {
+export default function FranchiseInquiry({
+  title = "Start Your KIA Skin Care Franchise",
+  subtitle = "Build your skincare business with KIA Korean Skin Care.",
+  image = "/images/client-approved/franchise-income-model.jpeg",
+}: {
+  title?: string;
+  subtitle?: string;
+  image?: string;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -44,9 +53,9 @@ export default function FranchiseInquiry() {
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#EDE5D8]/30 bg-[#F8F4EC]/12 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#F8F4EC] shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
                   FRANCHISE OPPORTUNITY
                 </div>
-                <h2 className="mt-7 max-w-lg text-white">Start Your KIA Skin Care Franchise</h2>
+                <h2 className="mt-7 max-w-lg text-white">{title}</h2>
                 <p className="mt-5 max-w-md text-base leading-7 text-[#EDE5D8]">
-                  Build your skincare business with KIA Korean Skin Care.
+                  {subtitle}
                 </p>
                 <div className="mt-9 h-px w-full max-w-sm bg-gradient-to-r from-[#EDE5D8]/80 via-[#9CAF88] to-transparent" />
 
@@ -60,6 +69,16 @@ export default function FranchiseInquiry() {
                       {benefit}
                     </div>
                   ))}
+                </div>
+
+                <div className="relative mt-8 aspect-[4/5] overflow-hidden rounded-2xl border border-[#EDE5D8]/20 bg-[#F8F4EC] shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+                  <Image
+                    src={image}
+                    alt="KIA Skin Care franchise opportunity"
+                    fill
+                    sizes="(max-width: 1024px) 90vw, 480px"
+                    className="object-contain"
+                  />
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">

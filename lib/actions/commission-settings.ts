@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function getCommissionSettings() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("commission_settings")
@@ -21,7 +21,7 @@ export async function getCommissionSettings() {
 }
 
 export async function updateCommissionSettings(formData: FormData) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const level_1_percentage = parseFloat(formData.get("level_1_percentage") as string);
   const level_2_percentage = parseFloat(formData.get("level_2_percentage") as string);

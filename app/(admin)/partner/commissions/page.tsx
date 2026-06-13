@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function PartnerCommissionsPage() {
   await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return <div>User not found</div>;
 

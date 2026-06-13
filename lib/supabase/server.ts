@@ -10,9 +10,9 @@ import { createClient } from "@supabase/supabase-js";
 import { assertSupabaseEnv, supabaseEnv, assertSupabaseServiceRole } from "./env";
 import type { Database } from "./types";
 
-export function getSupabaseServerClient() {
+export async function getSupabaseServerClient() {
   assertSupabaseEnv();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(supabaseEnv.url, supabaseEnv.anonKey, {
     cookies: {

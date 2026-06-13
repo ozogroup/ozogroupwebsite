@@ -6,7 +6,7 @@ import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabas
 import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
 
 export async function getTreatments() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("treatments" as any)
     .select("*")
@@ -21,7 +21,7 @@ export async function getTreatments() {
 }
 
 export async function getTreatmentById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase
     .from("treatments" as any)
     .select("*")
@@ -39,7 +39,7 @@ export async function getTreatmentById(id: string) {
 export async function createTreatment(formData: FormData) {
   "use server";
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const title = formData.get("title") as string;
   const slug = formData.get("slug") as string;
@@ -51,6 +51,7 @@ export async function createTreatment(formData: FormData) {
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
+  const gallery = formData.get("gallery") as string;
   const featured = formData.get("featured") !== null;
   const active = formData.get("active") !== null;
   const requiresSlots = formData.get("requires_slots") !== null;
@@ -67,6 +68,7 @@ export async function createTreatment(formData: FormData) {
     duration,
     sessions,
     image,
+    gallery: gallery ? JSON.parse(gallery) : image ? [image] : [],
     featured,
     active,
     requires_slots: requiresSlots,
@@ -85,7 +87,7 @@ export async function createTreatment(formData: FormData) {
 export async function updateTreatment(formData: FormData) {
   "use server";
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const id = formData.get("id") as string;
   const title = formData.get("title") as string;
@@ -98,6 +100,7 @@ export async function updateTreatment(formData: FormData) {
   const duration = formData.get("duration") as string;
   const sessions = formData.get("sessions") as string;
   const image = formData.get("image") as string;
+  const gallery = formData.get("gallery") as string;
   const featured = formData.get("featured") !== null;
   const active = formData.get("active") !== null;
   const requiresSlots = formData.get("requires_slots") !== null;
@@ -116,6 +119,7 @@ export async function updateTreatment(formData: FormData) {
       duration,
       sessions,
       image,
+      gallery: gallery ? JSON.parse(gallery) : image ? [image] : [],
       featured,
       active,
       requires_slots: requiresSlots,
@@ -137,7 +141,7 @@ export async function updateTreatment(formData: FormData) {
 export async function deleteTreatment(id: string) {
   "use server";
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { error } = await supabase.from("treatments" as any).delete().eq("id", id);
 
@@ -153,7 +157,7 @@ export async function deleteTreatment(id: string) {
 export async function toggleTreatmentActive(id: string, active: boolean) {
   "use server";
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { error } = await supabase
     .from("treatments" as any)
@@ -214,6 +218,7 @@ export async function ensureFinalTreatmentCatalog() {
     icon: treatment.icon,
     tone: treatment.tone,
     image: treatment.image,
+    gallery: treatment.gallery,
     image_alt: treatment.imageAlt,
     cta_text: treatment.note,
     active: true,

@@ -4,7 +4,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicSiteContent, getPublicSystemSettings } from "@/lib/data/public";
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80";
+  "/images/client-approved/korean-glass-treatment-kit.jpeg";
 
 const defaultHeroPoints = [
   "Premium Treatment Kits",
@@ -129,7 +129,7 @@ export default async function Hero() {
                 fill
                 sizes="(max-width: 1024px) 90vw, 600px"
                 priority
-                className="object-cover"
+                className="object-contain"
               />
               {/* Premium brand wash */}
               <div

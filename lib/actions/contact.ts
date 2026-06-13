@@ -8,7 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // =====================================================
 
 export async function getContactSettings() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("contact_settings" as any)
@@ -24,7 +24,7 @@ export async function getContactSettings() {
 }
 
 export async function updateContactSettings(settings: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   // Check if settings exist
   const { data: existing } = await supabase

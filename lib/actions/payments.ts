@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function getPayments() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("payments")
@@ -23,7 +23,7 @@ export async function getPayments() {
 }
 
 export async function updatePaymentStatus(id: string, status: "created" | "authorized" | "captured" | "refunded" | "failed") {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("payments")

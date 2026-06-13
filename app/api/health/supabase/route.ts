@@ -28,7 +28,7 @@ export async function GET() {
   }
 
   try {
-    const supabase = getSupabaseServerClient();
+    const supabase = await getSupabaseServerClient();
     const { error } = await supabase.auth.getSession();
     const elapsed = Date.now() - startedAt;
 

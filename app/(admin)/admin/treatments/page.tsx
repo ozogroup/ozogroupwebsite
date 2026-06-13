@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import ImageUpload from "@/components/admin/ImageUpload";
+import MultiImageUpload from "@/components/admin/MultiImageUpload";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 import { ensureFinalTreatmentCatalog } from "@/lib/actions/treatments";
 import { getOfferingTypeLabel } from "@/lib/treatment-labels";
@@ -22,6 +23,7 @@ type Treatment = {
   image: string;
   active: boolean;
   featured?: boolean;
+  gallery?: string[];
 };
 
 export default function AdminTreatmentsPage() {
@@ -41,6 +43,7 @@ export default function AdminTreatmentsPage() {
     description: "",
     overview: "",
     image: "",
+    gallery: [] as string[],
     image_alt: "",
     duration: "",
     sessions: "",
@@ -133,6 +136,7 @@ export default function AdminTreatmentsPage() {
         description: formData.description,
         overview: formData.overview,
         image: formData.image,
+        gallery: formData.gallery,
         image_alt: formData.image_alt,
         duration: formData.duration,
         sessions: formData.sessions,
@@ -199,6 +203,7 @@ export default function AdminTreatmentsPage() {
       description: treatment.description || "",
       overview: treatment.overview || "",
       image: treatment.image || "",
+      gallery: Array.isArray(treatment.gallery) ? treatment.gallery : [],
       image_alt: treatment.image_alt || "",
       duration: treatment.duration || "",
       sessions: treatment.sessions || "",
@@ -226,6 +231,7 @@ export default function AdminTreatmentsPage() {
       description: "",
       overview: "",
       image: "",
+      gallery: [],
       image_alt: "",
       duration: "",
       sessions: "",
@@ -444,6 +450,18 @@ export default function AdminTreatmentsPage() {
                   />
                 </div>
               </div>
+
+              <MultiImageUpload
+                value={formData.gallery}
+                onChange={(gallery) =>
+                  setFormData({
+                    ...formData,
+                    gallery,
+                    image: formData.image || gallery[0] || "",
+                  })
+                }
+                folder={`treatments/${formData.slug || "new"}`}
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

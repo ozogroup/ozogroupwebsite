@@ -16,7 +16,8 @@ import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 // =====================================================
 
 export async function getBookings() {
-  const supabase = getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("bookings" as any)
@@ -63,7 +64,7 @@ async function findPartnerByCode(supabase: ReturnType<typeof getSupabaseServiceC
 }
 
 async function getCurrentPartnerCode(serviceClient: ReturnType<typeof getSupabaseServiceClient>) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -184,6 +185,7 @@ async function restoreCatalogTreatment(
 
 export async function createBooking(payload: CreateBookingPayload) {
   const serviceClient = getSupabaseServiceClient();
+  const cookieStore = await cookies();
 
   const customerName = clean(payload.customer_name);
   const customerPhone = clean(payload.customer_phone);
@@ -193,8 +195,8 @@ export async function createBooking(payload: CreateBookingPayload) {
   const requestedTreatmentSlug = clean(payload.treatment_slug);
   let referralCode = normalizeKiaPartnerCode(
     clean(payload.referral_code) ||
-    clean(cookies().get("kia_referral_code")?.value) ||
-    clean(cookies().get("ozo_referral_code")?.value)
+    clean(cookieStore.get("kia_referral_code")?.value) ||
+    clean(cookieStore.get("ozo_referral_code")?.value)
   );
 
   if (!customerName) return { error: "Please enter your full name." };
@@ -303,7 +305,7 @@ export async function createBooking(payload: CreateBookingPayload) {
 }
 
 export async function getBookingById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("bookings" as any)
@@ -349,6 +351,7 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
       payment_amount:
         (data as any).payment_amount ?? (data as any).treatment_price ?? 0,
       booking_status: (data as any).booking_status,
+      payment_status: (data as any).payment_status,
     });
   }
 
@@ -368,8 +371,90 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
   return data;
 }
 
+export async function updateBookingPaymentStatus(
+  id: string,
+  paymentStatus: "unpaid" | "pending" | "pending_payment" | "paid" | "failed" | "refunded",
+  paymentReference?: string
+) {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+  const updateData: Record<string, unknown> = {
+    payment_status: paymentStatus,
+    updated_at: new Date().toISOString(),
+  };
+  if (paymentReference?.trim()) updateData.payment_reference = paymentReference.trim();
+  if (paymentStatus === "refunded") updateData.refund_status = "refunded";
+
+  let result = await supabase
+    .from("bookings" as any)
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (result.error && /payment_reference/i.test(result.error.message || "")) {
+    delete updateData.payment_reference;
+    result = await supabase
+      .from("bookings" as any)
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+  }
+
+  if (result.error) throw result.error;
+  const booking = result.data as any;
+  if (paymentStatus === "paid" && ["confirmed", "completed"].includes(booking.booking_status)) {
+    await generateBookingCommissions(supabase, {
+      id: booking.id,
+      referred_by: booking.referred_by,
+      referral_code: booking.referral_code,
+      partner_code: booking.partner_code,
+      payment_amount: booking.payment_amount ?? booking.treatment_price ?? 0,
+      booking_status: booking.booking_status,
+      payment_status: booking.payment_status,
+    });
+  }
+
+  revalidatePath("/admin/bookings");
+  revalidatePath("/admin/commissions");
+  revalidatePath("/admin/payouts");
+  revalidatePath("/partner/dashboard");
+  revalidatePath("/partner/income");
+  return booking;
+}
+
+export async function markBookingViewed(id: string) {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+  const { error } = await supabase
+    .from("bookings" as any)
+    .update({ viewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/bookings");
+  return { success: true };
+}
+
+export async function getBookingNotifications() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("bookings" as any)
+    .select("id,customer_name,treatment_name,booking_status,created_at,viewed_at")
+    .is("viewed_at", null)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error) {
+    console.error("Error loading booking notifications:", error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function deleteBooking(id: string) {
-  const supabase = getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase
     .from("bookings" as any)

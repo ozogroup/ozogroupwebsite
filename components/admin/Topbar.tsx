@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { getBookingNotifications } from "@/lib/actions/bookings";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -30,6 +32,13 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   const title = PAGE_TITLES[pathname] || "Admin Panel";
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    getBookingNotifications()
+      .then(setNotifications)
+      .catch((error) => console.error("Unable to load booking notifications:", error));
+  }, [pathname]);
 
   return (
     <header className="bg-brand-card/95 border-b border-brand-border sticky top-0 z-40 backdrop-blur-md">
@@ -74,26 +83,33 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              {notifications.length > 0 && (
+                <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-5 text-white">
+                  {notifications.length}
+                </span>
+              )}
             </button>
             {notificationsOpen && (
               <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 bg-brand-card rounded-xl shadow-lg border border-brand-border p-4">
                 <h3 className="font-semibold text-brand-ink mb-3">Notifications</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-2 hover:bg-brand-surface rounded-lg cursor-pointer">
-                    <div className="w-2 h-2 mt-2 bg-brand-accent rounded-full flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-brand-ink">New booking received</p>
-                      <p className="text-xs text-brand-muted mt-1">2 minutes ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-2 hover:bg-brand-surface rounded-lg cursor-pointer">
-                    <div className="w-2 h-2 mt-2 bg-brand-primary rounded-full flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-brand-ink">Partner payout approved</p>
-                      <p className="text-xs text-brand-muted mt-1">1 hour ago</p>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  {notifications.length === 0 ? (
+                    <p className="rounded-lg bg-brand-surface p-4 text-center text-sm text-brand-muted">No new bookings.</p>
+                  ) : notifications.map((notification) => (
+                    <Link
+                      key={notification.id}
+                      href={`/admin/bookings?booking=${notification.id}`}
+                      onClick={() => setNotificationsOpen(false)}
+                      className="flex items-start gap-3 rounded-lg p-2 hover:bg-brand-surface"
+                    >
+                      <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-accent" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-brand-ink">{notification.customer_name}</p>
+                        <p className="truncate text-xs text-brand-muted">{notification.treatment_name || "New booking"}</p>
+                        <p className="mt-1 text-[11px] text-brand-muted">{new Date(notification.created_at).toLocaleString("en-IN")}</p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}
@@ -135,12 +151,12 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
                   <p className="text-sm font-medium text-brand-ink">Admin User</p>
                   <p className="text-xs text-brand-muted mt-0.5">KIA Skin Care Admin</p>
                 </div>
-                <a href="/admin/settings" className="block px-4 py-2 text-sm text-brand-ink hover:bg-brand-surface transition-colors">
+                <Link href="/admin/settings" className="block px-4 py-2 text-sm text-brand-ink hover:bg-brand-surface transition-colors">
                   Settings
-                </a>
-                <a href="/" className="block px-4 py-2 text-sm text-brand-ink hover:bg-brand-surface transition-colors">
+                </Link>
+                <Link href="/" className="block px-4 py-2 text-sm text-brand-ink hover:bg-brand-surface transition-colors">
                   View Website
-                </a>
+                </Link>
                 <div className="border-t border-brand-border mt-2 pt-2">
                   <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
                     Sign Out

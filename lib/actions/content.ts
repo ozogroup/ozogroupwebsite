@@ -8,7 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // =====================================================
 
 export async function getSiteContent(section?: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   let query = supabase.from("site_content" as any).select("*").order("display_order", { ascending: true });
   
@@ -27,7 +27,7 @@ export async function getSiteContent(section?: string) {
 }
 
 export async function updateSiteContent(id: string, value: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("site_content" as any)
@@ -46,7 +46,7 @@ export async function updateSiteContent(id: string, value: string) {
 }
 
 export async function updateSiteContentBulk(updates: { id: string; value: string }[]) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   for (const update of updates) {
     const { error } = await supabase

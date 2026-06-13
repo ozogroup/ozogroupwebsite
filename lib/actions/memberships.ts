@@ -68,7 +68,7 @@ async function getMembershipAmount(supabase: ReturnType<typeof getSupabaseServic
 }
 
 export async function getMembershipRequests() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -104,7 +104,7 @@ export async function getSponsoredMembershipRequests(limit = 8) {
 }
 
 export async function getMembershipById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -121,7 +121,7 @@ export async function getMembershipById(id: string) {
 }
 
 export async function updateMembershipStatus(id: string, status: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -162,7 +162,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
     return { error: "Password and Confirm Password do not match." };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const serviceClient = getSupabaseServiceClient();
   const referralCode = normalizeKiaPartnerCode(data.referral_code) || null;
   const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
@@ -258,7 +258,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
     razorpay_payment_id: null,
   };
 
-  let membershipResult = await supabase
+  let membershipResult = await serviceClient
     .from("memberships" as any)
     .insert(membershipPayload)
     .select()
@@ -273,7 +273,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
     delete fallbackPayload.payment_amount;
     delete fallbackPayload.razorpay_order_id;
     delete fallbackPayload.razorpay_payment_id;
-    membershipResult = await supabase
+    membershipResult = await serviceClient
       .from("memberships" as any)
       .insert(fallbackPayload)
       .select()
@@ -336,7 +336,7 @@ export async function createSponsoredMembership(
 }
 
 export async function approveAndCreatePartner(membershipId: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const serviceClient = getSupabaseServiceClient();
 
   // 1. Fetch membership
@@ -512,7 +512,7 @@ export async function approveAndCreatePartner(membershipId: string) {
 }
 
 export async function updatePaymentStatus(id: string, paymentStatus: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -534,7 +534,7 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
 }
 
 export async function updateMembershipAdminNotes(id: string, adminNotes: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("memberships" as any)

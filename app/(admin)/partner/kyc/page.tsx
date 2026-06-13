@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 export default async function PartnerKycPage({
   searchParams,
 }: {
-  searchParams: { error?: string; success?: string };
+  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const { partner, kyc, profile } = await getPartnerKycStatus();
   const kycData = kyc as any;
   const status = partner?.kyc_status || "not_submitted";
@@ -21,14 +22,14 @@ export default async function PartnerKycPage({
         </p>
       </div>
 
-      {searchParams.error && (
+      {resolvedSearchParams.error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          {searchParams.error}
+          {resolvedSearchParams.error}
         </div>
       )}
-      {searchParams.success && (
+      {resolvedSearchParams.success && (
         <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
-          {searchParams.success}
+          {resolvedSearchParams.success}
         </div>
       )}
 

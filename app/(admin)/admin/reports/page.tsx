@@ -25,7 +25,7 @@ function monthKey(value?: string | null) {
 
 export default async function AdminReportsPage() {
   await requireAdmin();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const [{ data: bookings }, { data: memberships }, { data: commissions }, { data: payouts }, { data: partners }, { data: sales }] =
     await Promise.all([

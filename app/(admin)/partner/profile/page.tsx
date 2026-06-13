@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 async function updateProfile(formData: FormData) {
   "use server";
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/partner/login");
   const full_name = (formData.get("full_name") as string)?.trim();
@@ -20,9 +20,10 @@ async function updateProfile(formData: FormData) {
   redirect("/partner/profile?success=Profile updated");
 }
 
-export default async function PartnerProfilePage({ searchParams }: { searchParams: { error?: string; success?: string } }) {
+export default async function PartnerProfilePage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string }> }) {
   await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const resolvedSearchParams = await searchParams;
+  const supabase = await getSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return <div>User not found</div>;
 
@@ -38,8 +39,8 @@ export default async function PartnerProfilePage({ searchParams }: { searchParam
         <p className="text-slate-600">Manage your partner profile</p>
       </div>
 
-      {searchParams.error && <div className="p-4 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-700">{searchParams.error}</p></div>}
-      {searchParams.success && <div className="p-4 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm text-green-700">{searchParams.success}</p></div>}
+      {resolvedSearchParams.error && <div className="p-4 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-700">{resolvedSearchParams.error}</p></div>}
+      {resolvedSearchParams.success && <div className="p-4 bg-green-50 border border-green-200 rounded-lg"><p className="text-sm text-green-700">{resolvedSearchParams.success}</p></div>}
 
       <form action={updateProfile} className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -8,7 +8,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 // =====================================================
 
 export async function getTestimonials() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -24,7 +24,7 @@ export async function getTestimonials() {
 }
 
 export async function getTestimonialById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -41,7 +41,7 @@ export async function getTestimonialById(id: string) {
 }
 
 export async function createTestimonial(testimonial: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -63,7 +63,7 @@ export async function createTestimonial(testimonial: any) {
 }
 
 export async function updateTestimonial(id: string, testimonial: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -85,7 +85,7 @@ export async function updateTestimonial(id: string, testimonial: any) {
 }
 
 export async function deleteTestimonial(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { error } = await supabase
     .from("testimonials" as any)
@@ -102,7 +102,7 @@ export async function deleteTestimonial(id: string) {
 }
 
 export async function toggleTestimonialActive(id: string, isActive: boolean) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)

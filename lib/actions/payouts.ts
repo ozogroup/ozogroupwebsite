@@ -157,6 +157,14 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
   const now = new Date().toISOString();
+
+  const { data: existingPayout, error: existingError } = await supabase
+    .from("payouts" as any)
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (existingError || !existingPayout) throw existingError || new Error("Payout not found.");
+  if ((existingPayout as any).status === "paid" && status === "paid") return existingPayout;
   
   const updateData: any = { 
     status, 
@@ -175,6 +183,44 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     updateData.processed_at = now;
   }
   
+  const { data: rpcData, error: rpcError } = await (supabase as any).rpc("process_partner_payout", {
+    payout_id_input: id,
+    new_status_input: status,
+    transaction_reference_input: transactionReference || null,
+    transaction_note_input: note || null,
+  });
+
+  if (!rpcError) {
+    revalidatePath("/admin/payouts");
+    revalidatePath("/partner/payouts");
+    revalidatePath("/partner/income");
+    return rpcData;
+  }
+
+  let fallbackPartner: any = null;
+  let fallbackGrossDebit = 0;
+  if (status === "paid") {
+    fallbackGrossDebit = Number(
+      (existingPayout as any).gross_amount ||
+        (existingPayout as any).available_balance ||
+        (existingPayout as any).amount ||
+        0
+    );
+    const { data: partner, error: partnerReadError } = await supabase
+      .from("partners" as any)
+      .select("wallet_balance, paid_earnings")
+      .eq("id", (existingPayout as any).partner_id)
+      .maybeSingle();
+    if (partnerReadError || !partner) {
+      throw partnerReadError || new Error("Partner wallet could not be loaded.");
+    }
+    if (fallbackGrossDebit <= 0) throw new Error("Invalid payout amount.");
+    if (fallbackGrossDebit > Number((partner as any).wallet_balance || 0)) {
+      throw new Error("Partner wallet balance is lower than the requested gross payout.");
+    }
+    fallbackPartner = partner;
+  }
+
   const { data, error } = await supabase
     .from("payouts" as any)
     .update(updateData)
@@ -189,22 +235,32 @@ export async function updatePayoutStatus(id: string, status: string, transaction
 
   if (status === "paid" && data) {
     const payout = data as any;
-    const grossDebit = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
-    const { data: partner } = await supabase
-      .from("partners" as any)
-      .select("wallet_balance, paid_earnings")
-      .eq("id", payout.partner_id)
-      .maybeSingle();
+    const grossDebit = fallbackGrossDebit;
+    const partner = fallbackPartner;
 
     if (partner) {
-      await supabase
+      const balanceBefore = Number(partner.wallet_balance || 0);
+      const balanceAfter = Math.max(0, balanceBefore - grossDebit);
+      const { error: partnerError } = await supabase
         .from("partners" as any)
         .update({
-          wallet_balance: Math.max(0, Number((partner as any).wallet_balance || 0) - grossDebit),
-          paid_earnings: Number((partner as any).paid_earnings || 0) + Number(payout.amount || 0),
+          wallet_balance: balanceAfter,
+          paid_earnings: Number(partner.paid_earnings || 0) + Number(payout.amount || 0),
           updated_at: now,
         })
         .eq("id", payout.partner_id);
+      if (partnerError) throw partnerError;
+
+      await supabase.from("wallet_transactions" as any).insert({
+        partner_id: payout.partner_id,
+        transaction_type: "payout_debit",
+        amount: grossDebit,
+        balance_before: balanceBefore,
+        balance_after: balanceAfter,
+        reference_type: "payout",
+        reference_id: payout.id,
+        notes: transactionReference ? `Paid: ${transactionReference}` : "Payout marked paid by admin",
+      });
     }
   }
   
@@ -237,7 +293,7 @@ export async function createPayout(payout: any) {
 
 export async function getPartnerPayoutContext() {
   const profile = await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const [{ data: partner }, { data: payouts }] = await Promise.all([
     supabase
@@ -257,7 +313,7 @@ export async function getPartnerPayoutContext() {
 
 export async function requestPartnerPayout(amount: number, paymentMethod?: "bank" | "upi") {
   const profile = await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
 
   const { data: partner, error } = await supabase
     .from("partners" as any)
@@ -283,6 +339,18 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   if (amount > wallet) return { error: "Insufficient wallet balance." };
   if (method === "bank" && !hasBank) return { error: "Bank details are required for bank transfer." };
   if (method === "upi" && !hasUpi) return { error: "UPI details are required for UPI payout." };
+
+  const { data: existingRequest, error: existingRequestError } = await supabase
+    .from("payouts" as any)
+    .select("id, gross_amount, amount, status")
+    .eq("partner_id", profile.id)
+    .in("status", ["requested", "processing"])
+    .limit(1)
+    .maybeSingle();
+  if (existingRequestError) return { error: existingRequestError.message };
+  if (existingRequest) {
+    return { error: "A payout request is already pending. Please wait for the admin to process it." };
+  }
 
   const paymentDetails =
     method === "upi"
@@ -311,7 +379,11 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
     status: "requested",
   };
 
-  let { error: insertError } = await supabase.from("payouts" as any).insert(payoutPayload);
+  let { data: insertedPayout, error: insertError } = await supabase
+    .from("payouts" as any)
+    .insert(payoutPayload)
+    .select("id")
+    .single();
 
   if (insertError && /gross_amount|deduction_rate|deduction_amount|net_amount/i.test(insertError.message || "")) {
     const fallbackPayload = {
@@ -322,11 +394,25 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
       payment_details: `${paymentDetails} | Gross: Rs. ${grossAmount.toLocaleString("en-IN")} | 15% deduction: Rs. ${deductionAmount.toLocaleString("en-IN")}`,
       status: "requested",
     };
-    const fallbackResult = await supabase.from("payouts" as any).insert(fallbackPayload);
+    const fallbackResult = await supabase
+      .from("payouts" as any)
+      .insert(fallbackPayload)
+      .select("id")
+      .single();
+    insertedPayout = fallbackResult.data;
     insertError = fallbackResult.error;
   }
 
   if (insertError) return { error: insertError.message };
+
+  await supabase.from("activity_logs" as any).insert({
+    actor_id: profile.id,
+    actor_role: "partner",
+    action: "payout_requested",
+    entity_type: "payout",
+    entity_id: (insertedPayout as any)?.id || profile.id,
+    new_value: { gross_amount: grossAmount, deduction_amount: deductionAmount, net_amount: netAmount, payment_method: method },
+  });
 
   revalidatePath("/partner/payouts");
   revalidatePath("/admin/payouts");

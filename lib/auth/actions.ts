@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
  * Sign out current user - Server Action
  */
 export async function logoutAction() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/");
 }
@@ -24,7 +24,7 @@ export async function adminLogin(formData: FormData) {
     redirect("/admin/login?error=Email and password are required");
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -68,7 +68,7 @@ export async function partnerLogin(formData: FormData) {
     redirect("/partner/login?error=Email and password are required");
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,

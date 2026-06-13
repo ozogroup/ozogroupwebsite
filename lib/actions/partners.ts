@@ -11,7 +11,7 @@ import { generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-cod
 // =====================================================
 
 export async function getPartners() {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("partners" as any)
@@ -27,7 +27,7 @@ export async function getPartners() {
 }
 
 export async function getPartnerById(id: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("partners" as any)
@@ -44,7 +44,7 @@ export async function getPartnerById(id: string) {
 }
 
 export async function updatePartnerStatus(id: string, status: string) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   
   const { data, error } = await supabase
     .from("partners" as any)
@@ -66,7 +66,7 @@ export async function updatePartnerStatus(id: string, status: string) {
 }
 
 export async function createPartner(partner: any) {
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const partnerCode = await generateKiaPartnerCode(supabase);

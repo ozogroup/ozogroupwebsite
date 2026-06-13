@@ -26,7 +26,7 @@ function isBonusCommission(commission: any) {
 
 export default async function PartnerIncomePage() {
   await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

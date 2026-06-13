@@ -9,7 +9,7 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in").replace(/\/$/, "");
 const title = "KIA Skin Care | Premium Skincare & Partner Program";
 const description =
   "Premium skincare kits, Korean glass treatment campaign, and partner referral program by KIA Skin Care.";
@@ -37,6 +37,8 @@ export const metadata: Metadata = {
     apple: "/logos/kia-skin-care-logo.png",
   },
   openGraph: {
+    url: siteUrl,
+    siteName: "KIA Skin Care",
     title,
     description,
     type: "website",
@@ -47,6 +49,10 @@ export const metadata: Metadata = {
     title,
     description,
     images: ["/logos/kia-skin-care-logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

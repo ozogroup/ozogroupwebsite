@@ -26,6 +26,8 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 import { getReferralUrl } from "@/lib/referral-url";
 import { treatmentKitCatalog } from "@/lib/treatments/catalog";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import { resolveDateRange } from "@/lib/date-range";
 
 export const dynamic = "force-dynamic";
 
@@ -55,9 +57,14 @@ function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default async function PartnerDashboardPage() {
+export default async function PartnerDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ range?: string; from?: string; to?: string }>;
+}) {
   const profile = await requirePartner();
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
+  const resolvedSearchParams = await searchParams;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -115,7 +122,7 @@ export default async function PartnerDashboardPage() {
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
       supabase.from("referral_tree" as any).select("level,created_at").eq("ancestor_id", user.id),
       supabase.from("commissions" as any).select("amount,status,created_at,level").eq("partner_id", user.id),
-      supabase.from("payouts" as any).select("amount,status").eq("partner_id", user.id),
+      supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", user.id),
       supabase
         .from("bookings" as any)
         .select("id,customer_name,customer_phone,booking_status,created_at,treatment_name,treatment_price")
@@ -135,6 +142,11 @@ export default async function PartnerDashboardPage() {
   const bookings = (bookingsData as any)?.data || [];
   const sales = (salesData as any)?.data || [];
   const referralRows = (referralTreeData as any)?.data || [];
+  const range = resolveDateRange(resolvedSearchParams);
+  const filteredCommissions = commissions.filter((row: any) => range.includes(row.created_at));
+  const filteredSales = sales.filter((row: any) => range.includes(row.created_at));
+  const filteredReferrals = referralRows.filter((row: any) => range.includes(row.created_at));
+  const filteredPayouts = payouts.filter((row: any) => range.includes(row.created_at));
   const pendingRegistrations = (sponsoredMemberships as any[]).filter(
     (membership: any) => !["active", "rejected"].includes(membership.membership_status)
   );
@@ -175,20 +187,20 @@ export default async function PartnerDashboardPage() {
   }, {});
   const topSellingKit = Object.entries(kitStats).sort((a: any, b: any) => b[1].count - a[1].count)[0]?.[0] || "No sales yet";
 
-  const levelIncome = [1, 2, 3, 4, 5].map((level) => {
-    const income = commissions
+  const levelIncome = [1, 2, 3, 4].map((level) => {
+    const income = filteredCommissions
       .filter((c: any) => {
         const commissionLevel = Number(c.level || 1);
-        return level === 5 ? commissionLevel >= 5 : commissionLevel === level;
+        return commissionLevel === level;
       })
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
-    const partners = referralRows.filter((row: any) => {
+    const partners = filteredReferrals.filter((row: any) => {
       const rowLevel = Number(row.level || 1);
-      return level === 5 ? rowLevel >= 5 : rowLevel === level;
+      return rowLevel === level;
     }).length;
 
     return {
-      level: level === 1 ? "Direct" : level === 5 ? "Level 5+" : `Level ${level}`,
+      level: `Level ${level}`,
       income,
       partners,
     };
@@ -307,6 +319,17 @@ export default async function PartnerDashboardPage() {
         dateOfExpiry={membershipExpiry}
         initials={partnerInitials}
       />
+
+      <DateRangeFilter range={range.range} from={resolvedSearchParams?.from} to={resolvedSearchParams?.to} />
+
+      <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Period Sales" value={formatCurrency(filteredSales.reduce((sum: number, row: any) => sum + Number(row.treatment_price || 0), 0))} icon={TrendingUp} tone="primary" />
+        <StatCard label="Period Income" value={formatCurrency(filteredCommissions.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0))} icon={BadgeIndianRupee} tone="green" />
+        <StatCard label="Activated Partners" value={filteredReferrals.length} icon={Users} tone="rose" />
+        <StatCard label="Pending Payout" value={formatCurrency(filteredPayouts.filter((row: any) => ["requested", "processing"].includes(row.status)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0))} icon={Wallet} tone="orange" />
+        <StatCard label="Paid Payout" value={formatCurrency(filteredPayouts.filter((row: any) => row.status === "paid").reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0))} icon={CheckCircle2} tone="primary" />
+        <StatCard label="Wallet Balance" value={formatCurrency(walletBalance)} icon={Gem} tone="accent" />
+      </section>
 
       {!membershipActive && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 shadow-soft">
