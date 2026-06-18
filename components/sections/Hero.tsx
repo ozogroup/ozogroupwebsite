@@ -3,7 +3,11 @@ import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicSiteContent, getPublicSystemSettings } from "@/lib/data/public";
 
-const HERO_IMAGE = "/images/client-approved/korean-glass-treatment-kit.jpeg";
+const HERO_IMAGE = "/images/client-approved/home-hero-korean-skincare.png";
+const LEGACY_HERO_IMAGES = new Set([
+  "/images/client-approved/korean-glass-treatment-kit.jpeg",
+  "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
+]);
 
 const defaultHeroPoints = [
   "Premium Treatment Kits",
@@ -23,7 +27,11 @@ export default async function Hero() {
     siteContent.hero_description ||
     siteContent.hero_subtitle ||
     "Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.";
-  const heroImage = siteContent.hero_image || HERO_IMAGE;
+  const configuredHeroImage = siteContent.hero_image;
+  const heroImage =
+    configuredHeroImage && !LEGACY_HERO_IMAGES.has(configuredHeroImage)
+      ? configuredHeroImage
+      : HERO_IMAGE;
   const primaryButtonText = siteContent.primary_button_text || "Book Free Consultation";
   const secondaryButtonText = siteContent.secondary_button_text || "Explore Treatments";
   const secondaryButtonLink = siteContent.secondary_button_link || "#treatments";
@@ -90,8 +98,8 @@ export default async function Hero() {
 
           <div className="mt-8 flex items-center gap-3 text-sm text-white/75">
             <span className="font-semibold text-white">500+ happy clients</span>
-            <span aria-hidden>•</span>
-            <span className="text-[#eadba9]">★★★★★ 4.9/5</span>
+            <span aria-hidden>|</span>
+            <span className="text-[#eadba9]">Rated 4.9/5</span>
           </div>
         </div>
       </div>

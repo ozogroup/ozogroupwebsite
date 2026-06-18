@@ -125,8 +125,8 @@ const contentGroups: ContentGroup[] = [
     ],
   },
   {
-    title: "Milestone Bonus",
-    description: "Monthly milestone bonus copy shown on the public website.",
+    title: "Monthly Bonus",
+    description: "Monthly kit-sale bonus copy shown on the public website.",
     page: "home",
     section: "home_bonus",
     fields: [
