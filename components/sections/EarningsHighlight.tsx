@@ -1,6 +1,14 @@
 import { salesBonuses } from "@/lib/site";
+import { getPublicSiteContent } from "@/lib/data/public";
 
-export default function EarningsHighlight() {
+export default async function EarningsHighlight() {
+  const siteContent = await getPublicSiteContent("home_bonus");
+  const eyebrow = siteContent.bonus_eyebrow || "Monthly Bonus";
+  const heading = siteContent.bonus_heading || "Monthly Bonus Rewards";
+  const description =
+    siteContent.bonus_description ||
+    "Reach confirmed monthly kit sales milestones and unlock additional rewards on top of your regular earnings.";
+
   return (
     <section className="section bg-gradient-to-b from-brand-surface/50 to-white">
       <div className="container-x">
@@ -8,17 +16,14 @@ export default function EarningsHighlight() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-              Monthly Milestone
+              {eyebrow}
             </span>
           </div>
-          <h2 className="mt-6">
-            Milestone{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-              Bonus Rewards
-            </span>
+          <h2 className="mt-6 text-transparent bg-clip-text bg-gradient-to-r from-brand-ink via-brand-accent to-brand-light">
+            {heading}
           </h2>
           <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            Unlock additional bonus rewards as you achieve confirmed skincare kit milestones.
+            {description}
           </p>
         </div>
 
@@ -44,7 +49,7 @@ export default function EarningsHighlight() {
                   {bonus.bonus}
                 </p>
                 <p className="mt-1.5 md:mt-2 text-[10px] md:text-base text-white/90 font-medium leading-tight">
-                  {bonus.bookings} Skincare Kits Confirmed
+                  {bonus.bookings} Kit Sale
                 </p>
               </div>
             </div>
@@ -53,7 +58,7 @@ export default function EarningsHighlight() {
 
         <div className="mt-10 text-center">
           <p className="text-base text-brand-muted">
-            Achieve confirmed skincare kit milestones to unlock additional bonus rewards on top of your commissions.
+            Bonuses are calculated on confirmed kit sales completed within the monthly cycle.
           </p>
         </div>
       </div>

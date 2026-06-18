@@ -2,18 +2,18 @@ import type { SalesBonus as SalesBonusType } from "@/types";
 import { getPublicSiteContent } from "@/lib/data/public";
 
 const tiers: SalesBonusType[] = [
-  { bookings: 10, bonus: "₹5,000" },
-  { bookings: 20, bonus: "₹10,000" },
-  { bookings: 30, bonus: "₹15,000" },
+  { bookings: 15, bonus: "₹5,000" },
+  { bookings: 25, bonus: "₹10,000" },
+  { bookings: 35, bonus: "₹15,000" },
 ];
 
 export default async function SalesBonus() {
   const siteContent = await getPublicSiteContent("home_bonus");
-  const eyebrow = siteContent.bonus_eyebrow || "Monthly Milestone";
-  const heading = siteContent.bonus_heading || "Hit your milestones, unlock bigger rewards";
+  const eyebrow = siteContent.bonus_eyebrow || "Monthly Bonus";
+  const heading = siteContent.bonus_heading || "Monthly Kit Sales Bonus";
   const description =
     siteContent.bonus_description ||
-    "Beyond referrals, you earn lump-sum bonuses every time you cross a booking milestone. The more you grow, the more you earn.";
+    "Reach confirmed monthly kit sales milestones and unlock additional rewards on top of your regular earnings.";
 
   return (
     <section id="bonus" className="section">
@@ -40,7 +40,7 @@ export default async function SalesBonus() {
                 Tier {i + 1}
               </p>
               <p className="relative mt-2 text-2xl font-semibold text-brand-ink">
-                {t.bookings} Skincare Kits Confirmed
+                {t.bookings} Kit Sale
               </p>
               <div className="relative mt-4 flex items-baseline gap-2">
                 <span className="text-3xl md:text-4xl font-semibold text-brand-primary">
@@ -49,7 +49,7 @@ export default async function SalesBonus() {
                 <span className="text-sm text-brand-muted">bonus</span>
               </div>
               <p className="relative mt-3 text-sm text-brand-muted">
-                Confirm {t.bookings} skincare kits to unlock this reward.
+                Complete {t.bookings} confirmed kit sales in the monthly cycle.
               </p>
             </div>
           ))}

@@ -8,7 +8,7 @@ export default async function WhatsAppFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
-      className="fixed bottom-5 right-5 z-40 group"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-40 group sm:bottom-5 sm:right-5"
     >
       <span className="absolute inset-0 rounded-full bg-[#25D366]/30 blur-lg animate-pulse" />
       <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-card transition duration-200 group-hover:scale-105 group-hover:bg-[#20BD5A]">

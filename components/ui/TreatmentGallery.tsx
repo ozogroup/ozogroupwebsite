@@ -38,7 +38,7 @@ export default function TreatmentGallery({
           fill
           priority={priority}
           sizes={compact ? "(max-width: 768px) 100vw, 600px" : "(max-width: 1024px) 90vw, 600px"}
-          className="object-contain"
+          className={compact ? "object-cover" : "object-contain"}
         />
         {cleanImages.length > 1 && (
           <>
@@ -77,7 +77,7 @@ export default function TreatmentGallery({
                 activeIndex === index ? "border-brand-accent ring-2 ring-brand-accent/20" : "border-brand-border"
               }`}
             >
-              <Image src={image} alt="" fill sizes="120px" className="object-contain" />
+              <Image src={image} alt="" fill sizes="120px" className="object-cover" />
             </button>
           ))}
         </div>

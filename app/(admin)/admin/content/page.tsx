@@ -88,6 +88,21 @@ const contentGroups: ContentGroup[] = [
     ],
   },
   {
+    title: "Treatment Benefits Slider",
+    description: "Manage the homepage treatment-benefit heading and poster slots.",
+    page: "home",
+    section: "treatment_benefits",
+    fields: [
+      { label: "Eyebrow", page: "home", section: "treatment_benefits", key: "benefits_eyebrow", type: "text" },
+      { label: "Heading", page: "home", section: "treatment_benefits", key: "benefits_heading", type: "text" },
+      { label: "Description", page: "home", section: "treatment_benefits", key: "benefits_description", type: "textarea", rows: 3 },
+      { label: "Poster Image 1", page: "home", section: "treatment_benefits", key: "poster_image_1", type: "image_url" },
+      { label: "Poster Image 2", page: "home", section: "treatment_benefits", key: "poster_image_2", type: "image_url" },
+      { label: "Poster Image 3", page: "home", section: "treatment_benefits", key: "poster_image_3", type: "image_url" },
+      { label: "Poster Image 4", page: "home", section: "treatment_benefits", key: "poster_image_4", type: "image_url" },
+    ],
+  },
+  {
     title: "Membership / Referral Section",
     description: "Partner membership and referral CTA copy.",
     page: "home",
@@ -434,7 +449,7 @@ export default function AdminContentPage() {
                         {field.type === "image_url" && value ? (
                           <div className="flex items-center gap-3">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={value} alt={field.label} className="w-20 h-20 rounded-lg border border-slate-200 object-cover bg-slate-50" />
+                            <img src={value} alt={field.label} className="w-20 h-20 rounded-lg border border-slate-200 object-contain bg-brand-surface" />
                             <p className="text-sm text-slate-600 truncate">{value}</p>
                           </div>
                         ) : (

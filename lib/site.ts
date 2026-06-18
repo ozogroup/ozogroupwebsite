@@ -94,9 +94,9 @@ export const referralLevels: ReferralLevel[] = [
 ];
 
 export const salesBonuses: SalesBonus[] = [
-  { bookings: 10, bonus: "₹5,000" },
-  { bookings: 20, bonus: "₹10,000" },
-  { bookings: 30, bonus: "₹15,000" },
+  { bookings: 15, bonus: "₹5,000" },
+  { bookings: 25, bonus: "₹10,000" },
+  { bookings: 35, bonus: "₹15,000" },
 ];
 
 export const testimonials: Testimonial[] = [

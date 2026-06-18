@@ -393,12 +393,12 @@ export default async function AdminDashboardPage({
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { count: 10, bonus: "₹5,000" },
-                { count: 20, bonus: "₹10,000" },
-                { count: 30, bonus: "₹15,000" },
+                { count: 15, bonus: "₹5,000" },
+                { count: 25, bonus: "₹10,000" },
+                { count: 35, bonus: "₹15,000" },
               ].map((m) => (
                 <div key={m.count} className="bg-gradient-to-br from-brand-accent/15 to-brand-accent/5 border border-brand-accent/20 rounded-xl p-4">
-                  <div className="text-xs text-white/75">{m.count} Skincare Kits Confirmed</div>
+                  <div className="text-xs text-white/75">{m.count} Kit Sale</div>
                   <div className="text-xl font-semibold text-white mt-1 tabular-nums">{m.bonus}</div>
                 </div>
               ))}

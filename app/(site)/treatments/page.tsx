@@ -45,17 +45,12 @@ export default async function TreatmentsPage() {
                 className="card hover:-translate-y-1 transition-transform duration-300 flex flex-col"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div className="relative">
+                <div>
                   <TreatmentGallery
                     images={(treatment as any).gallery?.length ? (treatment as any).gallery : [treatment.image]}
                     alt={treatment.imageAlt}
                     compact
                   />
-                  {treatment.badge && (
-                    <span className="absolute top-4 left-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white bg-brand-primary/95 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-glass">
-                      {treatment.badge}
-                    </span>
-                  )}
                 </div>
 
                 <div className="mt-6 flex-1 flex flex-col">

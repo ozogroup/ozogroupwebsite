@@ -3,8 +3,7 @@ import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
 import { getPublicSiteContent, getPublicSystemSettings } from "@/lib/data/public";
 
-const HERO_IMAGE =
-  "/images/client-approved/korean-glass-treatment-kit.jpeg";
+const HERO_IMAGE = "/images/client-approved/korean-glass-treatment-kit.jpeg";
 
 const defaultHeroPoints = [
   "Premium Treatment Kits",
@@ -19,164 +18,80 @@ export default async function Hero() {
     getPublicSystemSettings(),
   ]);
 
-  const heroTitle = siteContent.hero_title || "Luxury Skin Treatments for";
-  const heroSubtitle = siteContent.hero_subtitle || "Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.";
-  const heroDescription = siteContent.hero_description || heroSubtitle;
+  const heroTitle = siteContent.hero_title || "Luxury Skin Treatments for Radiant Transformation";
+  const heroSubtitle =
+    siteContent.hero_description ||
+    siteContent.hero_subtitle ||
+    "Doctor-supervised skincare experiences inspired by Korean and Japanese beauty protocols.";
   const heroImage = siteContent.hero_image || HERO_IMAGE;
   const primaryButtonText = siteContent.primary_button_text || "Book Free Consultation";
-  const primaryButtonLink = siteContent.primary_button_link || "/contact";
   const secondaryButtonText = siteContent.secondary_button_text || "Explore Treatments";
   const secondaryButtonLink = siteContent.secondary_button_link || "#treatments";
-  const heroPoints = systemSettings.heroPoints?.length > 0 ? systemSettings.heroPoints : defaultHeroPoints;
-  return (
-    <section className="relative overflow-hidden">
-      {/* Premium background glow with Korean aesthetic */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse at 80% 0%, rgba(156,175,146,0.20) 0%, rgba(244,235,220,0) 50%), radial-gradient(ellipse at 20% 100%, rgba(220,230,214,0.58) 0%, rgba(244,235,220,0) 50%), linear-gradient(180deg, rgba(255,253,248,0.58) 0%, rgba(244,235,220,0) 100%)",
-        }}
-      />
+  const heroPoints = systemSettings.heroPoints?.length > 0
+    ? systemSettings.heroPoints
+    : defaultHeroPoints;
 
-      <div className="container-x pt-12 md:pt-20 pb-16 md:pb-24 lg:pb-28 grid gap-12 lg:gap-16 lg:grid-cols-12 items-center">
-        {/* Copy */}
-        <div className="lg:col-span-6 animate-fadeUp">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
-            <span className="h-2 w-2 rounded-full bg-brand-accent animate-pulse" />
-            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-              KIA Skin Care - Premium Care
+  return (
+    <section className="relative flex min-h-[76svh] items-center overflow-hidden bg-brand-ink text-white">
+      <Image
+        src={heroImage}
+        alt="KIA Skin Care premium Korean skincare treatment"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[64%_center] sm:object-center"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#2f2927]/95 via-[#3d3531]/76 to-[#302a27]/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#2f2927]/78 via-transparent to-[#2f2927]/20" />
+
+      <div className="container-x relative z-10 py-16 sm:py-20 lg:py-24">
+        <div className="max-w-2xl animate-fadeUp">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-md">
+            <span className="h-2 w-2 rounded-full bg-[#d9c896]" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/90">
+              KIA Skin Care
             </span>
           </div>
-          
-          <h1 className="mt-6 md:mt-8 leading-[1.1]">
-            {heroTitle}{" "}
-            <span className="relative inline-block">
-              <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
-                Radiant Transformation
-              </span>
-              <span className="absolute inset-0 bg-gradient-to-r from-brand-accent/20 to-brand-light/20 blur-xl -z-10" />
-            </span>
+
+          <h1 className="mt-6 max-w-2xl text-white drop-shadow-sm sm:mt-8">
+            {heroTitle}
           </h1>
-          
-          <p className="mt-6 text-lg md:text-xl text-brand-muted max-w-xl leading-relaxed">
-            {heroDescription}
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
+            {heroSubtitle}
           </p>
 
-          {/* Premium trust points */}
-          <ul className="mt-8 grid grid-cols-2 gap-4">
-            {heroPoints.map((p: string) => (
-              <li key={p} className="flex items-center gap-3 text-sm text-brand-ink/90 font-medium">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-brand-accent to-brand-light text-white shadow-glow">
+          <ul className="mt-7 grid max-w-xl grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+            {heroPoints.map((point: string) => (
+              <li
+                key={point}
+                className="flex min-h-11 items-center gap-3 rounded-lg border border-white/15 bg-black/15 px-3 py-2 text-sm font-medium text-white/90 backdrop-blur-sm"
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#9CAF88] text-white">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
                 </span>
-                {p}
+                {point}
               </li>
             ))}
           </ul>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-4">
-            <BookNowButton className="justify-center shadow-soft hover:shadow-card transition-shadow">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <BookNowButton className="justify-center border border-white/10 bg-white text-brand-ink hover:bg-brand-surface">
               {primaryButtonText}
             </BookNowButton>
-            <Link href={secondaryButtonLink} className="btn-secondary justify-center">
+            <Link
+              href={secondaryButtonLink}
+              className="btn justify-center border border-white/45 bg-black/15 text-white backdrop-blur-sm hover:bg-white/15"
+            >
               {secondaryButtonText}
             </Link>
           </div>
 
-          {/* Social proof with premium styling */}
-          <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-            <div className="flex -space-x-3">
-              {[0, 1, 2, 3].map((i) => (
-                <span
-                  key={i}
-                  className="h-10 w-10 rounded-full ring-3 ring-white shadow-soft"
-                  style={{
-                    background: `linear-gradient(135deg, ${i % 2 === 0 ? '#9CAF92' : '#DCE6D6'}, ${i === 0 ? '#7F927A' : i === 1 ? '#9CAF92' : '#DCE6D6'})`,
-                  }}
-                />
-              ))}
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-              <p className="text-sm text-brand-ink">
-                <span className="font-semibold text-brand-primary">500+</span> happy clients
-              </p>
-              <span className="hidden sm:inline text-brand-muted">·</span>
-              <div className="flex items-center gap-1.5">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-brand-accent">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  ))}
-                </div>
-                <span className="text-sm font-semibold text-brand-accent">4.9/5</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Visual with glassmorphism */}
-        <div className="lg:col-span-6 animate-fadeUp" style={{ animationDelay: "0.15s" }}>
-          <div className="relative mx-auto max-w-md lg:max-w-none">
-            <div className="relative aspect-[4/5] w-full rounded-[32px] border border-brand-border/50 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
-              <Image
-                src={heroImage}
-                alt="Premium skincare treatment at KIA Skin Care clinic"
-                fill
-                sizes="(max-width: 1024px) 90vw, 600px"
-                priority
-                className="object-contain"
-              />
-              {/* Premium brand wash */}
-              <div
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-tr from-brand-primary/20 via-transparent to-brand-accent/10"
-              />
-              {/* Glass overlay at bottom */}
-              <div
-                aria-hidden
-                className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-white/80 via-white/40 to-transparent backdrop-blur-xs"
-              />
-            </div>
-
-            {/* Floating result card with glassmorphism */}
-            <div className="absolute -bottom-8 -left-4 md:-left-10 bg-white/90 backdrop-blur-md rounded-3xl border border-brand-border/50 shadow-glass p-5 max-w-[260px] animate-float">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-accent to-brand-light flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                </div>
-                <p className="text-[11px] uppercase tracking-wider text-brand-accent font-semibold">
-                  Visible Results
-                </p>
-              </div>
-              <p className="text-base font-semibold text-brand-ink">
-                Glow in 2 weeks
-              </p>
-              <p className="text-xs text-brand-muted mt-1">
-                Clinical protocols backed
-              </p>
-            </div>
-
-            {/* Floating safety badge with premium styling */}
-            <div className="absolute -top-6 -right-4 md:-right-10 bg-white/90 backdrop-blur-md rounded-3xl border border-brand-border/50 shadow-glass p-5 max-w-[240px] animate-float" style={{ animationDelay: "0.5s" }}>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center shadow-soft">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-brand-ink">Doctor-Supervised</p>
-                  <p className="text-xs text-brand-muted mt-0.5">Certified protocols</p>
-                </div>
-              </div>
-            </div>
+          <div className="mt-8 flex items-center gap-3 text-sm text-white/75">
+            <span className="font-semibold text-white">500+ happy clients</span>
+            <span aria-hidden>•</span>
+            <span className="text-[#eadba9]">★★★★★ 4.9/5</span>
           </div>
         </div>
       </div>
