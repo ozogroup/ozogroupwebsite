@@ -1,6 +1,10 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { testimonials as staticTestimonials, faqs as staticFaqs, site as staticSite, referralLevels as staticReferralLevels, salesBonuses as staticSalesBonuses } from "@/lib/site";
-import { treatmentKitCatalog, treatmentKitSlugs } from "@/lib/treatments/catalog";
+import {
+  treatmentEditorialImages,
+  treatmentKitCatalog,
+  treatmentKitSlugs,
+} from "@/lib/treatments/catalog";
 
 // ============================================================================
 // PUBLIC DATA FETCHING WITH FALLBACK
@@ -11,6 +15,24 @@ export const defaultTreatmentCatalog = treatmentKitCatalog.map((treatment) => ({
   kitName: treatment.kitName,
   treatmentType: treatment.treatmentType,
 }));
+
+const legacyTreatmentImages = new Set([
+  "/images/client-approved/japanese-skin-care-kit.jpeg",
+  "/images/client-approved/korean-glass-treatment-kit.jpeg",
+  "/images/client-approved/skin-lightening-kit.jpeg",
+  "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
+  "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
+  "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=1400&q=80",
+  "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1400&q=80",
+]);
+
+function resolveTreatmentImages(slug: string, images: string[]) {
+  const customImages = images.filter((image) => !legacyTreatmentImages.has(image));
+  if (customImages.length > 0) return customImages;
+
+  const editorialImage = treatmentEditorialImages[slug];
+  return editorialImage ? [editorialImage] : images;
+}
 
 function normalizePublicTreatmentName(name?: string | null) {
   const value = (name || "").trim();
@@ -98,8 +120,14 @@ export async function getPublicTreatments() {
       (a: any, b: any) => treatmentKitSlugs.indexOf(a.slug) - treatmentKitSlugs.indexOf(b.slug)
     );
 
-    // Transform Supabase data to match Treatment type
-    return sorted.map((t: any) => ({
+    // Transform Supabase data to match Treatment type.
+    return sorted.map((t: any) => {
+      const gallery = resolveTreatmentImages(
+        t.slug,
+        normalizeImageList(t.gallery, t.image || t.image_url)
+      );
+
+      return {
       slug: t.slug,
       title: t.title,
       kitName: t.kit_name || t.title,
@@ -120,15 +148,16 @@ export async function getPublicTreatments() {
       badge: t.badge || t.kit_name || "",
       icon: t.icon,
       tone: t.tone,
-      image: t.image || "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
-      gallery: normalizeImageList(t.gallery, t.image || t.image_url),
+      image: gallery[0] || treatmentEditorialImages[t.slug],
+      gallery,
       beforeImage: t.before_image_url || null,
       afterImage: t.after_image_url || null,
       imageAlt: t.image_alt || t.title,
       treatmentType: t.treatment_type || (t.type === "home_kit" ? "home-kit" : "camp"),
       note: t.cta_text || (t.kit_name ? `Includes ${t.kit_name}.` : ""),
       featured: t.featured || false,
-    }));
+      };
+    });
   } catch (error) {
     console.error("Error fetching treatments from Supabase:", error);
     return defaultTreatmentCatalog;

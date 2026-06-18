@@ -28,9 +28,7 @@ export default function TreatmentGallery({
   return (
     <div className="space-y-3">
       <div
-        className={`relative w-full overflow-hidden border border-brand-border/60 bg-[#F8F4EC] ${
-          compact ? "aspect-[4/3] rounded-2xl" : "aspect-[4/5] rounded-[32px]"
-        }`}
+        className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-[#F8F4EC]"
       >
         <Image
           src={activeImage}
@@ -38,7 +36,7 @@ export default function TreatmentGallery({
           fill
           priority={priority}
           sizes={compact ? "(max-width: 768px) 100vw, 600px" : "(max-width: 1024px) 90vw, 600px"}
-          className={compact ? "object-cover" : "object-contain"}
+          className="object-cover object-center"
         />
         {cleanImages.length > 1 && (
           <>

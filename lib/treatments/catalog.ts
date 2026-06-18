@@ -1,3 +1,11 @@
+export const treatmentEditorialImages: Record<string, string> = {
+  "advanced-skin-treatment": "/images/treatments/editorial/advanced-skin-care-treatment.png",
+  "japanese-skin-treatment": "/images/treatments/editorial/japanese-skin-care-treatment.png",
+  "korean-glass-skin": "/images/treatments/editorial/korean-glass-treatment.png",
+  "skin-lightening": "/images/treatments/editorial/skin-lightening-treatment.png",
+  "basic-skin-treatment": "/images/treatments/editorial/basic-skin-care-treatment.png",
+};
+
 export const treatmentKitCatalog = [
   {
     slug: "advanced-skin-treatment",
@@ -33,9 +41,8 @@ export const treatmentKitCatalog = [
     badge: "Advanced",
     icon: "award",
     tone: "primaryDark",
-    image:
-      "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=80",
-    gallery: [],
+    image: treatmentEditorialImages["advanced-skin-treatment"],
+    gallery: [treatmentEditorialImages["advanced-skin-treatment"]],
     imageAlt: "Advance skincare kit",
     note: "Includes premium home-care kit delivery.",
     ctaText: "Book Advance Kit",
@@ -70,8 +77,8 @@ export const treatmentKitCatalog = [
     badge: "Refined",
     icon: "sparkle",
     tone: "light",
-    image: "/images/client-approved/japanese-skin-care-kit.jpeg",
-    gallery: ["/images/client-approved/japanese-skin-care-kit.jpeg"],
+    image: treatmentEditorialImages["japanese-skin-treatment"],
+    gallery: [treatmentEditorialImages["japanese-skin-treatment"]],
     imageAlt: "Japanese Skin Care Kit",
     note: "Japanese-inspired purification treatment for refined skin.",
     ctaText: "Book Kit",
@@ -102,8 +109,8 @@ export const treatmentKitCatalog = [
     badge: "Premium",
     icon: "sparkle",
     tone: "accent",
-    image: "/images/client-approved/korean-glass-treatment-kit.jpeg",
-    gallery: ["/images/client-approved/korean-glass-treatment-kit.jpeg"],
+    image: treatmentEditorialImages["korean-glass-skin"],
+    gallery: [treatmentEditorialImages["korean-glass-skin"]],
     imageAlt: "Korean Glass Treatment",
     note: "Our team will contact you on WhatsApp for schedule confirmation.",
     ctaText: "Book Kit",
@@ -145,8 +152,8 @@ export const treatmentKitCatalog = [
     badge: "Home Program",
     icon: "droplet",
     tone: "accent",
-    image: "/images/client-approved/skin-lightening-kit.jpeg",
-    gallery: ["/images/client-approved/skin-lightening-kit.jpeg"],
+    image: treatmentEditorialImages["skin-lightening"],
+    gallery: [treatmentEditorialImages["skin-lightening"]],
     imageAlt: "Premium skincare home kit",
     note: "Premium home kit with guided routine.",
     ctaText: "Book Kit",
@@ -177,9 +184,8 @@ export const treatmentKitCatalog = [
     badge: "Essential",
     icon: "droplet",
     tone: "primary",
-    image:
-      "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1400&q=80",
-    gallery: [],
+    image: treatmentEditorialImages["basic-skin-treatment"],
+    gallery: [treatmentEditorialImages["basic-skin-treatment"]],
     imageAlt: "Basic Skin Care Kit",
     note: "Essential skincare treatment.",
     ctaText: "Book Consultation",
