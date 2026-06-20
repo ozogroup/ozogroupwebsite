@@ -1,55 +1,49 @@
+import { Award } from "lucide-react";
 import { salesBonuses } from "@/lib/site";
-import { getPublicSiteContent } from "@/lib/data/public";
 
-export default async function EarningsHighlight() {
-  const siteContent = await getPublicSiteContent("home_bonus");
-  const eyebrow = siteContent.bonus_eyebrow || "Monthly Bonus";
-  const heading = siteContent.bonus_heading || "Monthly Bonus Rewards";
-  const description =
-    siteContent.bonus_description ||
-    "Reach confirmed monthly kit sales milestones and unlock additional rewards on top of your regular earnings.";
-
+export default function EarningsHighlight() {
   return (
-    <section className="section bg-gradient-to-b from-brand-surface/50 to-white">
+    <section className="section bg-[#F8F4EC]">
       <div className="container-x">
         <div className="max-w-3xl text-center mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#9CAF88]/35 bg-white px-4 py-2 shadow-soft">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-              {eyebrow}
+              Performance Rewards
             </span>
           </div>
-          <h2 className="mt-6 text-transparent bg-clip-text bg-gradient-to-r from-brand-ink via-brand-accent to-brand-light">
-            {heading}
-          </h2>
+          <h2 className="mt-6">Monthly Bonus Rewards</h2>
           <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
-            {description}
+            Earn additional monthly rewards when you complete confirmed kit sale milestones.
           </p>
         </div>
 
-        <div className="mt-8 md:mt-12 grid gap-3 md:gap-6 grid-cols-3">
+        <div className="mt-10 grid gap-5 md:mt-12 md:grid-cols-3 md:gap-6">
           {salesBonuses.map((bonus, i) => (
             <div
               key={bonus.bookings}
-              className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-brand-ink to-brand-muted text-white p-4 md:p-8 shadow-premium hover:shadow-glow transition-all duration-300 hover:-translate-y-1"
-              style={{ animationDelay: `${i * 0.1}s` }}
+              className="group relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#5B4E4A] to-[#6E5E58] p-7 text-white shadow-[0_20px_50px_rgba(91,78,74,0.18)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_58px_rgba(91,78,74,0.26)] sm:p-8 lg:p-10"
             >
-              <div
-                aria-hidden
-                className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"
-              />
+              <div aria-hidden className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#D9C896] to-transparent" />
+              <div aria-hidden className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#9CAF88]/15 blur-2xl" />
               <div className="relative z-10">
-                <div className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-white/20 text-white text-[10px] md:text-xs font-semibold">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="md:w-[14px] md:h-[14px]">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  Bonus
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#EDE5D8]">
+                    Milestone {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-[#9CAF88]/25 text-[#F8F4EC]">
+                    <Award size={20} strokeWidth={1.7} aria-hidden="true" />
+                  </span>
                 </div>
-                <p className="mt-3 md:mt-6 text-2xl md:text-5xl lg:text-6xl font-bold text-white leading-none">
-                  {bonus.bonus}
+                <p className="mt-8 text-2xl font-semibold text-white">
+                  {bonus.bookings} Kit Sales
                 </p>
-                <p className="mt-1.5 md:mt-2 text-[10px] md:text-base text-white/90 font-medium leading-tight">
-                  {bonus.bookings} Kit Sale
+                <div className="my-5 h-px w-12 bg-[#D9C896] transition-all duration-300 group-hover:w-20" />
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/65">
+                  Bonus Reward
+                </p>
+                <p className="mt-2 text-4xl font-bold leading-none text-white sm:text-5xl lg:text-6xl">
+                  {bonus.bonus}
                 </p>
               </div>
             </div>
@@ -57,8 +51,8 @@ export default async function EarningsHighlight() {
         </div>
 
         <div className="mt-10 text-center">
-          <p className="text-base text-brand-muted">
-            Bonuses are calculated on confirmed kit sales completed within the monthly cycle.
+          <p className="text-sm text-brand-muted sm:text-base">
+            Bonuses are applicable on confirmed monthly kit sales only.
           </p>
         </div>
       </div>

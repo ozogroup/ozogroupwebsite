@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 
+const OFFICIAL_EMAIL = "supportkiaskincare@gmail.com";
+const OFFICIAL_FACEBOOK = "https://www.facebook.com/profile.php?id=61591206116153&mibextid=ZbWKwL";
+const OFFICIAL_INSTAGRAM = "https://www.instagram.com/kiaskincareindia?igsh=MTl2c2h4cnh0dHBjOQ==";
+
 export default function AdminContactSettingsPage() {
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,12 +55,12 @@ export default function AdminContactSettingsPage() {
       setFormData({
         phone: settingsData.phone || "",
         whatsapp: settingsData.whatsapp || settingsData.whatsapp_number || settingsData.whatsapp_url || "",
-        email: settingsData.email || "",
+        email: settingsData.email || OFFICIAL_EMAIL,
         address: settingsData.address || "",
         business_hours: settingsData.business_hours || "",
         weekly_off: settingsData.weekly_off || "",
-        facebook_url: settingsData.facebook_url || "",
-        instagram_url: settingsData.instagram_url || "",
+        facebook_url: settingsData.facebook_url || OFFICIAL_FACEBOOK,
+        instagram_url: settingsData.instagram_url || OFFICIAL_INSTAGRAM,
         youtube_url: settingsData.youtube_url || "",
       });
     }
@@ -67,12 +71,12 @@ export default function AdminContactSettingsPage() {
     const defaultData = {
       phone: "+91 76986 17054",
       whatsapp: "+91 76986 17054",
-      email: "",
+      email: OFFICIAL_EMAIL,
       address: "KIA Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
       business_hours: "10:00 AM to 6:00 PM",
       weekly_off: "Sunday Off",
-      facebook_url: "",
-      instagram_url: "",
+      facebook_url: OFFICIAL_FACEBOOK,
+      instagram_url: OFFICIAL_INSTAGRAM,
       youtube_url: "",
     };
 

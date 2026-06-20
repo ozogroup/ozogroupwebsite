@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 import { site } from "@/lib/site";
 
 export default function ContactPage() {
@@ -160,7 +161,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="mt-8 grid gap-8 md:grid-cols-3">
+            <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               <div className="card">
                 <h3 className="text-lg font-semibold text-brand-ink">Office Time</h3>
                 <p className="mt-2 text-sm text-brand-muted">{site.businessHours}</p>
@@ -172,19 +173,42 @@ export default function ContactPage() {
               <div className="card">
                 <h3 className="text-lg font-semibold text-brand-ink">Instagram</h3>
                 <p className="mt-2 text-sm text-brand-muted">
-                  {site.instagram ? (
-                    <a
-                      href={site.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-brand-accent transition-colors"
-                    >
-                      Visit Instagram
-                    </a>
-                  ) : (
-                    "Coming soon"
-                  )}
+                  <a
+                    href={site.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 transition-colors hover:text-brand-accent"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                    </svg>
+                    Visit Instagram
+                  </a>
                 </p>
+              </div>
+              <div className="card">
+                <h3 className="text-lg font-semibold text-brand-ink">Facebook & Email</h3>
+                <div className="mt-2 flex flex-col gap-2 text-sm text-brand-muted">
+                  <a
+                    href={site.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 transition-colors hover:text-brand-accent"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M14 8h3V4.4c-.5-.1-2.2-.2-4.1-.2-4.1 0-6.9 2.5-6.9 7.1V15H2v4h4v10h5V19h4l.6-4H11v-3.3C11 10.5 11.3 8 14 8Z" transform="scale(.78) translate(3 -2)" />
+                    </svg>
+                    Visit Facebook
+                  </a>
+                  <a
+                    href={`mailto:${site.email}`}
+                    className="inline-flex items-center gap-2 break-all transition-colors hover:text-brand-accent"
+                  >
+                    <Mail size={17} className="shrink-0" aria-hidden="true" /> {site.email}
+                  </a>
+                </div>
               </div>
             </div>
           </div>

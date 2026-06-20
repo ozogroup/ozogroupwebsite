@@ -17,8 +17,9 @@ export const site = {
   phoneRaw: "+917698617054",
   whatsapp:
     "https://wa.me/917698617054?text=Hello%20KIA%20Skin%20Care%2C%20I%20want%20to%20book%20a%20skincare%20consultation.",
-  email: "",
-  instagram: "",
+  email: "supportkiaskincare@gmail.com",
+  facebook: "https://www.facebook.com/profile.php?id=61591206116153&mibextid=ZbWKwL",
+  instagram: "https://www.instagram.com/kiaskincareindia?igsh=MTl2c2h4cnh0dHBjOQ==",
   address: "KIA Skin Care\nD-25, 1st Floor, New Bus Port, Palanpur\nDist. B.K\nPIN Code: 385001",
   businessHours: "10:00 AM to 6:00 PM",
   weeklyOff: "Sunday Off",

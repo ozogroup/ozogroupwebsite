@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Mail } from "lucide-react";
 import Logo from "./Logo";
 import { getPublicContactSettings } from "@/lib/data/public";
 import { site } from "@/lib/site";
@@ -33,11 +34,33 @@ export default async function Footer() {
                 aria-label="Follow KIA Skin Care on Instagram"
                 className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 transition"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="5" />
                   <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                  <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
                 </svg>
+              </a>
+            ) : null}
+            {contactSettings.facebook ? (
+              <a
+                href={contactSettings.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Follow KIA Skin Care on Facebook"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M14 8h3V4.4c-.5-.1-2.2-.2-4.1-.2-4.1 0-6.9 2.5-6.9 7.1V15H2v4h4v10h5V19h4l.6-4H11v-3.3C11 10.5 11.3 8 14 8Z" transform="scale(.78) translate(3 -2)" />
+                </svg>
+              </a>
+            ) : null}
+            {contactSettings.email ? (
+              <a
+                href={`mailto:${contactSettings.email}`}
+                aria-label={`Email KIA Skin Care at ${contactSettings.email}`}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
+              >
+                <Mail size={19} strokeWidth={1.8} aria-hidden="true" />
               </a>
             ) : null}
           </div>
@@ -97,6 +120,19 @@ export default async function Footer() {
                   className="font-medium text-white hover:text-brand-accent transition-colors"
                 >
                   Visit Instagram
+                </a>
+              </li>
+            ) : null}
+            {contactSettings.facebook ? (
+              <li>
+                <span className="text-white/60">Facebook:</span>{" "}
+                <a
+                  href={contactSettings.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-white transition-colors hover:text-brand-accent"
+                >
+                  Visit Facebook
                 </a>
               </li>
             ) : null}

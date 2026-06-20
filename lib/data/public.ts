@@ -287,6 +287,7 @@ export async function getPublicContactSettings() {
         weeklyOff: content.weekly_off || staticSite.weeklyOff,
         footerText: replaceLegacyBranding(content.footer_text),
         instagram: content.instagram || staticSite.instagram,
+        facebook: content.facebook || staticSite.facebook,
       };
     }
 
@@ -309,6 +310,7 @@ export async function getPublicContactSettings() {
       weeklyOff: content.weekly_off || (data as any).weekly_off || staticSite.weeklyOff,
       footerText: replaceLegacyBranding(content.footer_text),
       instagram: content.instagram || (data as any).instagram_url || staticSite.instagram,
+      facebook: content.facebook || (data as any).facebook_url || staticSite.facebook,
     };
   } catch (error) {
     console.error("Error fetching contact settings from Supabase:", error);
