@@ -7,15 +7,11 @@ import { submitFranchiseLead } from "@/lib/actions/franchise-leads";
 const inputClass =
   "w-full rounded-2xl border border-[#EDE5D8] bg-[#F8F4EC]/80 px-4 py-3.5 text-sm text-[#5B4C46] shadow-inner outline-none transition placeholder:text-[#6A5A53]/45 focus:border-[#9CAF88] focus:bg-white focus:ring-4 focus:ring-[#9CAF88]/15";
 
-const FRANCHISE_BANNER = "/images/client-approved/franchise-banner.png";
-const LEGACY_FRANCHISE_IMAGES = new Set([
-  "/images/client-approved/franchise-income-model.jpeg",
-  "/images/client-approved/franchise-monthly-income.jpeg",
-  "/images/client-approved/franchise-opportunity.jpeg",
-  "/images/client-approved/professional-product-kit-pricing.png",
-]);
+const FRANCHISE_BANNER = "/images/client-approved/franchise-banner-final.png";
 
 export default function FranchiseInquiry({
+  title = "Start Your KIA Skin Care Franchise",
+  subtitle = "Build your skincare business with KIA Korean Skin Care.",
   image,
 }: {
   title?: string;
@@ -25,7 +21,7 @@ export default function FranchiseInquiry({
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const bannerImage = image && !LEGACY_FRANCHISE_IMAGES.has(image) ? image : FRANCHISE_BANNER;
+  const bannerImage = image && /^https?:\/\//i.test(image) ? image : FRANCHISE_BANNER;
 
   function handleSubmit(formData: FormData) {
     setMessage(null);
@@ -41,10 +37,10 @@ export default function FranchiseInquiry({
   }
 
   return (
-    <section className="bg-[#F8F4EC] py-10 md:py-12 lg:py-14">
+    <section className="bg-[#F8F4EC] py-12 md:py-16 lg:py-20">
       <div className="container-x">
         <div className="mx-auto max-w-[1400px]">
-          <div className="relative aspect-video w-full overflow-hidden rounded-[32px] bg-[#EDE5D8] shadow-[0_16px_48px_rgba(91,78,74,0.10)] lg:h-[420px] lg:aspect-auto">
+          <div className="relative aspect-video w-full overflow-hidden rounded-[32px] bg-[#EDE5D8] shadow-[0_16px_48px_rgba(91,78,74,0.10)]">
             <Image
               src={bannerImage}
               alt="KIA Skin Care franchise opportunity"
@@ -55,7 +51,27 @@ export default function FranchiseInquiry({
             />
           </div>
 
-          <div className="mx-auto mt-6 max-w-[1000px] rounded-[32px] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.06)] md:mt-8 md:p-9 lg:mt-10 lg:p-12">
+          <div className="mt-7 grid gap-6 lg:mt-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-8">
+            <div className="rounded-[32px] bg-gradient-to-br from-[#5B4E4A] to-[#6E5E58] p-6 text-white md:p-10 lg:p-12">
+              <div className="inline-flex rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/90">
+                Franchise Opportunity
+              </div>
+              <h2 className="mt-6 text-white">{title}</h2>
+              <p className="mt-4 max-w-xl text-base leading-7 text-white/80">{subtitle}</p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                {["Brand Support", "Training Guidance", "City Growth Opportunity"].map((benefit) => (
+                  <span
+                    key={benefit}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-[#A6B39E]" />
+                    {benefit}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[32px] bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.06)] md:p-10 lg:p-12">
               {message && (
                 <div
                   className={`mb-5 rounded-xl border px-4 py-3 text-sm ${
@@ -84,12 +100,13 @@ export default function FranchiseInquiry({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full rounded-full bg-gradient-to-r from-[#5B4E4A] to-[#7A6660] px-6 py-4 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(91,78,74,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(91,78,74,0.30)] focus:outline-none focus:ring-4 focus:ring-[#9CAF88]/25 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
+                    className="h-14 w-full rounded-full bg-gradient-to-br from-[#5B4E4A] to-[#7A6660] px-6 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(91,78,74,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_44px_rgba(91,78,74,0.30)] focus:outline-none focus:ring-4 focus:ring-[#9CAF88]/25 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
                   >
                     {isPending ? "Submitting..." : "Submit Franchise Inquiry"}
                   </button>
                 </div>
               </form>
+            </div>
           </div>
         </div>
       </div>

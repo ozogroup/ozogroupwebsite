@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FileText, Image as ImageIcon, Pencil, Plus, Search, Settings2, Trash2 } from "lucide-react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import ImageUpload from "@/components/admin/ImageUpload";
+import MultiImageUpload from "@/components/admin/MultiImageUpload";
 import { Badge, Button, Card, EmptyState, PageHeader } from "@/components/admin/ui";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -26,7 +27,7 @@ type ContentField = {
   section: string;
   key: string;
   aliases?: string[];
-  type?: "text" | "textarea" | "image_url" | "link";
+  type?: "text" | "textarea" | "image_url" | "image_gallery" | "link";
   rows?: number;
   placeholder?: string;
 };
@@ -88,18 +89,15 @@ const contentGroups: ContentGroup[] = [
     ],
   },
   {
-    title: "Treatment Benefits Slider",
-    description: "Manage the homepage treatment-benefit heading and poster slots.",
+    title: "Treatment Benefits Gallery",
+    description: "Manage the ordered homepage treatment-benefit image collection.",
     page: "home",
     section: "treatment_benefits",
     fields: [
       { label: "Eyebrow", page: "home", section: "treatment_benefits", key: "benefits_eyebrow", type: "text" },
       { label: "Heading", page: "home", section: "treatment_benefits", key: "benefits_heading", type: "text" },
       { label: "Description", page: "home", section: "treatment_benefits", key: "benefits_description", type: "textarea", rows: 3 },
-      { label: "Poster Image 1", page: "home", section: "treatment_benefits", key: "poster_image_1", type: "image_url" },
-      { label: "Poster Image 2", page: "home", section: "treatment_benefits", key: "poster_image_2", type: "image_url" },
-      { label: "Poster Image 3", page: "home", section: "treatment_benefits", key: "poster_image_3", type: "image_url" },
-      { label: "Poster Image 4", page: "home", section: "treatment_benefits", key: "poster_image_4", type: "image_url" },
+      { label: "Gallery Images", page: "home", section: "treatment_benefits", key: "benefit_images", type: "image_gallery" },
     ],
   },
   {
@@ -198,6 +196,21 @@ function getItemValue(item?: SiteContent | null) {
 
 function getFieldKeys(field: ContentField) {
   return [field.key, ...(field.aliases || [])];
+}
+
+function parseImageGallery(value?: string | null) {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      : [];
+  } catch {
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
 }
 
 function findContentItem(content: SiteContent[], field: ContentField) {
@@ -433,12 +446,15 @@ export default function AdminContentPage() {
                 {group.fields.map((field) => {
                   const item = findContentItem(content, field);
                   const value = getItemValue(item);
+                  const gallery = field.type === "image_gallery" ? parseImageGallery(value) : [];
                   return (
                     <div key={`${field.section}-${field.key}`} className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-start gap-4">
                       <div className="lg:w-64 shrink-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-semibold text-brand-ink">{field.label}</p>
-                          {field.type === "image_url" && <ImageIcon className="w-4 h-4 text-slate-400" />}
+                          {(field.type === "image_url" || field.type === "image_gallery") && (
+                            <ImageIcon className="w-4 h-4 text-slate-400" />
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 mt-1">
                           {item ? "Connected to website" : "Not added yet"}
@@ -446,7 +462,20 @@ export default function AdminContentPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        {field.type === "image_url" && value ? (
+                        {field.type === "image_gallery" && gallery.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {gallery.slice(0, 5).map((url, index) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                key={`${url}-${index}`}
+                                src={url}
+                                alt=""
+                                className="h-16 w-28 rounded-lg border border-slate-200 bg-brand-surface object-cover"
+                              />
+                            ))}
+                            <p className="text-xs font-medium text-slate-500">{gallery.length} image{gallery.length === 1 ? "" : "s"}</p>
+                          </div>
+                        ) : field.type === "image_url" && value ? (
                           <div className="flex items-center gap-3">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={value} alt={field.label} className="w-20 h-20 rounded-lg border border-slate-200 object-contain bg-brand-surface" />
@@ -575,6 +604,7 @@ export default function AdminContentPage() {
                       <option value="text">Text</option>
                       <option value="textarea">Long Text</option>
                       <option value="image_url">Image URL</option>
+                      <option value="image_gallery">Image Gallery</option>
                       <option value="link">Link</option>
                     </select>
                   </div>
@@ -582,7 +612,14 @@ export default function AdminContentPage() {
                 </div>
               )}
 
-              {formData.value_type === "image_url" ? (
+              {formData.value_type === "image_gallery" ? (
+                <MultiImageUpload
+                  value={parseImageGallery(formData.value)}
+                  onChange={(urls) => setFormData({ ...formData, value: JSON.stringify(urls) })}
+                  folder="content/treatment-benefits"
+                  label="Treatment Benefit Images"
+                />
+              ) : formData.value_type === "image_url" ? (
                 <ImageUpload
                   value={formData.value}
                   onChange={(url) => setFormData({ ...formData, value: url })}

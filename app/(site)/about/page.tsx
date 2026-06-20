@@ -10,8 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
 };
 
-const ABOUT_IMAGE =
-  "/images/client-approved/franchise-income-model.jpeg";
+const ABOUT_IMAGE = "/images/client-approved/home-hero-korean-skincare.png";
 
 export default async function AboutPage() {
   const siteContent = await getPublicSiteContent("about");
@@ -28,7 +27,10 @@ export default async function AboutPage() {
     siteContent.about_vision ||
     siteContent.vision ||
     "To become India's most trusted skincare destination, known for visible results, ethical practices, and customer-centric care.";
-  const aboutImage = siteContent.about_image || siteContent.image || ABOUT_IMAGE;
+  const configuredAboutImage = siteContent.about_image || siteContent.image;
+  const aboutImage = configuredAboutImage && /^https?:\/\//i.test(configuredAboutImage)
+    ? configuredAboutImage
+    : ABOUT_IMAGE;
 
   return (
     <>

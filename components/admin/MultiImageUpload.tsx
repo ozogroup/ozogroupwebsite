@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, ImagePlus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImagePlus, RefreshCw, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { deleteImageByUrl, uploadImage } from "@/lib/actions/storage";
 
@@ -16,6 +16,8 @@ export default function MultiImageUpload({
   label?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
@@ -49,6 +51,31 @@ export default function MultiImageUpload({
     onChange(next);
   }
 
+  async function replace(files: FileList | null) {
+    const file = files?.[0];
+    if (!file || replacingIndex == null) return;
+
+    setUploading(true);
+    setError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const result = await uploadImage(formData);
+
+    if (result.url) {
+      const previousUrl = value[replacingIndex];
+      const next = [...value];
+      next[replacingIndex] = result.url;
+      onChange(next);
+      if (previousUrl && previousUrl !== result.url) await deleteImageByUrl(previousUrl);
+    } else if (result.error) {
+      setError(result.error);
+    }
+
+    setReplacingIndex(null);
+    setUploading(false);
+  }
+
   async function remove(url: string) {
     onChange(value.filter((item) => item !== url));
     await deleteImageByUrl(url);
@@ -66,7 +93,7 @@ export default function MultiImageUpload({
           {value.map((url, index) => (
             <div key={`${url}-${index}`} className="rounded-lg border border-brand-border bg-brand-surface p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="aspect-square w-full rounded-md bg-white object-contain" />
+              <img src={url} alt="" className="aspect-video w-full rounded-md bg-white object-cover" />
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-xs font-semibold text-brand-muted">#{index + 1}</span>
                 <div className="flex items-center gap-1">
@@ -75,6 +102,18 @@ export default function MultiImageUpload({
                   </button>
                   <button type="button" title="Move right" disabled={index === value.length - 1} onClick={() => move(index, 1)} className="rounded p-1 text-brand-muted hover:bg-white disabled:opacity-30">
                     <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    title="Replace image"
+                    disabled={uploading}
+                    onClick={() => {
+                      setReplacingIndex(index);
+                      replaceInputRef.current?.click();
+                    }}
+                    className="rounded p-1 text-brand-muted hover:bg-white disabled:opacity-30"
+                  >
+                    <RefreshCw className="h-4 w-4" />
                   </button>
                   <button type="button" title="Delete image" onClick={() => remove(url)} className="rounded p-1 text-red-600 hover:bg-red-50">
                     <Trash2 className="h-4 w-4" />
@@ -87,6 +126,7 @@ export default function MultiImageUpload({
       )}
 
       <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => { upload(event.target.files); event.target.value = ""; }} />
+      <input ref={replaceInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => { replace(event.target.files); event.target.value = ""; }} />
       <button type="button" disabled={uploading} onClick={() => inputRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-medium text-brand-ink transition hover:border-brand-accent disabled:opacity-50">
         <ImagePlus className="h-4 w-4" />
         {uploading ? "Uploading..." : "Add Images"}
