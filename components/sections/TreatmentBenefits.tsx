@@ -77,16 +77,16 @@ export default async function TreatmentBenefits() {
             {images.map((image, index) => (
               <article
                 key={image}
-                className="overflow-hidden rounded-[32px] bg-white p-3 shadow-[0_10px_35px_rgba(0,0,0,0.06)]"
+                className="overflow-hidden rounded-[28px] bg-white p-[14px] shadow-[0_14px_40px_rgba(0,0,0,0.06)]"
               >
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px] bg-[#F5F2EB] p-2.5">
-                  <div className="relative h-full w-full overflow-hidden rounded-[22px]">
+                <div className="flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-[22px] bg-[#F5F2EB]">
+                  <div className="relative h-full w-full">
                     <Image
                       src={image}
                       alt={getImageAlt(image, index)}
                       fill
                       sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-                      className="object-contain object-center"
+                      className="rounded-[18px] object-contain object-center"
                       priority={index < 3}
                     />
                   </div>
