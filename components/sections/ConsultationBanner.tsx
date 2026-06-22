@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 
 export default function ConsultationBanner() {
   return (
-    <section className="py-10 md:py-14">
+    <section className="py-8 md:py-12">
       <div className="container-x">
         <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-white shadow-soft p-6 md:p-10 grid gap-6 md:grid-cols-12 items-center">
           <div

@@ -1,168 +1,161 @@
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, MessageCircle } from "lucide-react";
 import Logo from "./Logo";
-import { getPublicContactSettings } from "@/lib/data/public";
+import { getPublicContactSettings, getPublicTreatments } from "@/lib/data/public";
 import { site } from "@/lib/site";
 
 export default async function Footer() {
-  const contactSettings = await getPublicContactSettings();
+  const [contactSettings, treatments] = await Promise.all([
+    getPublicContactSettings(),
+    getPublicTreatments(),
+  ]);
   const footerText = "footerText" in contactSettings ? contactSettings.footerText : "";
+  const quickLinks = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/membership", label: "Membership" },
+    { href: "/contact", label: "Contact" },
+  ];
+  const treatmentLinks = treatments.slice(0, 5).map((treatment) => ({
+    href: `/treatments/${treatment.slug}`,
+    label: treatment.kitName,
+  }));
+
   return (
-    <footer className="mt-20 bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white relative overflow-hidden">
-      <div className="container-x py-16 md:py-24 grid gap-12 md:grid-cols-12 relative z-10">
-        <div className="md:col-span-5 space-y-6">
+    <footer className="relative mt-8 overflow-hidden bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white md:mt-10">
+      <div className="container-x relative z-10 grid grid-cols-1 gap-x-6 gap-y-3 py-5 md:grid-cols-4 md:gap-8 md:py-10">
+        <div>
           <Logo variant="light" size="footer" />
-          <p className="text-white/80 max-w-sm leading-relaxed">
-            {footerText ||
-              "KIA Skin Care offers advanced clinical treatments with visible, lasting results inspired by Korean and Japanese beauty traditions."}
+          <p className="mt-3 hidden max-w-xs text-xs leading-5 text-white/80 md:block">
+            {footerText || "Premium Korean and Japanese-inspired skincare treatments with expert guidance and visible results."}
           </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <a
-              href={contactSettings.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 rounded-full bg-brand-card px-6 py-3.5 text-sm font-semibold text-brand-ink hover:bg-brand-light hover:shadow-glow transition-all"
-            >
-              <span>Chat on WhatsApp</span>
-              <span aria-hidden>-&gt;</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          <MobileFooterLinks title="Quick Links" links={quickLinks} />
+          <MobileFooterLinks title="Treatments" links={treatmentLinks} />
+        </div>
+
+        <FooterLinks title="Quick Links" links={quickLinks} />
+        <FooterLinks title="Treatments" links={treatmentLinks} />
+
+        <div>
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-white md:mb-3">Contact</h4>
+          <div className="grid gap-1 text-xs leading-5 text-white/80 md:gap-1.5">
+            <a href={`tel:${contactSettings.phoneRaw}`} className="font-semibold text-white hover:text-brand-light">
+              {contactSettings.phone}
             </a>
+            {contactSettings.email ? (
+              <a href={`mailto:${contactSettings.email}`} className="hover:text-brand-light">
+                {contactSettings.email}
+              </a>
+            ) : null}
+            <p className="line-clamp-1 whitespace-pre-line text-xs leading-5 text-white/75 md:line-clamp-none">
+              {contactSettings.address || site.address}
+            </p>
+            <p className="text-xs text-white/75">
+              {(contactSettings as any).businessHours || site.businessHours} · {(contactSettings as any).weeklyOff || site.weeklyOff}
+            </p>
+          </div>
+
+          <div className="mt-2.5 flex items-center gap-2.5 md:mt-4">
+            <SocialLink href={contactSettings.whatsapp} label="Chat on WhatsApp">
+              <MessageCircle size={17} aria-hidden="true" />
+            </SocialLink>
             {contactSettings.instagram ? (
-              <a
-                href={contactSettings.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow KIA Skin Care on Instagram"
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white hover:bg-white/10 transition"
-              >
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <SocialLink href={contactSettings.instagram} label="Follow KIA Skin Care on Instagram">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="5" />
                   <circle cx="12" cy="12" r="4" />
                   <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
                 </svg>
-              </a>
+              </SocialLink>
             ) : null}
             {contactSettings.facebook ? (
-              <a
-                href={contactSettings.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow KIA Skin Care on Facebook"
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
-              >
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <SocialLink href={contactSettings.facebook} label="Follow KIA Skin Care on Facebook">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M14 8h3V4.4c-.5-.1-2.2-.2-4.1-.2-4.1 0-6.9 2.5-6.9 7.1V15H2v4h4v10h5V19h4l.6-4H11v-3.3C11 10.5 11.3 8 14 8Z" transform="scale(.78) translate(3 -2)" />
                 </svg>
-              </a>
+              </SocialLink>
             ) : null}
             {contactSettings.email ? (
-              <a
-                href={`mailto:${contactSettings.email}`}
-                aria-label={`Email KIA Skin Care at ${contactSettings.email}`}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
-              >
-                <Mail size={19} strokeWidth={1.8} aria-hidden="true" />
-              </a>
+              <SocialLink href={`mailto:${contactSettings.email}`} label={`Email KIA Skin Care at ${contactSettings.email}`} external={false}>
+                <Mail size={17} aria-hidden="true" />
+              </SocialLink>
             ) : null}
           </div>
-        </div>
-
-        <div className="md:col-span-3">
-          <h4 className="text-white text-sm font-semibold tracking-wide uppercase mb-6">
-            Quick Links
-          </h4>
-          <ul className="space-y-4 text-white/85 text-sm">
-            <li><Link href="/" className="hover:text-brand-accent transition-colors">Home</Link></li>
-            <li><Link href="/about" className="hover:text-brand-accent transition-colors">About</Link></li>
-            <li><Link href="/treatments" className="hover:text-brand-accent transition-colors">Treatments</Link></li>
-            <li><Link href="/referral" className="hover:text-brand-accent transition-colors">Membership</Link></li>
-            <li><Link href="/contact" className="hover:text-brand-accent transition-colors">Contact</Link></li>
-          </ul>
-        </div>
-
-        <div className="md:col-span-4">
-          <h4 className="text-white text-sm font-semibold tracking-wide uppercase mb-6">
-            Contact
-          </h4>
-          <ul className="space-y-4 text-white/85 text-sm">
-            <li>
-              <span className="text-white/60">Customer Care:</span>{" "}
-              <a href={`tel:${contactSettings.phoneRaw}`} className="font-semibold text-white hover:text-brand-accent transition-colors">
-                {contactSettings.phone}
-              </a>
-            </li>
-            {contactSettings.email ? (
-              <li>
-                <span className="text-white/60">Email:</span>{" "}
-                <a href={`mailto:${contactSettings.email}`} className="font-medium text-white hover:text-brand-accent transition-colors">
-                  {contactSettings.email}
-                </a>
-              </li>
-            ) : null}
-            <li>
-              <span className="text-white/60">Address:</span>{" "}
-              <span className="whitespace-pre-line">{contactSettings.address || site.address}</span>
-            </li>
-            <li>
-              <span className="text-white/60">Office Time:</span>{" "}
-              {(contactSettings as any).businessHours || site.businessHours}
-            </li>
-            <li>
-              <span className="text-white/60">Weekly Off:</span>{" "}
-              {(contactSettings as any).weeklyOff || site.weeklyOff}
-            </li>
-            {contactSettings.instagram ? (
-              <li>
-                <span className="text-white/60">Instagram:</span>{" "}
-                <a
-                  href={contactSettings.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-white hover:text-brand-accent transition-colors"
-                >
-                  Visit Instagram
-                </a>
-              </li>
-            ) : null}
-            {contactSettings.facebook ? (
-              <li>
-                <span className="text-white/60">Facebook:</span>{" "}
-                <a
-                  href={contactSettings.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-white transition-colors hover:text-brand-accent"
-                >
-                  Visit Facebook
-                </a>
-              </li>
-            ) : null}
-            <li>
-              <span className="text-white/60">Brand:</span> {site.brand}
-            </li>
-            <li>
-              <span className="text-white/60">Program:</span> {site.division}
-            </li>
-            <li className="text-white/70 italic">{site.tagline}</li>
-          </ul>
         </div>
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-x py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs [&_p]:text-white/90">
-          <p>© 2026 KIA Skin Care. All rights reserved.</p>
-          <p>
+        <div className="container-x flex flex-col items-center justify-between gap-1 py-3 text-center text-[11px] text-white/75 sm:flex-row sm:text-left md:gap-2 md:py-4">
+          <p className="text-white/75">© 2026 KIA Skin Care. All rights reserved.</p>
+          <p className="text-white/75">
             Developed by{" "}
-            <a
-              href={site.developer.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white font-medium hover:text-brand-light transition-colors"
-            >
+            <a href={site.developer.url} target="_blank" rel="noopener noreferrer" className="font-medium text-white hover:text-brand-light">
               {site.developer.name}
             </a>
           </p>
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterLinks({ title, links }: { title: string; links: Array<{ href: string; label: string }> }) {
+  return (
+    <div className="hidden md:block">
+      <h4 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-white">{title}</h4>
+      <ul className="space-y-2 text-xs text-white/80">
+        {links.map((link) => (
+          <li key={`${link.href}-${link.label}`}>
+            <Link href={link.href} className="line-clamp-1 hover:text-brand-light">
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MobileFooterLinks({ title, links }: { title: string; links: Array<{ href: string; label: string }> }) {
+  return (
+    <details className="rounded-xl border border-white/15 bg-white/5 px-3 py-2.5">
+      <summary className="cursor-pointer list-none text-xs font-semibold text-white">{title}</summary>
+      <ul className="mt-2 space-y-1.5 border-t border-white/10 pt-2 text-[11px] text-white/75">
+        {links.map((link) => (
+          <li key={`${link.href}-${link.label}`}>
+            <Link href={link.href} className="line-clamp-1 hover:text-brand-light">
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function SocialLink({
+  href,
+  label,
+  children,
+  external = true,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      aria-label={label}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noopener noreferrer" : undefined}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition hover:bg-white/10"
+    >
+      {children}
+    </a>
   );
 }

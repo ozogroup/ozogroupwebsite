@@ -142,7 +142,7 @@ export default async function ReferralPage() {
               </div>
               <h2 className="mt-6">
                 Earn{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+                <span className="text-brand-accent">
                   ₹500 Minimum
                 </span>{" "}
                 Per Referral

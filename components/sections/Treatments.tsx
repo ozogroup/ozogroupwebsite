@@ -1,8 +1,9 @@
 import Link from "next/link";
 import BookNowButton from "@/components/booking/BookNowButton";
+import AutoSlider from "@/components/ui/AutoSlider";
+import TreatmentGallery from "@/components/ui/TreatmentGallery";
 import { getPublicSiteContent, getPublicTreatments } from "@/lib/data/public";
 import { getOfferingCtaLabel, getOfferingTypeLabel } from "@/lib/treatment-labels";
-import TreatmentGallery from "@/components/ui/TreatmentGallery";
 
 export default async function Treatments() {
   const [treatments, siteContent] = await Promise.all([
@@ -17,103 +18,78 @@ export default async function Treatments() {
     "Choose between premium home treatment programs or exclusive clinical experiences designed for visible, lasting results.";
 
   return (
-    <section id="treatments" className="section scroll-mt-24">
+    <section id="treatments" className="scroll-mt-24 py-8 md:py-12">
       <div className="container-x">
-        <div className="max-w-3xl text-center mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand-accent/20 bg-gradient-to-r from-brand-accent/10 to-brand-light/10 px-4 py-2">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
-            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">
               Premium Treatments
             </span>
           </div>
-          <h2 className="mt-6">{heading}</h2>
-          <p className="mt-4 text-lg text-brand-muted max-w-2xl mx-auto leading-relaxed">
+          <h2 className="mt-4">{heading}</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-brand-muted">
             {subtitle}
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          {treatments.map((treatment, i) => (
-            <div
-              key={treatment.slug}
-              className="card hover:-translate-y-1 transition-transform duration-300 flex flex-col"
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <div>
+        <div className="mt-8">
+          <AutoSlider
+            ariaLabel="KIA Skin Care treatments"
+            tabletItems={2}
+            desktopItems={3}
+            intervalMs={3400}
+            itemClassName="basis-[84%] sm:basis-[calc((100%_-_1.25rem)/2)] lg:basis-[calc((100%_-_2.5rem)/3)]"
+          >
+            {treatments.map((treatment, index) => (
+              <article
+                key={treatment.slug}
+                className="flex h-full flex-col rounded-2xl border border-brand-border bg-white p-3 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-card"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <TreatmentGallery
                   images={(treatment as any).gallery?.length ? (treatment as any).gallery : [treatment.image]}
                   alt={treatment.imageAlt}
                   compact
                 />
-              </div>
 
-              <div className="mt-6 flex-1 flex flex-col">
-                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-brand-accent mb-2">
-                  {getOfferingTypeLabel(treatment.treatmentType)} · {treatment.tagline}
-                </p>
-                <h3 className="text-xl font-semibold text-brand-ink mb-3">
-                  {treatment.title}
-                </h3>
-                <p className="text-sm text-brand-muted leading-relaxed mb-6 flex-1">
-                  {treatment.description}
-                </p>
+                <div className="mt-4 flex flex-1 flex-col px-1 pb-1">
+                  <p className="mb-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
+                    {getOfferingTypeLabel(treatment.treatmentType)} · {treatment.tagline}
+                  </p>
+                  <h3 className="mb-1.5 truncate text-lg font-semibold text-brand-ink">
+                    {treatment.title}
+                  </h3>
+                  <p className="mb-4 line-clamp-1 text-sm text-brand-muted">
+                    {treatment.description}
+                  </p>
 
-                <div className="mb-4 space-y-2">
-                  {treatment.benefits.slice(0, 4).map((benefit: string) => (
-                    <div key={benefit} className="flex items-center gap-2 text-sm text-brand-ink/90">
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent">
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                      </span>
-                      {benefit}
+                  <div className="mt-auto border-t border-brand-border/60 pt-3">
+                    <div className="mb-3 flex items-end justify-between gap-3">
+                      <p className="text-xl font-bold text-brand-primary">{treatment.priceLabel}</p>
+                      <span className="text-xs text-brand-muted">{treatment.unit}</span>
                     </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 border-t border-brand-border/60">
-                  <div className="flex items-baseline justify-between mb-2">
-                    <p className="text-2xl font-bold text-brand-primary">
-                      {treatment.priceLabel}
-                    </p>
-                    <span className="text-sm text-brand-muted">
-                      {treatment.unit}
-                    </span>
-                  </div>
-                  {treatment.note && (
-                    <p className="text-xs text-brand-muted mb-4">
-                      {treatment.note}
-                    </p>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <BookNowButton
-                      treatmentSlug={treatment.slug}
-                      className="justify-center text-sm"
-                    >
-                      {getOfferingCtaLabel(treatment.treatmentType)}
-                    </BookNowButton>
-                    <Link
-                      href={`/treatments/${treatment.slug}`}
-                      className="btn-secondary justify-center text-sm"
-                    >
-                      View Details
-                    </Link>
+                    <div className="grid grid-cols-2 gap-2">
+                      <BookNowButton
+                        treatmentSlug={treatment.slug}
+                        className="min-w-0 justify-center px-3 py-2.5 text-xs"
+                      >
+                        {getOfferingCtaLabel(treatment.treatmentType)}
+                      </BookNowButton>
+                      <Link
+                        href={`/treatments/${treatment.slug}`}
+                        className="btn-secondary min-w-0 justify-center px-3 py-2.5 text-xs"
+                      >
+                        View Details
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </article>
+            ))}
+          </AutoSlider>
         </div>
 
-        <div className="mt-12 text-center">
-          <p className="text-base text-brand-muted mb-4">
-            Unsure which treatment is right for your skin?
-          </p>
-          <BookNowButton className="justify-center">
-            Get Free Consultation
-          </BookNowButton>
-        </div>
       </div>
     </section>
   );

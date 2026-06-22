@@ -25,7 +25,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="section">
+    <section id="how-it-works" className="py-8 md:py-12">
       <div className="container-x">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div className="max-w-3xl">
@@ -37,7 +37,7 @@ export default function HowItWorks() {
             </div>
             <h2 className="mt-6">
               Booking Your Treatment Is{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+              <span className="text-brand-accent">
                 Simple
               </span>
             </h2>

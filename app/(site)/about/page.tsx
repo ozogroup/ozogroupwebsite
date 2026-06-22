@@ -91,7 +91,7 @@ export default async function AboutPage() {
               </div>
               <h2 className="mt-6">
                 Transforming Skin,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+                <span className="text-brand-accent">
                   One Treatment at a Time
                 </span>
               </h2>

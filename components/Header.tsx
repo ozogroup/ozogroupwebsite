@@ -56,7 +56,7 @@ export default function Header({ whatsappUrl = site.whatsapp }: { whatsappUrl?: 
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-4">
-          <Link href="/partner/login" className="btn-ghost">
+          <Link href="/partner/login" className="btn border border-brand-border bg-brand-surface text-brand-ink hover:border-brand-primaryDark hover:bg-brand-light">
             Partner Login
           </Link>
           <button

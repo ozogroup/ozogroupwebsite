@@ -4,13 +4,13 @@
 
 :root {
   --brand-primary: #9CAF92;
-  --brand-primary-dark: #7F927A;
-  --brand-accent: #7F927A;
+  --brand-primary-dark: #76896E;
+  --brand-accent: #8A9C82;
   --brand-light: #DCE6D6;
   --brand-surface: #F4EBDC;
   --brand-card: #FFFDF8;
   --brand-ink: #4F4542;
-  --brand-muted: #6F625C;
+  --brand-muted: #625650;
   --brand-border: #E6DCCF;
 }
 
@@ -41,7 +41,10 @@ body {
   h3 { @apply text-xl md:text-2xl font-semibold; }
   p  { @apply text-brand-muted leading-relaxed; }
   /* Sub-label colors used inline below headings — bumped for readability */
-  .text-brand-muted { color: #6F625C; }
+  .text-brand-muted { color: #625650; }
+  .text-brand-accent { color: #8A9C82; }
+  a.text-brand-accent:hover,
+  button.text-brand-accent:hover { color: #76896E; }
   a  { @apply transition-colors; }
   ::selection { background: #9CAF92; color: #FFFDF8; }
 }
@@ -73,7 +76,7 @@ body {
 
   /* Section */
   .section {
-    @apply py-10 md:py-24;
+    @apply py-8 md:py-12;
   }
 
   /* Hide scrollbar but keep scrollable */

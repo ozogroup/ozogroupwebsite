@@ -7,10 +7,8 @@ import KoreanGlassHighlight from "@/components/sections/KoreanGlassHighlight";
 import ConsultationBanner from "@/components/sections/ConsultationBanner";
 import WhyChooseUs from "@/components/sections/WhyChooseUs";
 import HowItWorks from "@/components/sections/HowItWorks";
-import MembershipPreview from "@/components/sections/MembershipPreview";
-import EarningsHighlight from "@/components/sections/EarningsHighlight";
-import Referrals from "@/components/sections/Referrals";
 import Membership from "@/components/sections/Membership";
+import EarningsHighlight from "@/components/sections/EarningsHighlight";
 import Testimonials from "@/components/sections/Testimonials";
 import FAQ from "@/components/sections/FAQ";
 import FranchiseInquiry from "@/components/sections/FranchiseInquiry";
@@ -36,10 +34,8 @@ export default async function HomePage() {
       <ConsultationBanner />
       <WhyChooseUs />
       <HowItWorks />
-      <MembershipPreview />
-      <EarningsHighlight />
-      <Referrals />
       <Membership />
+      <EarningsHighlight />
       <Testimonials />
       <FAQ />
       <FranchiseInquiry

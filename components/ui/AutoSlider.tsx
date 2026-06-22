@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface AutoSliderProps {
   ariaLabel: string;
@@ -25,9 +26,10 @@ export default function AutoSlider({
   itemClassName = "basis-full",
   desktopItems = 1,
   tabletItems = 1,
-  intervalMs = 2800,
+  intervalMs = 2000,
 }: AutoSliderProps) {
   const slides = useMemo(() => Children.toArray(children), [children]);
+  const rootRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -36,6 +38,7 @@ export default function AutoSlider({
   const [isFocused, setIsFocused] = useState(false);
   const [isTouching, setIsTouching] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [isInView, setIsInView] = useState(false);
 
   const positionCount = Math.max(1, slides.length - visibleItems + 1);
 
@@ -78,6 +81,18 @@ export default function AutoSlider({
   }, []);
 
   useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.2 }
+    );
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (activeIndex >= positionCount) {
       setActiveIndex(positionCount - 1);
       scrollToIndex(positionCount - 1);
@@ -91,6 +106,7 @@ export default function AutoSlider({
       isHovered ||
       isFocused ||
       isTouching ||
+      !isInView ||
       reduceMotion
     ) {
       return;
@@ -110,6 +126,7 @@ export default function AutoSlider({
     isFocused,
     isHovered,
     isTouching,
+    isInView,
     positionCount,
     reduceMotion,
     scrollToIndex,
@@ -159,8 +176,14 @@ export default function AutoSlider({
     scrollToIndex(index);
   }
 
+  function move(direction: -1 | 1) {
+    const next = (activeIndex + direction + positionCount) % positionCount;
+    chooseSlide(next);
+  }
+
   return (
     <div
+      ref={rootRef}
       className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -187,6 +210,27 @@ export default function AutoSlider({
           </div>
         ))}
       </div>
+
+      {positionCount > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label={`Previous ${ariaLabel} slide`}
+            onClick={() => move(-1)}
+            className="absolute left-1 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-brand-ink shadow-card backdrop-blur-sm transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent md:-left-5 md:h-11 md:w-11"
+          >
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={`Next ${ariaLabel} slide`}
+            onClick={() => move(1)}
+            className="absolute right-1 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-brand-ink shadow-card backdrop-blur-sm transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent md:-right-5 md:h-11 md:w-11"
+          >
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6" aria-hidden="true" />
+          </button>
+        </>
+      )}
 
       {positionCount > 1 && (
         <div className="mt-6 flex items-center justify-center gap-2">

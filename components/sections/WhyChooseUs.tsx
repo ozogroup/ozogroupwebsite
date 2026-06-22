@@ -33,7 +33,7 @@ const Icon = ({ i }: { i: number }) => {
 
 export default function WhyChooseUs() {
   return (
-    <section id="about" className="section bg-gradient-to-b from-white to-brand-surface/50">
+    <section id="about" className="bg-gradient-to-b from-white to-brand-surface/50 py-8 md:py-12">
       <div className="container-x">
         <div className="max-w-3xl text-center mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
@@ -44,7 +44,7 @@ export default function WhyChooseUs() {
           </div>
           <h2 className="mt-6">
             A Premium Experience, Built Around{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+            <span className="text-brand-accent">
               Your Skin
             </span>
           </h2>

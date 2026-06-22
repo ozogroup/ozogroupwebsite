@@ -197,7 +197,7 @@ export default function MembershipPage() {
               </div>
               <h1 className="mt-6">
                 Book Your{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+                <span className="text-brand-accent">
                   Premium Partnership
                 </span>
               </h1>

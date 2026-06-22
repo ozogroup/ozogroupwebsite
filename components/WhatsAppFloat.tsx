@@ -25,7 +25,7 @@ export default function WhatsAppFloat({ whatsappUrl }: { whatsappUrl: string }) 
 
   return (
     <div
-      className={`fixed bottom-6 right-4 z-[9999] flex flex-col items-center gap-3 transition-all duration-300 sm:bottom-8 sm:right-6 sm:gap-4 ${
+      className={`fixed bottom-6 right-4 z-[9999] flex flex-col items-center gap-3 transition-all duration-300 sm:gap-4 ${
         footerVisible ? "pointer-events-none translate-y-4 opacity-0" : "translate-y-0 opacity-100"
       }`}
       aria-hidden={footerVisible}

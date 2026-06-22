@@ -17,7 +17,7 @@ export default async function Testimonials() {
   const testimonials = await getPublicTestimonials();
 
   return (
-    <section id="testimonials" className="section bg-gradient-to-b from-white to-brand-surface/50">
+    <section id="testimonials" className="bg-gradient-to-b from-white to-brand-surface/50 py-8 md:py-12">
       <div className="container-x">
         <div className="max-w-3xl text-center mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
@@ -28,7 +28,7 @@ export default async function Testimonials() {
           </div>
           <h2 className="mt-6">
             Loved by Our{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+            <span className="text-brand-accent">
               Skincare Clients
             </span>
           </h2>

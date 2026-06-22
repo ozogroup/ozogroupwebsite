@@ -94,7 +94,7 @@ export default function ContactPage() {
               </div>
               <h1 className="mt-6">
                 Get in{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+                <span className="text-brand-accent">
                   Touch
                 </span>
               </h1>

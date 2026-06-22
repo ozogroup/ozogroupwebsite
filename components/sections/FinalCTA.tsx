@@ -13,7 +13,7 @@ export default async function FinalCTA() {
     "Personalised treatments, doctor-supervised protocols, and a premium clinic experience designed around your skin goals.";
   const primaryCta = siteContent.final_cta_primary_text || "Book Consultation";
   return (
-    <section id="contact" className="section">
+    <section id="contact" className="py-8 md:py-12">
       <div className="container-x">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-8 md:p-14 shadow-card">
           <div

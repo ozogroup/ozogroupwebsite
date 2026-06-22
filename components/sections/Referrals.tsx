@@ -23,7 +23,7 @@ export default async function Referrals() {
           </span>
           <h2 className="mt-6">
             {referralHeading}{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+            <span className="text-brand-accent">
               Referral Rewards
             </span>
           </h2>

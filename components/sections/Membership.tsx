@@ -20,20 +20,20 @@ export default async function Membership() {
   const membershipPrice = systemSettings.membershipPrice || "1199";
   const features = systemSettings.membershipFeatures?.length > 0 ? systemSettings.membershipFeatures : defaultFeatures;
   return (
-    <section id="membership" className="section py-12 md:py-16">
+    <section id="membership" className="py-8 md:py-12">
       <div className="container-x">
-        <div className="rounded-[32px] border border-brand-border/60 bg-white shadow-premium overflow-hidden grid md:grid-cols-12">
+        <div className="grid overflow-hidden rounded-3xl border border-brand-border/60 bg-white shadow-premium md:grid-cols-12">
           {/* Left — premium pitch */}
-          <div className="md:col-span-7 p-6 md:p-10 lg:p-12">
+          <div className="p-6 md:col-span-7 md:p-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-brand-accent">
-                Premium Partner Program
+                Premium Referral Partner Program
               </span>
             </div>
             <h2 className="mt-5 text-2xl md:text-3xl">
               {membershipHeading}{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-brand-light">
+              <span className="text-brand-accent">
                 Premium Referral Partner
               </span>
             </h2>
@@ -41,7 +41,7 @@ export default async function Membership() {
               {membershipDescription}
             </p>
 
-            <ul className="mt-6 grid sm:grid-cols-2 gap-3">
+            <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {features.map((f: string) => (
                 <li key={f} className="flex items-start gap-3 text-xs md:text-sm text-brand-ink/90">
                   <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-accent/15 text-brand-accent">
@@ -56,7 +56,7 @@ export default async function Membership() {
           </div>
 
           {/* Right — premium price card */}
-          <div className="md:col-span-5 bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted text-white p-6 md:p-10 lg:p-12 flex flex-col relative overflow-hidden">
+          <div className="relative flex flex-col overflow-hidden bg-gradient-to-br from-brand-ink via-brand-ink to-brand-muted p-6 text-white md:col-span-5 md:p-8">
             {/* Decorative elements */}
             <div
               aria-hidden

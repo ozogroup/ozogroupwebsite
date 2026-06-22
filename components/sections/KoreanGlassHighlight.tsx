@@ -7,9 +7,9 @@ const GLASS_IMAGE =
 
 export default function KoreanGlassHighlight() {
   return (
-    <section className="section bg-gradient-to-b from-white to-brand-surface/50">
+    <section className="bg-gradient-to-b from-white to-brand-surface/50 py-8 md:py-12">
       <div className="container-x">
-        <div className="grid gap-12 lg:gap-16 lg:grid-cols-12 items-center">
+        <div className="grid items-center gap-7 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-6 animate-fadeUp">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
               <span className="h-1.5 w-1.5 rounded-full bg-brand-accent" />
@@ -17,14 +17,14 @@ export default function KoreanGlassHighlight() {
                 Signature Treatment
               </span>
             </div>
-            <h2 className="mt-6">
+            <h2 className="mt-4 text-3xl md:text-4xl">
               Korean Glass Treatment Campaign
             </h2>
-            <p className="mt-4 text-lg text-brand-muted max-w-xl leading-relaxed">
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-brand-muted">
               Campaign/location-based premium Korean glass treatment. Our team will contact you on WhatsApp with campaign date and location details.
             </p>
 
-            <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
               {[
                 "Deep hydration",
                 "Luminous glow",
@@ -44,7 +44,7 @@ export default function KoreanGlassHighlight() {
               ))}
             </ul>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <div className="mt-6 flex flex-wrap gap-3">
               <BookNowButton treatmentSlug="korean-glass-treatment" className="justify-center shadow-soft hover:shadow-card transition-shadow">
                 Enquire Now
               </BookNowButton>
@@ -55,7 +55,7 @@ export default function KoreanGlassHighlight() {
           </div>
 
           <div className="lg:col-span-6 animate-fadeUp" style={{ animationDelay: "0.15s" }}>
-            <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none rounded-[32px] border border-brand-border/60 shadow-premium overflow-hidden bg-gradient-to-br from-brand-surface to-white">
+            <div className="relative mx-auto aspect-[4/3] max-h-[300px] w-full max-w-xl overflow-hidden rounded-3xl border border-brand-border/60 bg-gradient-to-br from-brand-surface to-white shadow-premium md:max-h-[360px] lg:max-h-[400px]">
               <Image
                 src={GLASS_IMAGE}
                 alt="Korean Glass Treatment Campaign - luminous dewy radiant skin"

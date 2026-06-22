@@ -4,7 +4,7 @@ export default async function FAQ() {
   const faqs = await getPublicFaqs();
 
   return (
-    <section id="faq" className="section">
+    <section id="faq" className="py-8 md:py-12">
       <div className="container-x grid gap-12 lg:gap-16 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-brand-accent/10 to-brand-light/10 border border-brand-accent/20">
