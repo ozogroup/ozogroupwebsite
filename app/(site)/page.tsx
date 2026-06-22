@@ -29,10 +29,10 @@ export default async function HomePage() {
       <Hero />
       <TrustBadges />
       <Treatments />
-      <TreatmentBenefits />
       <KoreanGlassHighlight />
       <ConsultationBanner />
       <WhyChooseUs />
+      <TreatmentBenefits />
       <HowItWorks />
       <Membership />
       <EarningsHighlight />
