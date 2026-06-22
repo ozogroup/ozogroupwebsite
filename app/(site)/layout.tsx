@@ -22,7 +22,7 @@ export default async function SiteLayout({
       <Header whatsappUrl={contactSettings.whatsapp} />
       <main className="min-h-[60vh]">{children}</main>
       <Footer />
-      <WhatsAppFloat />
+      <WhatsAppFloat whatsappUrl={contactSettings.whatsapp} />
     </>
   );
 }
