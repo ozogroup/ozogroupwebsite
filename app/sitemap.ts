@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in").replace(/\/$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.kiaskincare.com").replace(/\/$/, "");
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = ["", "/about", "/contact", "/membership", "/referral", "/treatments"];

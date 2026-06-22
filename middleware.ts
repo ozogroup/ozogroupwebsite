@@ -23,9 +23,9 @@ import { cookies } from "next/headers";
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const hostname = req.nextUrl.hostname.toLowerCase();
-  const officialUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://kiaskincare.in").replace(/\/$/, "");
+  const officialUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.kiaskincare.com").replace(/\/$/, "");
   const officialHost = new URL(officialUrl).hostname.toLowerCase();
-  const legacyHosts = (process.env.LEGACY_DOMAINS || "ozo-group.vercel.app")
+  const legacyHosts = (process.env.LEGACY_DOMAINS || "ozo-group.vercel.app,ozogroupwebsite.vercel.app")
     .split(",")
     .map((host) => host.trim().toLowerCase())
     .filter(Boolean);
@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
     hostname !== officialHost &&
     (hostname.endsWith(".vercel.app") || legacyHosts.includes(hostname))
   ) {
-    return NextResponse.redirect(new URL(`${pathname}${req.nextUrl.search}`, officialUrl), 308);
+    return NextResponse.redirect(new URL(`${pathname}${req.nextUrl.search}`, officialUrl), 301);
   }
 
   // Set x-pathname as request header so layouts can read the current path
