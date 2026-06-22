@@ -143,7 +143,17 @@ export async function deleteTreatment(id: string) {
 
   const supabase = await getSupabaseServerClient();
 
-  const { error } = await supabase.from("treatments" as any).delete().eq("id", id);
+  // SAFETY: bookings.treatment_id -> treatments(id) ON DELETE CASCADE.
+  // Hard delete would destroy related bookings. Soft-delete (archive) instead.
+  const { error } = await supabase
+    .from("treatments" as any)
+    .update({
+      active: false,
+      is_active: false,
+      deleted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
 
   if (error) {
     console.error("Error deleting treatment:", error);

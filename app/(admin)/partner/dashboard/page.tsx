@@ -156,7 +156,7 @@ export default async function PartnerDashboardPage({
 
   const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingEarnings = commissions
-    .filter((c: any) => c.status === "pending" || c.status === "approved")
+    .filter((c: any) => c.status === "pending")
     .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const paidEarnings = commissions
     .filter((c: any) => c.status === "paid")

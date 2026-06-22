@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
+import { syncPayoutUpdated } from "@/lib/integrations/google-sheet-sync";
 
 // =====================================================
 // PAYOUTS ACTIONS
@@ -12,6 +13,34 @@ const PAYOUT_DEDUCTION_RATE = 0.15;
 
 function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+// When a payout is paid, move the partner's oldest approved commissions into the
+// "paid" state (FIFO) up to the gross payout amount. This keeps the commission
+// lifecycle (pending -> approved -> paid) consistent with wallet movements.
+// Status-only update; wallet_balance/paid_earnings are handled by the payout flow.
+async function markApprovedCommissionsPaid(supabase: any, partnerId: string, grossAmount: number) {
+  if (!partnerId || !(grossAmount > 0)) return;
+  const { data: rows, error } = await supabase
+    .from("commissions" as any)
+    .select("id, amount")
+    .eq("partner_id", partnerId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: true });
+  if (error || !Array.isArray(rows) || rows.length === 0) return;
+
+  let remaining = grossAmount;
+  const ids: string[] = [];
+  for (const row of rows) {
+    if (remaining <= 0.009) break;
+    ids.push(row.id);
+    remaining = roundMoney(remaining - Number(row.amount || 0));
+  }
+  if (ids.length === 0) return;
+  await supabase
+    .from("commissions" as any)
+    .update({ status: "paid", updated_at: new Date().toISOString() })
+    .in("id", ids);
 }
 
 export async function getPayouts() {
@@ -191,9 +220,30 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   });
 
   if (!rpcError) {
+    if (status === "paid") {
+      await markApprovedCommissionsPaid(
+        supabase,
+        (existingPayout as any).partner_id,
+        Number((existingPayout as any).gross_amount || (existingPayout as any).amount || 0)
+      );
+    }
+
+    // Sync to Google Sheet (non-blocking)
+    syncPayoutUpdated({
+      id: (existingPayout as any).id,
+      partner_id: (existingPayout as any).partner_id,
+      amount: Number((existingPayout as any).amount || 0),
+      status,
+      payment_method: (existingPayout as any).payment_method,
+      payment_reference: transactionReference || (existingPayout as any).transaction_reference,
+      updated_at: now,
+    }).catch((err) => console.error("Google Sheet sync error (payout.updated):", err));
+
     revalidatePath("/admin/payouts");
     revalidatePath("/partner/payouts");
     revalidatePath("/partner/income");
+    revalidatePath("/admin/commissions");
+    revalidatePath("/partner/dashboard");
     return rpcData;
   }
 
@@ -261,10 +311,27 @@ export async function updatePayoutStatus(id: string, status: string, transaction
         reference_id: payout.id,
         notes: transactionReference ? `Paid: ${transactionReference}` : "Payout marked paid by admin",
       });
+
+      await markApprovedCommissionsPaid(supabase, payout.partner_id, grossDebit);
     }
   }
-  
+
+  // Sync to Google Sheet (non-blocking)
+  syncPayoutUpdated({
+    id: (data as any).id,
+    partner_id: (data as any).partner_id,
+    amount: Number((data as any).amount || 0),
+    status,
+    payment_method: (data as any).payment_method,
+    payment_reference: transactionReference || (data as any).transaction_reference,
+    updated_at: now,
+  }).catch((err) => console.error("Google Sheet sync error (payout.updated):", err));
+
   revalidatePath("/admin/payouts");
+  revalidatePath("/partner/payouts");
+  revalidatePath("/partner/income");
+  revalidatePath("/admin/commissions");
+  revalidatePath("/partner/dashboard");
   return data;
 }
 

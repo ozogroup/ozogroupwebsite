@@ -67,7 +67,7 @@ export default async function PartnerIncomePage() {
   const deduction = Math.round(grossIncome * DEDUCTION_RATE * 100) / 100;
   const totalIncome = grossIncome - deduction;
   const pendingIncome = eligibleCommissions
-    .filter((commission: any) => ["pending", "approved"].includes(commission.status))
+    .filter((commission: any) => commission.status === "pending")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const paidIncome = eligibleCommissions
     .filter((commission: any) => commission.status === "paid")

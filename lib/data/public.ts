@@ -108,7 +108,7 @@ export async function getPublicTreatments() {
       .select("*")
       .eq("active", true)
       .is("deleted_at", null)
-      .in("slug", treatmentKitSlugs as unknown as string[])
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
@@ -117,7 +117,7 @@ export async function getPublicTreatments() {
     }
 
     const sorted = [...data].sort(
-      (a: any, b: any) => treatmentKitSlugs.indexOf(a.slug) - treatmentKitSlugs.indexOf(b.slug)
+      (a: any, b: any) => ((treatmentKitSlugs.indexOf(a.slug) + 1) || 999) - ((treatmentKitSlugs.indexOf(b.slug) + 1) || 999)
     );
 
     // Transform Supabase data to match Treatment type.

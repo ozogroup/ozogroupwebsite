@@ -6,6 +6,7 @@ import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabas
 import { getReferralUrl } from "@/lib/referral-url";
 import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
 import { generateKiaPartnerCode, isPartnerCodeConflict, normalizeKiaPartnerCode } from "@/lib/partner-code";
+import { syncMembershipCreated, syncPartnerApproved } from "@/lib/integrations/google-sheet-sync";
 
 // =====================================================
 // MEMBERSHIP REQUESTS ACTIONS
@@ -298,6 +299,17 @@ export async function createMembership(data: MembershipRegistrationInput) {
       .eq("referral_code", referralCode);
   }
 
+  // Sync to Google Sheet (non-blocking)
+  syncMembershipCreated({
+    id: (record as any).id,
+    full_name: data.full_name.trim(),
+    email: normalizedEmail,
+    phone: data.mobile.trim(),
+    city: data.city.trim(),
+    status: (record as any).membership_status,
+    created_at: (record as any).created_at,
+  }).catch((err) => console.error("Google Sheet sync error (membership.created):", err));
+
   revalidatePath("/admin/memberships");
   return { data: record };
 }
@@ -494,6 +506,17 @@ export async function approveAndCreatePartner(membershipId: string) {
   if ((membership as any).sponsor_id) {
     await createReferralTreeForPartner(serviceClient, userId, (membership as any).sponsor_id);
   }
+
+  // Sync to Google Sheet (non-blocking)
+  syncPartnerApproved({
+    id: userId,
+    partner_code: partnerCode,
+    full_name: fullName,
+    email,
+    phone: mobile,
+    city,
+    approved_at: startedAt.toISOString(),
+  }).catch((err) => console.error("Google Sheet sync error (partner.approved):", err));
 
   revalidatePath("/admin/memberships");
   revalidatePath("/admin/partners");

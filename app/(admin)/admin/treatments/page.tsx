@@ -54,6 +54,14 @@ export default function AdminTreatmentsPage() {
     cta_text: "Book Now",
     active: true,
     featured: false,
+    who_for: "",
+    process: "",
+    faqs: "",
+    before_image_url: "",
+    after_image_url: "",
+    seo_title: "",
+    seo_description: "",
+    sort_order: "",
   });
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -71,7 +79,8 @@ export default function AdminTreatmentsPage() {
     const { data, error } = await supabase
       .from("treatments" as any)
       .select("*")
-      .in("slug", treatmentKitSlugs as unknown as string[])
+      .is("deleted_at", null)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) {
       console.error("Error loading treatments:", error);
@@ -79,7 +88,7 @@ export default function AdminTreatmentsPage() {
     } else if (data && Array.isArray(data)) {
       setTreatments(
         (data as unknown as Treatment[]).sort(
-          (a, b) => treatmentKitSlugs.indexOf(a.slug as any) - treatmentKitSlugs.indexOf(b.slug as any)
+          (a, b) => ((treatmentKitSlugs.indexOf(a.slug as any) + 1) || 999) - ((treatmentKitSlugs.indexOf(b.slug as any) + 1) || 999)
         )
       );
     } else {
@@ -149,6 +158,24 @@ export default function AdminTreatmentsPage() {
         is_active: formData.active,
         deleted_at: formData.active ? null : new Date().toISOString(),
         featured: formData.featured,
+        who_for: formData.who_for ? formData.who_for.split(",").map((s) => s.trim()).filter(Boolean) : [],
+        process: formData.process
+          ? formData.process.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+              const [step, ...rest] = l.split("|");
+              return { step: step.trim(), detail: rest.join("|").trim() };
+            })
+          : [],
+        faqs: formData.faqs
+          ? formData.faqs.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+              const [q, ...rest] = l.split("|");
+              return { q: q.trim(), a: rest.join("|").trim() };
+            })
+          : [],
+        before_image_url: formData.before_image_url || null,
+        after_image_url: formData.after_image_url || null,
+        seo_title: formData.seo_title || null,
+        seo_description: formData.seo_description || null,
+        sort_order: formData.sort_order ? parseInt(formData.sort_order, 10) || 0 : 0,
       };
 
       if (editingTreatment) {
@@ -214,6 +241,18 @@ export default function AdminTreatmentsPage() {
       cta_text: treatment.cta_text || "Book Now",
       active: treatment.active ?? true,
       featured: treatment.featured ?? false,
+      who_for: Array.isArray(treatment.who_for) ? treatment.who_for.join(", ") : (treatment.who_for || ""),
+      process: Array.isArray(treatment.process)
+        ? treatment.process.map((p: any) => `${p.step || ""} | ${p.detail || ""}`).join("\n")
+        : "",
+      faqs: Array.isArray(treatment.faqs)
+        ? treatment.faqs.map((f: any) => `${f.q || ""} | ${f.a || ""}`).join("\n")
+        : "",
+      before_image_url: treatment.before_image_url || "",
+      after_image_url: treatment.after_image_url || "",
+      seo_title: treatment.seo_title || "",
+      seo_description: treatment.seo_description || "",
+      sort_order: treatment.sort_order?.toString() || "",
     });
     setShowModal(true);
   }
@@ -242,6 +281,14 @@ export default function AdminTreatmentsPage() {
       cta_text: "Book Now",
       active: true,
       featured: false,
+    who_for: "",
+    process: "",
+    faqs: "",
+    before_image_url: "",
+    after_image_url: "",
+    seo_title: "",
+    seo_description: "",
+    sort_order: "",
     });
   }
 
@@ -661,6 +708,86 @@ export default function AdminTreatmentsPage() {
                   value={formData.cta_text}
                   onChange={(e) => setFormData({ ...formData, cta_text: e.target.value })}
                   className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Who is it for? (comma-separated)</label>
+                <input
+                  type="text"
+                  value={formData.who_for}
+                  onChange={(e) => setFormData({ ...formData, who_for: e.target.value })}
+                  placeholder="Dull skin, Uneven tone, Pigmentation"
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">Process steps (one per line, format: Step | Detail)</label>
+                <textarea
+                  value={formData.process}
+                  onChange={(e) => setFormData({ ...formData, process: e.target.value })}
+                  rows={3}
+                  placeholder={"Consultation | Skin analysis and plan\nTreatment | Application of the kit"}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">FAQs (one per line, format: Question | Answer)</label>
+                <textarea
+                  value={formData.faqs}
+                  onChange={(e) => setFormData({ ...formData, faqs: e.target.value })}
+                  rows={3}
+                  placeholder={"Is it safe? | Yes, dermatologically tested.\nHow long? | Results in 2-4 weeks."}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <ImageUpload
+                  value={formData.before_image_url}
+                  onChange={(url) => setFormData({ ...formData, before_image_url: url })}
+                  folder="treatments/before-after"
+                  label="Before Image"
+                />
+                <ImageUpload
+                  value={formData.after_image_url}
+                  onChange={(url) => setFormData({ ...formData, after_image_url: url })}
+                  folder="treatments/before-after"
+                  label="After Image"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-1">Sort Order</label>
+                  <input
+                    type="number"
+                    value={formData.sort_order}
+                    onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-1">SEO Title</label>
+                  <input
+                    type="text"
+                    value={formData.seo_title}
+                    onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-brand-ink mb-1">SEO Description</label>
+                <textarea
+                  value={formData.seo_description}
+                  onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
                 />
               </div>
 

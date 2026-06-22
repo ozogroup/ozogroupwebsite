@@ -1,5 +1,6 @@
 import "server-only";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
+import { syncCommissionCreated } from "@/lib/integrations/google-sheet-sync";
 
 const COMMISSION_PERCENTAGES: Record<number, number> = {
   1: 6,
@@ -7,6 +8,27 @@ const COMMISSION_PERCENTAGES: Record<number, number> = {
   3: 1.7,
   4: 1.2,
 };
+
+async function getCommissionPercentages(supabase: any): Promise<Record<number, number>> {
+  try {
+    const { data } = await supabase
+      .from("commission_settings")
+      .select("level_1_percentage, level_2_percentage, level_3_percentage, level_4_percentage")
+      .eq("active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return COMMISSION_PERCENTAGES;
+    return {
+      1: Number(data.level_1_percentage) || COMMISSION_PERCENTAGES[1],
+      2: Number(data.level_2_percentage) || COMMISSION_PERCENTAGES[2],
+      3: Number(data.level_3_percentage) || COMMISSION_PERCENTAGES[3],
+      4: Number(data.level_4_percentage) || COMMISSION_PERCENTAGES[4],
+    };
+  } catch {
+    return COMMISSION_PERCENTAGES;
+  }
+}
 
 export async function resolvePartnerByCode(supabase: any, referralCode?: string | null) {
   const code = normalizeKiaPartnerCode(referralCode);
@@ -142,8 +164,10 @@ export async function generateBookingCommissions(
     }
   }
 
+  const percentages = await getCommissionPercentages(supabase);
+
   for (const item of commissionPartners) {
-    const percentage = COMMISSION_PERCENTAGES[item.level] || 0;
+    const percentage = percentages[item.level] || 0;
     const amount = Math.round(sourceAmount * percentage) / 100;
 
     const { data: currentPartner, error: partnerError } = await supabase
@@ -178,7 +202,12 @@ export async function generateBookingCommissions(
 
     if (existing) continue;
 
-    const { data: insertedCommission, error: insertError } = await supabase
+    // Generate the commission in a "pending" state and lock the amount.
+    // Wallet is credited only when an admin approves the commission
+    // (see approveCommission in lib/actions/commissions.ts). This enforces the
+    // pending -> approved -> paid workflow and keeps wallet_balance equal to the
+    // sum of approved-but-unpaid commissions.
+    const { data: commissionData, error: insertError } = await supabase
       .from("commissions")
       .insert({
         partner_id: item.partner_id,
@@ -188,9 +217,9 @@ export async function generateBookingCommissions(
         level: item.level,
         percentage,
         amount,
-        status: "approved",
+        status: "pending",
       })
-      .select("id")
+      .select("id, created_at")
       .single();
 
     if (insertError) {
@@ -198,33 +227,18 @@ export async function generateBookingCommissions(
       continue;
     }
 
-    const balanceBefore = Number(currentPartner.wallet_balance ?? 0) || 0;
-    const balanceAfter = balanceBefore + amount;
-    const { error: walletError } = await supabase
-      .from("partners")
-      .update({
-        wallet_balance: balanceAfter,
-        total_earnings: (Number(currentPartner.total_earnings ?? 0) || 0) + amount,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", item.partner_id);
-
-    if (walletError) {
-      console.error("Error crediting booking commission wallet:", walletError);
-      await supabase.from("commissions").delete().eq("id", insertedCommission.id);
-      continue;
+    // Sync to Google Sheet (non-blocking)
+    if (commissionData) {
+      syncCommissionCreated({
+        id: commissionData.id,
+        booking_id: booking.id,
+        partner_id: item.partner_id,
+        level: item.level,
+        amount,
+        status: "pending",
+        created_at: commissionData.created_at,
+      }).catch((err) => console.error("Google Sheet sync error (commission.created):", err));
     }
-
-    await supabase.from("wallet_transactions").insert({
-      partner_id: item.partner_id,
-      transaction_type: "commission_credit",
-      amount,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-      reference_type: "commission",
-      reference_id: insertedCommission.id,
-      notes: `Booking commission level ${item.level}`,
-    });
   }
 }
 

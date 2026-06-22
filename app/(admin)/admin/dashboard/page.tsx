@@ -133,7 +133,7 @@ export default async function AdminDashboardPage({
       (supabase as any).from("partner_sales").select("partner_id,treatment_price,booking_status,created_at"),
     ]);
   const filteredBookings = (periodBookings || []).filter((row: any) => range.includes(row.created_at));
-  const filteredCommissions = (periodCommissions || []).filter((row: any) => range.includes(row.created_at) && row.status !== "rejected");
+  const filteredCommissions = (periodCommissions || []).filter((row: any) => range.includes(row.created_at) && ["approved", "paid"].includes(String(row.status)));
   const filteredPayouts = (periodPayoutRows || []).filter((row: any) => range.includes(row.created_at));
   const filteredSales = (periodSales || []).filter((row: any) => range.includes(row.created_at) && ["confirmed", "completed"].includes(row.booking_status));
   const paidBookingSales = filteredBookings

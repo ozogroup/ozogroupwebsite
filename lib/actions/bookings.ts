@@ -10,6 +10,7 @@ import {
 } from "@/lib/treatments/catalog";
 import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
+import { syncBookingCreated, syncBookingUpdated } from "@/lib/integrations/google-sheet-sync";
 
 // =====================================================
 // BOOKINGS ACTIONS
@@ -25,6 +26,7 @@ export async function getBookings() {
       *,
       treatment:treatments(title)
     `)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
   
   if (error) {
@@ -48,6 +50,24 @@ type CreateBookingPayload = {
 };
 
 const COMMISSION_RATE = 6;
+
+async function getLevel1CommissionRate(
+  supabase: ReturnType<typeof getSupabaseServiceClient>
+): Promise<number> {
+  try {
+    const { data } = await supabase
+      .from("commission_settings" as any)
+      .select("level_1_percentage")
+      .eq("active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const rate = Number((data as any)?.level_1_percentage);
+    return Number.isFinite(rate) && rate > 0 ? rate : COMMISSION_RATE;
+  } catch {
+    return COMMISSION_RATE;
+  }
+}
 
 function clean(value?: string) {
   return value?.trim() || "";
@@ -224,7 +244,8 @@ export async function createBooking(payload: CreateBookingPayload) {
   const partnerIsEligible = isMembershipActive(partner);
   const treatmentPrice = Number(treatment.price || 0);
   const treatmentType = treatment.type;
-  const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * COMMISSION_RATE) / 100) : 0;
+  const level1Rate = await getLevel1CommissionRate(serviceClient);
+  const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * level1Rate) / 100) : 0;
 
   const bookingPayload: Record<string, unknown> = {
     customer_name: customerName,
@@ -298,6 +319,21 @@ export async function createBooking(payload: CreateBookingPayload) {
     if (saleError) console.error("Error creating partner sale:", saleError);
   }
 
+  // Sync to Google Sheet (non-blocking)
+  syncBookingCreated({
+    id: (booking as any).id,
+    customer_name: customerName,
+    customer_email: clean(payload.customer_email) || "",
+    customer_phone: customerPhone,
+    treatment_id: treatment.id,
+    treatment_name: treatment.title,
+    booking_date: new Date().toISOString(),
+    booking_status: "pending",
+    payment_status: "pending_payment",
+    payment_amount: treatmentPrice,
+    created_at: (booking as any).created_at,
+  }).catch((err) => console.error("Google Sheet sync error (booking.created):", err));
+
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/dashboard");
   revalidatePath("/partner/dashboard");
@@ -359,7 +395,18 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     .from("partner_sales" as any)
     .update({ booking_status: status, updated_at: new Date().toISOString() })
     .eq("booking_id", id);
-  
+
+  // Sync to Google Sheet (non-blocking)
+  syncBookingUpdated({
+    id: (data as any).id,
+    customer_name: (data as any).customer_name,
+    customer_email: (data as any).customer_email || "",
+    booking_status: status,
+    payment_status: (data as any).payment_status,
+    payment_amount: (data as any).payment_amount,
+    updated_at: (data as any).updated_at,
+  }).catch((err) => console.error("Google Sheet sync error (booking.updated):", err));
+
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/commissions");
   revalidatePath("/admin/payouts");
@@ -416,6 +463,17 @@ export async function updateBookingPaymentStatus(
     });
   }
 
+  // Sync to Google Sheet (non-blocking)
+  syncBookingUpdated({
+    id: booking.id,
+    customer_name: booking.customer_name,
+    customer_email: booking.customer_email || "",
+    booking_status: booking.booking_status,
+    payment_status: paymentStatus,
+    payment_amount: booking.payment_amount,
+    updated_at: booking.updated_at,
+  }).catch((err) => console.error("Google Sheet sync error (booking.updated):", err));
+
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/commissions");
   revalidatePath("/admin/payouts");
@@ -458,7 +516,7 @@ export async function deleteBooking(id: string) {
   
   const { error } = await supabase
     .from("bookings" as any)
-    .delete()
+    .update({ is_active: false, deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq("id", id);
   
   if (error) {
