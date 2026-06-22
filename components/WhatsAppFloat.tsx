@@ -5,8 +5,8 @@ const INSTAGRAM_FALLBACK = "https://www.instagram.com/kiaskincareindia?igsh=MTl2
 
 export default async function WhatsAppFloat() {
   const contactSettings = await getPublicContactSettings();
-  const facebookUrl = contactSettings.facebook || FACEBOOK_FALLBACK;
-  const instagramUrl = contactSettings.instagram || INSTAGRAM_FALLBACK;
+  const facebookUrl = FACEBOOK_FALLBACK;
+  const instagramUrl = INSTAGRAM_FALLBACK;
   const whatsappUrl = contactSettings.whatsapp;
 
   return (
