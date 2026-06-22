@@ -215,7 +215,7 @@ SELECT
   COALESCE(SUM(amount) FILTER (WHERE status IN ('approved','paid')), 0) AS approved_amount,
   COALESCE(SUM(amount) FILTER (WHERE status = 'paid'), 0) AS paid_amount
 FROM commissions
-WHERE COALESCE(is_active, TRUE) = TRUE AND COALESCE(reversed, FALSE) = FALSE
+WHERE deleted_at IS NULL AND COALESCE(reversed, FALSE) = FALSE
 GROUP BY level;
 
 -- Wallet + payout rollup

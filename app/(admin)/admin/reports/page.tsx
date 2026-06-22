@@ -39,7 +39,9 @@ export default async function AdminReportsPage() {
 
   const bookingRows = bookings || [];
   const membershipRows = memberships || [];
-  const commissionRows = (commissions || []).filter((row: any) => row.status !== "rejected");
+  const commissionRows = (commissions || []).filter((row: any) =>
+    ["approved", "paid"].includes(String(row.status))
+  );
   const payoutRows = payouts || [];
   const partnerRows = partners || [];
   const salesRows = sales || [];

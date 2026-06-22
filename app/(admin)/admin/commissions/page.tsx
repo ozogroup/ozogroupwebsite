@@ -43,6 +43,12 @@ export default function AdminCommissionsPage() {
     }
   }
 
+  function allowedStatuses(status: string) {
+    if (status === "pending") return ["pending", "approved", "rejected"];
+    if (status === "approved") return ["approved", "rejected"];
+    return [status];
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -103,10 +109,11 @@ export default function AdminCommissionsPage() {
                       onChange={(e) => handleUpdateStatus(commission.id, e.target.value)}
                       className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="paid">Paid</option>
-                      <option value="rejected">Rejected</option>
+                      {allowedStatuses(commission.status).map((status) => (
+                        <option key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </option>
+                      ))}
                     </select>
                   </td>
                 </tr>

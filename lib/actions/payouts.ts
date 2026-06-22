@@ -19,28 +19,44 @@ function roundMoney(value: number) {
 // "paid" state (FIFO) up to the gross payout amount. This keeps the commission
 // lifecycle (pending -> approved -> paid) consistent with wallet movements.
 // Status-only update; wallet_balance/paid_earnings are handled by the payout flow.
-async function markApprovedCommissionsPaid(supabase: any, partnerId: string, grossAmount: number) {
-  if (!partnerId || !(grossAmount > 0)) return;
+async function markApprovedCommissionsPaid(
+  supabase: any,
+  partnerId: string,
+  grossAmount: number,
+  payoutId: string
+) {
+  if (!partnerId || !payoutId || !(grossAmount > 0)) return;
   const { data: rows, error } = await supabase
     .from("commissions" as any)
     .select("id, amount")
     .eq("partner_id", partnerId)
     .eq("status", "approved")
+    .eq("reversed", false)
+    .is("deleted_at", null)
+    .is("payout_id", null)
     .order("created_at", { ascending: true });
-  if (error || !Array.isArray(rows) || rows.length === 0) return;
+  if (error) throw error;
+  if (!Array.isArray(rows) || rows.length === 0) return;
 
   let remaining = grossAmount;
   const ids: string[] = [];
   for (const row of rows) {
     if (remaining <= 0.009) break;
+    const amount = Number(row.amount || 0);
+    if (amount <= 0 || amount > remaining + 0.009) continue;
     ids.push(row.id);
-    remaining = roundMoney(remaining - Number(row.amount || 0));
+    remaining = roundMoney(remaining - amount);
   }
   if (ids.length === 0) return;
-  await supabase
+  const { error: updateError } = await supabase
     .from("commissions" as any)
-    .update({ status: "paid", updated_at: new Date().toISOString() })
+    .update({ status: "paid", payout_id: payoutId, updated_at: new Date().toISOString() })
+    .eq("status", "approved")
+    .eq("reversed", false)
+    .is("deleted_at", null)
+    .is("payout_id", null)
     .in("id", ids);
+  if (updateError) throw updateError;
 }
 
 export async function getPayouts() {
@@ -64,7 +80,8 @@ export async function getPayouts() {
   const [{ data: commissions }, { data: allPayouts }, { data: partners }] = await Promise.all([
     supabase
       .from("commissions" as any)
-      .select("partner_id, amount, source_type, status, reversed, is_active"),
+      .select("partner_id, amount, source_type, status, reversed, deleted_at")
+      .is("deleted_at", null),
     supabase
       .from("payouts" as any)
       .select("partner_id, amount, gross_amount, status"),
@@ -84,17 +101,19 @@ export async function getPayouts() {
   const summaryByPartner = new Map<string, any>();
   for (const partnerId of partnerIds) {
     const partnerCommissions = (commissions || []).filter(
-      (c: any) => c.partner_id === partnerId && c.is_active !== false && !c.reversed && c.status !== "rejected"
+      (c: any) =>
+        c.partner_id === partnerId &&
+        !c.reversed &&
+        c.deleted_at == null &&
+        ["approved", "paid"].includes(String(c.status))
     );
     const membershipIncome = partnerCommissions
       .filter((c: any) => c.source_type === "membership")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
     const productIncome = partnerCommissions
-      .filter((c: any) => ["booking", "product", "kit", "treatment"].includes(String(c.source_type || "").toLowerCase()))
+      .filter((c: any) => c.source_type === "booking")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
-    const bonusIncome = partnerCommissions
-      .filter((c: any) => ["bonus", "milestone"].includes(String(c.source_type || "").toLowerCase()))
-      .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const bonusIncome = 0;
     const grossIncome = membershipIncome + productIncome + bonusIncome;
     const deductionAmount = roundMoney(grossIncome * PAYOUT_DEDUCTION_RATE);
     const netPayable = roundMoney(grossIncome - deductionAmount);
@@ -194,6 +213,12 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     .single();
   if (existingError || !existingPayout) throw existingError || new Error("Payout not found.");
   if ((existingPayout as any).status === "paid" && status === "paid") return existingPayout;
+  if ((existingPayout as any).status === "paid") {
+    throw new Error("A paid payout is final. A dedicated payout reversal is required before changing it.");
+  }
+  if ((existingPayout as any).status === "rejected" && status !== "rejected") {
+    throw new Error("A rejected payout is final and cannot be reopened.");
+  }
   
   const updateData: any = { 
     status, 
@@ -224,12 +249,12 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       await markApprovedCommissionsPaid(
         supabase,
         (existingPayout as any).partner_id,
-        Number((existingPayout as any).gross_amount || (existingPayout as any).amount || 0)
+        Number((existingPayout as any).gross_amount || (existingPayout as any).amount || 0),
+        (existingPayout as any).id
       );
     }
 
-    // Sync to Google Sheet (non-blocking)
-    syncPayoutUpdated({
+    await syncPayoutUpdated({
       id: (existingPayout as any).id,
       partner_id: (existingPayout as any).partner_id,
       amount: Number((existingPayout as any).amount || 0),
@@ -237,7 +262,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       payment_method: (existingPayout as any).payment_method,
       payment_reference: transactionReference || (existingPayout as any).transaction_reference,
       updated_at: now,
-    }).catch((err) => console.error("Google Sheet sync error (payout.updated):", err));
+    });
 
     revalidatePath("/admin/payouts");
     revalidatePath("/partner/payouts");
@@ -312,12 +337,11 @@ export async function updatePayoutStatus(id: string, status: string, transaction
         notes: transactionReference ? `Paid: ${transactionReference}` : "Payout marked paid by admin",
       });
 
-      await markApprovedCommissionsPaid(supabase, payout.partner_id, grossDebit);
+      await markApprovedCommissionsPaid(supabase, payout.partner_id, grossDebit, payout.id);
     }
   }
 
-  // Sync to Google Sheet (non-blocking)
-  syncPayoutUpdated({
+  await syncPayoutUpdated({
     id: (data as any).id,
     partner_id: (data as any).partner_id,
     amount: Number((data as any).amount || 0),
@@ -325,7 +349,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     payment_method: (data as any).payment_method,
     payment_reference: transactionReference || (data as any).transaction_reference,
     updated_at: now,
-  }).catch((err) => console.error("Google Sheet sync error (payout.updated):", err));
+  });
 
   revalidatePath("/admin/payouts");
   revalidatePath("/partner/payouts");

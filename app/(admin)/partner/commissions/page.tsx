@@ -15,9 +15,12 @@ export default async function PartnerCommissionsPage() {
     .eq("partner_id", user.id)
     .order("created_at", { ascending: false });
 
-  const totalEarned = (commissions || []).reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
-  const totalPending = (commissions || []).filter((c: any) => c.status === "pending").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
-  const totalPaid = (commissions || []).filter((c: any) => c.status === "paid").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
+  const activeCommissions = (commissions || []).filter(
+    (c: any) => !c.reversed && c.deleted_at == null && c.status !== "rejected"
+  );
+  const totalEarned = activeCommissions.filter((c: any) => ["approved", "paid"].includes(c.status)).reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
+  const totalPending = activeCommissions.filter((c: any) => c.status === "pending").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
+  const totalPaid = activeCommissions.filter((c: any) => c.status === "paid").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
 
   return (
     <div className="space-y-6">

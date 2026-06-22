@@ -23,9 +23,26 @@
    - Adds search/filter indexes.
 
 2. **`supabase/MIGRATION_REFERRAL_WORKFLOW_HARDENING_2026_06_22.sql`** — run this second. It:
-   - Adds unique index `uq_commissions_booking_partner_level` to prevent duplicate commission rows for the same booking + partner + level.
+   - Uses the verified identity `source_type + source_id + partner_id + level`; `commissions` has **no `booking_id` column**.
+   - Adds unique partial index `uq_commissions_source_partner_level` for live rows (`deleted_at IS NULL`).
    - Adds performance indexes for commission status filtering and partner commission queries.
    - Adds check constraint `ck_commissions_status` to enforce valid status values (pending, approved, paid, rejected).
+
+### Verified commissions schema (2026-06-22)
+- `bookings.id` is UUID.
+- Verified `commissions` columns: `id`, `partner_id`, `source_type`, `source_id`, `source_amount`, `level`, `percentage`, `amount`, `status`, `payout_id`, `reversed`, `deleted_at`, `created_at`, `updated_at`.
+- `commissions.source_id` is UUID and stores `bookings.id` when `source_type = 'booking'`.
+- The `source_type` enum contains `membership` and `booking`; current booking commission generation writes `booking`.
+- Duplicate prevention is an application pre-check plus database uniqueness on `(source_type, source_id, partner_id, level)` for non-deleted rows.
+- Do not create or query `commissions.booking_id`.
+
+### Final SQL run order
+1. Take a Supabase backup.
+2. Run `supabase/MIGRATION_PRODUCTION_HARDENING_2026_06_22.sql`.
+3. Run the duplicate verification query embedded in `supabase/MIGRATION_REFERRAL_WORKFLOW_HARDENING_2026_06_22.sql`; it must return zero rows.
+4. Run `supabase/MIGRATION_REFERRAL_WORKFLOW_HARDENING_2026_06_22.sql`.
+5. Run all seven manual verification queries embedded at the end of that migration.
+6. When the invalid-status query returns zero rows, optionally validate `ck_commissions_status` using the documented `ALTER TABLE ... VALIDATE CONSTRAINT` statement.
 
 > The older scattered SQL files in `supabase/` remain for history; they are superseded by the above and are safe to leave un-run (all guarded by `IF NOT EXISTS`).
 
@@ -44,8 +61,8 @@
   - `lib/actions/bookings.ts` → `getLevel1CommissionRate()` drives the booking-time L1 estimate.
 - ✅ **D — Commission status workflow hardened** — Enforces strict lifecycle (pending → approved → paid):
   - `lib/actions/referral-tracking.ts` — Commissions generated as 'pending' without immediate wallet credit.
-  - `lib/actions/commissions.ts` — Wallet-aware approve/reject/pending functions with safe `updateCommissionStatus` router. Wallet credited only on approval, reversed on rejection.
-  - `lib/actions/payouts.ts` — On payout paid, marks approved commissions as paid FIFO up to payout amount.
+  - `lib/actions/commissions.ts` — Wallet-aware strict status router. Wallet is credited only on pending → approved and safely reversed on approved → rejected; paid and rejected rows are terminal.
+  - `lib/actions/payouts.ts` — On payout paid, marks only eligible approved commissions as paid FIFO, records `payout_id`, and excludes already paid/deleted/reversed rows.
   - `app/(admin)/partner/income/page.tsx` — Pending income counts only 'pending' commissions.
   - `app/(admin)/admin/dashboard/page.tsx` — Level X Income counts only 'approved' and 'paid' commissions.
   - `app/(admin)/partner/dashboard/page.tsx` — Earnings stats aligned: pending = 'pending', paid = 'paid'.
@@ -68,7 +85,7 @@
 | H) Social floats | ✅ | WhatsApp + IG + FB from CMS |
 | A) Website Content CMS | ✅ | **Re-assessed:** the admin page (`admin/content/page.tsx`) already provides section groups, field types (text/textarea/image_url/image_gallery/link), add/edit/delete, search, toasts, empty/loading states, writing directly via the browser client. The only blocker was the DB constraint (C4) — now fixed by the migration, so "Add Content" inserts succeed. (`lib/actions/content.ts` server actions are largely unused by this page.) |
 | C) Bookings admin | 🟡 | Soft-delete + archived-list filter done; data is real (force-dynamic). Pending (optional): server-side filters/pagination, explicit status workflow review. |
-| D) Referral system | ✅ | Engine strong + settings-driven; commission status workflow hardened (pending→approved→paid), wallet-aware approval/rejection, FIFO payout marking, duplicate prevention via unique index, all dashboards aligned. |
+| D) Referral system | ✅ | Commission identity is `source_type + source_id + partner_id + level` (no `booking_id`); lifecycle is pending→approved→paid or pending/approved→rejected; payout rows link through `payout_id`; rejected commissions are excluded from totals. |
 | E) KYC/membership/approval | ⬜ | Needs verification of reject-preserves-record, admin notes persistence, Auth-safe partner creation/password reset. |
 | F) Admin UI/UX | ⬜ | Sidebar double-scroll, responsive table→card, confirmations/empty/error states. |
 | G) Realtime/cache | ✅ | **Re-assessed:** `app/(site)/layout.tsx` is `export const dynamic = "force-dynamic"`, so the public site re-fetches from Supabase on every request — admin changes appear live on refresh with no stale cache. Admin/partner layouts are also force-dynamic. |
@@ -84,6 +101,6 @@
    - `MIGRATION_REFERRAL_WORKFLOW_HARDENING_2026_06_22.sql`
    - Verify the `media` bucket is public.
 2. Smoke-test in admin: add a treatment → confirm it appears on the website; add a content field → confirm it saves; toggle a treatment off → confirm it hides; verify WhatsApp/IG/FB floats.
-3. Test referral/commission flow: create booking → confirm commission generated as 'pending' → approve commission → verify wallet credited → reject commission → verify wallet reversed → payout paid → verify commissions marked paid FIFO.
+3. Test referral/commission flow: create a paid confirmed booking → confirm one pending row per `(source_type, source_id, partner_id, level)` → repeat the booking status update and confirm no duplicate → approve and verify wallet credit → reject and verify safe reversal → pay a payout and verify related commissions become paid with `payout_id` populated.
 4. Remaining optional polish: Admin UI/UX responsive pass (F), KYC/membership reject-preserves-record verification (E), media-library catalog + image compression (I).
 5. Full route walkthrough; fix any console/Supabase errors; update this checklist.

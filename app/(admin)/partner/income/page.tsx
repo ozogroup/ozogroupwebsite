@@ -18,12 +18,6 @@ function commissionAmount(commission: any) {
   return Number(commission.amount || commission.commission_amount || 0);
 }
 
-function isBonusCommission(commission: any) {
-  return ["bonus", "milestone"].includes(
-    String(commission.source_type || "").toLowerCase()
-  );
-}
-
 export default async function PartnerIncomePage() {
   await requirePartner();
   const supabase = await getSupabaseServerClient();
@@ -49,20 +43,18 @@ export default async function PartnerIncomePage() {
 
   const eligibleCommissions = (commissions || []).filter(
     (commission: any) =>
-      commission.is_active !== false && !commission.reversed && commission.status !== "rejected"
+      commission.deleted_at == null && !commission.reversed && commission.status !== "rejected"
   );
-  const membershipIncome = eligibleCommissions
-    .filter((commission: any) => commission.source_type === "membership" && !isBonusCommission(commission))
+  const earnedCommissions = eligibleCommissions.filter((commission: any) =>
+    ["approved", "paid"].includes(String(commission.status))
+  );
+  const membershipIncome = earnedCommissions
+    .filter((commission: any) => commission.source_type === "membership")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
-  const productIncome = eligibleCommissions
-    .filter((commission: any) =>
-      ["booking", "product", "kit", "treatment"].includes(String(commission.source_type || "").toLowerCase()) &&
-      !isBonusCommission(commission)
-    )
+  const productIncome = earnedCommissions
+    .filter((commission: any) => commission.source_type === "booking")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
-  const bonusIncome = eligibleCommissions
-    .filter(isBonusCommission)
-    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const bonusIncome = 0;
   const grossIncome = membershipIncome + productIncome + bonusIncome;
   const deduction = Math.round(grossIncome * DEDUCTION_RATE * 100) / 100;
   const totalIncome = grossIncome - deduction;
@@ -164,11 +156,9 @@ export default async function PartnerIncomePage() {
                       {new Date(commission.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3 text-sm text-brand-ink">
-                      {isBonusCommission(commission)
-                        ? "Bonus Reward"
-                        : commission.source_type === "membership"
-                          ? "Membership"
-                          : "Product / Treatment Booking"}
+                      {commission.source_type === "membership"
+                        ? "Membership"
+                        : "Product / Treatment Booking"}
                     </td>
                     <td className="px-4 py-3 text-sm text-brand-muted">Level {commission.level || 1}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-brand-primaryDark">{formatCurrency(commissionAmount(commission))}</td>

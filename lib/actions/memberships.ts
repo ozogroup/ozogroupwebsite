@@ -299,8 +299,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
       .eq("referral_code", referralCode);
   }
 
-  // Sync to Google Sheet (non-blocking)
-  syncMembershipCreated({
+  await syncMembershipCreated({
     id: (record as any).id,
     full_name: data.full_name.trim(),
     email: normalizedEmail,
@@ -308,7 +307,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
     city: data.city.trim(),
     status: (record as any).membership_status,
     created_at: (record as any).created_at,
-  }).catch((err) => console.error("Google Sheet sync error (membership.created):", err));
+  });
 
   revalidatePath("/admin/memberships");
   return { data: record };
@@ -507,8 +506,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     await createReferralTreeForPartner(serviceClient, userId, (membership as any).sponsor_id);
   }
 
-  // Sync to Google Sheet (non-blocking)
-  syncPartnerApproved({
+  await syncPartnerApproved({
     id: userId,
     partner_code: partnerCode,
     full_name: fullName,
@@ -516,7 +514,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     phone: mobile,
     city,
     approved_at: startedAt.toISOString(),
-  }).catch((err) => console.error("Google Sheet sync error (partner.approved):", err));
+  });
 
   revalidatePath("/admin/memberships");
   revalidatePath("/admin/partners");

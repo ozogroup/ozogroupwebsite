@@ -143,6 +143,9 @@ export async function approveCommission(id: string) {
   if (commission.status === "paid") {
     throw new Error("This commission has already been paid out and cannot be re-approved.");
   }
+  if (commission.status !== "pending") {
+    throw new Error(`A ${commission.status || "unknown"} commission cannot be approved.`);
+  }
 
   const { data, error } = await supabase
     .from("commissions" as any)
@@ -155,16 +158,15 @@ export async function approveCommission(id: string) {
   // Credit the wallet only when transitioning from a non-credited state.
   await creditWallet(supabase, commission);
 
-  // Sync to Google Sheet (non-blocking)
-  syncCommissionUpdated({
+  await syncCommissionUpdated({
     id: (data as any).id,
-    booking_id: (data as any).source_id,
+    source_id: (data as any).source_id,
     partner_id: commission.partner_id,
     level: commission.level || 1,
     amount: commission.amount || 0,
     status: "approved",
     updated_at: (data as any).updated_at,
-  }).catch((err) => console.error("Google Sheet sync error (commission.updated):", err));
+  });
 
   revalidateMoneyPaths();
   return data;
@@ -180,6 +182,9 @@ export async function rejectCommission(id: string) {
   if (commission.status === "paid") {
     throw new Error("This commission has already been paid out and cannot be rejected.");
   }
+  if (!["pending", "approved"].includes(String(commission.status))) {
+    throw new Error(`A ${commission.status || "unknown"} commission cannot be rejected.`);
+  }
 
   if (commission.status === "approved") {
     await reverseWallet(supabase, commission);
@@ -193,16 +198,15 @@ export async function rejectCommission(id: string) {
     .single();
   if (error) throw error;
 
-  // Sync to Google Sheet (non-blocking)
-  syncCommissionUpdated({
+  await syncCommissionUpdated({
     id: (data as any).id,
-    booking_id: (data as any).source_id,
+    source_id: (data as any).source_id,
     partner_id: commission.partner_id,
     level: commission.level || 1,
     amount: commission.amount || 0,
     status: "rejected",
     updated_at: (data as any).updated_at,
-  }).catch((err) => console.error("Google Sheet sync error (commission.updated):", err));
+  });
 
   revalidateMoneyPaths();
   return data;
@@ -215,35 +219,7 @@ export async function revertCommissionToPending(id: string) {
   const commission = await loadCommission(supabase, id);
 
   if (commission.status === "pending") return commission;
-  if (commission.status === "paid") {
-    throw new Error("This commission has already been paid out and cannot be reset to pending.");
-  }
-
-  if (commission.status === "approved") {
-    await reverseWallet(supabase, commission);
-  }
-
-  const { data, error } = await supabase
-    .from("commissions" as any)
-    .update({ status: "pending", reversed: false, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-
-  // Sync to Google Sheet (non-blocking)
-  syncCommissionUpdated({
-    id: (data as any).id,
-    booking_id: (data as any).source_id,
-    partner_id: commission.partner_id,
-    level: commission.level || 1,
-    amount: commission.amount || 0,
-    status: "pending",
-    updated_at: (data as any).updated_at,
-  }).catch((err) => console.error("Google Sheet sync error (commission.updated):", err));
-
-  revalidateMoneyPaths();
-  return data;
+  throw new Error(`A ${commission.status || "unknown"} commission cannot be reset to pending.`);
 }
 
 // Safe router used by the admin Commissions screen. Wallet effects are handled

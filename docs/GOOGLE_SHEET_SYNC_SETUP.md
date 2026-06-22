@@ -19,9 +19,17 @@ Add the following environment variables to your `.env.local` or production envir
 # Google Apps Script Webhook URL
 GOOGLE_APPS_SCRIPT_WEBHOOK_URL=https://script.google.com/macros/s/AKfycbzUH44o7o4yep2fo4NlkvjGhKcdQMGcUOO6rug7GMgo8TZfV4tAHDz2Hu9jGPUDe7Ot/exec
 
+# Deployment metadata (not called directly by Next.js)
+GOOGLE_APPS_SCRIPT_DEPLOYMENT_ID=AKfycbzUH44o7o4yep2fo4NlkvjGhKcdQMGcUOO6rug7GMgo8TZfV4tAHDz2Hu9jGPUDe7Ot
+GOOGLE_APPS_SCRIPT_LIBRARY_URL=https://script.google.com/macros/library/d/1vR-qQQXucD_fX7R48Hk-h1VSoLntLP33zig9tB_Wh80V-zyvuJVZZ4y_/2
+
 # Secret key for webhook authentication (shared with Apps Script)
 GOOGLE_APPS_SCRIPT_SECRET=your-secret-key-here
 ```
+
+Only `GOOGLE_APPS_SCRIPT_WEBHOOK_URL` is required for transport. The shared secret is strongly recommended and must match the Apps Script `WEBHOOK_SECRET` script property when enabled. The library URL is used inside an Apps Script project; it is not a webhook and must never be called from the browser.
+
+Add the same server-only values to the Production, Preview, and Development environments in Vercel, then redeploy. Do not prefix them with `NEXT_PUBLIC_`.
 
 ### Setting the Secret
 
@@ -54,6 +62,8 @@ Your Apps Script should:
 
 3. **Prevent duplicates** - Use Supabase IDs (booking_id, commission_id, etc.) as unique keys in the Sheet
 4. **Return success** - Return HTTP 200 on success
+5. **Return JSON** - Return `{ "success": true }` after the Sheet write and email action complete. Return `{ "success": false, "error": "..." }` on failure.
+6. **Send booking emails** - For `booking.created`, send a confirmation to `data.customer_email`. For `booking.updated`, send a status/payment update only when the email is present. Apps Script must use `MailApp.sendEmail` or the supplied library for the actual delivery.
 
 ### Example Apps Script Handler
 
@@ -62,8 +72,9 @@ function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
     
-    // Verify secret
-    if (payload.secret !== PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET')) {
+    // Verify the secret when WEBHOOK_SECRET is configured.
+    const expectedSecret = PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET');
+    if (expectedSecret && payload.secret !== expectedSecret) {
       return ContentService.createTextOutput(JSON.stringify({error: 'Invalid secret'}))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -108,11 +119,11 @@ function doPost(e) {
 
 ### 5. Commission Created
 - **Triggered when:** Booking is paid/confirmed and commissions are generated
-- **Payload includes:** commission_id, booking_id, partner_id, partner_code, partner_name, level, amount, status, created_at
+   - **Payload includes:** commission_id, source_type, source_id, booking_id (legacy Sheet alias), partner_id, partner_code, partner_name, level, amount, status, created_at
 
 ### 6. Commission Updated
 - **Triggered when:** Admin approves, rejects, or reverts commission status
-- **Payload includes:** commission_id, booking_id, partner_id, partner_code, partner_name, level, amount, status, updated_at
+   - **Payload includes:** commission_id, source_type, source_id, booking_id (legacy Sheet alias), partner_id, partner_code, partner_name, level, amount, status, updated_at
 
 ### 7. Payout Updated
 - **Triggered when:** Admin updates payout status (processing, paid, rejected)
@@ -120,10 +131,11 @@ function doPost(e) {
 
 ## Failure Handling
 
-The integration is designed to be **non-blocking**:
+The integration is designed to be **failure-isolated**:
 
 - Webhook calls are made **after** Supabase operations succeed
-- Webhook failures are **logged but do not fail** the main action
+- The server waits for the secondary webhook so Vercel does not terminate an unfinished request
+- Webhook failures are **logged but do not roll back** the successful Supabase action
 - Customer booking flow continues smoothly even if Google Sheet is down
 - Admin operations continue even if webhook fails
 - 10-second timeout protection prevents hanging
@@ -194,6 +206,10 @@ All webhook errors are logged to the console with clear event identification:
 - **Backup** - serves as a secondary data copy
 - **Never** used as source of truth
 - **Never** used for admin panel operations
+
+## Email Delivery
+
+The website sends the customer email address and complete booking context to Apps Script immediately after Supabase succeeds. Email delivery is performed by the deployed Apps Script, not by the browser or Supabase. Verify the Apps Script execution log after a test booking and confirm that the deployment owner has authorized Gmail/MailApp permissions. If the script writes the Sheet but no email arrives, the fault is in the Apps Script handler or its authorization/quota, not the Next.js webhook transport.
 
 ## Security
 

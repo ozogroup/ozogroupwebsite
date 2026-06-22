@@ -27,22 +27,27 @@ interface WebhookPayload {
   event: WebhookEvent;
   source: 'kia-website';
   timestamp: string;
-  secret: string;
+  secret?: string;
   data: Record<string, unknown>;
 }
 
-const WEBHOOK_URL = process.env.GOOGLE_APPS_SCRIPT_WEBHOOK_URL;
-const WEBHOOK_SECRET = process.env.GOOGLE_APPS_SCRIPT_SECRET;
-const TIMEOUT_MS = 10000; // 10 second timeout
+const TIMEOUT_MS = 10000;
 
 /**
  * Core webhook posting function with error handling and timeout.
  * Never throws - logs errors and returns success/failure status.
  */
 async function postToGoogleSheet(event: WebhookEvent, data: Record<string, unknown>): Promise<boolean> {
-  // Skip if webhook URL not configured
-  if (!WEBHOOK_URL || !WEBHOOK_SECRET) {
-    console.warn('[GoogleSheetSync] Webhook URL or secret not configured. Skipping sync.');
+  const webhookUrl = process.env.GOOGLE_APPS_SCRIPT_WEBHOOK_URL?.trim();
+  const webhookSecret = process.env.GOOGLE_APPS_SCRIPT_SECRET?.trim();
+
+  if (!webhookUrl) {
+    console.warn('[GoogleSheetSync] Webhook URL is not configured. Skipping sync.');
+    return false;
+  }
+
+  if (!webhookUrl.startsWith('https://script.google.com/macros/s/')) {
+    console.error('[GoogleSheetSync] Refusing to send data to an invalid Apps Script URL.');
     return false;
   }
 
@@ -50,15 +55,15 @@ async function postToGoogleSheet(event: WebhookEvent, data: Record<string, unkno
     event,
     source: 'kia-website',
     timestamp: new Date().toISOString(),
-    secret: WEBHOOK_SECRET,
     data,
   };
+  if (webhookSecret) payload.secret = webhookSecret;
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    const response = await fetch(WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,9 +74,23 @@ async function postToGoogleSheet(event: WebhookEvent, data: Record<string, unkno
 
     clearTimeout(timeoutId);
 
+    const responseText = await response.text();
     if (!response.ok) {
-      console.error(`[GoogleSheetSync] Webhook failed with status ${response.status}:`, await response.text());
+      console.error(`[GoogleSheetSync] Webhook failed with status ${response.status}:`, responseText);
       return false;
+    }
+
+    if (responseText) {
+      try {
+        const result = JSON.parse(responseText) as { success?: boolean; error?: unknown };
+        if (result.success === false || result.error) {
+          console.error(`[GoogleSheetSync] Apps Script rejected event ${event}:`, result.error || result);
+          return false;
+        }
+      } catch {
+        console.error(`[GoogleSheetSync] Apps Script returned a non-JSON response for event ${event}.`);
+        return false;
+      }
     }
 
     console.log(`[GoogleSheetSync] Successfully synced event: ${event}`);
@@ -192,7 +211,7 @@ export async function syncPartnerApproved(partner: {
  */
 export async function syncCommissionCreated(commission: {
   id: string;
-  booking_id: string;
+  source_id: string;
   partner_id: string;
   partner_code?: string;
   partner_name?: string;
@@ -203,7 +222,9 @@ export async function syncCommissionCreated(commission: {
 }): Promise<void> {
   await postToGoogleSheet('commission.created', {
     commission_id: commission.id,
-    booking_id: commission.booking_id,
+    source_type: 'booking',
+    source_id: commission.source_id,
+    booking_id: commission.source_id,
     partner_id: commission.partner_id,
     partner_code: commission.partner_code,
     partner_name: commission.partner_name,
@@ -219,7 +240,7 @@ export async function syncCommissionCreated(commission: {
  */
 export async function syncCommissionUpdated(commission: {
   id: string;
-  booking_id: string;
+  source_id: string;
   partner_id: string;
   partner_code?: string;
   partner_name?: string;
@@ -230,7 +251,9 @@ export async function syncCommissionUpdated(commission: {
 }): Promise<void> {
   await postToGoogleSheet('commission.updated', {
     commission_id: commission.id,
-    booking_id: commission.booking_id,
+    source_type: 'booking',
+    source_id: commission.source_id,
+    booking_id: commission.source_id,
     partner_id: commission.partner_id,
     partner_code: commission.partner_code,
     partner_name: commission.partner_name,

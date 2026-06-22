@@ -191,15 +191,21 @@ export async function generateBookingCommissions(
       continue;
     }
 
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("commissions")
       .select("id")
       .eq("source_type", "booking")
       .eq("source_id", booking.id)
       .eq("partner_id", item.partner_id)
       .eq("level", item.level)
+      .is("deleted_at", null)
+      .limit(1)
       .maybeSingle();
 
+    if (existingError) {
+      console.error("Error checking existing booking commission:", existingError);
+      continue;
+    }
     if (existing) continue;
 
     // Generate the commission in a "pending" state and lock the amount.
@@ -223,21 +229,21 @@ export async function generateBookingCommissions(
       .single();
 
     if (insertError) {
+      if (insertError.code === "23505") continue;
       console.error("Error creating booking commission:", insertError);
       continue;
     }
 
-    // Sync to Google Sheet (non-blocking)
     if (commissionData) {
-      syncCommissionCreated({
+      await syncCommissionCreated({
         id: commissionData.id,
-        booking_id: booking.id,
+        source_id: booking.id,
         partner_id: item.partner_id,
         level: item.level,
         amount,
         status: "pending",
         created_at: commissionData.created_at,
-      }).catch((err) => console.error("Google Sheet sync error (commission.created):", err));
+      });
     }
   }
 }

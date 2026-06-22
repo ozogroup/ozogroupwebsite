@@ -278,7 +278,7 @@ export async function createBooking(payload: CreateBookingPayload) {
   let bookingResult = await serviceClient
     .from("bookings" as any)
     .insert(bookingPayload)
-    .select("id")
+    .select("id, created_at")
     .single();
 
   if (
@@ -292,7 +292,7 @@ export async function createBooking(payload: CreateBookingPayload) {
     bookingResult = await serviceClient
       .from("bookings" as any)
       .insert(fallbackPayload)
-      .select("id")
+      .select("id, created_at")
       .single();
   }
 
@@ -319,8 +319,7 @@ export async function createBooking(payload: CreateBookingPayload) {
     if (saleError) console.error("Error creating partner sale:", saleError);
   }
 
-  // Sync to Google Sheet (non-blocking)
-  syncBookingCreated({
+  await syncBookingCreated({
     id: (booking as any).id,
     customer_name: customerName,
     customer_email: clean(payload.customer_email) || "",
@@ -332,7 +331,7 @@ export async function createBooking(payload: CreateBookingPayload) {
     payment_status: "pending_payment",
     payment_amount: treatmentPrice,
     created_at: (booking as any).created_at,
-  }).catch((err) => console.error("Google Sheet sync error (booking.created):", err));
+  });
 
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/dashboard");
@@ -396,8 +395,7 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     .update({ booking_status: status, updated_at: new Date().toISOString() })
     .eq("booking_id", id);
 
-  // Sync to Google Sheet (non-blocking)
-  syncBookingUpdated({
+  await syncBookingUpdated({
     id: (data as any).id,
     customer_name: (data as any).customer_name,
     customer_email: (data as any).customer_email || "",
@@ -405,7 +403,7 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
     payment_status: (data as any).payment_status,
     payment_amount: (data as any).payment_amount,
     updated_at: (data as any).updated_at,
-  }).catch((err) => console.error("Google Sheet sync error (booking.updated):", err));
+  });
 
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/commissions");
@@ -463,8 +461,7 @@ export async function updateBookingPaymentStatus(
     });
   }
 
-  // Sync to Google Sheet (non-blocking)
-  syncBookingUpdated({
+  await syncBookingUpdated({
     id: booking.id,
     customer_name: booking.customer_name,
     customer_email: booking.customer_email || "",
@@ -472,7 +469,7 @@ export async function updateBookingPaymentStatus(
     payment_status: paymentStatus,
     payment_amount: booking.payment_amount,
     updated_at: booking.updated_at,
-  }).catch((err) => console.error("Google Sheet sync error (booking.updated):", err));
+  });
 
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/commissions");
