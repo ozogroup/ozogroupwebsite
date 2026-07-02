@@ -16,8 +16,37 @@ export async function resolvePartnerLoginEmail(identifier: string) {
     return { error: GENERIC_LOGIN_ERROR };
   }
 
+  const supabase = getSupabaseServiceClient();
+
   if (login.includes("@")) {
-    return { email: login.toLowerCase() };
+    const { data, error } = await supabase
+      .from("profiles" as any)
+      .select("email, role")
+      .eq("role", "partner")
+      .ilike("email", login.toLowerCase())
+      .limit(1)
+      .maybeSingle();
+
+    const row = data as any;
+    if (error || !row?.email) return { error: GENERIC_LOGIN_ERROR };
+    return { email: String(row.email).toLowerCase() };
+  }
+
+  if (/^(KIA|OZO)\d+$/i.test(login)) {
+    const { data, error } = await supabase
+      .from("partners" as any)
+      .select("id, partner_code, is_active, deleted_at, profiles(email, role)")
+      .ilike("partner_code", login.toUpperCase())
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+
+    const row = data as any;
+    const profile = Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
+    if (error || row?.is_active === false || profile?.role !== "partner" || !profile?.email) {
+      return { error: GENERIC_LOGIN_ERROR };
+    }
+    return { email: String(profile.email).toLowerCase() };
   }
 
   const mobile = normalizeMobile(login);
@@ -25,7 +54,6 @@ export async function resolvePartnerLoginEmail(identifier: string) {
     return { error: GENERIC_LOGIN_ERROR };
   }
 
-  const supabase = getSupabaseServiceClient();
   const { data, error } = await supabase
     .from("profiles" as any)
     .select("email, phone, role")
@@ -35,10 +63,6 @@ export async function resolvePartnerLoginEmail(identifier: string) {
     .maybeSingle();
 
   const row = data as any;
-
-  if (error || !row?.email) {
-    return { error: GENERIC_LOGIN_ERROR };
-  }
-
+  if (error || !row?.email) return { error: GENERIC_LOGIN_ERROR };
   return { email: String(row.email).toLowerCase() };
 }

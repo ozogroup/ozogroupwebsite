@@ -13,25 +13,51 @@ export default function PartnerResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    supabase.auth.onAuthStateChange((event, session) => {
+    let mounted = true;
+
+    async function prepareRecoverySession() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (mounted && error) {
+          setMessage({ type: "error", text: "This reset link is invalid or expired. Please request a new password reset link." });
+        }
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (mounted) {
+        setReady(Boolean(data.session));
+        setChecking(false);
+      }
+    }
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || session) {
         setReady(true);
+        setChecking(false);
       }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+
+    prepareRecoverySession();
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    if (!password || password.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters" });
+    if (!password || password.length < 8) {
+      setMessage({ type: "error", text: "Password must be at least 8 characters" });
       setLoading(false);
       return;
     }
@@ -46,6 +72,7 @@ export default function PartnerResetPasswordPage() {
       if (error) {
         setMessage({ type: "error", text: error.message });
       } else {
+        await supabase.auth.signOut();
         setMessage({ type: "success", text: "Password set successfully. You can now login." });
       }
     } catch (err: any) {
@@ -55,12 +82,27 @@ export default function PartnerResetPasswordPage() {
     }
   }
 
-  if (!ready) {
+  if (checking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-brand-muted">Verifying your reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-brand-border bg-brand-card p-8 text-center shadow-premium">
+          <div className="flex justify-center mb-6"><Logo size="auth" /></div>
+          <h1 className="text-2xl font-bold text-brand-ink">Reset link expired</h1>
+          <p className="mt-3 text-brand-muted">Please request a new partner password reset link.</p>
+          <Link href="/partner/forgot-password" className="mt-6 inline-flex rounded-full bg-brand-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-muted">
+            Request New Link
+          </Link>
         </div>
       </div>
     );
@@ -86,7 +128,7 @@ export default function PartnerResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">New Password</label>
-              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Min 6 characters" />
+              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Min 8 characters" />
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>

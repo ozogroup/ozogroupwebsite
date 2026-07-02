@@ -142,7 +142,7 @@ export default function PartnerLoginPage() {
                 <span className="sm:hidden">Partner Login</span>
                 <span className="hidden sm:inline">Access Your Dashboard</span>
               </h2>
-              <p className="mt-2 text-sm text-brand-muted">Login with your registered email or mobile number.</p>
+              <p className="mt-2 text-sm text-brand-muted">Login with your registered email, mobile number, or Partner ID.</p>
             </div>
 
             {error && (
@@ -154,7 +154,7 @@ export default function PartnerLoginPage() {
             <div className="mt-6 space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-brand-ink">
-                  Email or Mobile Number
+                  Email, Mobile Number, or Partner ID
                 </label>
                 <input
                   type="text"
@@ -164,7 +164,7 @@ export default function PartnerLoginPage() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full rounded-2xl border border-brand-border bg-white px-4 py-3.5 text-brand-ink outline-none transition placeholder:text-slate-400 focus:border-brand-accent focus:ring-4 focus:ring-brand-accent/15"
-                  placeholder="Enter email or mobile number"
+                  placeholder="Enter email, mobile number, or KIA ID"
                 />
               </div>
 

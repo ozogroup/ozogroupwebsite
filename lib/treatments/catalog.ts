@@ -1,9 +1,9 @@
 export const treatmentEditorialImages: Record<string, string> = {
-  "advanced-skin-treatment": "/images/treatments/editorial/advanced-skin-care-treatment.png",
-  "japanese-skin-treatment": "/images/treatments/editorial/japanese-skin-care-treatment.png",
-  "korean-glass-skin": "/images/treatments/editorial/korean-glass-treatment.png",
-  "skin-lightening": "/images/treatments/editorial/skin-lightening-treatment.png",
-  "basic-skin-treatment": "/images/treatments/editorial/basic-skin-care-treatment.png",
+  "advanced-skin-treatment": "/images/treatments/client-posters/advanced-skin-care-kit.png",
+  "japanese-skin-treatment": "/images/treatments/client-posters/japanese-skin-care-kit.png",
+  "korean-glass-skin": "/images/treatments/client-posters/korean-glass-treatment.png",
+  "skin-lightening": "/images/treatments/client-posters/skin-lightening-kit.png",
+  "basic-skin-treatment": "/images/treatments/client-posters/basic-skin-care-kit.png",
 };
 
 export const treatmentKitCatalog = [

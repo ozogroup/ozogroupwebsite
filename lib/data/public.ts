@@ -17,6 +17,11 @@ export const defaultTreatmentCatalog = treatmentKitCatalog.map((treatment) => ({
 }));
 
 const legacyTreatmentImages = new Set([
+  "/images/treatments/editorial/advanced-skin-care-treatment.png",
+  "/images/treatments/editorial/japanese-skin-care-treatment.png",
+  "/images/treatments/editorial/korean-glass-treatment.png",
+  "/images/treatments/editorial/skin-lightening-treatment.png",
+  "/images/treatments/editorial/basic-skin-care-treatment.png",
   "/images/client-approved/japanese-skin-care-kit.jpeg",
   "/images/client-approved/korean-glass-treatment-kit.jpeg",
   "/images/client-approved/skin-lightening-kit.jpeg",

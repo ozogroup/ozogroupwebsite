@@ -38,8 +38,14 @@ export default function PartnerForgotPasswordPage() {
       const supabase = getSupabaseBrowserClient();
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
 
-      if (login.includes("@")) {
-        const { error } = await supabase.auth.resetPasswordForEmail(login.toLowerCase(), {
+      const resolved = await resolvePartnerLoginEmail(login);
+      if (resolved.error || !resolved.email) {
+        setMessage({ type: "error", text: "No active partner login was found for this email, mobile number, or Partner ID." });
+        return;
+      }
+
+      if (login.includes("@") || /^(KIA|OZO)\d+$/i.test(login)) {
+        const { error } = await supabase.auth.resetPasswordForEmail(resolved.email, {
           redirectTo: baseUrl + "/partner/reset-password",
         });
         if (error) {
@@ -58,18 +64,13 @@ export default function PartnerForgotPasswordPage() {
 
       const { error } = await supabase.auth.signInWithOtp({ phone });
       if (error) {
-        const resolved = await resolvePartnerLoginEmail(login);
-        if (resolved.email) {
-          const { error: resetError } = await supabase.auth.resetPasswordForEmail(resolved.email, {
-            redirectTo: baseUrl + "/partner/reset-password",
-          });
-          if (resetError) {
-            setMessage({ type: "error", text: resetError.message });
-          } else {
-            setMessage({ type: "success", text: "Password reset link sent to the email registered with this mobile number." });
-          }
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(resolved.email, {
+          redirectTo: baseUrl + "/partner/reset-password",
+        });
+        if (resetError) {
+          setMessage({ type: "error", text: resetError.message });
         } else {
-          setMessage({ type: "error", text: error.message });
+          setMessage({ type: "success", text: "Password reset link sent to the email registered with this mobile number." });
         }
       } else {
         setOtpPhone(phone);
@@ -140,8 +141,8 @@ export default function PartnerForgotPasswordPage() {
         <div className="flex justify-center mb-8"><Logo size="auth" /></div>
         <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-brand-ink mb-2">Set Your Password</h1>
-            <p className="text-brand-muted">Enter your partner email or mobile number to reset your password</p>
+            <h1 className="text-3xl font-bold text-brand-ink mb-2">Reset Partner Password</h1>
+            <p className="text-brand-muted">Enter your partner email, mobile number, or Partner ID to reset your password</p>
           </div>
           {message && (
             <div className={"mb-6 p-4 rounded-lg border " + (message.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700")}>
@@ -151,8 +152,8 @@ export default function PartnerForgotPasswordPage() {
           {!otpPhone ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-brand-ink mb-2">Partner Email or Mobile Number</label>
-                <input id="identifier" type="text" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="partner@example.com or 9876543210" />
+                <label htmlFor="identifier" className="block text-sm font-medium text-brand-ink mb-2">Partner Email, Mobile Number, or Partner ID</label>
+                <input id="identifier" type="text" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="partner@example.com, 9876543210, or KIA1008" />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
                 {loading ? "Sending..." : "Continue"}

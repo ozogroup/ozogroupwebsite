@@ -27,16 +27,14 @@ export default function TreatmentGallery({
 
   return (
     <div className="space-y-3">
-      <div
-        className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-[#F8F4EC]"
-      >
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#F8F4EC] p-2">
         <Image
           src={activeImage}
           alt={`${alt}${cleanImages.length > 1 ? ` image ${activeIndex + 1}` : ""}`}
           fill
           priority={priority}
           sizes={compact ? "(max-width: 768px) 100vw, 600px" : "(max-width: 1024px) 90vw, 600px"}
-          className="object-cover object-center"
+          className="object-contain object-center"
         />
         {cleanImages.length > 1 && (
           <>
@@ -75,7 +73,7 @@ export default function TreatmentGallery({
                 activeIndex === index ? "border-brand-accent ring-2 ring-brand-accent/20" : "border-brand-border"
               }`}
             >
-              <Image src={image} alt="" fill sizes="120px" className="object-cover" />
+              <Image src={image} alt="" fill sizes="120px" className="object-contain p-1" />
             </button>
           ))}
         </div>
