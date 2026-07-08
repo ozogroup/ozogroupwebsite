@@ -26,10 +26,6 @@ export const site = {
   membershipFee: 1199,
   // TODO: Future franchise inquiry form fields: Name, Phone, City, Investment Budget, Message.
   franchiseRequirementFields: ["Name", "Phone", "City", "Investment Budget", "Message"],
-  developer: {
-    name: "The Gujarati Designer",
-    url: "https://www.thegujaratidesigner.in",
-  },
   nav: [
     { label: "Home", href: "/" },
     { label: "Treatments", href: "/treatments" },
