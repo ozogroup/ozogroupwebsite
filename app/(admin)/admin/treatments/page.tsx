@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Breadcrumb from "@/components/admin/Breadcrumb";
-import ImageUpload from "@/components/admin/ImageUpload";
-import MultiImageUpload from "@/components/admin/MultiImageUpload";
+import TreatmentImageManager, {
+  ExistingTreatmentImage,
+  PendingTreatmentImage,
+} from "@/components/admin/TreatmentImageManager";
+import { ensureFinalTreatmentCatalog, getAdminTreatmentsWithImages, saveTreatmentWithImages } from "@/lib/actions/treatments";
 import { treatmentKitSlugs } from "@/lib/treatments/catalog";
-import { ensureFinalTreatmentCatalog } from "@/lib/actions/treatments";
 import { getOfferingTypeLabel } from "@/lib/treatment-labels";
 
 type Treatment = {
@@ -18,278 +20,239 @@ type Treatment = {
   price_label?: string;
   kit_name?: string;
   unit?: string;
+  subtitle?: string;
   description?: string;
+  overview?: string;
   treatment_type?: string;
-  image: string;
+  image?: string;
+  image_alt?: string;
   active: boolean;
   featured?: boolean;
   gallery?: string[];
+  duration?: string;
+  sessions?: string;
+  badge?: string;
+  benefits?: string[];
+  safety?: string;
+  available_cities?: string[];
+  cta_text?: string;
+  who_for?: string[] | string;
+  process?: Array<{ step?: string; detail?: string }>;
+  faqs?: Array<{ q?: string; a?: string }>;
+  seo_title?: string;
+  seo_description?: string;
+  sort_order?: number;
+  treatment_images?: ExistingTreatmentImage[];
 };
 
+type FormState = {
+  title: string;
+  slug: string;
+  type: string;
+  price: string;
+  price_label: string;
+  kit_name: string;
+  unit: string;
+  subtitle: string;
+  description: string;
+  overview: string;
+  image_alt: string;
+  duration: string;
+  sessions: string;
+  badge: string;
+  benefits: string;
+  safety: string;
+  available_cities: string;
+  cta_text: string;
+  active: boolean;
+  featured: boolean;
+  who_for: string;
+  process: string;
+  faqs: string;
+  seo_title: string;
+  seo_description: string;
+  sort_order: string;
+};
+
+const emptyForm: FormState = {
+  title: "",
+  slug: "",
+  type: "clinic",
+  price: "",
+  price_label: "",
+  kit_name: "",
+  unit: "per session",
+  subtitle: "",
+  description: "",
+  overview: "",
+  image_alt: "",
+  duration: "",
+  sessions: "",
+  badge: "",
+  benefits: "",
+  safety: "",
+  available_cities: "",
+  cta_text: "Book Now",
+  active: true,
+  featured: false,
+  who_for: "",
+  process: "",
+  faqs: "",
+  seo_title: "",
+  seo_description: "",
+  sort_order: "",
+};
+
+function splitList(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseProcess(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [step, ...rest] = line.split("|");
+      return { step: step.trim(), detail: rest.join("|").trim() };
+    });
+}
+
+function parseFaqs(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [q, ...rest] = line.split("|");
+      return { q: q.trim(), a: rest.join("|").trim() };
+    });
+}
+
+function imagesFromTreatment(treatment: Treatment): ExistingTreatmentImage[] {
+  if (Array.isArray(treatment.treatment_images) && treatment.treatment_images.length > 0) {
+    return treatment.treatment_images
+      .map((image, index) => ({
+        ...image,
+        sort_order: Number(image.sort_order ?? index),
+        alt_text: image.alt_text || treatment.image_alt || treatment.title,
+      }))
+      .sort((a, b) => {
+        if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
+        return a.sort_order - b.sort_order;
+      });
+  }
+
+  const urls = Array.from(new Set([treatment.image, ...(treatment.gallery || [])].filter(Boolean))) as string[];
+  return urls.map((url, index) => ({
+    id: `legacy-${index}-${url}`,
+    public_url: url,
+    storage_path: null,
+    alt_text: treatment.image_alt || treatment.title,
+    sort_order: index,
+    is_primary: index === 0,
+  }));
+}
+
+function formFromTreatment(treatment: Treatment): FormState {
+  return {
+    title: treatment.title || "",
+    slug: treatment.slug || "",
+    type: treatment.type || "clinic",
+    price: treatment.price?.toString() || "",
+    price_label: treatment.price_label || "",
+    kit_name: treatment.kit_name || treatment.title || "",
+    unit: treatment.unit || "per session",
+    subtitle: treatment.subtitle || "",
+    description: treatment.description || "",
+    overview: treatment.overview || "",
+    image_alt: treatment.image_alt || treatment.title || "",
+    duration: treatment.duration || "",
+    sessions: treatment.sessions || "",
+    badge: treatment.badge || "",
+    benefits: Array.isArray(treatment.benefits) ? treatment.benefits.join(", ") : "",
+    safety: treatment.safety || "",
+    available_cities: Array.isArray(treatment.available_cities) ? treatment.available_cities.join(", ") : "",
+    cta_text: treatment.cta_text || "Book Now",
+    active: treatment.active ?? true,
+    featured: treatment.featured ?? false,
+    who_for: Array.isArray(treatment.who_for) ? treatment.who_for.join(", ") : String(treatment.who_for || ""),
+    process: Array.isArray(treatment.process)
+      ? treatment.process.map((step) => `${step.step || ""} | ${step.detail || ""}`).join("\n")
+      : "",
+    faqs: Array.isArray(treatment.faqs)
+      ? treatment.faqs.map((faq) => `${faq.q || ""} | ${faq.a || ""}`).join("\n")
+      : "",
+    seo_title: treatment.seo_title || "",
+    seo_description: treatment.seo_description || "",
+    sort_order: treatment.sort_order?.toString() || "",
+  };
+}
+
 export default function AdminTreatmentsPage() {
+  const router = useRouter();
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(null);
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    type: "clinic",
-    price: "",
-    price_label: "",
-    kit_name: "",
-    unit: "per session",
-    subtitle: "",
-    description: "",
-    overview: "",
-    image: "",
-    gallery: [] as string[],
-    image_alt: "",
-    duration: "",
-    sessions: "",
-    badge: "",
-    benefits: "",
-    safety: "",
-    available_cities: "",
-    cta_text: "Book Now",
-    active: true,
-    featured: false,
-    who_for: "",
-    process: "",
-    faqs: "",
-    before_image_url: "",
-    after_image_url: "",
-    seo_title: "",
-    seo_description: "",
-    sort_order: "",
-  });
+  const [formData, setFormData] = useState<FormState>(emptyForm);
+  const [existingImages, setExistingImages] = useState<ExistingTreatmentImage[]>([]);
+  const [removedImages, setRemovedImages] = useState<ExistingTreatmentImage[]>([]);
+  const [pendingImages, setPendingImages] = useState<PendingTreatmentImage[]>([]);
+  const [primaryImageKey, setPrimaryImageKey] = useState("");
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const [syncing, startSyncTransition] = useTransition();
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
-  const supabase = getSupabaseBrowserClient();
 
   useEffect(() => {
     loadTreatments();
   }, []);
 
+  const sortedTreatments = useMemo(
+    () =>
+      [...treatments].sort(
+        (a, b) =>
+          ((treatmentKitSlugs.indexOf(a.slug as any) + 1) || 999) -
+          ((treatmentKitSlugs.indexOf(b.slug as any) + 1) || 999)
+      ),
+    [treatments]
+  );
+
   async function loadTreatments() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("treatments" as any)
-      .select("*")
-      .is("deleted_at", null)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("Error loading treatments:", error);
+    const result = await getAdminTreatmentsWithImages();
+    if (result.error) {
       setTreatments([]);
-    } else if (data && Array.isArray(data)) {
-      setTreatments(
-        (data as unknown as Treatment[]).sort(
-          (a, b) => ((treatmentKitSlugs.indexOf(a.slug as any) + 1) || 999) - ((treatmentKitSlugs.indexOf(b.slug as any) + 1) || 999)
-        )
-      );
+      showToast("error", result.error);
     } else {
-      setTreatments([]);
+      setTreatments((result.data || []) as Treatment[]);
     }
     setLoading(false);
   }
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
-    setTimeout(() => setToast(null), type === "success" ? 3000 : 4500);
+    window.setTimeout(() => setToast(null), type === "success" ? 3000 : 5000);
   }
 
-  async function handleSyncFinalTreatments() {
-    setSyncing(true);
-    setError("");
-    try {
-      const result = await ensureFinalTreatmentCatalog();
-      if (result?.error) {
-        setError(result.error);
-        showToast("error", result.error);
-        return;
-      }
-      await loadTreatments();
-      showToast("success", "Final treatment catalog synced.");
-    } catch (err) {
-      console.error("Error syncing treatments:", err);
-      showToast("error", "Unable to sync treatments. Please check admin access and SQL columns.");
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError("");
-
-    try {
-      // Convert comma-separated fields to JSON arrays
-      const benefitsArray = formData.benefits ? formData.benefits.split(",").map(b => b.trim()).filter(b => b) : [];
-      const availableCitiesArray = formData.available_cities ? formData.available_cities.split(",").map(c => c.trim()).filter(c => c) : [];
-
-      const data = {
-        title: formData.title,
-        slug: formData.slug,
-        type: formData.type,
-        price: parseFloat(formData.price),
-        price_label:
-          formData.price_label ||
-          `Rs. ${Number(parseFloat(formData.price) || 0).toLocaleString("en-IN")}`,
-        unit: formData.unit,
-        subtitle: formData.subtitle,
-        description: formData.description,
-        overview: formData.overview,
-        image: formData.image,
-        gallery: formData.gallery,
-        image_alt: formData.image_alt,
-        duration: formData.duration,
-        sessions: formData.sessions,
-        badge: formData.badge,
-        benefits: benefitsArray,
-        safety: formData.safety,
-        available_cities: availableCitiesArray,
-        cta_text: formData.cta_text,
-        active: formData.active,
-        is_active: formData.active,
-        deleted_at: formData.active ? null : new Date().toISOString(),
-        featured: formData.featured,
-        who_for: formData.who_for ? formData.who_for.split(",").map((s) => s.trim()).filter(Boolean) : [],
-        process: formData.process
-          ? formData.process.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
-              const [step, ...rest] = l.split("|");
-              return { step: step.trim(), detail: rest.join("|").trim() };
-            })
-          : [],
-        faqs: formData.faqs
-          ? formData.faqs.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
-              const [q, ...rest] = l.split("|");
-              return { q: q.trim(), a: rest.join("|").trim() };
-            })
-          : [],
-        before_image_url: formData.before_image_url || null,
-        after_image_url: formData.after_image_url || null,
-        seo_title: formData.seo_title || null,
-        seo_description: formData.seo_description || null,
-        sort_order: formData.sort_order ? parseInt(formData.sort_order, 10) || 0 : 0,
-      };
-
-      if (editingTreatment) {
-        const { error } = await supabase.from("treatments" as any).update(data).eq("id", editingTreatment.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("treatments" as any).insert(data);
-        if (error) throw error;
-      }
-
-      setShowModal(false);
-      setEditingTreatment(null);
-      resetForm();
-      loadTreatments();
-      showToast("success", "Treatment saved.");
-    } catch (err: any) {
-      console.error("Error saving treatment:", err);
-      setError("Failed to save treatment. Please check required fields and SQL columns.");
-      showToast("error", "Failed to save treatment.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Disable this treatment? It will stay editable in admin but stop showing on the website.")) return;
-    
-    const { error } = await supabase
-      .from("treatments" as any)
-      .update({ active: false, is_active: false, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) {
-      console.error("Error disabling treatment:", error);
-      showToast("error", "Unable to disable treatment.");
-    } else {
-      loadTreatments();
-      showToast("success", "Treatment disabled.");
-    }
-  }
-
-  function handleEdit(treatment: any) {
-    setEditingTreatment(treatment);
-    setFormData({
-      title: treatment.title || "",
-      slug: treatment.slug || "",
-      type: treatment.type || "clinic",
-      price: treatment.price?.toString() || "",
-      price_label: treatment.price_label || "",
-      kit_name: treatment.kit_name || treatment.title || "",
-      unit: treatment.unit || "per session",
-      subtitle: treatment.subtitle || "",
-      description: treatment.description || "",
-      overview: treatment.overview || "",
-      image: treatment.image || "",
-      gallery: Array.isArray(treatment.gallery) ? treatment.gallery : [],
-      image_alt: treatment.image_alt || "",
-      duration: treatment.duration || "",
-      sessions: treatment.sessions || "",
-      badge: treatment.badge || "",
-      benefits: Array.isArray(treatment.benefits) ? treatment.benefits.join(", ") : "",
-      safety: treatment.safety || "",
-      available_cities: Array.isArray(treatment.available_cities) ? treatment.available_cities.join(", ") : "",
-      cta_text: treatment.cta_text || "Book Now",
-      active: treatment.active ?? true,
-      featured: treatment.featured ?? false,
-      who_for: Array.isArray(treatment.who_for) ? treatment.who_for.join(", ") : (treatment.who_for || ""),
-      process: Array.isArray(treatment.process)
-        ? treatment.process.map((p: any) => `${p.step || ""} | ${p.detail || ""}`).join("\n")
-        : "",
-      faqs: Array.isArray(treatment.faqs)
-        ? treatment.faqs.map((f: any) => `${f.q || ""} | ${f.a || ""}`).join("\n")
-        : "",
-      before_image_url: treatment.before_image_url || "",
-      after_image_url: treatment.after_image_url || "",
-      seo_title: treatment.seo_title || "",
-      seo_description: treatment.seo_description || "",
-      sort_order: treatment.sort_order?.toString() || "",
-    });
-    setShowModal(true);
+  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setFormData((current) => ({ ...current, [key]: value }));
   }
 
   function resetForm() {
-    setFormData({
-      title: "",
-      slug: "",
-      type: "clinic",
-      price: "",
-      price_label: "",
-      kit_name: "",
-      unit: "per session",
-      subtitle: "",
-      description: "",
-      overview: "",
-      image: "",
-      gallery: [],
-      image_alt: "",
-      duration: "",
-      sessions: "",
-      badge: "",
-      benefits: "",
-      safety: "",
-      available_cities: "",
-      cta_text: "Book Now",
-      active: true,
-      featured: false,
-    who_for: "",
-    process: "",
-    faqs: "",
-    before_image_url: "",
-    after_image_url: "",
-    seo_title: "",
-    seo_description: "",
-    sort_order: "",
-    });
+    pendingImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    setFormData(emptyForm);
+    setExistingImages([]);
+    setRemovedImages([]);
+    setPendingImages([]);
+    setPrimaryImageKey("");
+    setImageError("");
+    setError("");
   }
 
   function handleAdd() {
@@ -298,540 +261,450 @@ export default function AdminTreatmentsPage() {
     setShowModal(true);
   }
 
+  function handleEdit(treatment: Treatment) {
+    const images = imagesFromTreatment(treatment);
+    setEditingTreatment(treatment);
+    setFormData(formFromTreatment(treatment));
+    setExistingImages(images);
+    setRemovedImages([]);
+    setPendingImages([]);
+    setPrimaryImageKey(images.find((image) => image.is_primary)?.id ? `existing:${images.find((image) => image.is_primary)?.id}` : images[0] ? `existing:${images[0].id}` : "");
+    setImageError("");
+    setError("");
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    if (saving) return;
+    setShowModal(false);
+    setEditingTreatment(null);
+    resetForm();
+  }
+
+  function handleSyncFinalTreatments() {
+    setError("");
+    startSyncTransition(async () => {
+      const result = await ensureFinalTreatmentCatalog();
+      if (result?.error) {
+        setError(result.error);
+        showToast("error", result.error);
+        return;
+      }
+      await loadTreatments();
+      router.refresh();
+      showToast("success", "Final treatment catalog synced.");
+    });
+  }
+
+  async function handleSave(event: React.FormEvent) {
+    event.preventDefault();
+    if (saving) return;
+
+    setSaving(true);
+    setError("");
+    setImageError("");
+
+    const payload = new FormData();
+    if (editingTreatment?.id) payload.append("id", editingTreatment.id);
+    Object.entries(formData).forEach(([key, value]) => {
+      if (typeof value === "boolean") payload.append(key, value ? "true" : "false");
+      else payload.append(key, value);
+    });
+
+    payload.set("benefits", JSON.stringify(splitList(formData.benefits)));
+    payload.set("available_cities", JSON.stringify(splitList(formData.available_cities)));
+    payload.set("who_for", JSON.stringify(splitList(formData.who_for)));
+    payload.set("process", JSON.stringify(parseProcess(formData.process)));
+    payload.set("faqs", JSON.stringify(parseFaqs(formData.faqs)));
+    payload.set("existingImages", JSON.stringify(existingImages.map((image, index) => ({
+      ...image,
+      sort_order: index,
+      is_primary: primaryImageKey === `existing:${image.id}`,
+    }))));
+    payload.set("removedImages", JSON.stringify(removedImages));
+    payload.set("newImageAltTexts", JSON.stringify(pendingImages.map((image) => image.alt_text)));
+    payload.set("primaryImageKey", primaryImageKey);
+    pendingImages.forEach((image) => payload.append("newImages", image.file));
+
+    const result = await saveTreatmentWithImages(payload);
+    setSaving(false);
+
+    if (result.error) {
+      setError(result.error);
+      setImageError(result.error);
+      showToast("error", result.error);
+      return;
+    }
+
+    showToast("success", "Treatment saved and website cache refreshed.");
+    setShowModal(false);
+    setEditingTreatment(null);
+    resetForm();
+    await loadTreatments();
+    router.refresh();
+  }
+
+  async function handleDisable(treatment: Treatment) {
+    const payload = new FormData();
+    const nextForm = { ...formFromTreatment(treatment), active: false };
+    const images = imagesFromTreatment(treatment);
+    payload.append("id", treatment.id);
+    Object.entries(nextForm).forEach(([key, value]) => {
+      if (typeof value === "boolean") payload.append(key, value ? "true" : "false");
+      else payload.append(key, value);
+    });
+    payload.set("benefits", JSON.stringify(splitList(nextForm.benefits)));
+    payload.set("available_cities", JSON.stringify(splitList(nextForm.available_cities)));
+    payload.set("who_for", JSON.stringify(splitList(nextForm.who_for)));
+    payload.set("process", JSON.stringify(parseProcess(nextForm.process)));
+    payload.set("faqs", JSON.stringify(parseFaqs(nextForm.faqs)));
+    payload.set("existingImages", JSON.stringify(images));
+    payload.set("removedImages", "[]");
+    payload.set("newImageAltTexts", "[]");
+    payload.set("primaryImageKey", images[0] ? `existing:${images[0].id}` : "");
+
+    const result = await saveTreatmentWithImages(payload);
+    if (result.error) {
+      showToast("error", result.error);
+      return;
+    }
+    await loadTreatments();
+    router.refresh();
+    showToast("success", "Treatment disabled.");
+  }
+
   return (
     <div className="space-y-6">
       {toast && (
-        <div className={`fixed top-20 right-6 z-[100] max-w-sm px-4 py-3 rounded-lg shadow-lg border text-sm ${
-          toast.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"
-        }`}>
+        <div
+          className={`fixed right-6 top-20 z-[100] max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg ${
+            toast.type === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
           {toast.message}
         </div>
       )}
+
       <Breadcrumb items={[{ label: "Treatments" }]} />
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-ink">Treatments</h1>
-          <p className="text-brand-muted">Manage the live kit and campaign catalog shown on the website.</p>
+          <p className="text-brand-muted">Manage the live kit and treatment catalog shown on the website.</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <button
             onClick={handleSyncFinalTreatments}
             disabled={syncing}
-            className="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:border-brand-accent hover:text-brand-accent transition-colors disabled:opacity-60"
+            className="rounded-lg border border-brand-border px-4 py-2 text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent disabled:opacity-60"
           >
             {syncing ? "Syncing..." : "Sync Final 5"}
           </button>
           <button
             onClick={handleAdd}
-            className="px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors"
+            className="rounded-lg bg-brand-ink px-4 py-2 text-white transition-colors hover:bg-brand-muted"
           >
             Add Treatment
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+      {error && !showModal && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-brand-border bg-white">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
-          <thead className="bg-slate-50 border-b border-brand-border">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Image</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Treatment</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Kit / Campaign</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Price</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Active</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-ink uppercase">Featured</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-brand-border">
-            {loading ? (
+          <table className="w-full min-w-[900px]">
+            <thead className="border-b border-brand-border bg-slate-50">
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-brand-muted">
-                  Loading...
-                </td>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Treatment</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Price</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Active</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-brand-ink">Featured</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-brand-ink">Actions</th>
               </tr>
-            ) : treatments.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="text-4xl">💆</span>
-                    <p className="text-brand-ink font-medium">No treatments found</p>
-                    <p className="text-sm text-brand-muted">Supabase has no final kit/campaign records yet.</p>
+            </thead>
+            <tbody className="divide-y divide-brand-border">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-brand-muted">Loading...</td>
+                </tr>
+              ) : sortedTreatments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center">
+                    <p className="font-medium text-brand-ink">No treatments found</p>
+                    <p className="mt-1 text-sm text-brand-muted">Supabase has no treatment records yet.</p>
                     <button
                       onClick={handleSyncFinalTreatments}
                       disabled={syncing}
-                      className="mt-2 px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors"
+                      className="mt-4 rounded-lg bg-brand-ink px-4 py-2 text-white transition-colors hover:bg-brand-muted"
                     >
                       {syncing ? "Syncing..." : "Seed Final 5 Treatments"}
                     </button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              treatments.map((treatment) => (
-                <tr key={treatment.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    {treatment.image ? (
-                      <img
-                        src={treatment.image}
-                        alt={treatment.title}
-                        className="w-12 h-12 rounded-lg object-cover border border-brand-border"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                        No img
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-brand-ink">{treatment.title}</p>
-                    <p className="text-xs text-brand-muted mt-1 line-clamp-2">{treatment.description || treatment.slug}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 text-xs rounded bg-brand-light/55 text-brand-primaryDark">
-                      {getOfferingTypeLabel(treatment.type || treatment.treatment_type)}
-                    </span>
-                    <p className="text-xs text-brand-muted mt-1">{treatment.kit_name || treatment.title}</p>
-                  </td>
-                  <td className="px-4 py-3 font-medium text-brand-ink">
-                    {treatment.price_label || `₹${treatment.price.toLocaleString()}`}
-                    {treatment.unit && <p className="text-xs font-normal text-brand-muted mt-1">{treatment.unit}</p>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      treatment.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
-                      {treatment.active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      treatment.featured ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
-                    }`}>
-                      {treatment.featured ? "Featured" : "Normal"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(treatment)}
-                        className="p-1 text-brand-muted hover:text-brand-accent rounded"
-                        title="Edit"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(treatment.id)}
-                        className="p-1 text-brand-muted hover:text-red-600 rounded"
-                        title="Disable"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                sortedTreatments.map((treatment) => (
+                  <tr key={treatment.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      {treatment.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={treatment.image}
+                          alt={treatment.title}
+                          className="h-12 w-12 rounded-lg border border-brand-border object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                          No img
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-brand-ink">{treatment.title}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-brand-muted">{treatment.description || treatment.slug}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded bg-brand-light/55 px-2 py-1 text-xs text-brand-primaryDark">
+                        {getOfferingTypeLabel(treatment.type || treatment.treatment_type)}
+                      </span>
+                      <p className="mt-1 text-xs text-brand-muted">{treatment.kit_name || treatment.title}</p>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-brand-ink">
+                      {treatment.price_label || `Rs. ${Number(treatment.price || 0).toLocaleString("en-IN")}`}
+                      {treatment.unit && <p className="mt-1 text-xs font-normal text-brand-muted">{treatment.unit}</p>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2 py-1 text-xs ${treatment.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        {treatment.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2 py-1 text-xs ${treatment.featured ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                        {treatment.featured ? "Featured" : "Normal"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(treatment)}
+                          className="rounded p-1 text-brand-muted hover:text-brand-accent"
+                          title="Edit"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDisable(treatment)}
+                          className="rounded p-1 text-brand-muted hover:text-red-600"
+                          title="Disable"
+                        >
+                          Disable
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-brand-ink/55 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 border-b border-brand-border flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/55 p-3 sm:p-4">
+          <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white">
+            <div className="flex items-center justify-between border-b border-brand-border p-4">
               <h2 className="text-lg font-bold text-brand-ink">
                 {editingTreatment ? "Edit Treatment" : "Add Treatment"}
               </h2>
               <button
-                onClick={() => { setShowModal(false); setEditingTreatment(null); }}
-                className="p-1 text-brand-muted hover:text-brand-ink"
+                onClick={closeModal}
+                disabled={saving}
+                className="rounded p-1 text-brand-muted hover:text-brand-ink disabled:opacity-50"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Close
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-4 space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
-                  {error}
-                </div>
-              )}
+            <form onSubmit={handleSave} className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
+                {error && (
+                  <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Title *</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput label="Title *" value={formData.title} onChange={(value) => update("title", value)} required />
+                  <FormInput label="Slug *" value={formData.slug} onChange={(value) => update("slug", value)} required />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Slug *</label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
 
-              <MultiImageUpload
-                value={formData.gallery}
-                onChange={(gallery) =>
-                  setFormData({
-                    ...formData,
-                    gallery,
-                    image: formData.image || gallery[0] || "",
-                  })
-                }
-                folder={`treatments/${formData.slug || "new"}`}
-              />
+                <TreatmentImageManager
+                  existingImages={existingImages}
+                  pendingImages={pendingImages}
+                  primaryImageKey={primaryImageKey}
+                  saving={saving}
+                  error={imageError}
+                  onExistingImagesChange={setExistingImages}
+                  onPendingImagesChange={setPendingImages}
+                  onRemovedExistingImage={(image) => setRemovedImages((current) => [...current, image])}
+                  onPrimaryImageKeyChange={setPrimaryImageKey}
+                />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Type *</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  >
-                    <option value="clinic">Treatment</option>
-                    <option value="home_kit">Kit</option>
-                    <option value="campaign">Campaign</option>
-                  </select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-brand-ink">Type *</label>
+                    <select
+                      value={formData.type}
+                      onChange={(event) => update("type", event.target.value)}
+                      required
+                      className="w-full rounded-lg border border-brand-border px-3 py-2 outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20"
+                    >
+                      <option value="clinic">Treatment</option>
+                      <option value="home_kit">Kit</option>
+                      <option value="campaign">Campaign</option>
+                    </select>
+                  </div>
+                  <FormInput label="Price *" type="number" value={formData.price} onChange={(value) => update("price", value)} required />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Price *</label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
-                    step="0.01"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Price Label</label>
-                  <input
-                    type="text"
-                    value={formData.price_label}
-                    onChange={(e) => setFormData({ ...formData, price_label: e.target.value })}
-                    placeholder="e.g., ₹18,000"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput label="Price Label" value={formData.price_label} onChange={(value) => update("price_label", value)} placeholder="Rs. 18,000" />
+                  <FormInput label="Kit Name" value={formData.kit_name} onChange={(value) => update("kit_name", value)} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Kit Name</label>
-                  <input
-                    type="text"
-                    value={formData.kit_name}
-                    onChange={(e) => setFormData({ ...formData, kit_name: e.target.value })}
-                    placeholder="e.g., Korean Glass Kit"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Unit</label>
-                  <input
-                    type="text"
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    placeholder="per session"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput label="Unit" value={formData.unit} onChange={(value) => update("unit", value)} placeholder="per session" />
+                  <FormInput label="Image Alt Text" value={formData.image_alt} onChange={(value) => update("image_alt", value)} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Featured Treatment</label>
-                  <label className="flex h-[42px] items-center gap-2 px-3 py-2 border border-brand-border rounded-lg">
+
+                <FormInput label="Subtitle" value={formData.subtitle} onChange={(value) => update("subtitle", value)} />
+                <FormTextarea label="Description" value={formData.description} onChange={(value) => update("description", value)} rows={3} />
+                <FormTextarea label="Overview" value={formData.overview} onChange={(value) => update("overview", value)} rows={3} />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput label="Duration" value={formData.duration} onChange={(value) => update("duration", value)} placeholder="60 min" />
+                  <FormInput label="Sessions" value={formData.sessions} onChange={(value) => update("sessions", value)} placeholder="1 session" />
+                </div>
+
+                <FormInput label="Badge" value={formData.badge} onChange={(value) => update("badge", value)} placeholder="Premium" />
+                <FormTextarea label="Benefits (comma-separated)" value={formData.benefits} onChange={(value) => update("benefits", value)} rows={3} />
+                <FormTextarea label="Safety" value={formData.safety} onChange={(value) => update("safety", value)} rows={2} />
+                <FormInput label="Available Cities (comma-separated)" value={formData.available_cities} onChange={(value) => update("available_cities", value)} />
+                <FormInput label="CTA Text" value={formData.cta_text} onChange={(value) => update("cta_text", value)} />
+                <FormInput label="Who is it for? (comma-separated)" value={formData.who_for} onChange={(value) => update("who_for", value)} />
+                <FormTextarea label="Process steps (one per line, format: Step | Detail)" value={formData.process} onChange={(value) => update("process", value)} rows={3} />
+                <FormTextarea label="FAQs (one per line, format: Question | Answer)" value={formData.faqs} onChange={(value) => update("faqs", value)} rows={3} />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormInput label="Sort Order" type="number" value={formData.sort_order} onChange={(value) => update("sort_order", value)} />
+                  <FormInput label="SEO Title" value={formData.seo_title} onChange={(value) => update("seo_title", value)} />
+                </div>
+                <FormTextarea label="SEO Description" value={formData.seo_description} onChange={(value) => update("seo_description", value)} rows={2} />
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm text-brand-ink">
+                    <input
+                      type="checkbox"
+                      checked={formData.active}
+                      onChange={(event) => update("active", event.target.checked)}
+                      className="rounded border-brand-border"
+                    />
+                    Active
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-brand-ink">
                     <input
                       type="checkbox"
                       checked={formData.featured}
-                      onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                      onChange={(event) => update("featured", event.target.checked)}
                       className="rounded border-brand-border"
                     />
-                    <span className="text-sm text-brand-ink">Mark as featured</span>
+                    Featured
                   </label>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Subtitle</label>
-                <input
-                  type="text"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Overview</label>
-                <textarea
-                  value={formData.overview}
-                  onChange={(e) => setFormData({ ...formData, overview: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <ImageUpload
-                    value={formData.image}
-                    onChange={(url) => setFormData({ ...formData, image: url })}
-                    folder="treatments"
-                    label="Image"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Image Alt</label>
-                  <input
-                    type="text"
-                    value={formData.image_alt}
-                    onChange={(e) => setFormData({ ...formData, image_alt: e.target.value })}
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Duration</label>
-                  <input
-                    type="text"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="e.g., 60 min"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Sessions</label>
-                  <input
-                    type="text"
-                    value={formData.sessions}
-                    onChange={(e) => setFormData({ ...formData, sessions: e.target.value })}
-                    placeholder="e.g., 1 session"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Badge</label>
-                <input
-                  type="text"
-                  value={formData.badge}
-                  onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                  placeholder="e.g., Premium"
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Benefits (comma-separated)</label>
-                <textarea
-                  value={formData.benefits}
-                  onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
-                  rows={3}
-                  placeholder="Benefit 1, Benefit 2, Benefit 3"
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Safety</label>
-                <textarea
-                  value={formData.safety}
-                  onChange={(e) => setFormData({ ...formData, safety: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Available Cities (comma-separated)</label>
-                <input
-                  type="text"
-                  value={formData.available_cities}
-                  onChange={(e) => setFormData({ ...formData, available_cities: e.target.value })}
-                  placeholder="Mumbai, Delhi, Bangalore"
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">CTA Text</label>
-                <input
-                  type="text"
-                  value={formData.cta_text}
-                  onChange={(e) => setFormData({ ...formData, cta_text: e.target.value })}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Who is it for? (comma-separated)</label>
-                <input
-                  type="text"
-                  value={formData.who_for}
-                  onChange={(e) => setFormData({ ...formData, who_for: e.target.value })}
-                  placeholder="Dull skin, Uneven tone, Pigmentation"
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">Process steps (one per line, format: Step | Detail)</label>
-                <textarea
-                  value={formData.process}
-                  onChange={(e) => setFormData({ ...formData, process: e.target.value })}
-                  rows={3}
-                  placeholder={"Consultation | Skin analysis and plan\nTreatment | Application of the kit"}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">FAQs (one per line, format: Question | Answer)</label>
-                <textarea
-                  value={formData.faqs}
-                  onChange={(e) => setFormData({ ...formData, faqs: e.target.value })}
-                  rows={3}
-                  placeholder={"Is it safe? | Yes, dermatologically tested.\nHow long? | Results in 2-4 weeks."}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <ImageUpload
-                  value={formData.before_image_url}
-                  onChange={(url) => setFormData({ ...formData, before_image_url: url })}
-                  folder="treatments/before-after"
-                  label="Before Image"
-                />
-                <ImageUpload
-                  value={formData.after_image_url}
-                  onChange={(url) => setFormData({ ...formData, after_image_url: url })}
-                  folder="treatments/before-after"
-                  label="After Image"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">Sort Order</label>
-                  <input
-                    type="number"
-                    value={formData.sort_order}
-                    onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-brand-ink mb-1">SEO Title</label>
-                  <input
-                    type="text"
-                    value={formData.seo_title}
-                    onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                    className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-brand-ink mb-1">SEO Description</label>
-                <textarea
-                  value={formData.seo_description}
-                  onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none resize-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    className="rounded border-brand-border"
-                  />
-                  <span className="text-sm text-brand-ink">Active</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="rounded border-brand-border"
-                  />
-                  <span className="text-sm text-brand-ink">Featured</span>
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-brand-border">
+              <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-brand-border bg-white p-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); setEditingTreatment(null); }}
-                  className="px-4 py-2 border border-brand-border rounded-lg hover:bg-slate-50 transition-colors"
+                  onClick={closeModal}
+                  disabled={saving}
+                  className="rounded-lg border border-brand-border px-4 py-2 transition-colors hover:bg-slate-50 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors disabled:opacity-50"
+                  className="rounded-lg bg-brand-ink px-4 py-2 text-white transition-colors hover:bg-brand-muted disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : editingTreatment ? "Update" : "Create"}
+                  {saving ? "Uploading and saving..." : editingTreatment ? "Update Treatment" : "Create Treatment"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function FormInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: "text" | "number";
+  required?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-brand-ink">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        required={required}
+        placeholder={placeholder}
+        step={type === "number" ? "0.01" : undefined}
+        className="w-full rounded-lg border border-brand-border px-3 py-2 outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20"
+      />
+    </div>
+  );
+}
+
+function FormTextarea({
+  label,
+  value,
+  onChange,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-brand-ink">{label}</label>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={rows}
+        className="w-full resize-none rounded-lg border border-brand-border px-3 py-2 outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20"
+      />
     </div>
   );
 }

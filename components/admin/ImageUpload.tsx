@@ -82,10 +82,10 @@ export default function ImageUpload({ value, onChange, folder = "general", label
           {uploading ? "Uploading..." : value ? "Replace image" : "Upload image"}
         </button>
         <input
-          type="url"
+          type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="…or paste image URL"
+          placeholder="Optional image path or URL"
           className="flex-1 px-3 py-2 border border-brand-border rounded-lg text-sm focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
         />
       </div>

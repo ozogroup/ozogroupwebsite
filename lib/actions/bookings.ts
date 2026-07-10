@@ -257,6 +257,10 @@ export async function createBooking(payload: CreateBookingPayload) {
     treatment_id: treatment.id,
     treatment_name: treatment.title,
     treatment_price: treatmentPrice,
+    treatment_name_snapshot: treatment.title,
+    unit_price_snapshot: treatmentPrice,
+    discount_snapshot: 0,
+    final_amount: treatmentPrice,
     booking_type:
       treatmentType === "home_kit"
         ? "home_kit"
@@ -283,12 +287,16 @@ export async function createBooking(payload: CreateBookingPayload) {
 
   if (
     bookingResult.error &&
-    /payment_gateway|razorpay_order_id|razorpay_payment_id/i.test(bookingResult.error.message || "")
+    /payment_gateway|razorpay_order_id|razorpay_payment_id|treatment_name_snapshot|unit_price_snapshot|discount_snapshot|final_amount/i.test(bookingResult.error.message || "")
   ) {
     const fallbackPayload = { ...bookingPayload };
     delete fallbackPayload.payment_gateway;
     delete fallbackPayload.razorpay_order_id;
     delete fallbackPayload.razorpay_payment_id;
+    delete fallbackPayload.treatment_name_snapshot;
+    delete fallbackPayload.unit_price_snapshot;
+    delete fallbackPayload.discount_snapshot;
+    delete fallbackPayload.final_amount;
     bookingResult = await serviceClient
       .from("bookings" as any)
       .insert(fallbackPayload)

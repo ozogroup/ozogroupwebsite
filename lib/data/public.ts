@@ -110,7 +110,7 @@ export async function getPublicTreatments() {
     const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase
       .from("treatments" as any)
-      .select("*")
+      .select("*, treatment_images(*)")
       .eq("active", true)
       .is("deleted_at", null)
       .order("sort_order", { ascending: true })
@@ -127,9 +127,18 @@ export async function getPublicTreatments() {
 
     // Transform Supabase data to match Treatment type.
     return sorted.map((t: any) => {
+      const imageRows = Array.isArray(t.treatment_images)
+        ? [...t.treatment_images].sort((a: any, b: any) => {
+            if (Boolean(a.is_primary) !== Boolean(b.is_primary)) return a.is_primary ? -1 : 1;
+            return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+          })
+        : [];
+      const rowImages = imageRows
+        .map((image: any) => image.public_url || image.image_url)
+        .filter((image: unknown): image is string => typeof image === "string" && image.trim().length > 0);
       const gallery = resolveTreatmentImages(
         t.slug,
-        normalizeImageList(t.gallery, t.image || t.image_url)
+        rowImages.length > 0 ? rowImages : normalizeImageList(t.gallery, t.image || t.image_url)
       );
 
       return {
