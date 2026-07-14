@@ -7,6 +7,16 @@ import type { Database } from "@/lib/supabase/types";
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type UserRole = "super_admin" | "admin" | "staff" | "content_manager" | "partner" | "customer";
 
+export const ADMIN_OWNER_EMAIL = "supportkiaskincare@gmail.com";
+
+function normalizeEmail(email?: string | null) {
+  return email?.trim().toLowerCase() || "";
+}
+
+export function isAdminAuthorized(profileRole?: string | null, email?: string | null) {
+  return profileRole === "admin" || profileRole === "super_admin" || normalizeEmail(email) === ADMIN_OWNER_EMAIL;
+}
+
 /**
  * Get current authenticated user
  */
@@ -45,7 +55,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
       .from("profiles")
       .select("*")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (error || !profile) {
       return null;
@@ -140,7 +150,39 @@ export async function requireSuperAdmin() {
  * Require admin role (includes super_admin)
  */
 export async function requireAdmin() {
-  return await requireRole(["super_admin", "admin"]);
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/admin/login");
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[AUTH] requireAdmin profile fetch failed:", error.message);
+  }
+
+  if (!isAdminAuthorized(profile?.role, user.email)) {
+    redirect("/unauthorized");
+  }
+
+  return (profile ||
+    ({
+      id: user.id,
+      email: user.email || ADMIN_OWNER_EMAIL,
+      role: "admin",
+      full_name: "Admin",
+      phone: null,
+      email_verified: true,
+      phone_verified: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as Profile));
 }
 
 /**
@@ -175,7 +217,17 @@ export async function isSuperAdmin(): Promise<boolean> {
  * Check if current user is admin (includes super_admin)
  */
 export async function isAdmin(): Promise<boolean> {
-  return await hasAnyRole(["super_admin", "admin"]);
+  const user = await getCurrentUser();
+  if (!user) return false;
+
+  const supabase = await getSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return isAdminAuthorized(profile?.role, user.email);
 }
 
 /**

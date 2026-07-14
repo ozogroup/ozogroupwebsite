@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { isAdminAuthorized } from "@/lib/auth/helpers";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
 
@@ -37,21 +38,44 @@ async function handleLogin(formData: FormData) {
     redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  console.log("[ADMIN LOGIN] Auth successful, data:", data);
-  
-  // Verify user exists
-  const { data: { user } } = await supabase.auth.getUser();
+  console.log("[ADMIN LOGIN] Auth successful");
 
-  if (!user) {
+  if (!data.session || !data.user) {
+    console.log("[ADMIN LOGIN] No session returned after auth");
+    redirect("/admin/login?error=Authentication failed");
+  }
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
     console.log("[ADMIN LOGIN] No user after auth");
     redirect("/admin/login?error=Authentication failed");
   }
 
   console.log("[ADMIN LOGIN] User authenticated:", user.id);
   console.log("[ADMIN LOGIN] User email:", user.email);
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id,email,role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("[ADMIN LOGIN] Profile fetch failed:", profileError.message);
+  }
+
+  if (!isAdminAuthorized(profile?.role, user.email)) {
+    console.log("[ADMIN LOGIN] Authenticated user is not authorized for admin");
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=Unauthorized admin account");
+  }
+
   console.log("[ADMIN LOGIN] Redirecting to /admin/dashboard");
   
-  // Direct redirect to dashboard - no profile check for now
   redirect("/admin/dashboard");
 }
 

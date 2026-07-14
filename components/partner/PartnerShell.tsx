@@ -108,7 +108,7 @@ export default function PartnerShell({ children }: { children: React.ReactNode }
           <div className="border-t border-brand-border/70 p-4">
             <div className="flex items-center gap-2 rounded-2xl bg-brand-surface/80 p-2">
               <LogOut className="h-4 w-4 text-brand-muted" />
-              <LogoutButton />
+              <LogoutButton redirectTo="/partner/login" />
             </div>
           </div>
         </div>

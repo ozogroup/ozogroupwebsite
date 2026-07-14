@@ -9,8 +9,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Bypass shell entirely for login page (no sidebar/topbar)
-  const isLoginRoute = pathname === "/admin/login";
+  // Bypass shell entirely for public admin auth pages (no sidebar/topbar).
+  const isPublicAdminAuthRoute =
+    pathname === "/admin/login" ||
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/reset-password";
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     };
   }, [sidebarOpen]);
 
-  if (isLoginRoute) {
+  if (isPublicAdminAuthRoute) {
     return <>{children}</>;
   }
 

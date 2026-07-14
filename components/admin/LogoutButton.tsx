@@ -3,13 +3,19 @@
 import { useState } from "react";
 import { logoutAction } from "@/lib/auth/actions";
 
-export default function LogoutButton({ inverse = false }: { inverse?: boolean }) {
+export default function LogoutButton({
+  inverse = false,
+  redirectTo = "/admin/login",
+}: {
+  inverse?: boolean;
+  redirectTo?: string;
+}) {
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
     if (!confirm("Are you sure you want to sign out?")) return;
     setLoading(true);
-    await logoutAction();
+    await logoutAction(redirectTo);
   };
 
   return (

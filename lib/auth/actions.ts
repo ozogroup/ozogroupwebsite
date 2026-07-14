@@ -3,14 +3,15 @@
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isAdminAuthorized } from "@/lib/auth/helpers";
 
 /**
  * Sign out current user - Server Action
  */
-export async function logoutAction() {
+export async function logoutAction(redirectTo = "/admin/login") {
   const supabase = await getSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect("/");
+  redirect(redirectTo);
 }
 
 /**
@@ -46,9 +47,9 @@ export async function adminLogin(formData: FormData) {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (!profile || !["super_admin", "admin", "staff"].includes(profile.role as any)) {
+  if (!isAdminAuthorized(profile?.role, user.email)) {
     await supabase.auth.signOut();
     redirect("/admin/login?error=Unauthorized: Admin access only");
   }

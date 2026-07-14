@@ -3,6 +3,16 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const ADMIN_OWNER_EMAIL = "supportkiaskincare@gmail.com";
+
+function normalizeEmail(email?: string | null) {
+  return email?.trim().toLowerCase() || "";
+}
+
+function isAdminAuthorized(role?: string | null, email?: string | null) {
+  return role === "admin" || role === "super_admin" || normalizeEmail(email) === ADMIN_OWNER_EMAIL;
+}
+
 /**
  * Middleware for route protection
  * 
@@ -30,10 +40,12 @@ export async function middleware(req: NextRequest) {
     .map((host) => host.trim().toLowerCase())
     .filter(Boolean);
 
+  const apexOfficialHost = officialHost.replace(/^www\./, "");
+  const alternateOfficialHost = officialHost.startsWith("www.") ? apexOfficialHost : `www.${officialHost}`;
   if (
     process.env.NODE_ENV === "production" &&
     hostname !== officialHost &&
-    (hostname.endsWith(".vercel.app") || legacyHosts.includes(hostname))
+    (hostname.endsWith(".vercel.app") || legacyHosts.includes(hostname) || hostname === alternateOfficialHost)
   ) {
     return NextResponse.redirect(new URL(`${pathname}${req.nextUrl.search}`, officialUrl), 301);
   }
@@ -79,8 +91,21 @@ export async function middleware(req: NextRequest) {
   const isPartner = pathname.startsWith("/partner");
   if (!isAdmin && !isPartner) return res;
 
-  // Allow login and password reset pages without any check
-  if (pathname === "/admin/login" || pathname === "/partner/login" || pathname === "/partner/forgot-password" || pathname === "/partner/reset-password") return res;
+  if (pathname === "/admin") {
+    return NextResponse.redirect(new URL("/admin/login", req.url));
+  }
+
+  const publicAdminRoutes = new Set([
+    "/admin/login",
+    "/admin/forgot-password",
+    "/admin/reset-password",
+    "/admin/auth/callback",
+  ]);
+  const publicPartnerRoutes = new Set([
+    "/partner/login",
+    "/partner/forgot-password",
+    "/partner/reset-password",
+  ]);
 
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -95,17 +120,47 @@ export async function middleware(req: NextRequest) {
     },
   );
 
-  // Get current session
-  let session = null;
-  try {
-    const { data } = await supabase.auth.getSession();
-    session = data.session;
-  } catch (e: any) {
-    console.error("[MIDDLEWARE] Session fetch failed:", e?.message || e);
-    return NextResponse.redirect(new URL("/admin/login?error=Connection+error", req.url));
+  if (isAdmin && publicAdminRoutes.has(pathname)) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return res;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (isAdminAuthorized(profile?.role, user.email)) {
+        return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+      }
+    } catch (e: any) {
+      console.error("[MIDDLEWARE] Public admin session check failed:", e?.message || e);
+    }
+
+    return res;
   }
 
-  if (!session) {
+  if (isPartner && publicPartnerRoutes.has(pathname)) return res;
+
+  // Get trusted current user
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error("[MIDDLEWARE] User fetch failed:", error.message);
+    }
+    user = data.user;
+  } catch (e: any) {
+    console.error("[MIDDLEWARE] User fetch failed:", e?.message || e);
+    const loginPath = isAdmin ? "/admin/login" : "/partner/login";
+    return NextResponse.redirect(new URL(`${loginPath}?error=Connection+error`, req.url));
+  }
+
+  if (!user) {
     const loginPath = isAdmin ? "/admin/login" : "/partner/login";
     return NextResponse.redirect(new URL(loginPath, req.url));
   }
@@ -115,18 +170,19 @@ export async function middleware(req: NextRequest) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", session.user.id)
-      .single();
+      .eq("id", user.id)
+      .maybeSingle();
 
     const allowed = isAdmin
-      ? ["super_admin", "admin"].includes(profile?.role || "")
+      ? isAdminAuthorized(profile?.role, user.email)
       : profile?.role === "partner";
     if (!allowed) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
   } catch (e: any) {
     console.error("[MIDDLEWARE] Profile fetch failed:", e?.message || e);
-    return NextResponse.redirect(new URL("/partner/login?error=Connection+error", req.url));
+    const loginPath = isAdmin ? "/admin/login" : "/partner/login";
+    return NextResponse.redirect(new URL(`${loginPath}?error=Connection+error`, req.url));
   }
 
   return res;
