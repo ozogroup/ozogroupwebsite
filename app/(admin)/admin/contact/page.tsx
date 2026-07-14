@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { getContactSettings, updateContactSettings } from "@/lib/actions/contact";
 
 const OFFICIAL_EMAIL = "supportkiaskincare@gmail.com";
 const OFFICIAL_FACEBOOK = "https://www.facebook.com/profile.php?id=61591206116153&mibextid=ZbWKwL";
@@ -26,45 +26,38 @@ export default function AdminContactSettingsPage() {
     youtube_url: "",
   });
 
-  const supabase = getSupabaseBrowserClient();
-
-  function withoutWeeklyOff<T extends Record<string, any>>(data: T) {
-    const { weekly_off, ...rest } = data;
-    return rest;
-  }
-
-  function isMissingWeeklyOffColumn(error: any) {
-    return /weekly_off/i.test(error?.message || "") || /weekly_off/i.test(error?.details || "");
-  }
-
   useEffect(() => {
     loadSettings();
   }, []);
 
   async function loadSettings() {
     setLoading(true);
-    const { data, error } = await supabase.from("contact_settings" as any).select("*").single();
-    
-    if (error) {
-      console.error("Error loading contact settings:", error);
+    setError("");
+    try {
+      const data = await getContactSettings();
+      if (data) {
+        const settingsData = data as any;
+        setSettings(settingsData);
+        setFormData({
+          phone: settingsData.phone || "",
+          whatsapp: settingsData.whatsapp || settingsData.whatsapp_number || settingsData.whatsapp_url || "",
+          email: settingsData.email || OFFICIAL_EMAIL,
+          address: settingsData.address || "",
+          business_hours: settingsData.business_hours || "",
+          weekly_off: settingsData.weekly_off || "",
+          facebook_url: settingsData.facebook_url || OFFICIAL_FACEBOOK,
+          instagram_url: settingsData.instagram_url || OFFICIAL_INSTAGRAM,
+          youtube_url: settingsData.youtube_url || "",
+        });
+      } else {
       // Auto-create if missing
-      await createDefaultSettings();
-    } else if (data) {
-      const settingsData = data as any;
-      setSettings(settingsData);
-      setFormData({
-        phone: settingsData.phone || "",
-        whatsapp: settingsData.whatsapp || settingsData.whatsapp_number || settingsData.whatsapp_url || "",
-        email: settingsData.email || OFFICIAL_EMAIL,
-        address: settingsData.address || "",
-        business_hours: settingsData.business_hours || "",
-        weekly_off: settingsData.weekly_off || "",
-        facebook_url: settingsData.facebook_url || OFFICIAL_FACEBOOK,
-        instagram_url: settingsData.instagram_url || OFFICIAL_INSTAGRAM,
-        youtube_url: settingsData.youtube_url || "",
-      });
+        await createDefaultSettings();
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to load contact settings");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function createDefaultSettings() {
@@ -80,18 +73,12 @@ export default function AdminContactSettingsPage() {
       youtube_url: "",
     };
 
-    let result = await (supabase as any).from("contact_settings").insert(defaultData).select().single();
-    if (result.error && isMissingWeeklyOffColumn(result.error)) {
-      result = await (supabase as any).from("contact_settings").insert(withoutWeeklyOff(defaultData)).select().single();
-    }
-    const { data, error } = result;
-    
-    if (error) {
-      console.error("Error creating default settings:", error);
-      setError("Failed to create default contact settings");
-    } else if (data) {
+    try {
+      const data = await updateContactSettings(defaultData);
       setSettings(data);
       setFormData(defaultData);
+    } catch (err: any) {
+      setError(err.message || "Failed to create default contact settings");
     }
   }
 
@@ -114,23 +101,12 @@ export default function AdminContactSettingsPage() {
         youtube_url: formData.youtube_url,
       };
 
-      if (settings) {
-        let result = await (supabase as any).from("contact_settings").update(data).eq("id", settings.id);
-        if (result.error && isMissingWeeklyOffColumn(result.error)) {
-          result = await (supabase as any).from("contact_settings").update(withoutWeeklyOff(data)).eq("id", settings.id);
-        }
-        if (result.error) throw result.error;
-      } else {
-        let result = await (supabase as any).from("contact_settings").insert(data);
-        if (result.error && isMissingWeeklyOffColumn(result.error)) {
-          result = await (supabase as any).from("contact_settings").insert(withoutWeeklyOff(data));
-        }
-        if (result.error) throw result.error;
-      }
+      const saved = await updateContactSettings(data);
 
+      setSettings(saved);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      loadSettings();
+      await loadSettings();
     } catch (err: any) {
       setError(err.message || "Failed to save contact settings");
     } finally {

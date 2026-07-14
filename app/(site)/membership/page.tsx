@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { site } from "@/lib/site";
-import { createMembership } from "@/lib/actions/memberships";
+import { createMembership, lookupReferralCode } from "@/lib/actions/memberships";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { LEGACY_REFERRAL_STORAGE_KEY, REFERRAL_STORAGE_KEY } from "@/components/ReferralTracker";
 
@@ -27,6 +27,11 @@ export default function MembershipPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [duplicateEmail, setDuplicateEmail] = useState(false);
+  const [referralStatus, setReferralStatus] = useState<{
+    state: "idle" | "checking" | "valid" | "invalid";
+    message: string;
+  }>({ state: "idle", message: "" });
 
   useEffect(() => {
     try {
@@ -43,9 +48,36 @@ export default function MembershipPage() {
     } catch {}
   }, []);
 
+  useEffect(() => {
+    const code = formData.referralCode.trim();
+    if (!code) {
+      setReferralStatus({ state: "idle", message: "" });
+      return;
+    }
+
+    setReferralStatus({ state: "checking", message: "Checking referral ID..." });
+    const timer = window.setTimeout(async () => {
+      const result = await lookupReferralCode(code, formData.email);
+      if (result.valid) {
+        setReferralStatus({
+          state: "valid",
+          message: result.partnerName ? `Referred by: ${result.partnerName}` : "",
+        });
+      } else {
+        setReferralStatus({
+          state: "invalid",
+          message: result.error || "Referral ID not found",
+        });
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [formData.referralCode, formData.email]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setDuplicateEmail(false);
 
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -54,6 +86,11 @@ export default function MembershipPage() {
 
     if (formData.password !== formData.confirmPassword) {
       setError("Password and Confirm Password do not match.");
+      return;
+    }
+
+    if (formData.referralCode.trim() && referralStatus.state === "invalid") {
+      setError(referralStatus.message || "Referral ID not found");
       return;
     }
 
@@ -74,6 +111,7 @@ export default function MembershipPage() {
 
     if (result.error) {
       setError(result.error);
+      setDuplicateEmail(Boolean((result as any).duplicate));
       setLoading(false);
     } else {
       const supabase = getSupabaseBrowserClient();
@@ -238,6 +276,16 @@ export default function MembershipPage() {
                   {error && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
                       <p className="text-sm text-red-600">{error}</p>
+                      {duplicateEmail && (
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <Link href="/partner/login" className="text-sm font-semibold text-brand-primary hover:text-brand-accent">
+                            Login
+                          </Link>
+                          <Link href="/partner/forgot-password" className="text-sm font-semibold text-brand-primary hover:text-brand-accent">
+                            Forgot Password
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div>
@@ -379,10 +427,26 @@ export default function MembershipPage() {
                       id="referralCode"
                       name="referralCode"
                       value={formData.referralCode}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        const value = e.target.value.toUpperCase().replace(/^OZO(?=\d+$)/, "KIA");
+                        setFormData({ ...formData, referralCode: value });
+                      }}
                       className="w-full px-4 py-3 rounded-2xl border border-brand-border/60 bg-white text-brand-ink focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
                       placeholder="Enter referral code if you have one"
                     />
+                    {referralStatus.message && (
+                      <p
+                        className={`mt-2 text-sm ${
+                          referralStatus.state === "valid"
+                            ? "text-green-700"
+                            : referralStatus.state === "invalid"
+                              ? "text-red-600"
+                              : "text-brand-muted"
+                        }`}
+                      >
+                        {referralStatus.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -402,7 +466,7 @@ export default function MembershipPage() {
 
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || referralStatus.state === "checking"}
                     className="w-full btn-primary justify-center shadow-soft hover:shadow-card transition-shadow disabled:opacity-60"
                   >
                     {loading ? "Submitting..." : "Book Membership · ₹1,199"}

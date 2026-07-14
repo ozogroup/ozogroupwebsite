@@ -211,7 +211,7 @@ export default function AdminMembershipsPage() {
           <table className="w-full min-w-[1320px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Name / IDs</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Phone</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">City</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Email</th>
@@ -238,7 +238,13 @@ export default function AdminMembershipsPage() {
               ) : (
                 memberships.map((membership) => (
                   <tr key={membership.id} className="transition-colors hover:bg-brand-surface/30">
-                    <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">{membership.full_name}</td>
+                    <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">
+                      <p>{membership.full_name}</p>
+                      <div className="mt-1 space-y-0.5 text-[11px] font-normal text-brand-muted">
+                        <p>Membership ID: {membership.membership_id || "-"}</p>
+                        <p>Partner ID: {membership.partners?.partner_code || "-"}</p>
+                      </div>
+                    </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.mobile}</td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.city}</td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.email}</td>

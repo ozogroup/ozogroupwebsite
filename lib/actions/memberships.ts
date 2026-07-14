@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
-import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
-import { generateKiaPartnerCode, isPartnerCodeConflict, normalizeKiaPartnerCode } from "@/lib/partner-code";
+import { resolvePartnerByCode } from "@/lib/actions/referral-tracking";
+import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 import { syncMembershipCreated, syncPartnerApproved } from "@/lib/integrations/google-sheet-sync";
 
 // =====================================================
@@ -13,10 +13,6 @@ import { syncMembershipCreated, syncPartnerApproved } from "@/lib/integrations/g
 // =====================================================
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type PartnerInsertResult =
-  | { partnerCode: string; referralLink: string }
-  | { error: { message?: string } };
 
 export type MembershipRegistrationInput = {
   full_name: string;
@@ -30,26 +26,6 @@ export type MembershipRegistrationInput = {
   password: string;
   confirm_password: string;
 };
-
-async function insertPartnerWithKiaCode(
-  supabase: ReturnType<typeof getSupabaseServiceClient>,
-  partnerData: Record<string, unknown>
-): Promise<PartnerInsertResult> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const partnerCode = await generateKiaPartnerCode(supabase);
-    const referralLink = getReferralUrl(partnerCode);
-    const { error } = await supabase.from("partners" as any).insert({
-      ...partnerData,
-      partner_code: partnerCode,
-      referral_link: referralLink,
-    });
-
-    if (!error) return { partnerCode, referralLink };
-    if (!isPartnerCodeConflict(error)) return { error };
-  }
-
-  return { error: new Error("Unable to reserve a unique partner ID. Please try again.") };
-}
 
 function toIndianAuthPhone(mobile: string) {
   const digits = mobile.replace(/\D/g, "");
@@ -66,6 +42,38 @@ async function getMembershipAmount(supabase: ReturnType<typeof getSupabaseServic
     .maybeSingle();
 
   return Number((data as any)?.membership_price || 1199);
+}
+
+function duplicateMembershipMessage() {
+  return "This email is already registered. Please log in to the Partner Portal or use Forgot Password.";
+}
+
+export async function lookupReferralCode(referralCode: string, currentEmail?: string) {
+  const code = normalizeKiaPartnerCode(referralCode);
+  if (!code) return { valid: true, partnerName: "", partnerCode: "" };
+
+  const supabase = getSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("partners" as any)
+    .select("id, partner_code, status, is_active, deleted_at, profiles(email, full_name)")
+    .eq("partner_code", code)
+    .maybeSingle();
+
+  const row = data as any;
+  const profile = Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
+  if (error || !row || row.status !== "active" || row.is_active === false || row.deleted_at) {
+    return { valid: false, partnerName: "", partnerCode: code };
+  }
+
+  if (currentEmail && profile?.email?.toLowerCase() === currentEmail.trim().toLowerCase()) {
+    return { valid: false, partnerName: "", partnerCode: code, error: "Self-referral is not allowed." };
+  }
+
+  return {
+    valid: true,
+    partnerName: profile?.full_name || "KIA Partner",
+    partnerCode: row.partner_code,
+  };
 }
 
 export async function getMembershipRequests() {
@@ -191,6 +199,10 @@ export async function createMembership(data: MembershipRegistrationInput) {
   const sponsor = await resolvePartnerByCode(serviceClient, referralCode);
   const membershipAmount = await getMembershipAmount(serviceClient);
 
+  if (referralCode && !sponsor) {
+    return { error: "Referral ID not found" };
+  }
+
   const { data: existingProfile, error: existingProfileError } = await serviceClient
     .from("profiles" as any)
     .select("id")
@@ -203,7 +215,19 @@ export async function createMembership(data: MembershipRegistrationInput) {
   }
 
   if (existingProfile) {
-    return { error: "An account with this email already exists. Please use a different email or log in." };
+    return { error: duplicateMembershipMessage(), duplicate: true };
+  }
+
+  if (sponsor && (sponsor as any).id) {
+    const { data: sponsorProfile } = await serviceClient
+      .from("profiles" as any)
+      .select("email")
+      .eq("id", (sponsor as any).id)
+      .maybeSingle();
+
+    if ((sponsorProfile as any)?.email?.toLowerCase() === normalizedEmail) {
+      return { error: "Self-referral is not allowed." };
+    }
   }
 
   const { data: authUser, error: authError } = await serviceClient.auth.admin.createUser({
@@ -221,9 +245,9 @@ export async function createMembership(data: MembershipRegistrationInput) {
   if (authError || !authUser.user) {
     console.error("Error creating auth user:", authError);
     const message = authError?.message?.toLowerCase().includes("already")
-      ? "An account with this email already exists. Please use a different email or log in."
+      ? duplicateMembershipMessage()
       : "Failed to create user account. Please try again.";
-    return { error: message };
+    return { error: message, duplicate: authError?.message?.toLowerCase().includes("already") };
   }
 
   const authUserId = authUser.user.id;
@@ -242,20 +266,22 @@ export async function createMembership(data: MembershipRegistrationInput) {
     return { error: "Failed to create user profile. Please try again." };
   }
 
-  const pendingPartner = await insertPartnerWithKiaCode(serviceClient, {
+  const { error: pendingPartnerError } = await serviceClient.from("partners" as any).insert({
     id: authUserId,
     city: data.city.trim(),
     address: data.address.trim(),
     pin_code: data.pin_code.trim(),
     sponsor_id: (sponsor as any)?.id || null,
+    partner_code: null,
+    referral_link: null,
     status: "pending",
     wallet_balance: 0,
     total_earnings: 0,
     paid_earnings: 0,
   });
 
-  if ("error" in pendingPartner) {
-    console.error("Error creating pending partner:", pendingPartner.error);
+  if (pendingPartnerError) {
+    console.error("Error creating pending partner:", pendingPartnerError);
     await serviceClient.from("profiles" as any).delete().eq("id", authUserId);
     await serviceClient.auth.admin.deleteUser(authUserId);
     return { error: "Failed to create pending partner request. Please try again." };
@@ -370,163 +396,29 @@ export async function createSponsoredMembership(
 
 export async function approveAndCreatePartner(membershipId: string) {
   await requireAdmin();
-  const serviceClient = getSupabaseServiceClient();
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await (supabase as any).rpc("kia_approve_paid_membership", {
+    membership_uuid: membershipId,
+  });
 
-  // 1. Fetch membership
-  const { data: membership, error: fetchError } = await serviceClient
-    .from("memberships" as any)
-    .select("*")
-    .eq("id", membershipId)
-    .single();
-
-  if (fetchError || !membership) {
-    return { error: "Membership not found" };
+  if (error) {
+    console.error("Error approving membership:", error);
+    return { error: error.message || "Failed to approve membership." };
   }
 
-  // 2. Validate payment is paid
-  if ((membership as any).payment_status !== "paid") {
-    return { error: "Payment must be marked as paid before approval" };
+  const approved = Array.isArray(data) ? data[0] : data;
+  if (!approved?.partner_code) {
+    return { error: "Membership approval did not return a Partner ID." };
   }
 
-  // 3. Check if already approved
-  if ((membership as any).membership_status === "active") {
-    return { error: "Membership is already approved" };
-  }
-
-  const email = (membership as any).email;
-  const fullName = (membership as any).full_name;
-  const mobile = (membership as any).mobile;
-  const city = (membership as any).city;
-  const pendingPartnerId = (membership as any).partner_id as string | null;
-
-  // 4. Check if profile already exists for this email
-  const { data: existingProfile } = await serviceClient
-    .from("profiles" as any)
-    .select("id, role")
-    .eq(pendingPartnerId ? "id" : "email", pendingPartnerId || email)
-    .maybeSingle();
-
-  const profile = existingProfile as any;
-  let userId: string;
-
-  if (profile) {
-    userId = profile.id;
-    // Update role to partner if not already
-    if (profile.role !== "partner") {
-      await serviceClient
-        .from("profiles" as any)
-        .update({ role: "partner", updated_at: new Date().toISOString() })
-        .eq("id", userId);
-    }
-  } else {
-    // Create auth user via admin API using service role client
-    // Must provide an initial password so the user has a password auth method;
-    // otherwise updateUser({password}) in the reset flow silently fails.
-    const initialPassword = crypto.randomUUID() + crypto.randomUUID();
-    const { data: newUser, error: createUserError } = await serviceClient.auth.admin.createUser({
-      email,
-      password: initialPassword,
-      email_confirm: true,
-      user_metadata: { full_name: fullName, phone: mobile },
-    });
-
-    if (createUserError) {
-      console.error("Error creating auth user:", createUserError);
-      return { error: "Failed to create user account: " + createUserError.message };
-    }
-
-    userId = newUser.user.id;
-
-    // Create profile using service client to bypass RLS
-    const { error: profileInsertError } = await serviceClient.from("profiles" as any).insert({
-      id: userId,
-      email,
-      full_name: fullName,
-      phone: mobile,
-      role: "partner",
-    });
-
-    if (profileInsertError) {
-      console.error("Error creating profile:", profileInsertError);
-      return { error: "Failed to create partner profile: " + profileInsertError.message };
-    }
-  }
-
-  // 5. Check if partner row already exists
-  const { data: existingPartner } = await serviceClient
-    .from("partners" as any)
-    .select("id, partner_code, referral_link, sponsor_id, status")
-    .eq("id", userId)
-    .maybeSingle();
-
-  const partner = existingPartner as any;
-  let partnerCode: string;
-  let referralLink: string;
-
-  const startedAt = new Date();
-  const expiresAt = new Date(startedAt);
-  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
-  if (partner) {
-    partnerCode = partner.partner_code;
-    referralLink = getReferralUrl(partnerCode);
-    const partnerUpdate: Record<string, unknown> = {
-      status: "active",
-      membership_started_at: startedAt.toISOString(),
-      membership_expires_at: expiresAt.toISOString(),
-      membership_purchased_at: startedAt.toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    if (!partner.sponsor_id && (membership as any).sponsor_id) {
-      partnerUpdate.sponsor_id = (membership as any).sponsor_id;
-    }
-
-    // Preserve the sponsor relationship while activating the existing pending partner.
-    await serviceClient
-      .from("partners" as any)
-      .update(partnerUpdate)
-      .eq("id", userId);
-  } else {
-    const createdPartner = await insertPartnerWithKiaCode(serviceClient, {
-      id: userId,
-      city,
-      sponsor_id: (membership as any).sponsor_id || null,
-      status: "active",
-      wallet_balance: 0,
-      total_earnings: 0,
-      paid_earnings: 0,
-      membership_purchased_at: startedAt.toISOString(),
-      membership_started_at: startedAt.toISOString(),
-      membership_expires_at: expiresAt.toISOString(),
-    });
-
-    if ("error" in createdPartner) {
-      console.error("Error creating partner:", createdPartner.error);
-      return { error: "Failed to create partner: " + (createdPartner.error.message || "Unknown error") };
-    }
-
-    partnerCode = createdPartner.partnerCode;
-    referralLink = createdPartner.referralLink;
-  }
-
-  // 8. Update membership
-  const { error: updateError } = await serviceClient
-    .from("memberships" as any)
-    .update({
-      membership_status: "active",
-      partner_id: userId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", membershipId);
-
-  if (updateError) {
-    console.error("Error updating membership:", updateError);
-    return { error: "Failed to update membership: " + updateError.message };
-  }
-
-  if ((membership as any).sponsor_id) {
-    await createReferralTreeForPartner(serviceClient, userId, (membership as any).sponsor_id);
-  }
+  const partnerCode = approved.partner_code as string;
+  const referralLink = approved.referral_link || getReferralUrl(partnerCode);
+  const userId = approved.partner_id as string;
+  const fullName = approved.full_name as string;
+  const email = approved.email as string;
+  const mobile = approved.phone as string;
+  const city = approved.city as string;
+  const approvedAt = approved.approved_at as string;
 
   await syncPartnerApproved({
     id: userId,
@@ -535,7 +427,7 @@ export async function approveAndCreatePartner(membershipId: string) {
     email,
     phone: mobile,
     city,
-    approved_at: startedAt.toISOString(),
+    approved_at: approvedAt,
   });
 
   revalidatePath("/admin/memberships");

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeIndianRupee, LockKeyhole, Network, ShieldCheck, Sparkles, Users } from "lucide-react";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
-import { resolvePartnerLoginEmail } from "@/lib/actions/partner-login";
+import { getPartnerLoginAccessStatus, resolvePartnerLoginEmail } from "@/lib/actions/partner-login";
 
 const LOGIN_ERROR = "Invalid email/mobile or password.";
 
@@ -29,7 +29,10 @@ export default function PartnerLoginPage() {
 
       const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
       const supabase = getSupabaseBrowserClient();
-      const resolved = await resolvePartnerLoginEmail(identifier);
+      const login = identifier.trim();
+      const resolved = login.includes("@")
+        ? { email: login.toLowerCase() }
+        : await resolvePartnerLoginEmail(identifier);
 
       if (resolved.error || !resolved.email) {
         setError(LOGIN_ERROR);
@@ -43,6 +46,13 @@ export default function PartnerLoginPage() {
 
       if (loginError) {
         setError(LOGIN_ERROR);
+        return;
+      }
+
+      const access = await getPartnerLoginAccessStatus(resolved.email);
+      if (!access.allowed) {
+        await supabase.auth.signOut();
+        setError(access.message || LOGIN_ERROR);
         return;
       }
 

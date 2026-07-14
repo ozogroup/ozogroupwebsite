@@ -36,12 +36,21 @@ export async function resolvePartnerByCode(supabase: any, referralCode?: string 
 
   const { data, error } = await supabase
     .from("partners")
-    .select("id, partner_code")
+    .select("id, partner_code, status, is_active, deleted_at")
     .eq("partner_code", code)
     .maybeSingle();
 
   if (error) {
     console.error("Error resolving referral code:", error);
+    return null;
+  }
+
+  if (
+    !data ||
+    data.status !== "active" ||
+    data.is_active === false ||
+    data.deleted_at
+  ) {
     return null;
   }
 

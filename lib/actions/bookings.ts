@@ -282,12 +282,12 @@ export async function createBooking(payload: CreateBookingPayload) {
   let bookingResult = await serviceClient
     .from("bookings" as any)
     .insert(bookingPayload)
-    .select("id, created_at")
+    .select("id, booking_id, treatment_order_id, created_at")
     .single();
 
   if (
     bookingResult.error &&
-    /payment_gateway|razorpay_order_id|razorpay_payment_id|treatment_name_snapshot|unit_price_snapshot|discount_snapshot|final_amount/i.test(bookingResult.error.message || "")
+    /payment_gateway|razorpay_order_id|razorpay_payment_id|treatment_name_snapshot|unit_price_snapshot|discount_snapshot|final_amount|booking_id|treatment_order_id/i.test(bookingResult.error.message || "")
   ) {
     const fallbackPayload = { ...bookingPayload };
     delete fallbackPayload.payment_gateway;
@@ -344,7 +344,14 @@ export async function createBooking(payload: CreateBookingPayload) {
   revalidatePath("/admin/bookings");
   revalidatePath("/admin/dashboard");
   revalidatePath("/partner/dashboard");
-  return { data: { booking_id: (booking as any).id, message: "Booking request submitted successfully. Our team will contact you shortly." } };
+  return {
+    data: {
+      id: (booking as any).id,
+      booking_id: (booking as any).booking_id || (booking as any).id,
+      treatment_order_id: (booking as any).treatment_order_id || null,
+      message: "Booking request submitted successfully. Our team will contact you shortly.",
+    },
+  };
 }
 
 export async function getBookingById(id: string) {
