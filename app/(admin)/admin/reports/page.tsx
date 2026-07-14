@@ -27,14 +27,13 @@ export default async function AdminReportsPage() {
   await requireAdmin();
   const supabase = await getSupabaseServerClient();
 
-  const [{ data: bookings }, { data: memberships }, { data: commissions }, { data: payouts }, { data: partners }, { data: sales }] =
+  const [{ data: bookings }, { data: memberships }, { data: commissions }, { data: payouts }, { data: partners }] =
     await Promise.all([
-      supabase.from("bookings" as any).select("id,customer_name,customer_phone,treatment_name,treatment_price,payment_amount,booking_status,created_at,partner_code"),
+      supabase.from("bookings" as any).select("id,booking_id,treatment_order_id,customer_name,customer_phone,treatment_name,treatment_price,payment_amount,booking_status,payment_status,created_at,partner_code,referred_by"),
       supabase.from("memberships" as any).select("id,full_name,mobile,amount,payment_amount,membership_status,payment_status,referral_code,sponsor_id,created_at"),
-      supabase.from("commissions" as any).select("id,partner_id,source_type,level,percentage,amount,status,created_at"),
+      supabase.from("commissions" as any).select("id,partner_id,source_type,source_id,source_amount,level,percentage,amount,status,payout_id,created_at,paid_at"),
       supabase.from("payouts" as any).select("id,partner_id,gross_amount,deduction_rate,deduction_amount,net_amount,amount,status,created_at"),
       supabase.from("partners" as any).select("id,partner_code,status,wallet_balance,total_earnings,paid_earnings,sponsor_id,created_at,profiles(full_name)"),
-      supabase.from("partner_sales" as any).select("id,partner_id,treatment_name,treatment_price,booking_status,commission_amount,created_at"),
     ]);
 
   const bookingRows = bookings || [];
@@ -44,7 +43,6 @@ export default async function AdminReportsPage() {
   );
   const payoutRows = payouts || [];
   const partnerRows = partners || [];
-  const salesRows = sales || [];
 
   const membershipSales = membershipRows.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.amount || 0), 0);
   const treatmentSales = bookingRows.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.treatment_price || 0), 0);

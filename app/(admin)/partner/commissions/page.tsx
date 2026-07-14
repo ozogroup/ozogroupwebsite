@@ -1,12 +1,22 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+function amount(row: any) {
+  return Number(row.amount || 0);
+}
+
+function money(value: number) {
+  return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
+}
 
 export default async function PartnerCommissionsPage() {
   await requirePartner();
   const supabase = await getSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return <div>User not found</div>;
 
   const { data: commissions } = await supabase
@@ -16,53 +26,92 @@ export default async function PartnerCommissionsPage() {
     .order("created_at", { ascending: false });
 
   const activeCommissions = (commissions || []).filter(
-    (c: any) => !c.reversed && c.deleted_at == null && c.status !== "rejected"
+    (commission: any) => !commission.reversed && commission.deleted_at == null && commission.status !== "rejected"
   );
-  const totalEarned = activeCommissions.filter((c: any) => ["approved", "paid"].includes(c.status)).reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
-  const totalPending = activeCommissions.filter((c: any) => c.status === "pending").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
-  const totalPaid = activeCommissions.filter((c: any) => c.status === "paid").reduce((s: number, c: any) => s + (c.amount || c.commission_amount || 0), 0);
+  const totalEarned = activeCommissions
+    .filter((commission: any) => ["approved", "paid"].includes(commission.status))
+    .reduce((sum: number, commission: any) => sum + amount(commission), 0);
+  const totalPending = activeCommissions
+    .filter((commission: any) => commission.status === "pending")
+    .reduce((sum: number, commission: any) => sum + amount(commission), 0);
+  const totalPaid = activeCommissions
+    .filter((commission: any) => commission.status === "paid")
+    .reduce((sum: number, commission: any) => sum + amount(commission), 0);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Commission History</h1>
-        <p className="text-slate-600">View your commission transactions</p>
+        <p className="text-slate-600">View your commission transactions.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200"><p className="text-sm text-slate-600 mb-1">Total Earned</p><p className="text-2xl font-bold text-slate-900">₹{totalEarned.toLocaleString()}</p></div>
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200"><p className="text-sm text-slate-600 mb-1">Pending</p><p className="text-2xl font-bold text-amber-600">₹{totalPending.toLocaleString()}</p></div>
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200"><p className="text-sm text-slate-600 mb-1">Paid</p><p className="text-2xl font-bold text-green-600">₹{totalPaid.toLocaleString()}</p></div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <SummaryCard label="Total Earned" value={money(totalEarned)} tone="default" />
+        <SummaryCard label="Pending" value={money(totalPending)} tone="warning" />
+        <SummaryCard label="Paid" value={money(totalPaid)} tone="success" />
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px]">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Source</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Level</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
-            {!commissions || commissions.length === 0 ? (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-500">No commissions found</td></tr>
-            ) : commissions.map((c: any) => (
-              <tr key={c.id} className="hover:bg-slate-50">
-                <td className="px-6 py-4 text-sm text-slate-900">{c.source || "Treatment booking"}</td>
-                <td className="px-6 py-4 text-sm text-slate-600">Level {c.level || 1}</td>
-                <td className="px-6 py-4 text-sm font-semibold text-green-600">₹{(c.amount || c.commission_amount || 0).toLocaleString()}</td>
-                <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-xs font-medium ${c.status === "paid" ? "bg-green-100 text-green-700" : c.status === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-slate-100 text-slate-700"}`}>{(c.status || "pending").toUpperCase()}</span></td>
-                <td className="px-6 py-4 text-sm text-slate-600">{new Date(c.created_at).toLocaleDateString()}</td>
+          <table className="w-full min-w-[760px]">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Source</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Level</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Rate</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {!commissions || commissions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    No commissions found
+                  </td>
+                </tr>
+              ) : (
+                commissions.map((commission: any) => (
+                  <tr key={commission.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 text-sm text-slate-900">
+                      {commission.source_type === "membership" ? "Membership" : "Treatment booking"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">Level {commission.level || 1}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{Number(commission.percentage || 0)}%</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-green-600">{money(amount(commission))}</td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusClass(commission.status)}`}>
+                        {(commission.status || "pending").toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {commission.created_at ? new Date(commission.created_at).toLocaleDateString("en-IN") : "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
+}
+
+function SummaryCard({ label, value, tone }: { label: string; value: string; tone: "default" | "warning" | "success" }) {
+  const toneClass = tone === "warning" ? "text-amber-600" : tone === "success" ? "text-green-600" : "text-slate-900";
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="mb-1 text-sm text-slate-600">{label}</p>
+      <p className={`text-2xl font-bold ${toneClass}`}>{value}</p>
+    </div>
+  );
+}
+
+function statusClass(status: string) {
+  if (status === "paid") return "bg-green-100 text-green-700";
+  if (status === "pending") return "bg-yellow-100 text-yellow-700";
+  if (status === "rejected") return "bg-red-100 text-red-700";
+  return "bg-slate-100 text-slate-700";
 }

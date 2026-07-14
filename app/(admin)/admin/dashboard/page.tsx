@@ -102,20 +102,21 @@ export default async function AdminDashboardPage({
     })(),
     safeQuery(() => (supabase as any).from("bookings").select("payment_amount,treatment_name,treatment_price,created_at").gte("created_at", monthStart.toISOString())),
     safeQuery(() => (supabase as any).from("payouts").select("amount,status")),
-    safeQuery(() => (supabase as any).from("partner_sales").select("treatment_name,treatment_price,partner_id")),
+    safeQuery(() => (supabase as any).from("bookings").select("treatment_name,treatment_price,payment_amount,booking_status,payment_status,referred_by,partner_code")),
   ]);
 
   const monthlyRevenue = monthlyBookings.reduce((sum: number, b: any) => sum + Number(b.payment_amount || b.treatment_price || 0), 0);
   const totalPayoutAmount = allPayouts.filter((p: any) => p.status === "paid").reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-  const treatmentRanking = allSales.reduce((acc: Record<string, number>, s: any) => {
+  const confirmedSalesRows = allSales.filter((s: any) => ["confirmed", "completed"].includes(String(s.booking_status)));
+  const treatmentRanking = confirmedSalesRows.reduce((acc: Record<string, number>, s: any) => {
     const name = s.treatment_name || "Unknown";
     acc[name] = (acc[name] || 0) + 1;
     return acc;
   }, {});
   const topSellingTreatment = Object.entries(treatmentRanking).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || "No sales yet";
-  const partnerRanking = allSales.reduce((acc: Record<string, { name: string; count: number }>, s: any) => {
-    const id = s.partner_id || "unknown";
-    acc[id] = acc[id] || { name: id === "unknown" ? "Unknown" : `Partner ${String(id).slice(0, 8)}`, count: 0 };
+  const partnerRanking = confirmedSalesRows.reduce((acc: Record<string, { name: string; count: number }>, s: any) => {
+    const id = s.referred_by || s.partner_code || "direct";
+    acc[id] = acc[id] || { name: id === "direct" ? "Direct sales" : String(id), count: 0 };
     acc[id].count += 1;
     return acc;
   }, {});
@@ -130,7 +131,7 @@ export default async function AdminDashboardPage({
       (supabase as any).from("commissions").select("amount,level,status,created_at"),
       (supabase as any).from("payouts").select("amount,status,created_at"),
       (supabase as any).from("partners").select("id,partner_code,wallet_balance,profiles(full_name)"),
-      (supabase as any).from("partner_sales").select("partner_id,treatment_price,booking_status,created_at"),
+      (supabase as any).from("bookings").select("referred_by,partner_code,treatment_price,payment_amount,booking_status,created_at"),
     ]);
   const filteredBookings = (periodBookings || []).filter((row: any) => range.includes(row.created_at));
   const filteredCommissions = (periodCommissions || []).filter((row: any) => range.includes(row.created_at) && ["approved", "paid"].includes(String(row.status)));
@@ -143,7 +144,8 @@ export default async function AdminDashboardPage({
   const periodPendingPayouts = filteredPayouts.filter((row: any) => ["requested", "processing"].includes(row.status));
   const periodPaidPayouts = filteredPayouts.filter((row: any) => row.status === "paid");
   const partnerSales = filteredSales.reduce((acc: Record<string, number>, row: any) => {
-    acc[row.partner_id || "direct"] = (acc[row.partner_id || "direct"] || 0) + Number(row.treatment_price || 0);
+    const partnerKey = row.referred_by || row.partner_code || "direct";
+    acc[partnerKey] = (acc[partnerKey] || 0) + Number(row.payment_amount || row.treatment_price || 0);
     return acc;
   }, {});
   const partnerLookup = new Map<string, string>(

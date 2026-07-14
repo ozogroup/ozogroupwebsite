@@ -116,7 +116,7 @@ export default async function PartnerDashboardPage({
     );
   }
 
-  const [referrals, directTeam, referralTreeData, commissionsData, payoutsData, bookingsData, salesData, sponsoredMemberships] =
+  const [referrals, directTeam, referralTreeData, commissionsData, payoutsData, bookingsData, sponsoredMemberships] =
     await Promise.all([
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id),
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
@@ -125,22 +125,16 @@ export default async function PartnerDashboardPage({
       supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", user.id),
       supabase
         .from("bookings" as any)
-        .select("id,customer_name,customer_phone,booking_status,created_at,treatment_name,treatment_price")
+        .select("id,customer_name,customer_phone,booking_status,payment_status,created_at,treatment_name,treatment_price,payment_amount")
         .eq("referred_by", user.id)
-        .order("created_at", { ascending: false })
-        .limit(8),
-      supabase
-        .from("partner_sales" as any)
-        .select("treatment_name,treatment_price,booking_status,commission_amount,created_at,customer_name,customer_phone")
-        .eq("partner_id", user.id)
         .order("created_at", { ascending: false }),
       getSponsoredMembershipRequests(100),
     ]);
 
   const commissions = (commissionsData as any)?.data || [];
   const payouts = (payoutsData as any)?.data || [];
-  const bookings = (bookingsData as any)?.data || [];
-  const sales = (salesData as any)?.data || [];
+  const sales = (bookingsData as any)?.data || [];
+  const bookings = sales.slice(0, 8);
   const referralRows = (referralTreeData as any)?.data || [];
   const range = resolveDateRange(resolvedSearchParams);
   const filteredCommissions = commissions.filter((row: any) => range.includes(row.created_at));
@@ -168,7 +162,7 @@ export default async function PartnerDashboardPage({
     .filter((p: any) => p.status === "paid")
     .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
-  const totalSales = sales.reduce((sum: number, s: any) => sum + Number(s.treatment_price || 0), 0);
+  const totalSales = sales.reduce((sum: number, s: any) => sum + Number(s.payment_amount || s.treatment_price || 0), 0);
   const confirmedTreatments = sales.filter((s: any) => ["confirmed", "completed"].includes(s.booking_status)).length;
   const thisMonthEarnings = commissions
     .filter((c: any) => {
@@ -182,7 +176,7 @@ export default async function PartnerDashboardPage({
     const kit = s.treatment_name || "Unknown";
     acc[kit] = acc[kit] || { count: 0, sales: 0 };
     acc[kit].count += 1;
-    acc[kit].sales += Number(s.treatment_price || 0);
+    acc[kit].sales += Number(s.payment_amount || s.treatment_price || 0);
     return acc;
   }, {});
   const topSellingKit = Object.entries(kitStats).sort((a: any, b: any) => b[1].count - a[1].count)[0]?.[0] || "No sales yet";
@@ -222,7 +216,7 @@ export default async function PartnerDashboardPage({
   sales.forEach((sale: any) => {
     if (!sale.created_at) return;
     const bucket = monthlyMap.get(monthKey(new Date(sale.created_at)));
-    if (bucket) bucket.sales += Number(sale.treatment_price || 0);
+    if (bucket) bucket.sales += Number(sale.payment_amount || sale.treatment_price || 0);
   });
   commissions.forEach((commission: any) => {
     if (!commission.created_at) return;
@@ -323,7 +317,7 @@ export default async function PartnerDashboardPage({
       <DateRangeFilter range={range.range} from={resolvedSearchParams?.from} to={resolvedSearchParams?.to} />
 
       <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Period Sales" value={formatCurrency(filteredSales.reduce((sum: number, row: any) => sum + Number(row.treatment_price || 0), 0))} icon={TrendingUp} tone="primary" />
+        <StatCard label="Period Sales" value={formatCurrency(filteredSales.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.treatment_price || 0), 0))} icon={TrendingUp} tone="primary" />
         <StatCard label="Period Income" value={formatCurrency(filteredCommissions.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0))} icon={BadgeIndianRupee} tone="green" />
         <StatCard label="Activated Partners" value={filteredReferrals.length} icon={Users} tone="rose" />
         <StatCard label="Pending Payout" value={formatCurrency(filteredPayouts.filter((row: any) => ["requested", "processing"].includes(row.status)).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0))} icon={Wallet} tone="orange" />

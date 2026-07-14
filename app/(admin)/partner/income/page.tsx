@@ -15,7 +15,7 @@ function formatCurrency(value: number) {
 }
 
 function commissionAmount(commission: any) {
-  return Number(commission.amount || commission.commission_amount || 0);
+  return Number(commission.amount || 0);
 }
 
 export default async function PartnerIncomePage() {

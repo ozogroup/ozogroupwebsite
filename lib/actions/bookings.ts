@@ -49,26 +49,6 @@ type CreateBookingPayload = {
   notes?: string;
 };
 
-const COMMISSION_RATE = 6;
-
-async function getLevel1CommissionRate(
-  supabase: ReturnType<typeof getSupabaseServiceClient>
-): Promise<number> {
-  try {
-    const { data } = await supabase
-      .from("commission_settings" as any)
-      .select("level_1_percentage")
-      .eq("active", true)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const rate = Number((data as any)?.level_1_percentage);
-    return Number.isFinite(rate) && rate > 0 ? rate : COMMISSION_RATE;
-  } catch {
-    return COMMISSION_RATE;
-  }
-}
-
 function clean(value?: string) {
   return value?.trim() || "";
 }
@@ -244,8 +224,6 @@ export async function createBooking(payload: CreateBookingPayload) {
   const partnerIsEligible = isMembershipActive(partner);
   const treatmentPrice = Number(treatment.price || 0);
   const treatmentType = treatment.type;
-  const level1Rate = await getLevel1CommissionRate(serviceClient);
-  const commissionAmount = partnerIsEligible ? Math.round((treatmentPrice * level1Rate) / 100) : 0;
 
   const bookingPayload: Record<string, unknown> = {
     customer_name: customerName,
@@ -321,7 +299,8 @@ export async function createBooking(payload: CreateBookingPayload) {
       customer_name: customerName,
       customer_phone: customerPhone,
       booking_status: "pending",
-      commission_amount: commissionAmount,
+      commission_amount: null,
+      commission_level: null,
     });
 
     if (saleError) console.error("Error creating partner sale:", saleError);

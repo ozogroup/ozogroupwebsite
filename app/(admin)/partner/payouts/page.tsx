@@ -75,7 +75,9 @@ export default function PartnerPayoutsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Payout Request</h1>
-        <p className="text-slate-600">Withdraw approved wallet earnings after KYC verification.</p>
+        <p className="text-slate-600">
+          Withdraw approved wallet earnings after KYC verification. A 15% admin/service fee is deducted from gross payout, and the net payable amount is transferred.
+        </p>
       </div>
 
       {restrictions.length > 0 && (
@@ -108,6 +110,7 @@ export default function PartnerPayoutsPage() {
           <div className="p-6 bg-brand-accent/10 rounded-lg text-center">
             <p className="text-4xl font-bold text-brand-accent">Rs. {wallet.toLocaleString("en-IN")}</p>
             <p className="text-sm text-slate-600 mt-2">Minimum payout: Rs. 1000</p>
+            <p className="mt-2 text-xs text-slate-600">Final payment = requested gross amount - 15% deduction.</p>
           </div>
           <div className="mt-4 text-sm text-slate-600 space-y-1">
             <p>KYC: <span className="font-semibold capitalize">{partner?.kyc_status || "not_submitted"}</span></p>

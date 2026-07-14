@@ -3675,6 +3675,19 @@ export type Database = {
           valid: boolean
         }[]
       }
+      kia_generate_booking_commissions: {
+        Args: { booking_uuid: string }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          level: number
+          partner_id: string
+          percentage: number
+          source_id: string
+          status: Database["public"]["Enums"]["commission_status"]
+        }[]
+      }
       kia_next_booking_id: { Args: never; Returns: string }
       kia_next_membership_id: { Args: never; Returns: string }
       kia_next_partner_code: { Args: never; Returns: string }

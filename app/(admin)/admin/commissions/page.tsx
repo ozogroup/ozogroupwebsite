@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getCommissions, updateCommissionStatus } from "@/lib/actions/commissions";
 
 export default function AdminCommissionsPage() {
@@ -22,9 +22,9 @@ export default function AdminCommissionsPage() {
     try {
       await updateCommissionStatus(id, status);
       await loadCommissions();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating commission status:", error);
-      alert("Error updating commission status");
+      alert(error?.message || "Error updating commission status");
     }
   }
 
@@ -51,8 +51,8 @@ export default function AdminCommissionsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin w-8 h-8 border-3 border-brand-accent border-t-transparent rounded-full" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-brand-accent border-t-transparent" />
       </div>
     );
   }
@@ -61,66 +61,89 @@ export default function AdminCommissionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-brand-ink">Commissions</h1>
-        <p className="text-sm text-brand-muted">View partner commissions</p>
+        <p className="text-sm text-brand-muted">Trace partner commissions from booking source to payout status.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-soft border border-brand-border overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-soft">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px]">
-          <thead className="bg-brand-surface/50 border-b border-brand-border">
-            <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Partner</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Level</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Amount</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Status</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Created At</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-brand-ink uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-brand-border">
-            {commissions.length === 0 ? (
+          <table className="w-full min-w-[1180px]">
+            <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="text-4xl">💰</span>
-                    <p className="text-brand-muted">No commissions found</p>
-                  </div>
-                </td>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Partner</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Level</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Rate</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Source Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Timeline</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
               </tr>
-            ) : (
-              commissions.map((commission) => (
-                <tr key={commission.id} className="hover:bg-brand-surface/30 transition-colors">
-                  <td className="px-4 sm:px-6 py-4 font-medium text-brand-ink">
-                    {commission.partner?.profiles?.full_name || "Unknown"}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">{commission.level}</td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">₹{commission.amount?.toLocaleString()}</td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(commission.status)}`}>
-                      {commission.status}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-brand-muted text-sm">
-                    {commission.created_at ? new Date(commission.created_at).toLocaleDateString() : "-"}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <select
-                      value={commission.status}
-                      onChange={(e) => handleUpdateStatus(commission.id, e.target.value)}
-                      className="px-2 py-1.5 text-xs border border-brand-border rounded focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none"
-                    >
-                      {allowedStatuses(commission.status).map((status) => (
-                        <option key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </option>
-                      ))}
-                    </select>
+            </thead>
+            <tbody className="divide-y divide-brand-border bg-white">
+              {commissions.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-brand-muted">
+                    No commissions found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                commissions.map((commission) => (
+                  <tr key={commission.id} className="transition-colors hover:bg-brand-surface/30">
+                    <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">
+                      <p>{commission.partner?.profiles?.full_name || "Unknown"}</p>
+                      <p className="mt-1 font-mono text-xs text-brand-muted">{commission.partner?.partner_code || "-"}</p>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
+                      {commission.source_type === "booking" && commission.source_booking ? (
+                        <div>
+                          <p className="font-medium text-brand-ink">{commission.source_booking.booking_id || commission.source_id}</p>
+                          <p>{commission.source_booking.customer_name || "-"} | {commission.source_booking.treatment_name || "-"}</p>
+                          <p className="font-mono text-xs">{commission.source_booking.treatment_order_id || "-"}</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="capitalize">{commission.source_type || "unknown"}</p>
+                          <p className="font-mono text-xs">{commission.source_id || "-"}</p>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{commission.level}</td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{Number(commission.percentage || 0)}%</td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
+                      Rs. {Number(commission.source_amount || commission.source_booking?.payment_amount || commission.source_booking?.treatment_price || 0).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
+                      Rs. {Number(commission.amount || 0).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(commission.status)}`}>
+                        {commission.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
+                      <p>Created: {commission.created_at ? new Date(commission.created_at).toLocaleDateString("en-IN") : "-"}</p>
+                      <p>Paid: {commission.paid_at ? new Date(commission.paid_at).toLocaleDateString("en-IN") : "-"}</p>
+                      <p className="font-mono text-xs">Payout: {commission.payout_id || "-"}</p>
+                    </td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <select
+                        value={commission.status}
+                        onChange={(event) => handleUpdateStatus(commission.id, event.target.value)}
+                        className="rounded border border-brand-border px-2 py-1.5 text-xs outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent"
+                      >
+                        {allowedStatuses(commission.status).map((status) => (
+                          <option key={status} value={status}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

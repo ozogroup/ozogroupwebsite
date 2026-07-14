@@ -48,9 +48,10 @@ async function markApprovedCommissionsPaid(
     remaining = roundMoney(remaining - amount);
   }
   if (ids.length === 0) return;
+  const now = new Date().toISOString();
   const { error: updateError } = await supabase
     .from("commissions" as any)
-    .update({ status: "paid", payout_id: payoutId, updated_at: new Date().toISOString() })
+    .update({ status: "paid", payout_id: payoutId, paid_at: now, updated_at: now })
     .eq("status", "approved")
     .eq("reversed", false)
     .is("deleted_at", null)
@@ -80,7 +81,7 @@ export async function getPayouts() {
   const [{ data: commissions }, { data: allPayouts }, { data: partners }] = await Promise.all([
     supabase
       .from("commissions" as any)
-      .select("partner_id, amount, source_type, status, reversed, deleted_at")
+      .select("partner_id, amount, source_type, source_id, source_amount, level, percentage, status, reversed, deleted_at")
       .is("deleted_at", null),
     supabase
       .from("payouts" as any)
@@ -89,6 +90,21 @@ export async function getPayouts() {
       .from("partners" as any)
       .select("id, partner_code, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name)")
   ]);
+
+  const bookingIds = Array.from(
+    new Set(
+      (commissions || [])
+        .filter((c: any) => c.source_type === "booking" && c.source_id)
+        .map((c: any) => c.source_id)
+    )
+  );
+  const { data: commissionBookings } = bookingIds.length > 0
+    ? await supabase
+        .from("bookings" as any)
+        .select("id, booking_id, treatment_order_id, treatment_name, payment_amount, treatment_price")
+        .in("id", bookingIds)
+    : { data: [] as any[] };
+  const bookingById = new Map((commissionBookings || []).map((booking: any) => [booking.id, booking]));
 
   const partnerIds = Array.from(
     new Set([
@@ -113,6 +129,36 @@ export async function getPayouts() {
     const productIncome = partnerCommissions
       .filter((c: any) => c.source_type === "booking")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const kitSummary = Array.from(
+      partnerCommissions
+        .filter((c: any) => c.source_type === "booking")
+        .reduce((map: Map<string, any>, c: any) => {
+          const booking = bookingById.get(c.source_id);
+          const kitName = booking?.treatment_name || "Unknown kit / treatment";
+          const current = map.get(kitName) || {
+            kitName,
+            bookingCount: 0,
+            sourceAmount: 0,
+            commissionAmount: 0,
+            levels: {} as Record<number, number>,
+          };
+          const level = Number(c.level || 1);
+          current.bookingCount += 1;
+          current.sourceAmount += Number(c.source_amount || booking?.payment_amount || booking?.treatment_price || 0);
+          current.commissionAmount += Number(c.amount || 0);
+          current.levels[level] = Number(current.levels[level] || 0) + Number(c.amount || 0);
+          map.set(kitName, current);
+          return map;
+        }, new Map<string, any>())
+        .values()
+    ).map((item: any) => ({
+      ...item,
+      sourceAmount: roundMoney(item.sourceAmount),
+      commissionAmount: roundMoney(item.commissionAmount),
+      levels: Object.fromEntries(
+        Object.entries(item.levels).map(([level, amount]) => [level, roundMoney(Number(amount || 0))])
+      ),
+    }));
     const bonusIncome = 0;
     const grossIncome = membershipIncome + productIncome + bonusIncome;
     const deductionAmount = roundMoney(grossIncome * PAYOUT_DEDUCTION_RATE);
@@ -140,6 +186,7 @@ export async function getPayouts() {
       paidAmount,
       pendingPayout,
       requestedPayout,
+      kitSummary,
       payoutStatus: requestedPayout > 0 ? "pending" : pendingPayout > 0 ? "available" : paidAmount >= netPayable && netPayable > 0 ? "paid" : "open",
     });
   }

@@ -130,7 +130,28 @@ export async function getCommissions() {
     return [];
   }
 
-  return data || [];
+  const rows = data || [];
+  const bookingIds = rows
+    .filter((row: any) => row.source_type === "booking" && row.source_id)
+    .map((row: any) => row.source_id);
+
+  if (bookingIds.length === 0) return rows;
+
+  const { data: bookings, error: bookingError } = await supabase
+    .from("bookings" as any)
+    .select("id, booking_id, treatment_order_id, customer_name, customer_phone, treatment_name, payment_amount, treatment_price, booking_status, payment_status, partner_code")
+    .in("id", Array.from(new Set(bookingIds)));
+
+  if (bookingError) {
+    console.error("Error enriching commissions with bookings:", bookingError);
+    return rows;
+  }
+
+  const bookingMap = new Map((bookings || []).map((booking: any) => [booking.id, booking]));
+  return rows.map((row: any) => ({
+    ...row,
+    source_booking: row.source_type === "booking" ? bookingMap.get(row.source_id) || null : null,
+  }));
 }
 
 // Approve a pending commission: credit the partner wallet exactly once.

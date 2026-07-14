@@ -130,16 +130,19 @@ export async function generateBookingCommissions(
     return;
   }
 
+  const rpcHandled = await generateBookingCommissionsViaRpc(supabase, booking.id);
+  if (rpcHandled) return;
+
   const sourceAmount = Number(booking.payment_amount ?? 0) || 0;
   if (sourceAmount <= 0) return;
 
-  let referredBy = booking.referred_by || null;
-  if (!referredBy) {
+  let sourcePartnerId = booking.referred_by || null;
+  if (!sourcePartnerId) {
     const partner = await resolvePartnerByCode(supabase, booking.referral_code || booking.partner_code);
-    referredBy = partner?.id || null;
+    sourcePartnerId = partner?.id || null;
   }
 
-  if (!referredBy) {
+  if (!sourcePartnerId) {
     console.error("Booking commission skipped: referral partner not found", {
       bookingId: booking.id,
       referralCode: booking.referral_code,
@@ -148,15 +151,12 @@ export async function generateBookingCommissions(
     return;
   }
 
-  const commissionPartners = [
-    { partner_id: referredBy, level: 1 },
-  ];
-
   const { data: ancestors, error } = await supabase
     .from("referral_tree")
     .select("ancestor_id, level")
-    .eq("descendant_id", referredBy)
-    .lte("level", 3);
+    .eq("descendant_id", sourcePartnerId)
+    .lte("level", 4)
+    .order("level", { ascending: true });
 
   if (error) {
     console.error("Error fetching booking commission ancestors:", error);
@@ -164,13 +164,30 @@ export async function generateBookingCommissions(
 
   const ancestorRows = Array.isArray(ancestors) && ancestors.length > 0
     ? ancestors
-    : await getSponsorAncestors(supabase, referredBy);
+    : await getSponsorAncestors(supabase, sourcePartnerId);
 
+  const seen = new Set<string>();
+  const commissionPartners: Array<{ partner_id: string; level: number }> = [];
   for (const row of ancestorRows || []) {
-    const level = Number(row.level) + 1;
-    if (level <= 4) {
+    const level = Number(row.level);
+    if (
+      row.ancestor_id &&
+      row.ancestor_id !== sourcePartnerId &&
+      level >= 1 &&
+      level <= 4 &&
+      !seen.has(`${row.ancestor_id}:${level}`)
+    ) {
+      seen.add(`${row.ancestor_id}:${level}`);
       commissionPartners.push({ partner_id: row.ancestor_id, level });
     }
+  }
+
+  if (commissionPartners.length === 0) {
+    console.error("Booking commission skipped: no eligible sponsor chain", {
+      bookingId: booking.id,
+      sourcePartnerId,
+    });
+    return;
   }
 
   const percentages = await getCommissionPercentages(supabase);
@@ -257,11 +274,46 @@ export async function generateBookingCommissions(
   }
 }
 
+async function generateBookingCommissionsViaRpc(supabase: any, bookingId: string) {
+  try {
+    const { data, error } = await supabase.rpc("kia_generate_booking_commissions", {
+      booking_uuid: bookingId,
+    });
+
+    if (error) {
+      const message = `${error.message || ""} ${error.details || ""}`;
+      if (/kia_generate_booking_commissions|function .* does not exist|schema cache/i.test(message)) {
+        return false;
+      }
+      console.error("Booking commission RPC failed; using server fallback:", error);
+      return false;
+    }
+
+    for (const row of data || []) {
+      await syncCommissionCreated({
+        id: row.id || row.commission_id,
+        source_id: row.source_id || bookingId,
+        partner_id: row.partner_id,
+        level: Number(row.level || 1),
+        amount: Number(row.amount || 0),
+        status: row.status || "pending",
+        created_at: row.created_at || new Date().toISOString(),
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Booking commission RPC threw; using server fallback:", error);
+    return false;
+  }
+}
+
 async function getSponsorAncestors(supabase: any, partnerId: string) {
   const ancestors: Array<{ ancestor_id: string; level: number }> = [];
   let currentPartnerId: string | null = partnerId;
+  const seen = new Set<string>([partnerId]);
 
-  for (let level = 1; level <= 3 && currentPartnerId; level += 1) {
+  for (let level = 1; level <= 4 && currentPartnerId; level += 1) {
     const { data, error }: { data: { sponsor_id?: string | null } | null; error: any } = await supabase
       .from("partners")
       .select("sponsor_id")
@@ -274,9 +326,10 @@ async function getSponsorAncestors(supabase: any, partnerId: string) {
     }
 
     const sponsorId: string | null = data?.sponsor_id || null;
-    if (!sponsorId || sponsorId === partnerId) break;
+    if (!sponsorId || seen.has(sponsorId)) break;
 
     ancestors.push({ ancestor_id: sponsorId, level });
+    seen.add(sponsorId);
     currentPartnerId = sponsorId;
   }
 
