@@ -7,6 +7,7 @@ import {
   ArrowRight, TrendingUp, Award, IndianRupee, Plus,
 } from "lucide-react";
 import { Card, CardHeader, PageHeader, StatCard, Badge, EmptyState, Button } from "@/components/admin/ui";
+import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 import DateRangeFilter from "@/components/admin/DateRangeFilter";
 import { resolveDateRange } from "@/lib/date-range";
 
@@ -161,6 +162,7 @@ export default async function AdminDashboardPage({
 
   return (
     <div className="space-y-8">
+      <AutoRefreshRoute />
       <PageHeader
         title="Dashboard"
         description="Welcome back. Here's what's happening with KIA Skin Care today."

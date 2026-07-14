@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
 
 export default function AdminPayoutsPage() {
@@ -10,21 +10,31 @@ export default function AdminPayoutsPage() {
   const [refs, setRefs] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadPayouts();
+  const loadPayouts = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true);
+    setPayouts(await getPayouts());
+    if (showLoader) setLoading(false);
   }, []);
 
-  async function loadPayouts() {
-    setLoading(true);
-    setPayouts(await getPayouts());
-    setLoading(false);
-  }
+  useEffect(() => {
+    void loadPayouts();
+  }, [loadPayouts]);
+
+  useEffect(() => {
+    const refresh = () => void loadPayouts(false);
+    window.addEventListener("focus", refresh);
+    const interval = window.setInterval(refresh, 25000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.clearInterval(interval);
+    };
+  }, [loadPayouts]);
 
   async function handleUpdateStatus(id: string, status: string) {
     setBusy(id);
     try {
       await updatePayoutStatus(id, status, refs[id], notes[id]);
-      await loadPayouts();
+      await loadPayouts(false);
     } catch (error: any) {
       alert(error?.message || "Error updating payout status");
     } finally {

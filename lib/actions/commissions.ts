@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/helpers";
+import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { syncCommissionUpdated } from "@/lib/integrations/google-sheet-sync";
 
@@ -152,6 +153,45 @@ export async function getCommissions() {
     ...row,
     source_booking: row.source_type === "booking" ? bookingMap.get(row.source_id) || null : null,
   }));
+}
+
+export async function generateMissingBookingCommissions() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const { data: bookings, error } = await supabase
+    .from("bookings" as any)
+    .select("id, referred_by, referral_code, partner_code, payment_amount, treatment_price, booking_status, payment_status")
+    .eq("payment_status", "paid")
+    .in("booking_status", ["confirmed", "completed"])
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.error("Error loading bookings for commission generation:", error);
+    throw new Error(error.message || "Unable to load eligible bookings.");
+  }
+
+  let processed = 0;
+  for (const booking of ((bookings || []) as any[])) {
+    await generateBookingCommissions(supabase, {
+      id: booking.id,
+      referred_by: booking.referred_by,
+      referral_code: booking.referral_code,
+      partner_code: booking.partner_code,
+      payment_amount: Number(booking.payment_amount ?? booking.treatment_price ?? 0),
+      booking_status: booking.booking_status,
+      payment_status: booking.payment_status,
+    });
+    processed += 1;
+  }
+
+  revalidateMoneyPaths();
+
+  return {
+    scanned: bookings?.length || 0,
+    processed,
+  };
 }
 
 // Approve a pending commission: credit the partner wallet exactly once.

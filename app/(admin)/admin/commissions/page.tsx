@@ -1,30 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCommissions, updateCommissionStatus } from "@/lib/actions/commissions";
+import { useCallback, useEffect, useState } from "react";
+import { generateMissingBookingCommissions, getCommissions, updateCommissionStatus } from "@/lib/actions/commissions";
 
 export default function AdminCommissionsPage() {
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCommissions();
-  }, []);
-
-  async function loadCommissions() {
-    setLoading(true);
+  const loadCommissions = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     const data = await getCommissions();
     setCommissions(data);
-    setLoading(false);
-  }
+    if (showLoader) setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void loadCommissions();
+  }, [loadCommissions]);
+
+  useEffect(() => {
+    const refresh = () => void loadCommissions(false);
+    window.addEventListener("focus", refresh);
+    const interval = window.setInterval(refresh, 25000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.clearInterval(interval);
+    };
+  }, [loadCommissions]);
 
   async function handleUpdateStatus(id: string, status: string) {
     try {
       await updateCommissionStatus(id, status);
-      await loadCommissions();
+      await loadCommissions(false);
     } catch (error: any) {
       console.error("Error updating commission status:", error);
       alert(error?.message || "Error updating commission status");
+    }
+  }
+
+  async function handleGenerateMissing() {
+    setGenerating(true);
+    setMessage(null);
+    try {
+      const result = await generateMissingBookingCommissions();
+      await loadCommissions(false);
+      setMessage(`Checked ${result.scanned} eligible bookings and generated any missing 4-level commission rows.`);
+    } catch (error: any) {
+      setMessage(error?.message || "Unable to generate missing commissions.");
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -59,10 +85,26 @@ export default function AdminCommissionsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-brand-ink">Commissions</h1>
-        <p className="text-sm text-brand-muted">Trace partner commissions from booking source to payout status.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-brand-ink">Commissions</h1>
+          <p className="text-sm text-brand-muted">Trace partner commissions from booking source to payout status.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleGenerateMissing}
+          disabled={generating}
+          className="rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-4 py-2.5 text-sm font-medium text-white transition-all hover:shadow-glow disabled:opacity-60"
+        >
+          {generating ? "Checking..." : "Generate Missing Booking Commissions"}
+        </button>
       </div>
+
+      {message && (
+        <div className="rounded-lg border border-brand-border bg-white px-4 py-3 text-sm text-brand-muted shadow-sm">
+          {message}
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-soft">
         <div className="overflow-x-auto">

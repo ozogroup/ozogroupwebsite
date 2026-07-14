@@ -1,6 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/lib/auth/helpers";
+import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function getCommissionLevels() {
@@ -25,6 +26,8 @@ export async function searchPartner(query: string) {
   const supabase = getSupabaseServiceClient();
   const term = query.trim();
   if (!term) return [];
+  const normalizedCode = normalizeKiaPartnerCode(term);
+  const phoneDigits = term.replace(/\D/g, "");
 
   const partnerColumns = `
     id,
@@ -41,7 +44,7 @@ export async function searchPartner(query: string) {
   const { data: codeMatches, error: codeError } = await supabase
     .from("partners")
     .select(partnerColumns)
-    .ilike("partner_code", `%${term}%`)
+    .or(`partner_code.eq.${normalizedCode},partner_code.ilike.%${term}%,partner_code.ilike.%${normalizedCode}%`)
     .limit(10);
 
   if (codeError) {
@@ -51,7 +54,7 @@ export async function searchPartner(query: string) {
   const { data: profiles, error: profileError } = await supabase
     .from("profiles")
     .select("id")
-    .or(`phone.ilike.%${term}%,full_name.ilike.%${term}%`)
+    .or(`phone.ilike.%${term}%,phone.ilike.%${phoneDigits || term}%,full_name.ilike.%${term}%,email.ilike.%${term.toLowerCase()}%`)
     .limit(10);
 
   if (profileError) {
@@ -77,6 +80,62 @@ export async function searchPartner(query: string) {
   }
 
   return Array.from(merged.values()).slice(0, 10);
+}
+
+export async function getReferralOverview() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const partnerColumns = `
+    id,
+    partner_code,
+    profiles(full_name, phone, email),
+    sponsor_id,
+    status,
+    city,
+    wallet_balance,
+    total_earnings,
+    paid_earnings,
+    created_at
+  `;
+
+  const [
+    commissionLevels,
+    partnersCount,
+    activePartnersCount,
+    pendingMembersCount,
+    treeLinksCount,
+    recentPartners,
+  ] = await Promise.all([
+    getCommissionLevels(),
+    supabase.from("partners").select("id", { count: "exact", head: true }),
+    supabase.from("partners").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase
+      .from("memberships")
+      .select("id", { count: "exact", head: true })
+      .not("membership_status", "in", "(active,rejected)"),
+    supabase.from("referral_tree").select("ancestor_id", { count: "exact", head: true }),
+    supabase
+      .from("partners")
+      .select(partnerColumns)
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
+
+  if (recentPartners.error) {
+    console.error("Error fetching referral overview partners:", recentPartners.error);
+  }
+
+  return {
+    commissionLevels,
+    totals: {
+      partners: partnersCount.count || 0,
+      activePartners: activePartnersCount.count || 0,
+      pendingMembers: pendingMembersCount.count || 0,
+      treeLinks: treeLinksCount.count || 0,
+    },
+    recentPartners: recentPartners.data || [],
+  };
 }
 
 async function getSponsorFallbackTree(supabase: any, partnerId: string) {
@@ -130,6 +189,26 @@ async function getPendingMembers(supabase: any, sponsorId: string) {
 export async function getReferralTree(partnerId: string) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
+
+  const { data: selectedPartner, error: selectedError } = await supabase
+    .from("partners")
+    .select(`
+      id,
+      partner_code,
+      sponsor_id,
+      profiles(full_name, phone, email),
+      status,
+      city,
+      wallet_balance,
+      total_earnings,
+      created_at
+    `)
+    .eq("id", partnerId)
+    .maybeSingle();
+
+  if (selectedError) {
+    console.error("Error fetching selected referral partner:", selectedError);
+  }
   
   // Get the partner's direct referrals (level 1)
   const { data: level1, error: error1 } = await supabase
@@ -153,7 +232,6 @@ export async function getReferralTree(partnerId: string) {
 
   if (error1) {
     console.error("Error fetching referral tree:", error1);
-    return null;
   }
 
   // Get all levels for the partner
@@ -177,25 +255,27 @@ export async function getReferralTree(partnerId: string) {
 
   if (error2) {
     console.error("Error fetching all referral levels:", error2);
-    return null;
   }
 
   // Group by level
   let tree: Record<number, any[]> = { 1: [], 2: [], 3: [], 4: [] };
-  allLevels?.forEach((item: any) => {
-    if (!tree[item.level]) {
+  if (!error2) {
+    allLevels?.forEach((item: any) => {
+      if (!tree[item.level]) {
       tree[item.level] = [];
-    }
-    tree[item.level].push(item.descendants);
-  });
+      }
+      if (item.descendants) tree[item.level].push(item.descendants);
+    });
+  }
 
-  if (!allLevels || allLevels.length === 0) {
+  if (error2 || !allLevels || allLevels.length === 0) {
     tree = await getSponsorFallbackTree(supabase, partnerId);
   }
 
   const pendingMembers = await getPendingMembers(supabase, partnerId);
 
   return {
+    partner: selectedPartner,
     level1: tree[1] || level1?.map((item: any) => item.descendants) || [],
     tree,
     pendingMembers,

@@ -1,5 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
+import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export default async function PartnerIncomePage() {
 
   return (
     <div className="space-y-6">
+      <AutoRefreshRoute />
       <div>
         <h1 className="text-2xl font-bold text-brand-ink">My Income</h1>
         <p className="text-brand-muted">View your recorded earnings and final income calculation.</p>

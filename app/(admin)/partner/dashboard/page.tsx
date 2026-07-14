@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import BookNowButton from "@/components/booking/BookNowButton";
+import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 import PartnerDashboardCharts from "@/components/partner/PartnerDashboardCharts";
 import { getSponsoredMembershipRequests } from "@/lib/actions/memberships";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -270,6 +271,7 @@ export default async function PartnerDashboardPage({
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <AutoRefreshRoute />
       <section className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/[0.82] p-5 shadow-premium backdrop-blur md:p-8">
         <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-brand-accent/10 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-brand-primary/10 blur-3xl" />
