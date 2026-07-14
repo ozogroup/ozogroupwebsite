@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePartner } from "@/lib/auth/helpers";
+import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
 import { createReferralTreeForPartner, resolvePartnerByCode } from "@/lib/actions/referral-tracking";
@@ -69,19 +69,39 @@ async function getMembershipAmount(supabase: ReturnType<typeof getSupabaseServic
 }
 
 export async function getMembershipRequests() {
-  const supabase = await getSupabaseServerClient();
-  
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
   const { data, error } = await supabase
     .from("memberships" as any)
     .select("*, partners:partner_id(partner_code, referral_link, status), sponsor:partners!memberships_sponsor_id_fkey(partner_code, profiles(full_name))")
     .order("created_at", { ascending: false });
-  
+
   if (error) {
     console.error("Error fetching membership requests:", error);
-    return [];
+    return {
+      data: [],
+      error: error.message,
+      diagnostics: {
+        table: "memberships",
+        projectRef: process.env.NEXT_PUBLIC_SUPABASE_URL
+          ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(".")[0]
+          : "unknown",
+      },
+    };
   }
-  
-  return data || [];
+
+  return {
+    data: data || [],
+    error: null,
+    diagnostics: {
+      table: "memberships",
+      projectRef: process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname.split(".")[0]
+        : "unknown",
+      count: data?.length || 0,
+    },
+  };
 }
 
 export async function getSponsoredMembershipRequests(limit = 8) {
@@ -105,7 +125,8 @@ export async function getSponsoredMembershipRequests(limit = 8) {
 }
 
 export async function getMembershipById(id: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -122,7 +143,8 @@ export async function getMembershipById(id: string) {
 }
 
 export async function updateMembershipStatus(id: string, status: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -347,11 +369,11 @@ export async function createSponsoredMembership(
 }
 
 export async function approveAndCreatePartner(membershipId: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
   const serviceClient = getSupabaseServiceClient();
 
   // 1. Fetch membership
-  const { data: membership, error: fetchError } = await supabase
+  const { data: membership, error: fetchError } = await serviceClient
     .from("memberships" as any)
     .select("*")
     .eq("id", membershipId)
@@ -378,7 +400,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   const pendingPartnerId = (membership as any).partner_id as string | null;
 
   // 4. Check if profile already exists for this email
-  const { data: existingProfile } = await supabase
+  const { data: existingProfile } = await serviceClient
     .from("profiles" as any)
     .select("id, role")
     .eq(pendingPartnerId ? "id" : "email", pendingPartnerId || email)
@@ -431,7 +453,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   }
 
   // 5. Check if partner row already exists
-  const { data: existingPartner } = await supabase
+  const { data: existingPartner } = await serviceClient
     .from("partners" as any)
     .select("id, partner_code, referral_link, sponsor_id, status")
     .eq("id", userId)
@@ -533,7 +555,8 @@ export async function approveAndCreatePartner(membershipId: string) {
 }
 
 export async function updatePaymentStatus(id: string, paymentStatus: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
 
   const { data, error } = await supabase
     .from("memberships" as any)
@@ -555,7 +578,8 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
 }
 
 export async function updateMembershipAdminNotes(id: string, adminNotes: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
 
   const { data, error } = await supabase
     .from("memberships" as any)

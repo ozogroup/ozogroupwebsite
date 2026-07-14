@@ -15,20 +15,54 @@ import {
 export default function AdminMembershipsPage() {
   const [memberships, setMemberships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [queryError, setQueryError] = useState<string | null>(null);
+  const [diagnostics, setDiagnostics] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadMemberships();
+
+    const interval = window.setInterval(() => loadMemberships({ background: true }), 25000);
+    const onFocus = () => loadMemberships({ background: true });
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
-  async function loadMemberships() {
-    setLoading(true);
-    const data = await getMembershipRequests();
-    setMemberships(data);
-    setAdminNotes(Object.fromEntries(data.map((item: any) => [item.id, item.admin_notes || ""])));
-    setLoading(false);
+  async function loadMemberships(options: { background?: boolean } = {}) {
+    if (!options.background) setLoading(true);
+    try {
+      const result = await getMembershipRequests();
+      const data = result.data || [];
+      setQueryError(result.error || null);
+      setDiagnostics(result.diagnostics || null);
+      setMemberships(data);
+      setAdminNotes(Object.fromEntries(data.map((item: any) => [item.id, item.admin_notes || ""])));
+    } catch (err: any) {
+      setQueryError(err?.message || "Unable to load membership requests.");
+      setMemberships([]);
+    } finally {
+      if (!options.background) setLoading(false);
+    }
+  }
+
+  async function handleMarkPaymentContacted(id: string) {
+    setActionLoading(id);
+    setMessage(null);
+    try {
+      await updateMembershipStatus(id, "under_review");
+      setMessage({ type: "success", text: "Marked as payment contacted / under review" });
+      await loadMemberships();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Failed to update request" });
+    } finally {
+      setActionLoading(null);
+    }
   }
 
   async function handleMarkPaid(id: string) {
@@ -115,6 +149,7 @@ export default function AdminMembershipsPage() {
   function getActivationStatus(m: any): { label: string; color: string } {
     if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
     if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
+    if (m.membership_status === "under_review") return { label: "Payment Contacted", color: "bg-blue-100 text-blue-700" };
     if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-brand-light text-brand-primaryDark" };
     return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
   }
@@ -131,8 +166,25 @@ export default function AdminMembershipsPage() {
     <div className="space-y-6">
       <Breadcrumb items={[{ label: "Membership Requests" }]} />
       <div>
-        <h1 className="font-display text-2xl font-bold text-brand-ink">Membership Requests</h1>
-        <p className="text-sm text-brand-muted">Manage partner membership requests</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-brand-ink">Membership Requests</h1>
+            <p className="text-sm text-brand-muted">Manage partner membership requests</p>
+            {diagnostics && (
+              <p className="mt-1 text-xs text-brand-muted">
+                Source: {diagnostics.table} on project {diagnostics.projectRef}
+                {typeof diagnostics.count === "number" ? ` - ${diagnostics.count} rows loaded` : ""}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => loadMemberships()}
+            className="rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-surface"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {message && (
@@ -144,6 +196,13 @@ export default function AdminMembershipsPage() {
           }`}
         >
           <p className="text-sm">{message.text}</p>
+        </div>
+      )}
+
+      {queryError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <p className="text-sm font-semibold">Unable to load membership requests</p>
+          <p className="mt-1 text-xs">{queryError}</p>
         </div>
       )}
 
@@ -163,7 +222,14 @@ export default function AdminMembershipsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border bg-white">
-              {memberships.length === 0 ? (
+              {queryError ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center">
+                    <p className="font-medium text-red-700">Database query failed</p>
+                    <p className="mt-1 text-sm text-red-600">Use the error message above to diagnose the source table or policy issue.</p>
+                  </td>
+                </tr>
+              ) : memberships.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
                     <p className="text-brand-muted">No membership requests found</p>
@@ -217,6 +283,17 @@ export default function AdminMembershipsPage() {
                     </td>
                     <td className="px-4 py-4 sm:px-6">
                       <div className="flex flex-wrap items-center gap-2">
+                        {membership.payment_status !== "paid" &&
+                          membership.membership_status !== "under_review" &&
+                          membership.membership_status !== "rejected" && (
+                            <button
+                              onClick={() => handleMarkPaymentContacted(membership.id)}
+                              disabled={actionLoading === membership.id}
+                              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                            >
+                              Payment Contacted
+                            </button>
+                          )}
                         {membership.payment_status !== "paid" && membership.membership_status !== "rejected" && (
                           <button
                             onClick={() => handleMarkPaid(membership.id)}
