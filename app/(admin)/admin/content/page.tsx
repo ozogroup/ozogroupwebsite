@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FileText, Image as ImageIcon, Pencil, Plus, Search, Settings2, Trash2 } from "lucide-react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import ImageUpload from "@/components/admin/ImageUpload";
 import MultiImageUpload from "@/components/admin/MultiImageUpload";
 import { Badge, Button, Card, EmptyState, PageHeader } from "@/components/admin/ui";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { deleteSiteContent, getSiteContent, saveSiteContent } from "@/lib/actions/content";
 
 type SiteContent = {
   id: string;
@@ -225,7 +225,6 @@ function humanize(value?: string | null) {
 }
 
 export default function AdminContentPage() {
-  const supabase = getSupabaseBrowserClient();
   const [content, setContent] = useState<SiteContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -246,31 +245,28 @@ export default function AdminContentPage() {
     is_active: true,
   });
 
-  useEffect(() => {
-    loadContent();
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), type === "success" ? 3000 : 4500);
   }, []);
 
-  async function loadContent() {
+  const loadContent = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("site_content")
-      .select("*")
-      .order("display_order", { ascending: true });
-
-    if (error) {
+    try {
+      const data = await getSiteContent();
+      setContent(Array.isArray(data) ? (data as unknown as SiteContent[]) : []);
+    } catch (error) {
       console.error("Error loading content:", error);
       setContent([]);
       showToast("error", "Unable to load website content.");
-    } else {
-      setContent(Array.isArray(data) ? (data as SiteContent[]) : []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  }, [showToast]);
 
-  function showToast(type: "success" | "error", message: string) {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), type === "success" ? 3000 : 4500);
-  }
+  useEffect(() => {
+    loadContent();
+  }, [loadContent]);
 
   function openFieldEditor(field: ContentField, item?: SiteContent | null) {
     setEditingContent(item || null);
@@ -322,16 +318,10 @@ export default function AdminContentPage() {
     };
 
     try {
-      if (editingContent) {
-        const { error } = await (supabase as any)
-          .from("site_content")
-          .update(payload)
-          .eq("id", editingContent.id);
-        if (error) throw error;
-      } else {
-        const { error } = await (supabase as any).from("site_content").insert(payload);
-        if (error) throw error;
-      }
+      await saveSiteContent({
+        id: editingContent?.id,
+        ...payload,
+      });
 
       setShowModal(false);
       setEditingContent(null);
@@ -348,14 +338,14 @@ export default function AdminContentPage() {
   async function handleDelete(id: string) {
     if (!confirm("Delete this content item?")) return;
 
-    const { error } = await (supabase as any).from("site_content").delete().eq("id", id);
-    if (error) {
+    try {
+      await deleteSiteContent(id);
+      await loadContent();
+      showToast("success", "Content deleted.");
+    } catch (error) {
       console.error("Error deleting content:", error);
       showToast("error", "Unable to delete content.");
-      return;
     }
-    await loadContent();
-    showToast("success", "Content deleted.");
   }
 
   const filteredGroups = useMemo(() => {

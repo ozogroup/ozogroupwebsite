@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function getPayments() {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("payments")
@@ -23,7 +25,8 @@ export async function getPayments() {
 }
 
 export async function updatePaymentStatus(id: string, status: "created" | "authorized" | "captured" | "refunded" | "failed") {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
 
   const { data, error } = await supabase
     .from("payments")

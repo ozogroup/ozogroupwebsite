@@ -14,6 +14,1757 @@ export type Database = {
   }
   public: {
     Tables: {
+      _bak_20260622_commission_settings: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string | null
+          level_1_percentage: number | null
+          level_2_percentage: number | null
+          level_3_percentage: number | null
+          level_4_percentage: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string | null
+          level_1_percentage?: number | null
+          level_2_percentage?: number | null
+          level_3_percentage?: number | null
+          level_4_percentage?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string | null
+          level_1_percentage?: number | null
+          level_2_percentage?: number | null
+          level_3_percentage?: number | null
+          level_4_percentage?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _bak_20260622_site_content: {
+        Row: {
+          content_key: string | null
+          content_value: Json | null
+          created_at: string | null
+          deleted_at: string | null
+          display_order: number | null
+          id: string | null
+          is_active: boolean | null
+          key_name: string | null
+          page: string | null
+          section: string | null
+          updated_at: string | null
+          value: string | null
+          value_type: string | null
+        }
+        Insert: {
+          content_key?: string | null
+          content_value?: Json | null
+          created_at?: string | null
+          deleted_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          key_name?: string | null
+          page?: string | null
+          section?: string | null
+          updated_at?: string | null
+          value?: string | null
+          value_type?: string | null
+        }
+        Update: {
+          content_key?: string | null
+          content_value?: Json | null
+          created_at?: string | null
+          deleted_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          key_name?: string | null
+          page?: string | null
+          section?: string | null
+          updated_at?: string | null
+          value?: string | null
+          value_type?: string | null
+        }
+        Relationships: []
+      }
+      _bak_20260622_treatments: {
+        Row: {
+          active: boolean | null
+          after_image_url: string | null
+          available_cities: Json | null
+          badge: string | null
+          before_image_url: string | null
+          benefits: Json | null
+          created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
+          deleted_at: string | null
+          description: string | null
+          display_order: number | null
+          duration: string | null
+          faqs: Json | null
+          featured: boolean | null
+          gallery: Json | null
+          icon: string | null
+          id: string | null
+          image: string | null
+          image_alt: string | null
+          image_url: string | null
+          is_active: boolean | null
+          kit_name: string | null
+          long_description: string | null
+          meta_keywords: string | null
+          note: string | null
+          overview: string | null
+          price: number | null
+          price_label: string | null
+          process: Json | null
+          process_steps: Json | null
+          recovery_time: string | null
+          requires_slots: boolean | null
+          safety: string | null
+          seo_description: string | null
+          seo_title: string | null
+          sessions: string | null
+          short_description: string | null
+          slots_per_day: number | null
+          slug: string | null
+          subtitle: string | null
+          tagline: string | null
+          title: string | null
+          tone: string | null
+          treatment_type: string | null
+          type: Database["public"]["Enums"]["treatment_type"] | null
+          unit: string | null
+          updated_at: string | null
+          who_for: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          after_image_url?: string | null
+          available_cities?: Json | null
+          badge?: string | null
+          before_image_url?: string | null
+          benefits?: Json | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration?: string | null
+          faqs?: Json | null
+          featured?: boolean | null
+          gallery?: Json | null
+          icon?: string | null
+          id?: string | null
+          image?: string | null
+          image_alt?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          kit_name?: string | null
+          long_description?: string | null
+          meta_keywords?: string | null
+          note?: string | null
+          overview?: string | null
+          price?: number | null
+          price_label?: string | null
+          process?: Json | null
+          process_steps?: Json | null
+          recovery_time?: string | null
+          requires_slots?: boolean | null
+          safety?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          sessions?: string | null
+          short_description?: string | null
+          slots_per_day?: number | null
+          slug?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          title?: string | null
+          tone?: string | null
+          treatment_type?: string | null
+          type?: Database["public"]["Enums"]["treatment_type"] | null
+          unit?: string | null
+          updated_at?: string | null
+          who_for?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          after_image_url?: string | null
+          available_cities?: Json | null
+          badge?: string | null
+          before_image_url?: string | null
+          benefits?: Json | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration?: string | null
+          faqs?: Json | null
+          featured?: boolean | null
+          gallery?: Json | null
+          icon?: string | null
+          id?: string | null
+          image?: string | null
+          image_alt?: string | null
+          image_url?: string | null
+          is_active?: boolean | null
+          kit_name?: string | null
+          long_description?: string | null
+          meta_keywords?: string | null
+          note?: string | null
+          overview?: string | null
+          price?: number | null
+          price_label?: string | null
+          process?: Json | null
+          process_steps?: Json | null
+          recovery_time?: string | null
+          requires_slots?: boolean | null
+          safety?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          sessions?: string | null
+          short_description?: string | null
+          slots_per_day?: number | null
+          slug?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          title?: string | null
+          tone?: string | null
+          treatment_type?: string | null
+          type?: Database["public"]["Enums"]["treatment_type"] | null
+          unit?: string | null
+          updated_at?: string | null
+          who_for?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_bookings: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          booking_slot_id: string | null
+          booking_status: Database["public"]["Enums"]["booking_status"] | null
+          booking_type: string | null
+          cancellation_reason: string | null
+          cancelled_by: string | null
+          city: string | null
+          courier_name: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          deleted_at: string | null
+          discount_snapshot: number | null
+          final_amount: number | null
+          id: string | null
+          is_active: boolean | null
+          notes: string | null
+          partner_code: string | null
+          payment_amount: number | null
+          payment_gateway: string | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          pin_code: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          referral_code: string | null
+          referred_by: string | null
+          refund_status: string | null
+          shipping_status: Database["public"]["Enums"]["shipping_status"] | null
+          tracking_id: string | null
+          treatment_id: string | null
+          treatment_name: string | null
+          treatment_name_snapshot: string | null
+          treatment_price: number | null
+          unit_price_snapshot: number | null
+          updated_at: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          booking_slot_id?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          booking_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
+          city?: string | null
+          courier_name?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          partner_code?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          refund_status?: string | null
+          shipping_status?:
+            | Database["public"]["Enums"]["shipping_status"]
+            | null
+          tracking_id?: string | null
+          treatment_id?: string | null
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          booking_slot_id?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          booking_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
+          city?: string | null
+          courier_name?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          partner_code?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          refund_status?: string | null
+          shipping_status?:
+            | Database["public"]["Enums"]["shipping_status"]
+            | null
+          tracking_id?: string | null
+          treatment_id?: string | null
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_commissions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string | null
+          is_active: boolean | null
+          level: number | null
+          paid_at: string | null
+          partner_id: string | null
+          payout_id: string | null
+          percentage: number | null
+          reversal_reason: string | null
+          reversed: boolean | null
+          reversed_at: string | null
+          source_amount: number | null
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["source_type"] | null
+          status: Database["public"]["Enums"]["commission_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          level?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payout_id?: string | null
+          percentage?: number | null
+          reversal_reason?: string | null
+          reversed?: boolean | null
+          reversed_at?: string | null
+          source_amount?: number | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          level?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payout_id?: string | null
+          percentage?: number | null
+          reversal_reason?: string | null
+          reversed?: boolean | null
+          reversed_at?: string | null
+          source_amount?: number | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_contact_settings: {
+        Row: {
+          address: string | null
+          business_hours: string | null
+          created_at: string | null
+          email: string | null
+          facebook_url: string | null
+          id: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          phone: string | null
+          twitter_url: string | null
+          updated_at: string | null
+          whatsapp: string | null
+          whatsapp_number: string | null
+          whatsapp_url: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_hours?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook_url?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          phone?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+          whatsapp_number?: string | null
+          whatsapp_url?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_hours?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook_url?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          phone?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+          whatsapp_number?: string | null
+          whatsapp_url?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_memberships: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          amount: number | null
+          city: string | null
+          created_at: string | null
+          deleted_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile: string | null
+          notes: string | null
+          partner_id: string | null
+          payment_amount: number | null
+          payment_gateway: string | null
+          payment_id: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          pin_code: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          referral_code: string | null
+          sponsor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          amount?: number | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          amount?: number | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_partner_sales: {
+        Row: {
+          booking_id: string | null
+          booking_status: string | null
+          commission_amount: number | null
+          commission_level: number | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string | null
+          partner_code: string | null
+          partner_id: string | null
+          treatment_name: string | null
+          treatment_price: number | null
+        }
+        Insert: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Update: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_partners: {
+        Row: {
+          aadhaar_last4: string | null
+          address: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_ifsc: string | null
+          bank_verified: boolean | null
+          city: string | null
+          created_at: string | null
+          deleted_at: string | null
+          fraud_notes: string | null
+          id: string | null
+          is_active: boolean | null
+          kyc_status: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at: string | null
+          last_login_ip: string | null
+          membership_expires_at: string | null
+          membership_purchased_at: string | null
+          membership_started_at: string | null
+          paid_earnings: number | null
+          pan_number: string | null
+          partner_code: string | null
+          payout_hold_reason: string | null
+          pin_code: string | null
+          referral_link: string | null
+          sponsor_id: string | null
+          status: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag: boolean | null
+          total_earnings: number | null
+          updated_at: string | null
+          upi_id: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          aadhaar_last4?: string | null
+          address?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_verified?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          fraud_notes?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          membership_expires_at?: string | null
+          membership_purchased_at?: string | null
+          membership_started_at?: string | null
+          paid_earnings?: number | null
+          pan_number?: string | null
+          partner_code?: string | null
+          payout_hold_reason?: string | null
+          pin_code?: string | null
+          referral_link?: string | null
+          sponsor_id?: string | null
+          status?: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag?: boolean | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upi_id?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          aadhaar_last4?: string | null
+          address?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_verified?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          fraud_notes?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          membership_expires_at?: string | null
+          membership_purchased_at?: string | null
+          membership_started_at?: string | null
+          paid_earnings?: number | null
+          pan_number?: string | null
+          partner_code?: string | null
+          payout_hold_reason?: string | null
+          pin_code?: string | null
+          referral_link?: string | null
+          sponsor_id?: string | null
+          status?: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag?: boolean | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upi_id?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_payments: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          order_id: string | null
+          payment_id: string | null
+          refund_amount: number | null
+          refund_reference: string | null
+          refund_status: string | null
+          refunded_at: string | null
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["source_type"] | null
+          status: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data: Json | null
+          webhook_received: boolean | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          refund_amount?: number | null
+          refund_reference?: string | null
+          refund_status?: string | null
+          refunded_at?: string | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data?: Json | null
+          webhook_received?: boolean | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          refund_amount?: number | null
+          refund_reference?: string | null
+          refund_status?: string | null
+          refunded_at?: string | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data?: Json | null
+          webhook_received?: boolean | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_payouts: {
+        Row: {
+          admin_notes: string | null
+          amount: number | null
+          approved_at: string | null
+          available_balance: number | null
+          created_at: string | null
+          deduction_amount: number | null
+          deduction_rate: number | null
+          deleted_at: string | null
+          gross_amount: number | null
+          id: string | null
+          is_active: boolean | null
+          net_amount: number | null
+          paid_at: string | null
+          partner_id: string | null
+          payment_details: string | null
+          payment_method: string | null
+          payment_proof: string | null
+          processed_at: string | null
+          rejected_at: string | null
+          status: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note: string | null
+          transaction_reference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount?: number | null
+          approved_at?: string | null
+          available_balance?: number | null
+          created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
+          deleted_at?: string | null
+          gross_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_details?: string | null
+          payment_method?: string | null
+          payment_proof?: string | null
+          processed_at?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note?: string | null
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number | null
+          approved_at?: string | null
+          available_balance?: number | null
+          created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
+          deleted_at?: string | null
+          gross_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_details?: string | null
+          payment_method?: string | null
+          payment_proof?: string | null
+          processed_at?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note?: string | null
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_profiles: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          email_verified: boolean | null
+          full_name: string | null
+          id: string | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code: string | null
+          phone: string | null
+          phone_verified: boolean | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
+          phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
+          phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_referral_links: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          partner_code: string | null
+          partner_id: string | null
+          referral_link: string | null
+          total_clicks: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          referral_link?: string | null
+          total_clicks?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          referral_link?: string | null
+          total_clicks?: number | null
+        }
+        Relationships: []
+      }
+      _kia_launch_backup_20260714_referral_tree: {
+        Row: {
+          ancestor_id: string | null
+          created_at: string | null
+          descendant_id: string | null
+          id: string | null
+          level: number | null
+          locked: boolean | null
+        }
+        Insert: {
+          ancestor_id?: string | null
+          created_at?: string | null
+          descendant_id?: string | null
+          id?: string | null
+          level?: number | null
+          locked?: boolean | null
+        }
+        Update: {
+          ancestor_id?: string | null
+          created_at?: string | null
+          descendant_id?: string | null
+          id?: string | null
+          level?: number | null
+          locked?: boolean | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_bookings: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          booking_slot_id: string | null
+          booking_status: Database["public"]["Enums"]["booking_status"] | null
+          booking_type: string | null
+          cancellation_reason: string | null
+          cancelled_by: string | null
+          city: string | null
+          courier_name: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          deleted_at: string | null
+          discount_snapshot: number | null
+          final_amount: number | null
+          id: string | null
+          is_active: boolean | null
+          notes: string | null
+          partner_code: string | null
+          payment_amount: number | null
+          payment_gateway: string | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          pin_code: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          referral_code: string | null
+          referred_by: string | null
+          refund_status: string | null
+          shipping_status: Database["public"]["Enums"]["shipping_status"] | null
+          tracking_id: string | null
+          treatment_id: string | null
+          treatment_name: string | null
+          treatment_name_snapshot: string | null
+          treatment_price: number | null
+          unit_price_snapshot: number | null
+          updated_at: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          booking_slot_id?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          booking_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
+          city?: string | null
+          courier_name?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          partner_code?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          refund_status?: string | null
+          shipping_status?:
+            | Database["public"]["Enums"]["shipping_status"]
+            | null
+          tracking_id?: string | null
+          treatment_id?: string | null
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          booking_slot_id?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          booking_type?: string | null
+          cancellation_reason?: string | null
+          cancelled_by?: string | null
+          city?: string | null
+          courier_name?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          partner_code?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          refund_status?: string | null
+          shipping_status?:
+            | Database["public"]["Enums"]["shipping_status"]
+            | null
+          tracking_id?: string | null
+          treatment_id?: string | null
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_commissions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string | null
+          is_active: boolean | null
+          level: number | null
+          paid_at: string | null
+          partner_id: string | null
+          payout_id: string | null
+          percentage: number | null
+          reversal_reason: string | null
+          reversed: boolean | null
+          reversed_at: string | null
+          source_amount: number | null
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["source_type"] | null
+          status: Database["public"]["Enums"]["commission_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          level?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payout_id?: string | null
+          percentage?: number | null
+          reversal_reason?: string | null
+          reversed?: boolean | null
+          reversed_at?: string | null
+          source_amount?: number | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          level?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payout_id?: string | null
+          percentage?: number | null
+          reversal_reason?: string | null
+          reversed?: boolean | null
+          reversed_at?: string | null
+          source_amount?: number | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["commission_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_franchise_leads: {
+        Row: {
+          admin_notes: string | null
+          city: string | null
+          created_at: string | null
+          current_business: string | null
+          full_name: string | null
+          id: string | null
+          investment_budget: string | null
+          message: string | null
+          mobile: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          city?: string | null
+          created_at?: string | null
+          current_business?: string | null
+          full_name?: string | null
+          id?: string | null
+          investment_budget?: string | null
+          message?: string | null
+          mobile?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          city?: string | null
+          created_at?: string | null
+          current_business?: string | null
+          full_name?: string | null
+          id?: string | null
+          investment_budget?: string | null
+          message?: string | null
+          mobile?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_memberships: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          amount: number | null
+          city: string | null
+          created_at: string | null
+          deleted_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile: string | null
+          notes: string | null
+          partner_id: string | null
+          payment_amount: number | null
+          payment_gateway: string | null
+          payment_id: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          pin_code: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          referral_code: string | null
+          sponsor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          amount?: number | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          amount?: number | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          mobile?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pin_code?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          referral_code?: string | null
+          sponsor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_partner_sales: {
+        Row: {
+          booking_id: string | null
+          booking_status: string | null
+          commission_amount: number | null
+          commission_level: number | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string | null
+          partner_code: string | null
+          partner_id: string | null
+          treatment_name: string | null
+          treatment_price: number | null
+        }
+        Insert: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Update: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_partners: {
+        Row: {
+          aadhaar_last4: string | null
+          address: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_ifsc: string | null
+          bank_verified: boolean | null
+          city: string | null
+          created_at: string | null
+          deleted_at: string | null
+          fraud_notes: string | null
+          id: string | null
+          is_active: boolean | null
+          kyc_status: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at: string | null
+          last_login_ip: string | null
+          membership_expires_at: string | null
+          membership_purchased_at: string | null
+          membership_started_at: string | null
+          paid_earnings: number | null
+          pan_number: string | null
+          partner_code: string | null
+          payout_hold_reason: string | null
+          pin_code: string | null
+          referral_link: string | null
+          sponsor_id: string | null
+          status: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag: boolean | null
+          total_earnings: number | null
+          updated_at: string | null
+          upi_id: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          aadhaar_last4?: string | null
+          address?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_verified?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          fraud_notes?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          membership_expires_at?: string | null
+          membership_purchased_at?: string | null
+          membership_started_at?: string | null
+          paid_earnings?: number | null
+          pan_number?: string | null
+          partner_code?: string | null
+          payout_hold_reason?: string | null
+          pin_code?: string | null
+          referral_link?: string | null
+          sponsor_id?: string | null
+          status?: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag?: boolean | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upi_id?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          aadhaar_last4?: string | null
+          address?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc?: string | null
+          bank_verified?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          fraud_notes?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_login_at?: string | null
+          last_login_ip?: string | null
+          membership_expires_at?: string | null
+          membership_purchased_at?: string | null
+          membership_started_at?: string | null
+          paid_earnings?: number | null
+          pan_number?: string | null
+          partner_code?: string | null
+          payout_hold_reason?: string | null
+          pin_code?: string | null
+          referral_link?: string | null
+          sponsor_id?: string | null
+          status?: Database["public"]["Enums"]["partner_status"] | null
+          suspicious_flag?: boolean | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upi_id?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_payments: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          order_id: string | null
+          payment_id: string | null
+          refund_amount: number | null
+          refund_reference: string | null
+          refund_status: string | null
+          refunded_at: string | null
+          source_id: string | null
+          source_type: Database["public"]["Enums"]["source_type"] | null
+          status: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data: Json | null
+          webhook_received: boolean | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          refund_amount?: number | null
+          refund_reference?: string | null
+          refund_status?: string | null
+          refunded_at?: string | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data?: Json | null
+          webhook_received?: boolean | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          refund_amount?: number | null
+          refund_reference?: string | null
+          refund_status?: string | null
+          refunded_at?: string | null
+          source_id?: string | null
+          source_type?: Database["public"]["Enums"]["source_type"] | null
+          status?: Database["public"]["Enums"]["razorpay_status"] | null
+          webhook_data?: Json | null
+          webhook_received?: boolean | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_payouts: {
+        Row: {
+          admin_notes: string | null
+          amount: number | null
+          approved_at: string | null
+          available_balance: number | null
+          created_at: string | null
+          deduction_amount: number | null
+          deduction_rate: number | null
+          deleted_at: string | null
+          gross_amount: number | null
+          id: string | null
+          is_active: boolean | null
+          net_amount: number | null
+          paid_at: string | null
+          partner_id: string | null
+          payment_details: string | null
+          payment_method: string | null
+          payment_proof: string | null
+          processed_at: string | null
+          rejected_at: string | null
+          status: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note: string | null
+          transaction_reference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount?: number | null
+          approved_at?: string | null
+          available_balance?: number | null
+          created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
+          deleted_at?: string | null
+          gross_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_details?: string | null
+          payment_method?: string | null
+          payment_proof?: string | null
+          processed_at?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note?: string | null
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number | null
+          approved_at?: string | null
+          available_balance?: number | null
+          created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
+          deleted_at?: string | null
+          gross_amount?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
+          partner_id?: string | null
+          payment_details?: string | null
+          payment_method?: string | null
+          payment_proof?: string | null
+          processed_at?: string | null
+          rejected_at?: string | null
+          status?: Database["public"]["Enums"]["payout_status"] | null
+          transaction_note?: string | null
+          transaction_reference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_profiles: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          email_verified: boolean | null
+          full_name: string | null
+          id: string | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code: string | null
+          phone: string | null
+          phone_verified: boolean | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
+          phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
+          phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          sponsor_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_referral_clicks: {
+        Row: {
+          city: string | null
+          clicked_at: string | null
+          converted_to_membership: boolean | null
+          device_type: string | null
+          id: string | null
+          ip_address: string | null
+          partner_id: string | null
+          referral_code: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          city?: string | null
+          clicked_at?: string | null
+          converted_to_membership?: boolean | null
+          device_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          partner_id?: string | null
+          referral_code?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          city?: string | null
+          clicked_at?: string | null
+          converted_to_membership?: boolean | null
+          device_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          partner_id?: string | null
+          referral_code?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_referral_links: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          partner_code: string | null
+          partner_id: string | null
+          referral_link: string | null
+          total_clicks: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          referral_link?: string | null
+          total_clicks?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          partner_code?: string | null
+          partner_id?: string | null
+          referral_link?: string | null
+          total_clicks?: number | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_referral_tree: {
+        Row: {
+          ancestor_id: string | null
+          created_at: string | null
+          descendant_id: string | null
+          id: string | null
+          level: number | null
+          locked: boolean | null
+        }
+        Insert: {
+          ancestor_id?: string | null
+          created_at?: string | null
+          descendant_id?: string | null
+          id?: string | null
+          level?: number | null
+          locked?: boolean | null
+        }
+        Update: {
+          ancestor_id?: string | null
+          created_at?: string | null
+          descendant_id?: string | null
+          id?: string | null
+          level?: number | null
+          locked?: boolean | null
+        }
+        Relationships: []
+      }
+      _kia_reset_backup_20260710_wallet_transactions: {
+        Row: {
+          amount: number | null
+          balance_after: number | null
+          balance_before: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string | null
+          notes: string | null
+          partner_id: string | null
+          reference_id: string | null
+          reference_type: Database["public"]["Enums"]["reference_type"] | null
+          transaction_type:
+            | Database["public"]["Enums"]["wallet_transaction_type"]
+            | null
+        }
+        Insert: {
+          amount?: number | null
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          reference_id?: string | null
+          reference_type?: Database["public"]["Enums"]["reference_type"] | null
+          transaction_type?:
+            | Database["public"]["Enums"]["wallet_transaction_type"]
+            | null
+        }
+        Update: {
+          amount?: number | null
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          reference_id?: string | null
+          reference_type?: Database["public"]["Enums"]["reference_type"] | null
+          transaction_type?:
+            | Database["public"]["Enums"]["wallet_transaction_type"]
+            | null
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string
@@ -150,6 +1901,7 @@ export type Database = {
         Row: {
           address: string
           admin_notes: string | null
+          booking_id: string | null
           booking_slot_id: string | null
           booking_status: Database["public"]["Enums"]["booking_status"]
           booking_type: string
@@ -162,23 +1914,37 @@ export type Database = {
           customer_name: string
           customer_phone: string
           deleted_at: string | null
+          discount_snapshot: number | null
+          final_amount: number | null
           id: string
           is_active: boolean | null
           notes: string | null
+          partner_code: string | null
           payment_amount: number | null
+          payment_gateway: string | null
+          payment_reference: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           pin_code: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
           referral_code: string | null
           referred_by: string | null
           refund_status: string | null
           shipping_status: Database["public"]["Enums"]["shipping_status"] | null
           tracking_id: string | null
           treatment_id: string
+          treatment_name: string | null
+          treatment_name_snapshot: string | null
+          treatment_order_id: string | null
+          treatment_price: number | null
+          unit_price_snapshot: number | null
           updated_at: string | null
+          viewed_at: string | null
         }
         Insert: {
           address: string
           admin_notes?: string | null
+          booking_id?: string | null
           booking_slot_id?: string | null
           booking_status?: Database["public"]["Enums"]["booking_status"]
           booking_type: string
@@ -191,12 +1957,19 @@ export type Database = {
           customer_name: string
           customer_phone: string
           deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          partner_code?: string | null
           payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           referral_code?: string | null
           referred_by?: string | null
           refund_status?: string | null
@@ -205,11 +1978,18 @@ export type Database = {
             | null
           tracking_id?: string | null
           treatment_id: string
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_order_id?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
           updated_at?: string | null
+          viewed_at?: string | null
         }
         Update: {
           address?: string
           admin_notes?: string | null
+          booking_id?: string | null
           booking_slot_id?: string | null
           booking_status?: Database["public"]["Enums"]["booking_status"]
           booking_type?: string
@@ -222,12 +2002,19 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           deleted_at?: string | null
+          discount_snapshot?: number | null
+          final_amount?: number | null
           id?: string
           is_active?: boolean | null
           notes?: string | null
+          partner_code?: string | null
           payment_amount?: number | null
+          payment_gateway?: string | null
+          payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           referral_code?: string | null
           referred_by?: string | null
           refund_status?: string | null
@@ -236,7 +2023,13 @@ export type Database = {
             | null
           tracking_id?: string | null
           treatment_id?: string
+          treatment_name?: string | null
+          treatment_name_snapshot?: string | null
+          treatment_order_id?: string | null
+          treatment_price?: number | null
+          unit_price_snapshot?: number | null
           updated_at?: string | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -307,6 +2100,7 @@ export type Database = {
           partner_id: string
           payout_id: string | null
           percentage: number
+          referral_transaction_id: string | null
           reversal_reason: string | null
           reversed: boolean | null
           reversed_at: string | null
@@ -327,6 +2121,7 @@ export type Database = {
           partner_id: string
           payout_id?: string | null
           percentage: number
+          referral_transaction_id?: string | null
           reversal_reason?: string | null
           reversed?: boolean | null
           reversed_at?: string | null
@@ -347,6 +2142,7 @@ export type Database = {
           partner_id?: string
           payout_id?: string | null
           percentage?: number
+          referral_transaction_id?: string | null
           reversal_reason?: string | null
           reversed?: boolean | null
           reversed_at?: string | null
@@ -369,33 +2165,54 @@ export type Database = {
       contact_settings: {
         Row: {
           address: string | null
+          business_hours: string | null
           created_at: string | null
           email: string | null
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
+          linkedin_url: string | null
           phone: string | null
+          twitter_url: string | null
           updated_at: string | null
+          whatsapp: string | null
           whatsapp_number: string | null
           whatsapp_url: string | null
+          youtube_url: string | null
         }
         Insert: {
           address?: string | null
+          business_hours?: string | null
           created_at?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
           phone?: string | null
+          twitter_url?: string | null
           updated_at?: string | null
+          whatsapp?: string | null
           whatsapp_number?: string | null
           whatsapp_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
           address?: string | null
+          business_hours?: string | null
           created_at?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
           phone?: string | null
+          twitter_url?: string | null
           updated_at?: string | null
+          whatsapp?: string | null
           whatsapp_number?: string | null
           whatsapp_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }
@@ -446,6 +2263,158 @@ export type Database = {
           },
         ]
       }
+      faqs: {
+        Row: {
+          active: boolean | null
+          answer: string
+          category: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          answer: string
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          answer?: string
+          category?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      franchise_leads: {
+        Row: {
+          admin_notes: string | null
+          city: string
+          created_at: string | null
+          current_business: string | null
+          full_name: string
+          id: string
+          investment_budget: string | null
+          message: string | null
+          mobile: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          city: string
+          created_at?: string | null
+          current_business?: string | null
+          full_name: string
+          id?: string
+          investment_budget?: string | null
+          message?: string | null
+          mobile: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          city?: string
+          created_at?: string | null
+          current_business?: string | null
+          full_name?: string
+          id?: string
+          investment_budget?: string | null
+          message?: string | null
+          mobile?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      kia_reset_row_counts_audit: {
+        Row: {
+          phase: string
+          recorded_at: string | null
+          row_count: number
+          run_label: string
+          table_name: string
+        }
+        Insert: {
+          phase: string
+          recorded_at?: string | null
+          row_count: number
+          run_label: string
+          table_name: string
+        }
+        Update: {
+          phase?: string
+          recorded_at?: string | null
+          row_count?: number
+          run_label?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      media_library: {
+        Row: {
+          created_at: string | null
+          file_name: string | null
+          folder: string | null
+          height: number | null
+          id: string
+          mime_type: string | null
+          path: string
+          size_bytes: number | null
+          uploaded_by: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name?: string | null
+          folder?: string | null
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          path: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string | null
+          folder?: string | null
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          path?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_library_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memberships: {
         Row: {
           address: string
@@ -458,13 +2427,18 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean | null
+          membership_id: string | null
           membership_status: Database["public"]["Enums"]["membership_status"]
           mobile: string
           notes: string | null
           partner_id: string | null
+          payment_amount: number | null
+          payment_gateway: string | null
           payment_id: string | null
           payment_status: Database["public"]["Enums"]["payment_status"]
           pin_code: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
           referral_code: string | null
           sponsor_id: string | null
           updated_at: string | null
@@ -480,13 +2454,18 @@ export type Database = {
           full_name: string
           id?: string
           is_active?: boolean | null
+          membership_id?: string | null
           membership_status?: Database["public"]["Enums"]["membership_status"]
           mobile: string
           notes?: string | null
           partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
           payment_id?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           referral_code?: string | null
           sponsor_id?: string | null
           updated_at?: string | null
@@ -502,13 +2481,18 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean | null
+          membership_id?: string | null
           membership_status?: Database["public"]["Enums"]["membership_status"]
           mobile?: string
           notes?: string | null
           partner_id?: string | null
+          payment_amount?: number | null
+          payment_gateway?: string | null
           payment_id?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"]
           pin_code?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
           referral_code?: string | null
           sponsor_id?: string | null
           updated_at?: string | null
@@ -615,6 +2599,51 @@ export type Database = {
           },
         ]
       }
+      partner_sales: {
+        Row: {
+          booking_id: string | null
+          booking_status: string | null
+          commission_amount: number | null
+          commission_level: number | null
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          partner_code: string | null
+          partner_id: string | null
+          treatment_name: string | null
+          treatment_price: number | null
+        }
+        Insert: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Update: {
+          booking_id?: string | null
+          booking_status?: string | null
+          commission_amount?: number | null
+          commission_level?: number | null
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          partner_code?: string | null
+          partner_id?: string | null
+          treatment_name?: string | null
+          treatment_price?: number | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           aadhaar_last4: string | null
@@ -632,10 +2661,12 @@ export type Database = {
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           last_login_at: string | null
           last_login_ip: string | null
+          membership_expires_at: string | null
           membership_purchased_at: string | null
+          membership_started_at: string | null
           paid_earnings: number | null
           pan_number: string | null
-          partner_code: string
+          partner_code: string | null
           payout_hold_reason: string | null
           pin_code: string | null
           referral_link: string | null
@@ -663,10 +2694,12 @@ export type Database = {
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_login_at?: string | null
           last_login_ip?: string | null
+          membership_expires_at?: string | null
           membership_purchased_at?: string | null
+          membership_started_at?: string | null
           paid_earnings?: number | null
           pan_number?: string | null
-          partner_code: string
+          partner_code?: string | null
           payout_hold_reason?: string | null
           pin_code?: string | null
           referral_link?: string | null
@@ -694,10 +2727,12 @@ export type Database = {
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_login_at?: string | null
           last_login_ip?: string | null
+          membership_expires_at?: string | null
           membership_purchased_at?: string | null
+          membership_started_at?: string | null
           paid_earnings?: number | null
           pan_number?: string | null
-          partner_code?: string
+          partner_code?: string | null
           payout_hold_reason?: string | null
           pin_code?: string | null
           referral_link?: string | null
@@ -784,49 +2819,76 @@ export type Database = {
         Row: {
           admin_notes: string | null
           amount: number
+          approved_at: string | null
           available_balance: number
           created_at: string | null
+          deduction_amount: number | null
+          deduction_rate: number | null
           deleted_at: string | null
+          gross_amount: number | null
           id: string
           is_active: boolean | null
+          net_amount: number | null
+          paid_at: string | null
           partner_id: string
           payment_details: string
           payment_method: string
           payment_proof: string | null
           processed_at: string | null
+          rejected_at: string | null
           status: Database["public"]["Enums"]["payout_status"]
+          transaction_note: string | null
+          transaction_reference: string | null
           updated_at: string | null
         }
         Insert: {
           admin_notes?: string | null
           amount: number
+          approved_at?: string | null
           available_balance: number
           created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
           deleted_at?: string | null
+          gross_amount?: number | null
           id?: string
           is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
           partner_id: string
           payment_details: string
           payment_method: string
           payment_proof?: string | null
           processed_at?: string | null
+          rejected_at?: string | null
           status?: Database["public"]["Enums"]["payout_status"]
+          transaction_note?: string | null
+          transaction_reference?: string | null
           updated_at?: string | null
         }
         Update: {
           admin_notes?: string | null
           amount?: number
+          approved_at?: string | null
           available_balance?: number
           created_at?: string | null
+          deduction_amount?: number | null
+          deduction_rate?: number | null
           deleted_at?: string | null
+          gross_amount?: number | null
           id?: string
           is_active?: boolean | null
+          net_amount?: number | null
+          paid_at?: string | null
           partner_id?: string
           payment_details?: string
           payment_method?: string
           payment_proof?: string | null
           processed_at?: string | null
+          rejected_at?: string | null
           status?: Database["public"]["Enums"]["payout_status"]
+          transaction_note?: string | null
+          transaction_reference?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -841,36 +2903,54 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
           created_at: string | null
           email: string
           email_verified: boolean | null
           full_name: string | null
           id: string
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code: string | null
           phone: string | null
           phone_verified: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          sponsor_code: string | null
           updated_at: string | null
         }
         Insert: {
+          city?: string | null
           created_at?: string | null
           email: string
           email_verified?: boolean | null
           full_name?: string | null
           id: string
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          sponsor_code?: string | null
           updated_at?: string | null
         }
         Update: {
+          city?: string | null
           created_at?: string | null
           email?: string
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          partner_code?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          sponsor_code?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -962,6 +3042,7 @@ export type Database = {
           id: string
           level: number
           locked: boolean | null
+          referral_transaction_id: string | null
         }
         Insert: {
           ancestor_id: string
@@ -970,6 +3051,7 @@ export type Database = {
           id?: string
           level: number
           locked?: boolean | null
+          referral_transaction_id?: string | null
         }
         Update: {
           ancestor_id?: string
@@ -978,6 +3060,7 @@ export type Database = {
           id?: string
           level?: number
           locked?: boolean | null
+          referral_transaction_id?: string | null
         }
         Relationships: [
           {
@@ -1048,37 +3131,49 @@ export type Database = {
       }
       site_content: {
         Row: {
-          content_key: string
-          content_value: Json
+          content_key: string | null
+          content_value: Json | null
           created_at: string | null
           deleted_at: string | null
+          display_order: number | null
           id: string
           is_active: boolean | null
-          page: string
+          key_name: string | null
+          page: string | null
           section: string
           updated_at: string | null
+          value: string | null
+          value_type: string | null
         }
         Insert: {
-          content_key: string
-          content_value: Json
+          content_key?: string | null
+          content_value?: Json | null
           created_at?: string | null
           deleted_at?: string | null
+          display_order?: number | null
           id?: string
           is_active?: boolean | null
-          page: string
+          key_name?: string | null
+          page?: string | null
           section: string
           updated_at?: string | null
+          value?: string | null
+          value_type?: string | null
         }
         Update: {
-          content_key?: string
-          content_value?: Json
+          content_key?: string | null
+          content_value?: Json | null
           created_at?: string | null
           deleted_at?: string | null
+          display_order?: number | null
           id?: string
           is_active?: boolean | null
-          page?: string
+          key_name?: string | null
+          page?: string | null
           section?: string
           updated_at?: string | null
+          value?: string | null
+          value_type?: string | null
         }
         Relationships: []
       }
@@ -1128,9 +3223,12 @@ export type Database = {
           bookings_enabled: boolean | null
           commissions_enabled: boolean | null
           created_at: string | null
+          hero_points: Json | null
           id: string
           maintenance_mode: boolean | null
           membership_enabled: boolean | null
+          membership_features: Json | null
+          membership_price: number | null
           payouts_enabled: boolean | null
           updated_at: string | null
         }
@@ -1138,9 +3236,12 @@ export type Database = {
           bookings_enabled?: boolean | null
           commissions_enabled?: boolean | null
           created_at?: string | null
+          hero_points?: Json | null
           id?: string
           maintenance_mode?: boolean | null
           membership_enabled?: boolean | null
+          membership_features?: Json | null
+          membership_price?: number | null
           payouts_enabled?: boolean | null
           updated_at?: string | null
         }
@@ -1148,40 +3249,159 @@ export type Database = {
           bookings_enabled?: boolean | null
           commissions_enabled?: boolean | null
           created_at?: string | null
+          hero_points?: Json | null
           id?: string
           maintenance_mode?: boolean | null
           membership_enabled?: boolean | null
+          membership_features?: Json | null
+          membership_price?: number | null
           payouts_enabled?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          active: boolean | null
+          city: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          message: string | null
+          name: string
+          quote: string | null
+          rating: number | null
+          role: string | null
+          treatment: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string | null
+          name: string
+          quote?: string | null
+          rating?: number | null
+          role?: string | null
+          treatment?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string | null
+          name?: string
+          quote?: string | null
+          rating?: number | null
+          role?: string | null
+          treatment?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      treatment_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          public_url: string | null
+          sort_order: number | null
+          storage_path: string | null
+          treatment_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          public_url?: string | null
+          sort_order?: number | null
+          storage_path?: string | null
+          treatment_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          public_url?: string | null
+          sort_order?: number | null
+          storage_path?: string | null
+          treatment_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_images_treatment_id_fkey"
+            columns: ["treatment_id"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatments: {
         Row: {
           active: boolean | null
+          after_image_url: string | null
           available_cities: Json | null
           badge: string | null
+          before_image_url: string | null
           benefits: Json | null
+          category: string | null
           created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
           deleted_at: string | null
           description: string | null
+          display_order: number | null
           duration: string | null
           faqs: Json | null
+          featured: boolean | null
+          gallery: Json | null
+          icon: string | null
           id: string
           image: string | null
           image_alt: string | null
+          image_url: string | null
+          included_products: Json | null
           is_active: boolean | null
+          kit_name: string | null
+          long_description: string | null
+          meta_keywords: string | null
+          note: string | null
+          overview: string | null
           price: number
           price_label: string | null
+          process: Json | null
           process_steps: Json | null
+          recovery_time: string | null
           requires_slots: boolean | null
           safety: string | null
+          seo_description: string | null
+          seo_title: string | null
           sessions: string | null
+          short_description: string | null
+          slots_per_day: number | null
           slug: string
+          sort_order: number | null
           subtitle: string | null
           tagline: string | null
           title: string
           tone: string | null
+          treatment_type: string | null
           type: Database["public"]["Enums"]["treatment_type"]
           unit: string | null
           updated_at: string | null
@@ -1189,29 +3409,53 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          after_image_url?: string | null
           available_cities?: Json | null
           badge?: string | null
+          before_image_url?: string | null
           benefits?: Json | null
+          category?: string | null
           created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
           deleted_at?: string | null
           description?: string | null
+          display_order?: number | null
           duration?: string | null
           faqs?: Json | null
+          featured?: boolean | null
+          gallery?: Json | null
+          icon?: string | null
           id?: string
           image?: string | null
           image_alt?: string | null
+          image_url?: string | null
+          included_products?: Json | null
           is_active?: boolean | null
+          kit_name?: string | null
+          long_description?: string | null
+          meta_keywords?: string | null
+          note?: string | null
+          overview?: string | null
           price: number
           price_label?: string | null
+          process?: Json | null
           process_steps?: Json | null
+          recovery_time?: string | null
           requires_slots?: boolean | null
           safety?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           sessions?: string | null
+          short_description?: string | null
+          slots_per_day?: number | null
           slug: string
+          sort_order?: number | null
           subtitle?: string | null
           tagline?: string | null
           title: string
           tone?: string | null
+          treatment_type?: string | null
           type: Database["public"]["Enums"]["treatment_type"]
           unit?: string | null
           updated_at?: string | null
@@ -1219,29 +3463,53 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          after_image_url?: string | null
           available_cities?: Json | null
           badge?: string | null
+          before_image_url?: string | null
           benefits?: Json | null
+          category?: string | null
           created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
           deleted_at?: string | null
           description?: string | null
+          display_order?: number | null
           duration?: string | null
           faqs?: Json | null
+          featured?: boolean | null
+          gallery?: Json | null
+          icon?: string | null
           id?: string
           image?: string | null
           image_alt?: string | null
+          image_url?: string | null
+          included_products?: Json | null
           is_active?: boolean | null
+          kit_name?: string | null
+          long_description?: string | null
+          meta_keywords?: string | null
+          note?: string | null
+          overview?: string | null
           price?: number
           price_label?: string | null
+          process?: Json | null
           process_steps?: Json | null
+          recovery_time?: string | null
           requires_slots?: boolean | null
           safety?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           sessions?: string | null
+          short_description?: string | null
+          slots_per_day?: number | null
           slug?: string
+          sort_order?: number | null
           subtitle?: string | null
           tagline?: string | null
           title?: string
           tone?: string | null
+          treatment_type?: string | null
           type?: Database["public"]["Enums"]["treatment_type"]
           unit?: string | null
           updated_at?: string | null
@@ -1341,10 +3609,86 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_admin_booking_sales: {
+        Row: {
+          paid_booking_sales: number | null
+          paid_bookings_count: number | null
+          total_bookings: number | null
+        }
+        Relationships: []
+      }
+      v_admin_commission_by_level: {
+        Row: {
+          approved_amount: number | null
+          level: number | null
+          paid_amount: number | null
+          pending_amount: number | null
+          total_amount: number | null
+        }
+        Relationships: []
+      }
+      v_admin_payout_summary: {
+        Row: {
+          paid_payouts: number | null
+          pending_payouts: number | null
+        }
+        Relationships: []
+      }
+      v_admin_wallet_summary: {
+        Row: {
+          total_earnings: number | null
+          total_paid_earnings: number | null
+          total_wallet_balance: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_active_commission_percentages: {
+        Args: never
+        Returns: {
+          level_1: number
+          level_2: number
+          level_3: number
+          level_4: number
+        }[]
+      }
+      kia_approve_paid_membership: {
+        Args: { membership_uuid: string }
+        Returns: {
+          approved_at: string
+          city: string
+          email: string
+          full_name: string
+          partner_code: string
+          partner_id: string
+          phone: string
+          referral_link: string
+        }[]
+      }
+      kia_is_admin: { Args: { check_user_id?: string }; Returns: boolean }
+      kia_lookup_referrer: {
+        Args: { raw_code: string }
+        Returns: {
+          partner_code: string
+          partner_name: string
+          valid: boolean
+        }[]
+      }
+      kia_next_booking_id: { Args: never; Returns: string }
+      kia_next_membership_id: { Args: never; Returns: string }
+      kia_next_partner_code: { Args: never; Returns: string }
+      kia_next_referral_transaction_id: { Args: never; Returns: string }
+      kia_next_treatment_order_id: { Args: never; Returns: string }
+      process_partner_payout: {
+        Args: {
+          new_status_input: string
+          payout_id_input: string
+          transaction_note_input?: string
+          transaction_reference_input?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       booking_status:
@@ -1379,8 +3723,19 @@ export type Database = {
         | "email_verification"
         | "password_reset"
         | "login_2fa"
-      partner_status: "active" | "inactive" | "pending" | "suspended"
-      payment_status: "pending_payment" | "paid" | "failed"
+      partner_status:
+        | "active"
+        | "inactive"
+        | "pending"
+        | "suspended"
+        | "approved"
+      payment_status:
+        | "pending_payment"
+        | "paid"
+        | "failed"
+        | "unpaid"
+        | "pending"
+        | "refunded"
       payout_status: "requested" | "processing" | "paid" | "rejected"
       razorpay_status:
         | "created"
@@ -1575,8 +3930,21 @@ export const Constants = {
         "password_reset",
         "login_2fa",
       ],
-      partner_status: ["active", "inactive", "pending", "suspended"],
-      payment_status: ["pending_payment", "paid", "failed"],
+      partner_status: [
+        "active",
+        "inactive",
+        "pending",
+        "suspended",
+        "approved",
+      ],
+      payment_status: [
+        "pending_payment",
+        "paid",
+        "failed",
+        "unpaid",
+        "pending",
+        "refunded",
+      ],
       payout_status: ["requested", "processing", "paid", "rejected"],
       razorpay_status: [
         "created",
@@ -1615,4 +3983,3 @@ export const Constants = {
     },
   },
 } as const
-

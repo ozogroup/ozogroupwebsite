@@ -1,14 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 // =====================================================
 // TESTIMONIALS ACTIONS
 // =====================================================
 
 export async function getTestimonials() {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -24,7 +26,8 @@ export async function getTestimonials() {
 }
 
 export async function getTestimonialById(id: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -41,7 +44,8 @@ export async function getTestimonialById(id: string) {
 }
 
 export async function createTestimonial(testimonial: any) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -59,11 +63,13 @@ export async function createTestimonial(testimonial: any) {
   }
   
   revalidatePath("/admin/testimonials");
+  revalidatePath("/");
   return data;
 }
 
 export async function updateTestimonial(id: string, testimonial: any) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -81,11 +87,13 @@ export async function updateTestimonial(id: string, testimonial: any) {
   }
   
   revalidatePath("/admin/testimonials");
+  revalidatePath("/");
   return data;
 }
 
 export async function deleteTestimonial(id: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase
     .from("testimonials" as any)
@@ -98,11 +106,13 @@ export async function deleteTestimonial(id: string) {
   }
   
   revalidatePath("/admin/testimonials");
+  revalidatePath("/");
   return { success: true };
 }
 
 export async function toggleTestimonialActive(id: string, isActive: boolean) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("testimonials" as any)
@@ -120,5 +130,6 @@ export async function toggleTestimonialActive(id: string, isActive: boolean) {
   }
   
   revalidatePath("/admin/testimonials");
+  revalidatePath("/");
   return data;
 }

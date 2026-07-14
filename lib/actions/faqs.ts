@@ -1,14 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 // =====================================================
 // FAQs ACTIONS
 // =====================================================
 
 export async function getFaqs() {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -24,7 +26,8 @@ export async function getFaqs() {
 }
 
 export async function getFaqById(id: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -41,7 +44,8 @@ export async function getFaqById(id: string) {
 }
 
 export async function createFaq(faq: any) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -59,11 +63,13 @@ export async function createFaq(faq: any) {
   }
   
   revalidatePath("/admin/faqs");
+  revalidatePath("/");
   return data;
 }
 
 export async function updateFaq(id: string, faq: any) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -81,11 +87,13 @@ export async function updateFaq(id: string, faq: any) {
   }
   
   revalidatePath("/admin/faqs");
+  revalidatePath("/");
   return data;
 }
 
 export async function deleteFaq(id: string) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { error } = await supabase
     .from("faqs" as any)
@@ -98,11 +106,13 @@ export async function deleteFaq(id: string) {
   }
   
   revalidatePath("/admin/faqs");
+  revalidatePath("/");
   return { success: true };
 }
 
 export async function toggleFaqActive(id: string, isActive: boolean) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("faqs" as any)
@@ -120,5 +130,6 @@ export async function toggleFaqActive(id: string, isActive: boolean) {
   }
   
   revalidatePath("/admin/faqs");
+  revalidatePath("/");
   return data;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useCallback, useEffect, useState } from "react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { createFaq, deleteFaq, getFaqs, updateFaq } from "@/lib/actions/faqs";
 
 type FAQ = {
   id: string;
@@ -28,25 +28,23 @@ export default function AdminFaqsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const supabase = getSupabaseBrowserClient();
+  const loadFaqs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getFaqs();
+      setFaqs(Array.isArray(data) ? (data as unknown as FAQ[]) : []);
+    } catch (err: any) {
+      console.error("Error loading FAQs:", err);
+      setFaqs([]);
+      setError(err?.message || "Unable to load FAQs.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadFaqs();
-  }, []);
-
-  async function loadFaqs() {
-    setLoading(true);
-    const { data, error } = await (supabase as any).from("faqs").select("*");
-    if (error) {
-      console.error("Error loading FAQs:", error);
-      setFaqs([]);
-    } else if (data && Array.isArray(data)) {
-      setFaqs(data as unknown as FAQ[]);
-    } else {
-      setFaqs([]);
-    }
-    setLoading(false);
-  }
+  }, [loadFaqs]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -63,17 +61,15 @@ export default function AdminFaqsPage() {
       };
 
       if (editingFaq) {
-        const { error } = await (supabase as any).from("faqs").update(data).eq("id", editingFaq.id);
-        if (error) throw error;
+        await updateFaq(editingFaq.id, data);
       } else {
-        const { error } = await (supabase as any).from("faqs").insert(data);
-        if (error) throw error;
+        await createFaq(data);
       }
 
       setShowModal(false);
       setEditingFaq(null);
       resetForm();
-      loadFaqs();
+      await loadFaqs();
     } catch (err: any) {
       setError(err.message || "Failed to save FAQ");
     } finally {
@@ -83,12 +79,12 @@ export default function AdminFaqsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
-    
-    const { error } = await (supabase as any).from("faqs").delete().eq("id", id);
-    if (error) {
-      alert(error.message);
-    } else {
-      loadFaqs();
+
+    try {
+      await deleteFaq(id);
+      await loadFaqs();
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete FAQ");
     }
   }
 

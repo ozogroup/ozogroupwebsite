@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useCallback, useEffect, useState } from "react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import {
+  createTestimonial,
+  deleteTestimonial,
+  getTestimonials,
+  updateTestimonial,
+} from "@/lib/actions/testimonials";
 
 type Testimonial = {
   id: string;
@@ -30,25 +35,23 @@ export default function AdminTestimonialsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const supabase = getSupabaseBrowserClient();
+  const loadTestimonials = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getTestimonials();
+      setTestimonials(Array.isArray(data) ? (data as unknown as Testimonial[]) : []);
+    } catch (err: any) {
+      console.error("Error loading testimonials:", err);
+      setTestimonials([]);
+      setError(err?.message || "Unable to load testimonials.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadTestimonials();
-  }, []);
-
-  async function loadTestimonials() {
-    setLoading(true);
-    const { data, error } = await (supabase as any).from("testimonials").select("*");
-    if (error) {
-      console.error("Error loading testimonials:", error);
-      setTestimonials([]);
-    } else if (data && Array.isArray(data)) {
-      setTestimonials(data as unknown as Testimonial[]);
-    } else {
-      setTestimonials([]);
-    }
-    setLoading(false);
-  }
+  }, [loadTestimonials]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -66,17 +69,15 @@ export default function AdminTestimonialsPage() {
       };
 
       if (editingTestimonial) {
-        const { error } = await (supabase as any).from("testimonials").update(data).eq("id", editingTestimonial.id);
-        if (error) throw error;
+        await updateTestimonial(editingTestimonial.id, data);
       } else {
-        const { error } = await (supabase as any).from("testimonials").insert(data);
-        if (error) throw error;
+        await createTestimonial(data);
       }
 
       setShowModal(false);
       setEditingTestimonial(null);
       resetForm();
-      loadTestimonials();
+      await loadTestimonials();
     } catch (err: any) {
       setError(err.message || "Failed to save testimonial");
     } finally {
@@ -86,12 +87,12 @@ export default function AdminTestimonialsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this testimonial?")) return;
-    
-    const { error } = await (supabase as any).from("testimonials").delete().eq("id", id);
-    if (error) {
-      alert(error.message);
-    } else {
-      loadTestimonials();
+
+    try {
+      await deleteTestimonial(id);
+      await loadTestimonials();
+    } catch (err: any) {
+      alert(err?.message || "Failed to delete testimonial");
     }
   }
 
@@ -159,13 +160,13 @@ export default function AdminTestimonialsPage() {
           <tbody className="divide-y divide-brand-border">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-brand-muted">
+                <td colSpan={7} className="px-4 py-12 text-center text-brand-muted">
                   Loading...
                 </td>
               </tr>
             ) : testimonials.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center">
+                <td colSpan={7} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <span className="text-4xl">⭐</span>
                     <p className="text-brand-ink font-medium">No testimonials found</p>

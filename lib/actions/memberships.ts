@@ -494,6 +494,7 @@ export async function updateMembershipAdminNotes(id: string, adminNotes: string)
 
 export async function repairPartnerAuthUser(email: string) {
   "use server";
+  await requireAdmin();
   const serviceClient = getSupabaseServiceClient();
 
   if (!email?.trim()) {

@@ -1,6 +1,7 @@
 "use server";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
 
 const franchiseLeadSelect =
   "id,full_name,mobile,city,current_business,investment_budget,message,status,created_at";
@@ -54,6 +55,7 @@ export async function submitFranchiseLead(formData: FormData) {
 
 export async function getFranchiseLeads() {
   try {
+    await requireAdmin();
     const supabase = getSupabaseServiceClient();
     const { data, error } = await supabase
       .from("franchise_leads" as any)
@@ -81,6 +83,7 @@ export async function getFranchiseLeads() {
 
 export async function updateFranchiseLead(input: { id: string; status: string; adminNote?: string }) {
   try {
+    await requireAdmin();
     const supabase = getSupabaseServiceClient();
     const payload: Record<string, string> = { status: input.status };
     if (input.adminNote?.trim()) payload.admin_notes = input.adminNote.trim();

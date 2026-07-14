@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function getSystemSettings() {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("system_settings")
@@ -20,7 +22,8 @@ export async function getSystemSettings() {
 }
 
 export async function updateSystemSettings(formData: FormData) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
 
   const maintenance_mode = formData.get("maintenance_mode") === "true";
   const payouts_enabled = formData.get("payouts_enabled") === "true";

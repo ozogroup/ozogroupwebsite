@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function getCommissionSettings() {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
   
   const { data, error } = await supabase
     .from("commission_settings")
@@ -21,7 +23,8 @@ export async function getCommissionSettings() {
 }
 
 export async function updateCommissionSettings(formData: FormData) {
-  const supabase = await getSupabaseServerClient();
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
 
   const level_1_percentage = parseFloat(formData.get("level_1_percentage") as string);
   const level_2_percentage = parseFloat(formData.get("level_2_percentage") as string);

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/helpers";
-import { getReferralUrl } from "@/lib/referral-url";
 
 // =====================================================
 // PARTNERS ACTIONS
@@ -67,36 +66,9 @@ export async function updatePartnerStatus(id: string, status: string) {
   return data;
 }
 
-export async function createPartner(partner: any) {
+export async function createPartner(_partner: any) {
   await requireAdmin();
-  const supabase = getSupabaseServiceClient();
-
-  const { data, error } = await supabase
-    .from("partners" as any)
-    .insert({
-      ...partner,
-      partner_code: partner.partner_code || null,
-      referral_link: partner.referral_link || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating partner:", error);
-    throw error;
-  }
-
-  if ((data as any)?.partner_code && !(data as any)?.referral_link) {
-    await supabase
-      .from("partners" as any)
-      .update({ referral_link: getReferralUrl((data as any).partner_code) })
-      .eq("id", (data as any).id);
-  }
-
-  revalidatePath("/admin/partners");
-  return data;
+  throw new Error("Create partners through Membership Requests after payment is marked paid and approved.");
 }
 
 export async function updatePartnerAuthPassword(partnerId: string, password: string) {
