@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { getReferralUrl } from "@/lib/referral-url";
-import { resolvePartnerByCode } from "@/lib/actions/referral-tracking";
-import { normalizeKiaPartnerCode } from "@/lib/partner-code";
+import { resolvePartnerByCode, createReferralTreeForPartner } from "@/lib/actions/referral-tracking";
+import { normalizeKiaPartnerCode, generateKiaPartnerCode, isPartnerCodeConflict } from "@/lib/partner-code";
 import { syncMembershipCreated, syncPartnerApproved } from "@/lib/integrations/google-sheet-sync";
 
 // =====================================================
@@ -394,6 +394,199 @@ export async function createSponsoredMembership(
   return result;
 }
 
+// Flat commission paid to the direct sponsor only when a new paid membership
+// is approved (confirmed 2026-07-15: Rs 500, level 1 only, no 4-level split,
+// same pending->approved->paid lifecycle as booking commissions). Mirrors the
+// insert done inside the kia_approve_paid_membership RPC so behavior matches
+// whether the RPC path or this JS fallback path runs.
+async function generateMembershipReferralCommission(
+  supabase: ReturnType<typeof getSupabaseServiceClient>,
+  membership: { id: string; amount: number | null; sponsor_id: string | null }
+) {
+  if (!membership.sponsor_id) return;
+
+  const { data: sponsor } = await supabase
+    .from("partners" as any)
+    .select("status, is_active, deleted_at, membership_expires_at")
+    .eq("id", membership.sponsor_id)
+    .maybeSingle();
+  const sp = sponsor as any;
+  const sponsorEligible =
+    sp &&
+    sp.status === "active" &&
+    sp.is_active !== false &&
+    !sp.deleted_at &&
+    (!sp.membership_expires_at || new Date(sp.membership_expires_at).getTime() >= Date.now());
+  if (!sponsorEligible) return;
+
+  const { data: settings } = await supabase
+    .from("system_settings" as any)
+    .select("membership_referral_bonus_amount")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const bonusAmount = Number((settings as any)?.membership_referral_bonus_amount ?? 500);
+  if (!(bonusAmount > 0)) return;
+
+  const { data: existing } = await supabase
+    .from("commissions" as any)
+    .select("id")
+    .eq("source_type", "membership")
+    .eq("source_id", membership.id)
+    .eq("partner_id", membership.sponsor_id)
+    .eq("level", 1)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (existing) return;
+
+  const { error } = await supabase.from("commissions" as any).insert({
+    partner_id: membership.sponsor_id,
+    source_type: "membership",
+    source_id: membership.id,
+    source_amount: membership.amount || 0,
+    level: 1,
+    percentage: 0,
+    amount: bonusAmount,
+    status: "pending",
+  });
+  if (error && error.code !== "23505") {
+    console.error("Error creating membership referral commission:", error);
+  }
+}
+
+// JS fallback for kia_approve_paid_membership. The RPC is tried first (it is
+// atomic and row-locked, which this fallback cannot fully replicate with
+// separate Supabase calls); this only runs if the RPC itself is missing from
+// the database, so membership approval never becomes a hard launch blocker.
+async function approveAndCreatePartnerFallback(membershipId: string) {
+  const supabase = getSupabaseServiceClient();
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("memberships" as any)
+    .select("*")
+    .eq("id", membershipId)
+    .single();
+  if (membershipError || !membership) return { error: "Membership not found." };
+  const m = membership as any;
+
+  if (m.payment_status !== "paid") return { error: "Payment must be marked paid before approval." };
+  if (m.membership_status === "rejected") return { error: "Rejected membership cannot be approved." };
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles" as any)
+    .select("*")
+    .eq("id", m.partner_id)
+    .maybeSingle();
+  if (profileError || !profile) return { error: `Linked profile/auth user not found for membership ${membershipId}` };
+  const prof = profile as any;
+
+  const approvedAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: existingPartner } = await supabase
+    .from("partners" as any)
+    .select("*")
+    .eq("id", prof.id)
+    .maybeSingle();
+
+  let partnerRow: any;
+  if (!existingPartner) {
+    const { data: inserted, error: insertError } = await supabase
+      .from("partners" as any)
+      .insert({
+        id: prof.id,
+        partner_code: null,
+        city: m.city,
+        address: m.address,
+        pin_code: m.pin_code,
+        sponsor_id: m.sponsor_id,
+        status: "active",
+        wallet_balance: 0,
+        total_earnings: 0,
+        paid_earnings: 0,
+        membership_purchased_at: approvedAt,
+        membership_started_at: approvedAt,
+        membership_expires_at: expiresAt,
+        is_active: true,
+      })
+      .select()
+      .single();
+    if (insertError) return { error: insertError.message };
+    partnerRow = inserted;
+  } else {
+    const ep = existingPartner as any;
+    const { data: updated, error: updateError } = await supabase
+      .from("partners" as any)
+      .update({
+        status: "active",
+        is_active: true,
+        sponsor_id: ep.sponsor_id || m.sponsor_id,
+        city: ep.city || m.city,
+        address: ep.address || m.address,
+        pin_code: ep.pin_code || m.pin_code,
+        membership_purchased_at: ep.membership_purchased_at || approvedAt,
+        membership_started_at: ep.membership_started_at || approvedAt,
+        membership_expires_at: ep.membership_expires_at || expiresAt,
+        updated_at: approvedAt,
+      })
+      .eq("id", ep.id)
+      .select()
+      .single();
+    if (updateError) return { error: updateError.message };
+    partnerRow = updated;
+  }
+
+  // The DB trigger trg_kia_assign_partner_code_on_activation normally
+  // assigns partner_code on this same status update. If that trigger is also
+  // missing, generate one here so approval never gets stuck without an ID.
+  if (!partnerRow.partner_code) {
+    for (let attempt = 0; attempt < 5 && !partnerRow.partner_code; attempt += 1) {
+      const candidate = await generateKiaPartnerCode(supabase);
+      const { data: coded, error: codeError } = await supabase
+        .from("partners" as any)
+        .update({ partner_code: candidate, referral_link: getReferralUrl(candidate) })
+        .eq("id", partnerRow.id)
+        .select()
+        .single();
+      if (!codeError) {
+        partnerRow = coded;
+        break;
+      }
+      if (!isPartnerCodeConflict(codeError)) {
+        return { error: codeError.message };
+      }
+    }
+  }
+
+  await supabase
+    .from("profiles" as any)
+    .update({ role: "partner", membership_status: "active", partner_code: partnerRow.partner_code, updated_at: approvedAt })
+    .eq("id", prof.id);
+
+  await supabase
+    .from("memberships" as any)
+    .update({ partner_id: prof.id, membership_status: "active", updated_at: approvedAt })
+    .eq("id", membershipId);
+
+  if (m.sponsor_id && m.sponsor_id !== prof.id) {
+    await createReferralTreeForPartner(supabase, prof.id, m.sponsor_id);
+    await generateMembershipReferralCommission(supabase, { id: membershipId, amount: m.amount, sponsor_id: m.sponsor_id });
+  }
+
+  return {
+    data: {
+      partner_id: partnerRow.id,
+      partner_code: partnerRow.partner_code,
+      referral_link: partnerRow.referral_link || getReferralUrl(partnerRow.partner_code),
+      full_name: m.full_name,
+      email: m.email,
+      phone: m.mobile,
+      city: m.city,
+      approved_at: approvedAt,
+    },
+  };
+}
+
 export async function approveAndCreatePartner(membershipId: string) {
   await requireAdmin();
   const supabase = await getSupabaseServerClient();
@@ -401,12 +594,21 @@ export async function approveAndCreatePartner(membershipId: string) {
     membership_uuid: membershipId,
   });
 
+  let approved: any;
   if (error) {
-    console.error("Error approving membership:", error);
-    return { error: error.message || "Failed to approve membership." };
+    const message = `${error.message || ""} ${(error as any).details || ""}`;
+    if (!/kia_approve_paid_membership|function .* does not exist|schema cache/i.test(message)) {
+      console.error("Error approving membership:", error);
+      return { error: error.message || "Failed to approve membership." };
+    }
+    console.error("Membership approval RPC unavailable; using server fallback:", error);
+    const fallbackResult = await approveAndCreatePartnerFallback(membershipId);
+    if ((fallbackResult as any).error) return fallbackResult;
+    approved = (fallbackResult as any).data;
+  } else {
+    approved = Array.isArray(data) ? data[0] : data;
   }
 
-  const approved = Array.isArray(data) ? data[0] : data;
   if (!approved?.partner_code) {
     return { error: "Membership approval did not return a Partner ID." };
   }
@@ -432,9 +634,12 @@ export async function approveAndCreatePartner(membershipId: string) {
 
   revalidatePath("/admin/memberships");
   revalidatePath("/admin/partners");
+  revalidatePath("/admin/commissions");
   revalidatePath("/partner/dashboard");
   revalidatePath("/partner/team");
   revalidatePath("/partner/direct-team");
+  revalidatePath("/partner/income");
+  revalidatePath("/partner/commissions");
 
   return {
     data: {
