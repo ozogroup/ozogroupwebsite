@@ -4,15 +4,56 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 import { syncPayoutUpdated } from "@/lib/integrations/google-sheet-sync";
+import {
+  roundMoney,
+  computePayoutBreakdown,
+  selectCommissionsForFifoPayout,
+  evaluatePayoutRequestEligibility,
+} from "@/lib/finance";
 
 // =====================================================
 // PAYOUTS ACTIONS
 // =====================================================
 
-const PAYOUT_DEDUCTION_RATE = 0.15;
+// Fallback values only — used if system_settings has no row yet or the new
+// settings columns from supabase/kia-financial-repair have not been applied.
+// Matches the values confirmed with the project owner on 2026-07-15.
+const DEFAULT_PAYOUT_DEDUCTION_RATE = 0.15;
+const DEFAULT_PAYOUT_MINIMUM_AMOUNT = 1000;
 
-function roundMoney(value: number) {
-  return Math.round(value * 100) / 100;
+type PayoutSettings = {
+  deductionRate: number;
+  minimumAmount: number;
+  kycRequired: boolean;
+  bankRequired: boolean;
+  singleOpenRequestOnly: boolean;
+};
+
+async function getPayoutSettings(supabase: any): Promise<PayoutSettings> {
+  try {
+    const { data } = await supabase
+      .from("system_settings" as any)
+      .select("payout_deduction_rate, payout_minimum_amount, payout_kyc_required, payout_bank_required, payout_single_open_request_only")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const row = data as any;
+    return {
+      deductionRate: Number(row?.payout_deduction_rate ?? DEFAULT_PAYOUT_DEDUCTION_RATE),
+      minimumAmount: Number(row?.payout_minimum_amount ?? DEFAULT_PAYOUT_MINIMUM_AMOUNT),
+      kycRequired: row?.payout_kyc_required ?? true,
+      bankRequired: row?.payout_bank_required ?? true,
+      singleOpenRequestOnly: row?.payout_single_open_request_only ?? true,
+    };
+  } catch {
+    return {
+      deductionRate: DEFAULT_PAYOUT_DEDUCTION_RATE,
+      minimumAmount: DEFAULT_PAYOUT_MINIMUM_AMOUNT,
+      kycRequired: true,
+      bankRequired: true,
+      singleOpenRequestOnly: true,
+    };
+  }
 }
 
 // When a payout is paid, move the partner's oldest approved commissions into the
@@ -38,15 +79,7 @@ async function markApprovedCommissionsPaid(
   if (error) throw error;
   if (!Array.isArray(rows) || rows.length === 0) return;
 
-  let remaining = grossAmount;
-  const ids: string[] = [];
-  for (const row of rows) {
-    if (remaining <= 0.009) break;
-    const amount = Number(row.amount || 0);
-    if (amount <= 0 || amount > remaining + 0.009) continue;
-    ids.push(row.id);
-    remaining = roundMoney(remaining - amount);
-  }
+  const ids = selectCommissionsForFifoPayout(rows, grossAmount);
   if (ids.length === 0) return;
   const now = new Date().toISOString();
   const { error: updateError } = await supabase
@@ -63,7 +96,9 @@ async function markApprovedCommissionsPaid(
 export async function getPayouts() {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
-  
+  const payoutSettings = await getPayoutSettings(supabase);
+  const deductionRate = payoutSettings.deductionRate;
+
   const { data, error } = await supabase
     .from("payouts" as any)
     .select(`
@@ -161,7 +196,7 @@ export async function getPayouts() {
     }));
     const bonusIncome = 0;
     const grossIncome = membershipIncome + productIncome + bonusIncome;
-    const deductionAmount = roundMoney(grossIncome * PAYOUT_DEDUCTION_RATE);
+    const deductionAmount = roundMoney(grossIncome * deductionRate);
     const netPayable = roundMoney(grossIncome - deductionAmount);
     const partnerPayouts = (allPayouts || []).filter((p: any) => p.partner_id === partnerId);
     const paidAmount = partnerPayouts
@@ -180,7 +215,7 @@ export async function getPayouts() {
       grossIncome,
       walletBalance: Number(partner?.wallet_balance || 0),
       paidEarnings: Number(partner?.paid_earnings || 0),
-      deductionRate: PAYOUT_DEDUCTION_RATE,
+      deductionRate,
       deductionAmount,
       netPayable,
       paidAmount,
@@ -193,12 +228,12 @@ export async function getPayouts() {
 
   const rows = payouts.map((payout: any) => {
     const grossAmount = Number(payout.gross_amount || payout.amount || 0);
-    const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE));
+    const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * deductionRate));
     const netAmount = Number(payout.net_amount || payout.amount || roundMoney(grossAmount - deductionAmount));
     return {
       ...payout,
       gross_amount: grossAmount,
-      deduction_rate: Number(payout.deduction_rate ?? PAYOUT_DEDUCTION_RATE),
+      deduction_rate: Number(payout.deduction_rate ?? deductionRate),
       deduction_amount: deductionAmount,
       net_amount: netAmount,
       partner_summary: summaryByPartner.get(payout.partner_id),
@@ -216,7 +251,7 @@ export async function getPayouts() {
     const partner = (partners || []).find((p: any) => p.id === partnerId) as any;
     const walletBalance = Number(partner?.wallet_balance || 0);
     if (!summary || walletBalance <= 0) continue;
-    const walletDeduction = roundMoney(walletBalance * PAYOUT_DEDUCTION_RATE);
+    const walletDeduction = roundMoney(walletBalance * deductionRate);
     const walletNet = roundMoney(walletBalance - walletDeduction);
     rows.push({
       id: `summary-${partnerId}`,
@@ -224,7 +259,7 @@ export async function getPayouts() {
       partner,
       amount: walletNet,
       gross_amount: walletBalance,
-      deduction_rate: PAYOUT_DEDUCTION_RATE,
+      deduction_rate: deductionRate,
       deduction_amount: walletDeduction,
       net_amount: walletNet,
       available_balance: walletBalance,
@@ -462,6 +497,7 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   if (error || !partner) return { error: "Partner profile not found." };
 
   const p = partner as any;
+  const payoutSettings = await getPayoutSettings(supabase);
   const wallet = Number(p.wallet_balance || 0);
   const membershipActive = p.status === "active" && (!p.membership_expires_at || new Date(p.membership_expires_at).getTime() >= Date.now());
   const hasBank = Boolean(p.bank_account_holder && p.bank_account_number && p.bank_ifsc);
@@ -469,26 +505,32 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   const hasUpi = Boolean(upiId);
   const method = paymentMethod || (hasBank ? "bank" : hasUpi ? "upi" : "bank");
 
-  if (p.kyc_status !== "verified") return { error: "KYC approval is required before withdrawal." };
-  if (!p.bank_verified) return { error: "Bank details must be verified before withdrawal." };
-  if (!membershipActive) return { error: "Membership must be active before withdrawal." };
-  if (wallet < 1000) return { error: "Minimum wallet balance for payout is Rs. 1000." };
-  if (!Number.isFinite(amount) || amount < 1000) return { error: "Minimum payout amount is Rs. 1000." };
-  if (amount > wallet) return { error: "Insufficient wallet balance." };
   if (method === "bank" && !hasBank) return { error: "Bank details are required for bank transfer." };
   if (method === "upi" && !hasUpi) return { error: "UPI details are required for UPI payout." };
 
-  const { data: existingRequest, error: existingRequestError } = await supabase
-    .from("payouts" as any)
-    .select("id, gross_amount, amount, status")
-    .eq("partner_id", profile.id)
-    .in("status", ["requested", "processing"])
-    .limit(1)
-    .maybeSingle();
-  if (existingRequestError) return { error: existingRequestError.message };
-  if (existingRequest) {
-    return { error: "A payout request is already pending. Please wait for the admin to process it." };
+  let hasOpenRequest = false;
+  if (payoutSettings.singleOpenRequestOnly) {
+    const { data: existingRequest, error: existingRequestError } = await supabase
+      .from("payouts" as any)
+      .select("id")
+      .eq("partner_id", profile.id)
+      .in("status", ["requested", "processing"])
+      .limit(1)
+      .maybeSingle();
+    if (existingRequestError) return { error: existingRequestError.message };
+    hasOpenRequest = Boolean(existingRequest);
   }
+
+  const eligibility = evaluatePayoutRequestEligibility({
+    walletBalance: wallet,
+    requestedAmount: amount,
+    kycStatus: p.kyc_status,
+    bankVerified: p.bank_verified,
+    membershipActive,
+    hasOpenRequest,
+    settings: payoutSettings,
+  });
+  if (!eligibility.allowed) return { error: eligibility.error };
 
   const paymentDetails =
     method === "upi"
@@ -501,14 +543,12 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
           p.bank_ifsc,
         ].filter(Boolean).join(" | ");
 
-  const grossAmount = roundMoney(amount);
-  const deductionAmount = roundMoney(grossAmount * PAYOUT_DEDUCTION_RATE);
-  const netAmount = roundMoney(grossAmount - deductionAmount);
+  const { gross: grossAmount, deduction: deductionAmount, net: netAmount } = computePayoutBreakdown(amount, payoutSettings.deductionRate);
   const payoutPayload: Record<string, unknown> = {
     partner_id: profile.id,
     amount: netAmount,
     gross_amount: grossAmount,
-    deduction_rate: PAYOUT_DEDUCTION_RATE,
+    deduction_rate: payoutSettings.deductionRate,
     deduction_amount: deductionAmount,
     net_amount: netAmount,
     available_balance: wallet,
