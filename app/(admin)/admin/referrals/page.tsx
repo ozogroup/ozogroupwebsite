@@ -1,25 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getReferralOverview, getReferralTree, searchPartner } from "@/lib/actions/referrals";
+import { Network, Search, Users, GitBranch, UserCheck, Link2 } from "lucide-react";
+import { getAllPartnersDirectory, getReferralOverview, getReferralTree } from "@/lib/actions/referrals";
+import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
 
 function money(value: number | string | null | undefined) {
   return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
-function statusClass(status?: string | null) {
+function statusVariant(status?: string | null): "success" | "warning" | "danger" | "neutral" {
   switch (status) {
     case "active":
-      return "bg-green-50 text-green-700";
+      return "success";
     case "pending":
     case "payment_pending":
     case "pending_payment":
-      return "bg-amber-50 text-amber-700";
+      return "warning";
     case "suspended":
     case "rejected":
-      return "bg-red-50 text-red-700";
+      return "danger";
     default:
-      return "bg-slate-50 text-slate-700";
+      return "neutral";
   }
 }
 
@@ -40,9 +42,7 @@ function PartnerCard({ partner, onView }: { partner: any; onView: (partner: any)
           <p className="mt-1 font-mono text-xs text-brand-muted">{partner.partner_code || "-"}</p>
           <p className="mt-1 text-xs text-brand-muted">{partnerPhone(partner)}</p>
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(partner.status)}`}>
-          {partner.status || "unknown"}
-        </span>
+        <Badge variant={statusVariant(partner.status)} dot>{partner.status || "unknown"}</Badge>
       </div>
       <div className="mt-4 flex items-center justify-between border-t border-brand-border pt-3 text-xs text-brand-muted">
         <span>{partner.city || "City not set"}</span>
@@ -61,12 +61,12 @@ function PartnerCard({ partner, onView }: { partner: any; onView: (partner: any)
 
 export default function AdminReferralsPage() {
   const [overview, setOverview] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [directory, setDirectory] = useState<any[]>([]);
+  const [directorySearch, setDirectorySearch] = useState("");
+  const [levelFilter, setLevelFilter] = useState<"all" | number>("all");
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [referralTree, setReferralTree] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
   const [treeLoading, setTreeLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,10 +83,14 @@ export default function AdminReferralsPage() {
     [commissionLevels],
   );
 
-  const loadOverview = useCallback(async () => {
+  const loadAll = useCallback(async () => {
     try {
-      const data = await getReferralOverview();
-      setOverview(data);
+      const [overviewData, directoryData] = await Promise.all([
+        getReferralOverview(),
+        getAllPartnersDirectory(),
+      ]);
+      setOverview(overviewData);
+      setDirectory(directoryData);
       setError(null);
     } catch (err: any) {
       setError(err?.message || "Unable to load referral network.");
@@ -106,12 +110,12 @@ export default function AdminReferralsPage() {
   }, [selectedPartner?.id]);
 
   useEffect(() => {
-    void loadOverview();
-  }, [loadOverview]);
+    void loadAll();
+  }, [loadAll]);
 
   useEffect(() => {
     const onFocus = () => {
-      void loadOverview();
+      void loadAll();
       void refreshSelectedTree();
     };
     window.addEventListener("focus", onFocus);
@@ -120,27 +124,7 @@ export default function AdminReferralsPage() {
       window.removeEventListener("focus", onFocus);
       window.clearInterval(interval);
     };
-  }, [loadOverview, refreshSelectedTree]);
-
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const term = searchQuery.trim();
-    if (!term) {
-      setSearchResults([]);
-      return;
-    }
-
-    setSearching(true);
-    setError(null);
-    try {
-      const results = await searchPartner(term);
-      setSearchResults(results);
-    } catch (err: any) {
-      setError(err?.message || "Search failed.");
-    } finally {
-      setSearching(false);
-    }
-  }
+  }, [loadAll, refreshSelectedTree]);
 
   async function handleViewTree(partner: any) {
     setSelectedPartner(partner);
@@ -162,6 +146,24 @@ export default function AdminReferralsPage() {
     setReferralTree(null);
   }
 
+  const filteredDirectory = useMemo(() => {
+    let rows = directory;
+    if (levelFilter !== "all") {
+      rows = rows.filter((p) => (levelFilter === 4 ? p.levelFromRoot >= 4 : p.levelFromRoot === levelFilter));
+    }
+    const term = directorySearch.trim().toLowerCase();
+    if (term) {
+      rows = rows.filter((p) =>
+        [p.partner_code, partnerName(p), partnerPhone(p), p.sponsor?.partner_code, partnerName(p.sponsor), p.city]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(term)
+      );
+    }
+    return rows;
+  }, [directory, directorySearch, levelFilter]);
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -179,7 +181,7 @@ export default function AdminReferralsPage() {
             onClick={handleBack}
             className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-muted transition-colors hover:text-brand-ink"
           >
-            Back
+            ← Back to all accounts
           </button>
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-ink">{partnerName(selectedPartner)}</h1>
@@ -254,12 +256,8 @@ export default function AdminReferralsPage() {
                   <p className="mt-1 text-xs text-brand-muted">{member.mobile || "-"}</p>
                   <p className="text-xs text-brand-muted">{member.city || "-"}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-amber-700">
-                      {member.membership_status || "pending"}
-                    </span>
-                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-amber-700">
-                      {member.payment_status || "payment pending"}
-                    </span>
+                    <Badge variant="warning">{member.membership_status || "pending"}</Badge>
+                    <Badge variant="warning">{member.payment_status || "payment pending"}</Badge>
                   </div>
                 </div>
               ))}
@@ -272,32 +270,20 @@ export default function AdminReferralsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-brand-ink">Referral Network</h1>
-        <p className="text-sm text-brand-muted">Track sponsor chains, pending members and 4-level commission eligibility.</p>
-      </div>
+      <PageHeader
+        title="Referral Network"
+        description="Every business account, who referred them, and their 4-level commission eligibility — in one place."
+      />
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
-          <p className="text-sm font-medium text-brand-muted">Total Partners</p>
-          <p className="mt-2 text-3xl font-bold text-brand-ink">{totals.partners || 0}</p>
-        </div>
-        <div className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
-          <p className="text-sm font-medium text-brand-muted">Active Partners</p>
-          <p className="mt-2 text-3xl font-bold text-brand-ink">{totals.activePartners || 0}</p>
-        </div>
-        <div className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
-          <p className="text-sm font-medium text-brand-muted">Pending Members</p>
-          <p className="mt-2 text-3xl font-bold text-brand-ink">{totals.pendingMembers || 0}</p>
-        </div>
-        <div className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
-          <p className="text-sm font-medium text-brand-muted">Tree Links</p>
-          <p className="mt-2 text-3xl font-bold text-brand-ink">{totals.treeLinks || 0}</p>
-        </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <StatCard label="Total Accounts" value={totals.partners || 0} icon={Users} tone="sage" />
+        <StatCard label="Active Accounts" value={totals.activePartners || 0} icon={UserCheck} tone="green" />
+        <StatCard label="Pending Members" value={totals.pendingMembers || 0} icon={Network} tone="amber" />
+        <StatCard label="Sponsor Links" value={totals.treeLinks || 0} icon={GitBranch} tone="purple" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -310,63 +296,111 @@ export default function AdminReferralsPage() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-soft">
-        <h2 className="font-display text-lg font-semibold text-brand-ink">Search Partner</h2>
-        <p className="mt-1 text-sm text-brand-muted">Search by Partner ID, phone, email or name.</p>
-        <form onSubmit={handleSearch} className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="KIA1001, phone, email or name"
-            className="flex-1 rounded-lg border border-brand-border px-4 py-2.5 outline-none transition-all focus:border-brand-accent focus:ring-2 focus:ring-brand-accent"
-          />
-          <button
-            type="submit"
-            disabled={searching}
-            className="rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-6 py-2.5 text-sm font-medium text-white transition-all hover:shadow-glow disabled:opacity-60"
-          >
-            {searching ? "Searching..." : "Search"}
-          </button>
-        </form>
-
-        {searchQuery.trim() && !searching && searchResults.length === 0 && (
-          <p className="mt-4 rounded-lg bg-brand-surface px-4 py-3 text-sm text-brand-muted">No partner found for this search.</p>
-        )}
-
-        {searchResults.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {searchResults.map((partner) => (
-              <PartnerCard key={partner.id} partner={partner} onView={handleViewTree} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-brand-border bg-white p-6 shadow-soft">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <Card noPadding>
+        <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-display text-lg font-semibold text-brand-ink">Recent Partners</h2>
-            <p className="text-sm text-brand-muted">Open any partner to inspect their direct and 4-level team.</p>
+            <h2 className="font-display text-lg font-semibold text-brand-ink">All Business Accounts</h2>
+            <p className="text-sm text-brand-muted">Every partner account, with who referred them (sponsor) and their level from the top of the chain.</p>
           </div>
-          <button
-            type="button"
-            onClick={loadOverview}
-            className="rounded-lg border border-brand-border px-3 py-2 text-sm font-medium text-brand-ink hover:border-brand-accent"
-          >
-            Refresh
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <select
+              value={levelFilter === "all" ? "all" : String(levelFilter)}
+              onChange={(e) => setLevelFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
+              className="rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent"
+            >
+              <option value="all">All levels</option>
+              <option value="0">Root (no sponsor)</option>
+              <option value="1">Level 1</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3</option>
+              <option value="4">Level 4+</option>
+            </select>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+              <input
+                type="text"
+                value={directorySearch}
+                onChange={(e) => setDirectorySearch(e.target.value)}
+                placeholder="Search ID, name, phone, sponsor..."
+                className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none transition-all focus:border-brand-accent focus:ring-2 focus:ring-brand-accent sm:w-72"
+              />
+            </div>
+          </div>
         </div>
-        {(overview?.recentPartners || []).length === 0 ? (
-          <p className="rounded-lg bg-brand-surface px-4 py-8 text-center text-brand-muted">No partner records found yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {overview.recentPartners.map((partner: any) => (
-              <PartnerCard key={partner.id} partner={partner} onView={handleViewTree} />
-            ))}
-          </div>
-        )}
-      </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1100px]">
+            <thead className="border-b border-brand-border bg-brand-surface/50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Account (Member ID)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Referred By (Sponsor)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Level</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Direct Team</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">City</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Wallet</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-brand-border bg-white">
+              {filteredDirectory.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12">
+                    <EmptyState icon={Users} title="No accounts found" description="Try a different search or level filter." />
+                  </td>
+                </tr>
+              ) : (
+                filteredDirectory.map((partner) => (
+                  <tr key={partner.id} className="transition-colors hover:bg-brand-surface/30">
+                    <td className="px-4 py-4 sm:px-6">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
+                          {partnerName(partner)[0]}
+                        </div>
+                        <div>
+                          <p className="font-medium text-brand-ink">{partnerName(partner)}</p>
+                          <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">{partner.partner_code || "—"}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-sm sm:px-6">
+                      {partner.sponsor ? (
+                        <div className="flex items-center gap-1.5">
+                          <Link2 className="h-3.5 w-3.5 shrink-0 text-brand-muted" />
+                          <div>
+                            <p className="text-brand-ink">{partnerName(partner.sponsor)}</p>
+                            <p className="font-mono text-xs text-brand-muted">{partner.sponsor.partner_code}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-brand-muted">Root account (no sponsor)</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
+                      {partner.levelFromRoot === 0 ? "Root" : `L${partner.levelFromRoot}`}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.directTeamCount}</td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.city || "—"}</td>
+                    <td className="px-4 py-4 text-sm font-medium text-brand-ink sm:px-6">{money(partner.wallet_balance)}</td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <Badge variant={statusVariant(partner.status)} dot>{partner.status || "unknown"}</Badge>
+                    </td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <button
+                        type="button"
+                        onClick={() => handleViewTree(partner)}
+                        className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent"
+                      >
+                        View Tree
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }

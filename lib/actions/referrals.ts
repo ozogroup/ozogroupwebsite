@@ -138,6 +138,69 @@ export async function getReferralOverview() {
   };
 }
 
+// Full directory of every partner account in the business, with who referred
+// them (sponsor), how many people they directly referred, and how many hops
+// they sit below the top of their sponsor chain. Unlike getReferralOverview
+// (which only returns 8 "recent" partners for the dashboard-style cards),
+// this is meant to be the complete, browsable list an admin can search.
+export async function getAllPartnersDirectory(limit = 500) {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const { data, error } = await supabase
+    .from("partners")
+    .select(`
+      id,
+      partner_code,
+      profiles(full_name, phone, email),
+      sponsor_id,
+      status,
+      city,
+      wallet_balance,
+      total_earnings,
+      paid_earnings,
+      kyc_status,
+      created_at
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching partner directory:", error);
+    return [];
+  }
+
+  const rows = (data || []) as any[];
+  const byId = new Map(rows.map((partner) => [partner.id, partner]));
+  const directTeamCount = new Map<string, number>();
+  for (const partner of rows) {
+    if (partner.sponsor_id) {
+      directTeamCount.set(partner.sponsor_id, (directTeamCount.get(partner.sponsor_id) || 0) + 1);
+    }
+  }
+
+  function levelFromRoot(partnerId: string): number {
+    const seen = new Set<string>();
+    let level = 0;
+    let currentId: string | null = partnerId;
+    while (currentId && !seen.has(currentId) && level < 20) {
+      seen.add(currentId);
+      const current = byId.get(currentId);
+      if (!current?.sponsor_id) break;
+      level += 1;
+      currentId = current.sponsor_id;
+    }
+    return level;
+  }
+
+  return rows.map((partner) => ({
+    ...partner,
+    sponsor: partner.sponsor_id ? byId.get(partner.sponsor_id) || null : null,
+    directTeamCount: directTeamCount.get(partner.id) || 0,
+    levelFromRoot: levelFromRoot(partner.id),
+  }));
+}
+
 async function getSponsorFallbackTree(supabase: any, partnerId: string) {
   const tree: Record<number, any[]> = { 1: [], 2: [], 3: [], 4: [] };
   let currentIds = [partnerId];
