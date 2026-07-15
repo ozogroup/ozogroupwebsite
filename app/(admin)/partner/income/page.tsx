@@ -4,7 +4,7 @@ import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 
 export const dynamic = "force-dynamic";
 
-const DEDUCTION_RATE = 0.15;
+const DEFAULT_DEDUCTION_RATE = 0.15;
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -28,7 +28,7 @@ export default async function PartnerIncomePage() {
 
   if (!user) return <div>User not found</div>;
 
-  const [{ data: commissions }, { data: payouts }, { data: partner }] = await Promise.all([
+  const [{ data: commissions }, { data: payouts }, { data: partner }, { data: settings }] = await Promise.all([
     supabase
       .from("commissions" as any)
       .select("*")
@@ -40,7 +40,15 @@ export default async function PartnerIncomePage() {
       .eq("partner_id", user.id)
       .order("created_at", { ascending: false }),
     supabase.from("partners" as any).select("wallet_balance").eq("id", user.id).single(),
+    supabase
+      .from("system_settings" as any)
+      .select("payout_deduction_rate")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const deductionRate = Number((settings as any)?.payout_deduction_rate ?? DEFAULT_DEDUCTION_RATE);
 
   const eligibleCommissions = (commissions || []).filter(
     (commission: any) =>
@@ -57,7 +65,7 @@ export default async function PartnerIncomePage() {
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const bonusIncome = 0;
   const grossIncome = membershipIncome + productIncome + bonusIncome;
-  const deduction = Math.round(grossIncome * DEDUCTION_RATE * 100) / 100;
+  const deduction = Math.round(grossIncome * deductionRate * 100) / 100;
   const totalIncome = grossIncome - deduction;
   const pendingIncome = eligibleCommissions
     .filter((commission: any) => commission.status === "pending")

@@ -210,7 +210,7 @@ export default function AdminPartnersPage() {
                   <td className="px-4 sm:px-6 py-4">
                     <div>
                       <p className="font-semibold text-slate-900">₹{(partner.total_earnings || 0).toLocaleString()}</p>
-                      <p className="text-xs text-amber-600">Pending: ₹{(partner.pending_payout || 0).toLocaleString()}</p>
+                      <p className="text-xs text-amber-600">Pending: ₹{(partner.wallet_balance || 0).toLocaleString()}</p>
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4">

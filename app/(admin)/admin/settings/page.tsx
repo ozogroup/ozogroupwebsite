@@ -62,6 +62,24 @@ export default function AdminSettingsPage() {
       systemFormData.append("commissions_enabled", systemSettings.commissions_enabled.toString());
       systemFormData.append("bookings_enabled", systemSettings.bookings_enabled.toString());
       systemFormData.append("membership_enabled", systemSettings.membership_enabled.toString());
+      if (systemSettings.payout_deduction_rate != null) {
+        systemFormData.append("payout_deduction_rate", (systemSettings.payout_deduction_rate * 100).toString());
+      }
+      if (systemSettings.payout_minimum_amount != null) {
+        systemFormData.append("payout_minimum_amount", systemSettings.payout_minimum_amount.toString());
+      }
+      if (systemSettings.membership_referral_bonus_amount != null) {
+        systemFormData.append("membership_referral_bonus_amount", systemSettings.membership_referral_bonus_amount.toString());
+      }
+      if (systemSettings.payout_kyc_required != null) {
+        systemFormData.append("payout_kyc_required", systemSettings.payout_kyc_required.toString());
+      }
+      if (systemSettings.payout_bank_required != null) {
+        systemFormData.append("payout_bank_required", systemSettings.payout_bank_required.toString());
+      }
+      if (systemSettings.payout_single_open_request_only != null) {
+        systemFormData.append("payout_single_open_request_only", systemSettings.payout_single_open_request_only.toString());
+      }
 
       const systemResult = await updateSystemSettings(systemFormData);
       if (systemResult.error) {
@@ -251,6 +269,85 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Payout Settings */}
+          {systemSettings?.payout_deduction_rate != null && (
+            <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">
+              <h2 className="font-display text-lg font-semibold text-brand-ink mb-4 flex items-center gap-2">
+                <span className="text-xl">🏦</span>
+                Payout Settings
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-2">Payout Deduction Rate (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={Math.round(systemSettings.payout_deduction_rate * 1000) / 10}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, payout_deduction_rate: parseFloat(e.target.value) / 100 })}
+                    className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-2">Minimum Payout Amount (Rs.)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={systemSettings.payout_minimum_amount ?? 1000}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, payout_minimum_amount: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-brand-ink mb-2">New Membership Referral Bonus (Rs.)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={systemSettings.membership_referral_bonus_amount ?? 500}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, membership_referral_bonus_amount: parseFloat(e.target.value) })}
+                    className="w-full px-4 py-2.5 border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-brand-accent outline-none transition-all"
+                  />
+                  <p className="mt-1 text-xs text-brand-muted">Flat commission paid to the direct sponsor only when a new paid membership is approved.</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-brand-ink">Require KYC for Payout Request</label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={systemSettings.payout_kyc_required ?? true}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, payout_kyc_required: e.target.checked })}
+                      className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                    />
+                    <span className="text-sm text-brand-muted">Enable</span>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-brand-ink">Require Verified Bank/UPI for Payout Request</label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={systemSettings.payout_bank_required ?? true}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, payout_bank_required: e.target.checked })}
+                      className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                    />
+                    <span className="text-sm text-brand-muted">Enable</span>
+                  </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-brand-ink">Only One Open Request Per Partner</label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={systemSettings.payout_single_open_request_only ?? true}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, payout_single_open_request_only: e.target.checked })}
+                      className="w-4 h-4 text-brand-accent rounded border-brand-border focus:ring-brand-accent"
+                    />
+                    <span className="text-sm text-brand-muted">Enable</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* System Settings */}
           <div className="bg-white rounded-xl shadow-soft p-6 border border-brand-border">

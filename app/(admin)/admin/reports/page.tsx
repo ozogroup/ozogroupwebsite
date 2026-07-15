@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const DEDUCTION_RATE = 0.15;
+const DEFAULT_DEDUCTION_RATE = 0.15;
 
 function money(value: number) {
   return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
@@ -27,13 +27,19 @@ export default async function AdminReportsPage() {
   await requireAdmin();
   const supabase = await getSupabaseServerClient();
 
-  const [{ data: bookings }, { data: memberships }, { data: commissions }, { data: payouts }, { data: partners }] =
+  const [{ data: bookings }, { data: memberships }, { data: commissions }, { data: payouts }, { data: partners }, { data: settings }] =
     await Promise.all([
       supabase.from("bookings" as any).select("id,booking_id,treatment_order_id,customer_name,customer_phone,treatment_name,treatment_price,payment_amount,booking_status,payment_status,created_at,partner_code,referred_by"),
       supabase.from("memberships" as any).select("id,full_name,mobile,amount,payment_amount,membership_status,payment_status,referral_code,sponsor_id,created_at"),
       supabase.from("commissions" as any).select("id,partner_id,source_type,source_id,source_amount,level,percentage,amount,status,payout_id,created_at,paid_at"),
       supabase.from("payouts" as any).select("id,partner_id,gross_amount,deduction_rate,deduction_amount,net_amount,amount,status,created_at"),
       supabase.from("partners" as any).select("id,partner_code,status,wallet_balance,total_earnings,paid_earnings,sponsor_id,created_at,profiles(full_name)"),
+      supabase
+        .from("system_settings" as any)
+        .select("payout_deduction_rate")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
   const bookingRows = bookings || [];
@@ -43,11 +49,12 @@ export default async function AdminReportsPage() {
   );
   const payoutRows = payouts || [];
   const partnerRows = partners || [];
+  const deductionRate = Number((settings as any)?.payout_deduction_rate ?? DEFAULT_DEDUCTION_RATE);
 
   const membershipSales = membershipRows.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.amount || 0), 0);
   const treatmentSales = bookingRows.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.treatment_price || 0), 0);
   const grossIncome = commissionRows.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const deduction = Math.round(grossIncome * DEDUCTION_RATE * 100) / 100;
+  const deduction = Math.round(grossIncome * deductionRate * 100) / 100;
   const netIncome = grossIncome - deduction;
   const pendingPayouts = payoutRows.filter((row: any) => ["requested", "processing"].includes(row.status));
   const approvedPayouts = payoutRows.filter((row: any) => row.status === "paid");
@@ -62,7 +69,7 @@ export default async function AdminReportsPage() {
   const partnerRevenue = partnerRows.map((partner: any) => {
     const partnerCommissions = commissionRows.filter((row: any) => row.partner_id === partner.id);
     const gross = partnerCommissions.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-    const partnerDeduction = Math.round(gross * DEDUCTION_RATE * 100) / 100;
+    const partnerDeduction = Math.round(gross * deductionRate * 100) / 100;
     return {
       partner: partner.profiles?.full_name || partner.partner_code,
       partner_code: partner.partner_code,
