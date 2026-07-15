@@ -1,13 +1,7 @@
 import "server-only";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 import { syncCommissionCreated } from "@/lib/integrations/google-sheet-sync";
-
-const COMMISSION_PERCENTAGES: Record<number, number> = {
-  1: 6,
-  2: 3,
-  3: 1.7,
-  4: 1.2,
-};
+import { resolveCommissionRates, computeCommissionAmount, isPartnerEligibleForCommission } from "@/lib/finance";
 
 async function getCommissionPercentages(supabase: any): Promise<Record<number, number>> {
   try {
@@ -18,15 +12,13 @@ async function getCommissionPercentages(supabase: any): Promise<Record<number, n
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!data) return COMMISSION_PERCENTAGES;
-    return {
-      1: Number(data.level_1_percentage) || COMMISSION_PERCENTAGES[1],
-      2: Number(data.level_2_percentage) || COMMISSION_PERCENTAGES[2],
-      3: Number(data.level_3_percentage) || COMMISSION_PERCENTAGES[3],
-      4: Number(data.level_4_percentage) || COMMISSION_PERCENTAGES[4],
-    };
+    return resolveCommissionRates(
+      data
+        ? { 1: data.level_1_percentage, 2: data.level_2_percentage, 3: data.level_3_percentage, 4: data.level_4_percentage }
+        : null
+    );
   } catch {
-    return COMMISSION_PERCENTAGES;
+    return resolveCommissionRates(null);
   }
 }
 
@@ -119,6 +111,7 @@ export async function generateBookingCommissions(
     referral_code?: string | null;
     partner_code?: string | null;
     payment_amount: number | null;
+    net_amount?: number | null;
     booking_status: string;
     payment_status?: string | null;
   }
@@ -133,7 +126,10 @@ export async function generateBookingCommissions(
   const rpcHandled = await generateBookingCommissionsViaRpc(supabase, booking.id);
   if (rpcHandled) return;
 
-  const sourceAmount = Number(booking.payment_amount ?? 0) || 0;
+  // Net-of-discount amount is the commission base (locked business rule);
+  // falls back to gross payment_amount when net_amount wasn't passed in,
+  // which is identical while discounts stay at 0.
+  const sourceAmount = Number(booking.net_amount ?? booking.payment_amount ?? 0) || 0;
   if (sourceAmount <= 0) return;
 
   let sourcePartnerId = booking.referred_by || null;
@@ -194,21 +190,15 @@ export async function generateBookingCommissions(
 
   for (const item of commissionPartners) {
     const percentage = percentages[item.level] || 0;
-    const amount = Math.round(sourceAmount * percentage) / 100;
+    const amount = computeCommissionAmount(sourceAmount, percentage);
 
     const { data: currentPartner, error: partnerError } = await supabase
       .from("partners")
-      .select("wallet_balance, total_earnings, status, membership_expires_at")
+      .select("wallet_balance, total_earnings, status, is_active, deleted_at, membership_expires_at")
       .eq("id", item.partner_id)
       .maybeSingle();
 
-    if (
-      partnerError ||
-      !currentPartner ||
-      currentPartner.status !== "active" ||
-      (currentPartner.membership_expires_at &&
-        new Date(currentPartner.membership_expires_at).getTime() < Date.now())
-    ) {
+    if (partnerError || !isPartnerEligibleForCommission(currentPartner)) {
       console.error("Booking commission skipped: partner is not eligible", {
         bookingId: booking.id,
         partnerId: item.partner_id,

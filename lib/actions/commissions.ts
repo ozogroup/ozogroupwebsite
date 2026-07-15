@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/helpers";
 import { generateBookingCommissions } from "@/lib/actions/referral-tracking";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { syncCommissionUpdated } from "@/lib/integrations/google-sheet-sync";
+import { roundMoney } from "@/lib/finance";
 
 type CommissionRow = {
   id: string;
@@ -14,10 +15,6 @@ type CommissionRow = {
   status: string | null;
   reversed: boolean | null;
 };
-
-function roundMoney(value: number) {
-  return Math.round(value * 100) / 100;
-}
 
 function revalidateMoneyPaths() {
   revalidatePath("/admin/commissions");
@@ -100,7 +97,7 @@ async function reverseWallet(supabase: any, commission: CommissionRow) {
   if (updateError) throw updateError;
   await supabase.from("wallet_transactions").insert({
     partner_id: commission.partner_id,
-    transaction_type: "commission_reversal",
+    transaction_type: "adjustment_debit",
     amount,
     balance_before: before,
     balance_after: after,
@@ -161,7 +158,7 @@ export async function generateMissingBookingCommissions() {
 
   const { data: bookings, error } = await supabase
     .from("bookings" as any)
-    .select("id, referred_by, referral_code, partner_code, payment_amount, treatment_price, booking_status, payment_status")
+    .select("id, referred_by, referral_code, partner_code, payment_amount, treatment_price, net_amount, booking_status, payment_status")
     .eq("payment_status", "paid")
     .in("booking_status", ["confirmed", "completed"])
     .order("created_at", { ascending: false })
@@ -180,6 +177,7 @@ export async function generateMissingBookingCommissions() {
       referral_code: booking.referral_code,
       partner_code: booking.partner_code,
       payment_amount: Number(booking.payment_amount ?? booking.treatment_price ?? 0),
+      net_amount: booking.net_amount,
       booking_status: booking.booking_status,
       payment_status: booking.payment_status,
     });
@@ -194,10 +192,49 @@ export async function generateMissingBookingCommissions() {
   };
 }
 
+// Change a commission's status via the atomic, row-locked
+// kia_set_commission_status RPC (see supabase/kia-financial-repair). Falls
+// back to the unlocked JS read-then-write path only if that RPC is missing
+// from the database, matching this codebase's existing RPC-first/JS-fallback
+// convention (see generateBookingCommissionsViaRpc, updatePayoutStatus).
+async function setCommissionStatusViaRpc(supabase: any, id: string, status: "approved" | "rejected") {
+  const { data, error } = await supabase.rpc("kia_set_commission_status", {
+    commission_id_input: id,
+    new_status_input: status,
+  });
+
+  if (error) {
+    const message = `${error.message || ""} ${error.details || ""}`;
+    if (/kia_set_commission_status|function .* does not exist|schema cache/i.test(message)) {
+      return { handled: false as const };
+    }
+    throw error;
+  }
+
+  return { handled: true as const, data };
+}
+
 // Approve a pending commission: credit the partner wallet exactly once.
 export async function approveCommission(id: string) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
+
+  const rpcResult = await setCommissionStatusViaRpc(supabase, id, "approved");
+  if (rpcResult.handled) {
+    const data = rpcResult.data as any;
+    await syncCommissionUpdated({
+      id: data.id,
+      source_id: data.source_id,
+      partner_id: data.partner_id,
+      level: data.level || 1,
+      amount: data.amount || 0,
+      status: "approved",
+      updated_at: data.updated_at,
+    });
+    revalidateMoneyPaths();
+    return data;
+  }
+
   const commission = await loadCommission(supabase, id);
 
   if (commission.status === "approved") return commission;
@@ -237,6 +274,23 @@ export async function approveCommission(id: string) {
 export async function rejectCommission(id: string) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
+
+  const rpcResult = await setCommissionStatusViaRpc(supabase, id, "rejected");
+  if (rpcResult.handled) {
+    const data = rpcResult.data as any;
+    await syncCommissionUpdated({
+      id: data.id,
+      source_id: data.source_id,
+      partner_id: data.partner_id,
+      level: data.level || 1,
+      amount: data.amount || 0,
+      status: "rejected",
+      updated_at: data.updated_at,
+    });
+    revalidateMoneyPaths();
+    return data;
+  }
+
   const commission = await loadCommission(supabase, id);
 
   if (commission.status === "rejected") return commission;

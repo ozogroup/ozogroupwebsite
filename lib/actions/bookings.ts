@@ -193,11 +193,19 @@ export async function createBooking(payload: CreateBookingPayload) {
   const address = clean(payload.address);
   const pinCode = clean(payload.pin_code);
   const requestedTreatmentSlug = clean(payload.treatment_slug);
-  let referralCode = normalizeKiaPartnerCode(
-    clean(payload.referral_code) ||
+
+  // Attribution precedence (locked business rule: a client-side cookie or
+  // stale link must not override a logged-in user's own correct
+  // attribution): an explicit code the customer submitted right now takes
+  // priority, then the logged-in user's own resolved partner identity, and
+  // only then a referral-link cookie for anonymous visitors.
+  const explicitReferralCode = normalizeKiaPartnerCode(clean(payload.referral_code));
+  const cookieReferralCode = normalizeKiaPartnerCode(
     clean(cookieStore.get("kia_referral_code")?.value) ||
     clean(cookieStore.get("ozo_referral_code")?.value)
   );
+  const currentUserPartnerCode = explicitReferralCode ? "" : await getCurrentPartnerCode(serviceClient);
+  let referralCode = explicitReferralCode || currentUserPartnerCode || cookieReferralCode;
 
   if (!customerName) return { error: "Please enter your full name." };
   if (!/^[0-9+\-\s]{10,15}$/.test(customerPhone)) return { error: "Please enter a valid mobile number." };
@@ -214,10 +222,6 @@ export async function createBooking(payload: CreateBookingPayload) {
 
   if (!treatment) {
     return { error: "Selected treatment is not available." };
-  }
-
-  if (!referralCode) {
-    referralCode = await getCurrentPartnerCode(serviceClient);
   }
 
   const partner = await findPartnerByCode(serviceClient, referralCode);
@@ -379,6 +383,7 @@ export async function updateBookingStatus(id: string, status: string, adminNote?
       partner_code: (data as any).partner_code,
       payment_amount:
         (data as any).payment_amount ?? (data as any).treatment_price ?? 0,
+      net_amount: (data as any).net_amount,
       booking_status: (data as any).booking_status,
       payment_status: (data as any).payment_status,
     });
@@ -450,6 +455,7 @@ export async function updateBookingPaymentStatus(
       referral_code: booking.referral_code,
       partner_code: booking.partner_code,
       payment_amount: booking.payment_amount ?? booking.treatment_price ?? 0,
+      net_amount: booking.net_amount,
       booking_status: booking.booking_status,
       payment_status: booking.payment_status,
     });
