@@ -4,11 +4,12 @@ import Link from "next/link";
 import {
   Sparkles, Star, MessageCircleQuestion, FileText, Phone,
   Calendar, CreditCard, Users, BadgeIndianRupee, Wallet,
-  ArrowRight, TrendingUp, Award, IndianRupee, Plus,
+  ArrowRight, TrendingUp, Award, IndianRupee, Plus, ShieldCheck,
 } from "lucide-react";
-import { Card, CardHeader, PageHeader, StatCard, Badge, EmptyState, Button } from "@/components/admin/ui";
+import { Card, CardHeader, StatCard, Badge, EmptyState } from "@/components/admin/ui";
 import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import AdminDashboardCharts from "@/components/admin/AdminDashboardCharts";
 import { resolveDateRange } from "@/lib/date-range";
 
 export const dynamic = 'force-dynamic';
@@ -160,50 +161,152 @@ export default async function AdminDashboardPage({
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 
+  // Commission still owed to partners (pending + approved, not yet paid out).
+  const commissionLiability = (periodCommissions || [])
+    .filter((row: any) => ["pending", "approved"].includes(String(row.status)))
+    .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const actionItemsCount = pendingKycCount + pendingPayoutsCount;
+
+  // Last 6 calendar months, independent of the date-range filter above.
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1);
+  sixMonthsAgo.setHours(0, 0, 0, 0);
+
+  const [{ data: trendBookings }, { data: trendPartnersRaw }] = await Promise.all([
+    (supabase as any).from("bookings").select("payment_amount,treatment_price,payment_status,created_at").gte("created_at", sixMonthsAgo.toISOString()),
+    (supabase as any).from("partners").select("created_at").gte("created_at", sixMonthsAgo.toISOString()),
+  ]);
+
+  const monthLabels: string[] = [];
+  for (let i = 5; i >= 0; i -= 1) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    monthLabels.push(d.toLocaleDateString("en-IN", { month: "short" }));
+  }
+  const salesByMonth: Record<string, number> = Object.fromEntries(monthLabels.map((m) => [m, 0]));
+  const commissionsByMonth: Record<string, number> = Object.fromEntries(monthLabels.map((m) => [m, 0]));
+  const partnersByMonth: Record<string, number> = Object.fromEntries(monthLabels.map((m) => [m, 0]));
+
+  for (const row of (trendBookings || []) as any[]) {
+    if (row.payment_status !== "paid") continue;
+    const m = new Date(row.created_at).toLocaleDateString("en-IN", { month: "short" });
+    if (m in salesByMonth) salesByMonth[m] += Number(row.payment_amount || row.treatment_price || 0);
+  }
+  for (const row of (periodCommissions || []) as any[]) {
+    if (!["approved", "paid"].includes(String(row.status))) continue;
+    const m = new Date(row.created_at).toLocaleDateString("en-IN", { month: "short" });
+    if (m in commissionsByMonth) commissionsByMonth[m] += Number(row.amount || 0);
+  }
+  for (const row of (trendPartnersRaw || []) as any[]) {
+    const m = new Date(row.created_at).toLocaleDateString("en-IN", { month: "short" });
+    if (m in partnersByMonth) partnersByMonth[m] += 1;
+  }
+  const monthlyTrend = monthLabels.map((m) => ({
+    month: m,
+    sales: salesByMonth[m],
+    commissions: commissionsByMonth[m],
+    partners: partnersByMonth[m],
+  }));
+
+  const levelIncomeChart = [1, 2, 3, 4].map((level) => ({
+    level: `L${level}`,
+    income: filteredCommissions.filter((row: any) => Number(row.level) === level).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0),
+  }));
+
+  const statusMix = ["pending", "approved", "paid"].map((status) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    value: (periodCommissions || [])
+      .filter((row: any) => row.status === status)
+      .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0),
+  }));
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const todayLabel = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
   return (
     <div className="space-y-8">
       <AutoRefreshRoute />
-      <PageHeader
-        title="Dashboard"
-        description="Welcome back. Here's what's happening with KIA Skin Care today."
-        actions={
-          <Link href="/admin/treatments" className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-brand-ink text-white rounded-lg hover:bg-brand-muted transition-colors">
+
+      {/* Hero greeting */}
+      <div className="relative overflow-hidden rounded-2xl border border-brand-border bg-gradient-to-br from-white via-brand-surface/60 to-brand-light/40 p-6 shadow-soft sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-luxury-gold/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-brand-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent">{greeting}, Admin</p>
+            <h1 className="mt-2 font-display text-2xl font-bold text-brand-ink sm:text-3xl">KIA Skin Care Control Center</h1>
+            <p className="mt-1.5 text-sm text-brand-muted">
+              {todayLabel} &middot; {todayBookingsCount} booking{todayBookingsCount === 1 ? "" : "s"} today &middot;{" "}
+              {actionItemsCount > 0 ? (
+                <Link href="/admin/kyc" className="font-medium text-brand-primaryDark hover:underline">
+                  {actionItemsCount} item{actionItemsCount === 1 ? "" : "s"} need{actionItemsCount === 1 ? "s" : ""} your review
+                </Link>
+              ) : (
+                "no pending approvals"
+              )}
+            </p>
+          </div>
+          <Link
+            href="/admin/treatments"
+            className="inline-flex items-center gap-1.5 self-start rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-4 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:shadow-glow"
+          >
             <Plus className="w-4 h-4" /> Add Treatment
           </Link>
-        }
-      />
+        </div>
+      </div>
 
       <DateRangeFilter range={range.range} from={resolvedSearchParams?.from} to={resolvedSearchParams?.to} />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Paid Booking Sales" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} icon={Calendar} tone="sage" />
-        {[1, 2, 3, 4].map((level) => (
-          <StatCard
-            key={level}
-            label={`Level ${level} Income`}
-            value={`Rs. ${filteredCommissions.filter((row: any) => Number(row.level) === level).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0).toLocaleString("en-IN")}`}
-            icon={BadgeIndianRupee}
-            tone="purple"
-          />
-        ))}
-        <StatCard label="Wallet Balance" value={`Rs. ${totalWalletBalance.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="amber" />
-        <StatCard label="Pending Payouts" value={periodPendingPayouts.length} icon={Wallet} href="/admin/payouts" tone="rose" />
-        <StatCard label="Paid Payouts" value={periodPaidPayouts.length} icon={Wallet} href="/admin/payouts" tone="green" />
+      {/* Hero KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Paid Booking Sales" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} icon={Calendar} tone="sage" hint="Selected period" />
+        <StatCard label="Commission Owed" value={`Rs. ${commissionLiability.toLocaleString("en-IN")}`} icon={BadgeIndianRupee} tone="amber" hint="Pending + approved, unpaid" />
+        <StatCard label="Wallet Balance" value={`Rs. ${totalWalletBalance.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" hint="Across all partners" />
+        <StatCard
+          label="Action Items"
+          value={actionItemsCount}
+          icon={ShieldCheck}
+          href="/admin/kyc"
+          tone={actionItemsCount > 0 ? "rose" : "green"}
+          hint={`${pendingKycCount} KYC · ${pendingPayoutsCount} payouts`}
+        />
       </div>
 
-      <Card>
-        <CardHeader title="Partner-wise Sales" subtitle="Confirmed and completed sales in the selected period" />
-        <div className="mt-4 space-y-2">
-          {topPeriodPartners.length === 0 ? (
-            <p className="text-sm text-brand-muted">No partner sales in this period.</p>
-          ) : topPeriodPartners.map((partner) => (
-            <div key={partner.name} className="flex items-center justify-between rounded-lg bg-brand-surface/60 px-4 py-3 text-sm">
-              <span className="font-medium text-brand-ink">{partner.name}</span>
-              <span className="font-semibold text-brand-primary">Rs. {partner.amount.toLocaleString("en-IN")}</span>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <AdminDashboardCharts monthlyTrend={monthlyTrend} levelIncome={levelIncomeChart} statusMix={statusMix} />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Partner-wise Sales" subtitle="Confirmed and completed sales in the selected period" />
+          <div className="mt-4 space-y-2">
+            {topPeriodPartners.length === 0 ? (
+              <p className="text-sm text-brand-muted">No partner sales in this period.</p>
+            ) : topPeriodPartners.map((partner) => (
+              <div key={partner.name} className="flex items-center justify-between rounded-lg bg-brand-surface/60 px-4 py-3 text-sm">
+                <span className="font-medium text-brand-ink">{partner.name}</span>
+                <span className="font-semibold text-brand-primary">Rs. {partner.amount.toLocaleString("en-IN")}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <CardHeader title="Level Rates" subtitle="Confirmed 4-level structure" />
+          <div className="mt-4 space-y-2">
+            {[
+              { level: 1, rate: "6%" },
+              { level: 2, rate: "3%" },
+              { level: 3, rate: "1.7%" },
+              { level: 4, rate: "1.2%" },
+            ].map((item) => (
+              <div key={item.level} className="flex items-center justify-between rounded-lg bg-brand-surface/60 px-4 py-3 text-sm">
+                <span className="font-medium text-brand-ink">Level {item.level}</span>
+                <span className="font-semibold text-brand-accent">{item.rate}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
 
       {/* Content Stats */}
       <div>
@@ -220,84 +323,6 @@ export default async function AdminDashboardPage({
           <StatCard label="Content Items" value={siteContentCount} icon={FileText} href="/admin/content" tone="teal" hint={siteContentCount > 0 ? "Live on website" : "No data"} />
           <StatCard label="Contact Settings" value={contactSettingsCount} icon={Phone} href="/admin/contact" tone="rose" hint={contactSettingsCount > 0 ? "Configured" : "Not set"} />
         </div>
-      </div>
-
-      {/* legacy placeholder to preserve flow - hidden */}
-      <div className="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <Link href="/admin/treatments" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${treatmentsCount > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-              {treatmentsCount > 0 ? "Live" : "Empty"}
-            </span>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900">{treatmentsCount}</h3>
-          <p className="text-sm text-slate-600 mt-1">Treatments</p>
-        </Link>
-
-        <Link href="/admin/testimonials" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${testimonialsCount > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-              {testimonialsCount > 0 ? "Live" : "Empty"}
-            </span>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900">{testimonialsCount}</h3>
-          <p className="text-sm text-slate-600 mt-1">Testimonials</p>
-        </Link>
-
-        <Link href="/admin/faqs" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${faqsCount > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-              {faqsCount > 0 ? "Live" : "Empty"}
-            </span>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900">{faqsCount}</h3>
-          <p className="text-sm text-slate-600 mt-1">FAQs</p>
-        </Link>
-
-        <Link href="/admin/content" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-brand-light rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-brand-primaryDark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${siteContentCount > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-              {siteContentCount > 0 ? "Live" : "Empty"}
-            </span>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900">{siteContentCount}</h3>
-          <p className="text-sm text-slate-600 mt-1">Content Items</p>
-        </Link>
-
-        <Link href="/admin/contact" className="bg-white rounded-xl border border-slate-200 p-6 hover:border-brand-accent hover:shadow-lg transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${contactSettingsCount > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-              {contactSettingsCount > 0 ? "Live" : "Empty"}
-            </span>
-          </div>
-          <h3 className="text-3xl font-bold text-slate-900">{contactSettingsCount}</h3>
-          <p className="text-sm text-slate-600 mt-1">Contact Settings</p>
-        </Link>
       </div>
 
       {/* Business Operations */}
