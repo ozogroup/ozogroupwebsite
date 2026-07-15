@@ -132,23 +132,42 @@ export async function getCommissions() {
   const bookingIds = rows
     .filter((row: any) => row.source_type === "booking" && row.source_id)
     .map((row: any) => row.source_id);
+  const membershipIds = rows
+    .filter((row: any) => row.source_type === "membership" && row.source_id)
+    .map((row: any) => row.source_id);
 
-  if (bookingIds.length === 0) return rows;
+  const [bookingsResult, membershipsResult] = await Promise.all([
+    bookingIds.length > 0
+      ? supabase
+          .from("bookings" as any)
+          .select("id, booking_id, treatment_order_id, customer_name, customer_phone, treatment_name, payment_amount, treatment_price, booking_status, payment_status, partner_code")
+          .in("id", Array.from(new Set(bookingIds)))
+      : Promise.resolve({ data: [] as any[], error: null }),
+    // Membership commissions (the flat new-member referral bonus) need the
+    // new member's identity resolved so the admin can see WHO was referred,
+    // not just a raw membership UUID.
+    membershipIds.length > 0
+      ? supabase
+          .from("memberships" as any)
+          .select("id, membership_id, full_name, mobile, email, city, membership_status, payment_status, sponsor_id")
+          .in("id", Array.from(new Set(membershipIds)))
+      : Promise.resolve({ data: [] as any[], error: null }),
+  ]);
 
-  const { data: bookings, error: bookingError } = await supabase
-    .from("bookings" as any)
-    .select("id, booking_id, treatment_order_id, customer_name, customer_phone, treatment_name, payment_amount, treatment_price, booking_status, payment_status, partner_code")
-    .in("id", Array.from(new Set(bookingIds)));
-
-  if (bookingError) {
-    console.error("Error enriching commissions with bookings:", bookingError);
-    return rows;
+  if (bookingsResult.error) {
+    console.error("Error enriching commissions with bookings:", bookingsResult.error);
+  }
+  if (membershipsResult.error) {
+    console.error("Error enriching commissions with memberships:", membershipsResult.error);
   }
 
-  const bookingMap = new Map((bookings || []).map((booking: any) => [booking.id, booking]));
+  const bookingMap = new Map((bookingsResult.data || []).map((booking: any) => [booking.id, booking]));
+  const membershipMap = new Map((membershipsResult.data || []).map((membership: any) => [membership.id, membership]));
+
   return rows.map((row: any) => ({
     ...row,
     source_booking: row.source_type === "booking" ? bookingMap.get(row.source_id) || null : null,
+    source_membership: row.source_type === "membership" ? membershipMap.get(row.source_id) || null : null,
   }));
 }
 

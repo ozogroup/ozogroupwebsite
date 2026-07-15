@@ -1,13 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw, Wallet, Clock, CheckCircle2, BadgeIndianRupee } from "lucide-react";
 import { generateMissingBookingCommissions, getCommissions, updateCommissionStatus } from "@/lib/actions/commissions";
+import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
+
+function money(value: number) {
+  return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
+}
+
+function statusVariant(status: string): "warning" | "info" | "success" | "danger" | "neutral" {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "approved":
+      return "info";
+    case "paid":
+      return "success";
+    case "rejected":
+      return "danger";
+    default:
+      return "neutral";
+  }
+}
+
+function allowedStatuses(status: string) {
+  if (status === "pending") return ["pending", "approved", "rejected"];
+  if (status === "approved") return ["approved", "rejected"];
+  return [status];
+}
 
 export default function AdminCommissionsPage() {
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "paid" | "rejected">("all");
+  const [search, setSearch] = useState("");
 
   const loadCommissions = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -54,26 +83,42 @@ export default function AdminCommissionsPage() {
     }
   }
 
-  function getStatusColor(status: string) {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "approved":
-        return "bg-brand-light text-brand-primaryDark";
-      case "paid":
-        return "bg-green-100 text-green-700";
-      case "rejected":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  }
+  const summary = useMemo(() => {
+    const pending = commissions.filter((c) => c.status === "pending");
+    const approved = commissions.filter((c) => c.status === "approved");
+    const paid = commissions.filter((c) => c.status === "paid");
+    const sum = (rows: any[]) => rows.reduce((s, r) => s + Number(r.amount || 0), 0);
+    return {
+      pendingCount: pending.length,
+      pendingAmount: sum(pending),
+      approvedAmount: sum(approved),
+      paidAmount: sum(paid),
+      total: commissions.length,
+    };
+  }, [commissions]);
 
-  function allowedStatuses(status: string) {
-    if (status === "pending") return ["pending", "approved", "rejected"];
-    if (status === "approved") return ["approved", "rejected"];
-    return [status];
-  }
+  const visibleCommissions = useMemo(() => {
+    let rows = commissions;
+    if (filter !== "all") rows = rows.filter((c) => c.status === filter);
+    const term = search.trim().toLowerCase();
+    if (term) {
+      rows = rows.filter((c) => {
+        const haystack = [
+          c.partner?.partner_code,
+          c.partner?.profiles?.full_name,
+          c.source_booking?.customer_name,
+          c.source_booking?.booking_id,
+          c.source_membership?.full_name,
+          c.source_membership?.membership_id,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(term);
+      });
+    }
+    return rows;
+  }, [commissions, filter, search]);
 
   if (loading) {
     return (
@@ -85,20 +130,21 @@ export default function AdminCommissionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-brand-ink">Commissions</h1>
-          <p className="text-sm text-brand-muted">Trace partner commissions from booking source to payout status.</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleGenerateMissing}
-          disabled={generating}
-          className="rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-4 py-2.5 text-sm font-medium text-white transition-all hover:shadow-glow disabled:opacity-60"
-        >
-          {generating ? "Checking..." : "Generate Missing Booking Commissions"}
-        </button>
-      </div>
+      <PageHeader
+        title="Commissions"
+        description="Every partner's earnings, traced from source (booking or new member) to payout status."
+        actions={
+          <button
+            type="button"
+            onClick={handleGenerateMissing}
+            disabled={generating}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-4 py-2.5 text-sm font-medium text-white transition-all hover:shadow-glow disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} />
+            {generating ? "Checking..." : "Generate Missing Booking Commissions"}
+          </button>
+        }
+      />
 
       {message && (
         <div className="rounded-lg border border-brand-border bg-white px-4 py-3 text-sm text-brand-muted shadow-sm">
@@ -106,42 +152,90 @@ export default function AdminCommissionsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-soft">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <StatCard label="Pending Approval" value={money(summary.pendingAmount)} icon={Clock} tone="amber" hint={`${summary.pendingCount} commission${summary.pendingCount === 1 ? "" : "s"}`} />
+        <StatCard label="Approved (Unpaid)" value={money(summary.approvedAmount)} icon={BadgeIndianRupee} tone="purple" hint="Waiting in payout queue" />
+        <StatCard label="Paid Out" value={money(summary.paidAmount)} icon={CheckCircle2} tone="green" hint="Settled to partners" />
+        <StatCard label="Total Records" value={summary.total} icon={Wallet} tone="sage" hint="All commission rows" />
+      </div>
+
+      <Card noPadding>
+        <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "pending", "approved", "paid", "rejected"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setFilter(tab)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-colors ${
+                  filter === tab
+                    ? "bg-brand-ink text-white"
+                    : "bg-brand-surface text-brand-muted hover:bg-brand-light"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search partner ID, member name..."
+            className="w-full rounded-lg border border-brand-border px-3.5 py-2 text-sm outline-none transition-all focus:border-brand-accent focus:ring-2 focus:ring-brand-accent sm:w-72"
+          />
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1180px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Partner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Earning Partner (Member ID)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Earned From (Who Was Added)</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Level</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Rate</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Source Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Commission</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Timeline</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border bg-white">
-              {commissions.length === 0 ? (
+              {visibleCommissions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-brand-muted">
-                    No commissions found
+                  <td colSpan={9} className="px-6 py-12">
+                    <EmptyState icon={Wallet} title="No commissions found" description="Try a different filter or search term." />
                   </td>
                 </tr>
               ) : (
-                commissions.map((commission) => (
+                visibleCommissions.map((commission) => (
                   <tr key={commission.id} className="transition-colors hover:bg-brand-surface/30">
                     <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">
-                      <p>{commission.partner?.profiles?.full_name || "Unknown"}</p>
-                      <p className="mt-1 font-mono text-xs text-brand-muted">{commission.partner?.partner_code || "-"}</p>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
+                          {(commission.partner?.profiles?.full_name || "P")[0]}
+                        </div>
+                        <div>
+                          <p>{commission.partner?.profiles?.full_name || "Unknown"}</p>
+                          <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">
+                            {commission.partner?.partner_code || "—"}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
                       {commission.source_type === "booking" && commission.source_booking ? (
                         <div>
-                          <p className="font-medium text-brand-ink">{commission.source_booking.booking_id || commission.source_id}</p>
-                          <p>{commission.source_booking.customer_name || "-"} | {commission.source_booking.treatment_name || "-"}</p>
-                          <p className="font-mono text-xs">{commission.source_booking.treatment_order_id || "-"}</p>
+                          <p className="font-medium text-brand-ink">{commission.source_booking.customer_name || "-"}</p>
+                          <p className="text-xs">{commission.source_booking.treatment_name || "-"}</p>
+                          <p className="font-mono text-xs">Booking {commission.source_booking.booking_id || commission.source_id}</p>
+                        </div>
+                      ) : commission.source_type === "membership" && commission.source_membership ? (
+                        <div>
+                          <p className="font-medium text-brand-ink">{commission.source_membership.full_name || "-"}</p>
+                          <p className="text-xs">New member sign-up</p>
+                          <p className="font-mono text-xs">Membership {commission.source_membership.membership_id || commission.source_id}</p>
                         </div>
                       ) : (
                         <div>
@@ -150,23 +244,22 @@ export default function AdminCommissionsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{commission.level}</td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{Number(commission.percentage || 0)}%</td>
+                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">L{commission.level}</td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
-                      Rs. {Number(commission.source_amount || commission.source_booking?.payment_amount || commission.source_booking?.treatment_price || 0).toLocaleString("en-IN")}
+                      {commission.source_type === "membership" ? "Flat" : `${Number(commission.percentage || 0)}%`}
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
-                      Rs. {Number(commission.amount || 0).toLocaleString("en-IN")}
+                      {money(commission.source_amount || commission.source_booking?.payment_amount || commission.source_booking?.treatment_price || 0)}
                     </td>
+                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink sm:px-6">{money(commission.amount)}</td>
                     <td className="px-4 py-4 sm:px-6">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusColor(commission.status)}`}>
+                      <Badge variant={statusVariant(commission.status)} dot>
                         {commission.status}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
                       <p>Created: {commission.created_at ? new Date(commission.created_at).toLocaleDateString("en-IN") : "-"}</p>
                       <p>Paid: {commission.paid_at ? new Date(commission.paid_at).toLocaleDateString("en-IN") : "-"}</p>
-                      <p className="font-mono text-xs">Payout: {commission.payout_id || "-"}</p>
                     </td>
                     <td className="px-4 py-4 sm:px-6">
                       <select
@@ -187,7 +280,7 @@ export default function AdminCommissionsPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
