@@ -86,16 +86,16 @@ export default function Navigation({ collapsed = false, onItemClick }: Navigatio
                     collapsed ? "justify-center" : ""
                   } ${
                     isActive
-                      ? "bg-white/15 text-white border-l-2 border-brand-light pl-[10px]"
+                      ? "bg-gradient-to-r from-white/20 to-white/5 text-white shadow-glow border-l-2 border-brand-light pl-[10px]"
                       : "text-white/80 hover:text-white hover:bg-white/10"
                   }`}
                 >
-                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
+                  <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-brand-light" : ""}`} strokeWidth={1.75} />
                   {!collapsed && (
                     <span className="ml-3 text-sm font-medium">{item.name}</span>
                   )}
                   {isActive && !collapsed && (
-                    <div className="ml-auto w-1.5 h-1.5 bg-brand-light rounded-full" />
+                    <div className="ml-auto w-1.5 h-1.5 bg-brand-light rounded-full animate-pulse" />
                   )}
                 </Link>
               );
