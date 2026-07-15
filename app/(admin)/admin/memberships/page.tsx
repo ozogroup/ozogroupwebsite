@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Phone, MapPin, Mail, Link2, RefreshCw, Search } from "lucide-react";
 import PartnerPasswordManager from "@/components/admin/PartnerPasswordManager";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import { Badge, Card, PageHeader, EmptyState } from "@/components/admin/ui";
 import {
   approveAndCreatePartner,
   getMembershipRequests,
@@ -12,6 +14,14 @@ import {
   updatePaymentStatus,
 } from "@/lib/actions/memberships";
 
+function getActivationStatus(m: any): { label: string; variant: "danger" | "success" | "info" | "warning" } {
+  if (m.membership_status === "rejected") return { label: "Rejected", variant: "danger" };
+  if (m.membership_status === "active") return { label: "Approved", variant: "success" };
+  if (m.membership_status === "under_review") return { label: "Payment Contacted", variant: "info" };
+  if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", variant: "info" };
+  return { label: "Pending Payment", variant: "warning" };
+}
+
 export default function AdminMembershipsPage() {
   const [memberships, setMemberships] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +30,8 @@ export default function AdminMembershipsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadMemberships();
@@ -146,13 +158,15 @@ export default function AdminMembershipsPage() {
     }
   }
 
-  function getActivationStatus(m: any): { label: string; color: string } {
-    if (m.membership_status === "rejected") return { label: "Rejected", color: "bg-red-100 text-red-700" };
-    if (m.membership_status === "active") return { label: "Approved", color: "bg-green-100 text-green-700" };
-    if (m.membership_status === "under_review") return { label: "Payment Contacted", color: "bg-blue-100 text-blue-700" };
-    if (m.payment_status === "paid") return { label: "Paid - Awaiting Approval", color: "bg-brand-light text-brand-primaryDark" };
-    return { label: "Pending Payment", color: "bg-yellow-100 text-yellow-700" };
-  }
+  const filtered = memberships.filter((m) => {
+    const term = search.trim().toLowerCase();
+    if (!term) return true;
+    return [m.full_name, m.email, m.mobile, m.membership_id, m.partners?.partner_code, m.sponsor?.partner_code]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(term);
+  });
 
   if (loading) {
     return (
@@ -165,27 +179,23 @@ export default function AdminMembershipsPage() {
   return (
     <div className="space-y-6">
       <Breadcrumb items={[{ label: "Membership Requests" }]} />
-      <div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-brand-ink">Membership Requests</h1>
-            <p className="text-sm text-brand-muted">Manage partner membership requests</p>
-            {diagnostics && (
-              <p className="mt-1 text-xs text-brand-muted">
-                Source: {diagnostics.table} on project {diagnostics.projectRef}
-                {typeof diagnostics.count === "number" ? ` - ${diagnostics.count} rows loaded` : ""}
-              </p>
-            )}
-          </div>
+      <PageHeader
+        title="Membership Requests"
+        description={
+          diagnostics
+            ? `Source: ${diagnostics.table} on project ${diagnostics.projectRef}${typeof diagnostics.count === "number" ? ` — ${diagnostics.count} rows loaded` : ""}`
+            : "Manage partner membership requests"
+        }
+        actions={
           <button
             type="button"
             onClick={() => loadMemberships()}
-            className="rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-surface"
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-surface"
           >
-            Refresh
+            <RefreshCw className="h-4 w-4" /> Refresh
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {message && (
         <div
@@ -206,156 +216,181 @@ export default function AdminMembershipsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-soft">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1320px]">
-            <thead className="border-b border-brand-border bg-brand-surface/50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Name / IDs</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Phone</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">City</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Linked Referrer</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Security / Notes</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-border bg-white">
-              {queryError ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <p className="font-medium text-red-700">Database query failed</p>
-                    <p className="mt-1 text-sm text-red-600">Use the error message above to diagnose the source table or policy issue.</p>
-                  </td>
-                </tr>
-              ) : memberships.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <p className="text-brand-muted">No membership requests found</p>
-                  </td>
-                </tr>
-              ) : (
-                memberships.map((membership) => (
-                  <tr key={membership.id} className="transition-colors hover:bg-brand-surface/30">
-                    <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">
-                      <p>{membership.full_name}</p>
-                      <div className="mt-1 space-y-0.5 text-[11px] font-normal text-brand-muted">
-                        <p>Membership ID: {membership.membership_id || "-"}</p>
-                        <p>Partner ID: {membership.partners?.partner_code || "-"}</p>
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, email, phone, ID..."
+          className="w-full rounded-lg border border-brand-border py-2.5 pl-9 pr-3 text-sm outline-none transition-all focus:border-brand-accent focus:ring-2 focus:ring-brand-accent"
+        />
+      </div>
+
+      {queryError ? null : filtered.length === 0 ? (
+        <Card>
+          <EmptyState title="No membership requests found" description="Try a different search, or check back after a new signup." />
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map((membership) => {
+            const status = getActivationStatus(membership);
+            const notesOpen = expandedNotes[membership.id] ?? false;
+            return (
+              <Card key={membership.id} noPadding>
+                <div className="flex flex-col gap-4 p-5">
+                  {/* Top row: identity + status */}
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-sm font-semibold text-white">
+                        {(membership.full_name || "?")[0]}
                       </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.mobile}</td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.city}</td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{membership.email}</td>
-                    <td className="px-4 py-4 text-sm sm:px-6">
-                      <p className="font-mono font-semibold text-brand-primaryDark">
-                        {membership.sponsor?.partner_code || membership.referral_code || "-"}
-                      </p>
-                      {membership.sponsor?.profiles?.full_name && (
-                        <p className="mt-1 text-xs text-brand-muted">{membership.sponsor.profiles.full_name}</p>
+                      <div>
+                        <p className="font-display text-base font-semibold text-brand-ink">{membership.full_name}</p>
+                        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-brand-muted">
+                          <span>Membership ID: <span className="font-mono">{membership.membership_id || "-"}</span></span>
+                          {membership.partners?.partner_code && (
+                            <span>Partner ID: <span className="font-mono font-semibold text-brand-primaryDark">{membership.partners.partner_code}</span></span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant={status.variant} dot>{status.label}</Badge>
+                  </div>
+
+                  {/* Info grid */}
+                  <div className="grid grid-cols-1 gap-3 rounded-lg bg-brand-surface/50 p-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="flex items-center gap-2 text-brand-muted">
+                      <Phone className="h-3.5 w-3.5 shrink-0" /> {membership.mobile || "—"}
+                    </div>
+                    <div className="flex items-center gap-2 text-brand-muted">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" /> {membership.city || "—"}
+                    </div>
+                    <div className="flex items-center gap-2 text-brand-muted sm:col-span-2 lg:col-span-1">
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{membership.email || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-brand-muted">
+                      <Link2 className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {membership.sponsor?.partner_code || membership.referral_code ? (
+                          <>
+                            <span className="font-mono font-semibold text-brand-primaryDark">
+                              {membership.sponsor?.partner_code || membership.referral_code}
+                            </span>
+                            {membership.sponsor?.profiles?.full_name && ` · ${membership.sponsor.profiles.full_name}`}
+                          </>
+                        ) : (
+                          "No referrer"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-brand-muted">
+                    Created {membership.created_at ? new Date(membership.created_at).toLocaleDateString("en-IN") : "-"}
+                    {" · "}Updated {membership.updated_at ? new Date(membership.updated_at).toLocaleDateString("en-IN") : "-"}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap items-center gap-2 border-t border-brand-border pt-4">
+                    {membership.payment_status !== "paid" &&
+                      membership.membership_status !== "under_review" &&
+                      membership.membership_status !== "rejected" && (
+                        <button
+                          onClick={() => handleMarkPaymentContacted(membership.id)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+                        >
+                          Payment Contacted
+                        </button>
                       )}
-                    </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      {(() => {
-                        const s = getActivationStatus(membership);
-                        return <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${s.color}`}>{s.label}</span>;
-                      })()}
-                      <div className="mt-2 text-[11px] leading-5 text-brand-muted">
-                        <p>Created: {membership.created_at ? new Date(membership.created_at).toLocaleDateString("en-IN") : "-"}</p>
-                        <p>Updated: {membership.updated_at ? new Date(membership.updated_at).toLocaleDateString("en-IN") : "-"}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="min-w-[260px] space-y-2">
-                        <p className="text-xs text-brand-muted">
-                          Passwords are masked by Supabase Auth. Use reset with visibility toggle after approval.
-                        </p>
+                    {membership.payment_status !== "paid" && membership.membership_status !== "rejected" && (
+                      <button
+                        onClick={() => handleMarkPaid(membership.id)}
+                        disabled={actionLoading === membership.id}
+                        className="rounded-lg border border-brand-primary/20 bg-brand-light/55 px-3 py-1.5 text-xs font-medium text-brand-primaryDark transition-colors hover:bg-brand-light disabled:opacity-50"
+                      >
+                        Mark Paid
+                      </button>
+                    )}
+                    {membership.payment_status === "paid" &&
+                      membership.membership_status !== "active" &&
+                      membership.membership_status !== "rejected" && (
+                        <button
+                          onClick={() => handleApproveAndCreatePartner(membership)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded-lg border border-brand-ink bg-brand-ink px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-muted disabled:opacity-50"
+                        >
+                          {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
+                        </button>
+                      )}
+                    {membership.membership_status !== "rejected" && membership.membership_status !== "active" && (
+                      <button
+                        onClick={() => handleReject(membership.id)}
+                        disabled={actionLoading === membership.id}
+                        className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    )}
+                    {membership.partner_id && membership.membership_status === "active" && (
+                      <button
+                        onClick={() => handleRepairLogin(membership)}
+                        disabled={actionLoading === membership.id}
+                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        {actionLoading === membership.id ? "..." : "Repair Login"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedNotes((prev) => ({ ...prev, [membership.id]: !notesOpen }))}
+                      className="ml-auto rounded-lg px-3 py-1.5 text-xs font-medium text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-ink"
+                    >
+                      {notesOpen ? "Hide notes & security" : "Notes & security"}
+                    </button>
+                  </div>
+
+                  {/* Collapsible: notes + password manager */}
+                  {notesOpen && (
+                    <div className="grid grid-cols-1 gap-4 rounded-lg border border-brand-border bg-brand-surface/40 p-4 sm:grid-cols-2">
+                      <div>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">Admin Notes</p>
                         <textarea
                           value={adminNotes[membership.id] || ""}
                           onChange={(e) => setAdminNotes((notes) => ({ ...notes, [membership.id]: e.target.value }))}
-                          rows={2}
+                          rows={3}
                           placeholder="Admin notes"
                           className="w-full rounded-lg border border-brand-border px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-accent"
                         />
                         <button
                           onClick={() => handleSaveNotes(membership.id)}
                           disabled={actionLoading === membership.id}
-                          className="rounded border border-brand-border bg-white px-2 py-1 text-[10px] font-medium text-brand-ink hover:bg-brand-surface disabled:opacity-50"
+                          className="mt-2 rounded border border-brand-border bg-white px-2 py-1 text-[10px] font-medium text-brand-ink hover:bg-brand-surface disabled:opacity-50"
                         >
                           Save Notes
                         </button>
                       </div>
-                    </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {membership.payment_status !== "paid" &&
-                          membership.membership_status !== "under_review" &&
-                          membership.membership_status !== "rejected" && (
-                            <button
-                              onClick={() => handleMarkPaymentContacted(membership.id)}
-                              disabled={actionLoading === membership.id}
-                              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
-                            >
-                              Payment Contacted
-                            </button>
-                          )}
-                        {membership.payment_status !== "paid" && membership.membership_status !== "rejected" && (
-                          <button
-                            onClick={() => handleMarkPaid(membership.id)}
-                            disabled={actionLoading === membership.id}
-                            className="rounded-lg border border-brand-primary/20 bg-brand-light/55 px-3 py-1.5 text-xs font-medium text-brand-primaryDark transition-colors hover:bg-brand-light disabled:opacity-50"
-                          >
-                            Mark Paid
-                          </button>
-                        )}
-                        {membership.payment_status === "paid" &&
-                          membership.membership_status !== "active" &&
-                          membership.membership_status !== "rejected" && (
-                            <button
-                              onClick={() => handleApproveAndCreatePartner(membership)}
-                              disabled={actionLoading === membership.id}
-                              className="rounded-lg border border-brand-ink bg-brand-ink px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-muted disabled:opacity-50"
-                            >
-                              {actionLoading === membership.id ? "Processing..." : "Approve & Create Partner"}
-                            </button>
-                          )}
-                        {membership.partner_id && membership.membership_status === "active" && (
-                          <div className="flex min-w-[300px] flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs text-brand-accent">
-                                {membership.partners?.partner_code || "-"}
-                              </span>
-                              <button
-                                onClick={() => handleRepairLogin(membership)}
-                                disabled={actionLoading === membership.id}
-                                className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
-                                title="Repair Login Access"
-                              >
-                                {actionLoading === membership.id ? "..." : "Repair Login"}
-                              </button>
-                            </div>
-                            <PartnerPasswordManager partnerId={membership.partner_id} compact />
-                          </div>
-                        )}
-                        {membership.membership_status !== "rejected" && membership.membership_status !== "active" && (
-                          <button
-                            onClick={() => handleReject(membership.id)}
-                            disabled={actionLoading === membership.id}
-                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
+                      <div>
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">Login / Password</p>
+                        <p className="mb-2 text-xs text-brand-muted">
+                          Passwords are masked by Supabase Auth. Use reset with visibility toggle after approval.
+                        </p>
+                        {membership.partner_id ? (
+                          <PartnerPasswordManager partnerId={membership.partner_id} compact />
+                        ) : (
+                          <p className="text-xs text-brand-muted italic">Available after the partner account is created.</p>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }
