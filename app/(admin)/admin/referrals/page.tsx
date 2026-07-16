@@ -300,7 +300,9 @@ export default function AdminReferralsPage() {
         <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-lg font-semibold text-brand-ink">All Business Accounts</h2>
-            <p className="text-sm text-brand-muted">Every partner account, with who referred them (sponsor) and their level from the top of the chain.</p>
+            <p className="text-sm text-brand-muted">
+              Every partner account, sorted by biggest full team first (Total Team = every level below them, Direct = only people they personally referred).
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <select
@@ -335,7 +337,8 @@ export default function AdminReferralsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Account (Member ID)</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Referred By (Sponsor)</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Level</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Direct Team</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Total Team ▾</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Direct</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">City</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Wallet</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
@@ -345,7 +348,7 @@ export default function AdminReferralsPage() {
             <tbody className="divide-y divide-brand-border bg-white">
               {filteredDirectory.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12">
+                  <td colSpan={9} className="px-6 py-12">
                     <EmptyState icon={Users} title="No accounts found" description="Try a different search or level filter." />
                   </td>
                 </tr>
@@ -378,6 +381,11 @@ export default function AdminReferralsPage() {
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
                       {partner.levelFromRoot === 0 ? "Root" : `L${partner.levelFromRoot}`}
+                    </td>
+                    <td className="px-4 py-4 sm:px-6">
+                      <span className="rounded-full bg-brand-light/60 px-2.5 py-1 text-sm font-semibold text-brand-primaryDark">
+                        {partner.totalTeamCount}
+                      </span>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.directTeamCount}</td>
                     <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.city || "—"}</td>

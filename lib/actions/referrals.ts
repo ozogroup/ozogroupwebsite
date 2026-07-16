@@ -4,6 +4,16 @@ import { requireAdmin } from "@/lib/auth/helpers";
 import { normalizeKiaPartnerCode } from "@/lib/partner-code";
 import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
+// Supabase returns a to-one relationship (e.g. partners.profiles) as either
+// a single object or a single-item array depending on how the FK is
+// inferred for a given query shape. Normalize every row so
+// partner.profiles.full_name is always safe to read.
+function normalizeProfile<T extends { profiles?: any }>(row: T | null | undefined): T | null {
+  if (!row) return null;
+  if (Array.isArray(row.profiles)) row.profiles = row.profiles[0] || null;
+  return row;
+}
+
 export async function getCommissionLevels() {
   const supabase = await getSupabaseServerClient();
   
@@ -125,6 +135,7 @@ export async function getReferralOverview() {
   if (recentPartners.error) {
     console.error("Error fetching referral overview partners:", recentPartners.error);
   }
+  (recentPartners.data || []).forEach((partner: any) => normalizeProfile(partner));
 
   return {
     commissionLevels,
@@ -171,11 +182,20 @@ export async function getAllPartnersDirectory(limit = 500) {
   }
 
   const rows = (data || []) as any[];
+  // Supabase can return a to-one relationship as an object or a single-item
+  // array depending on how the FK is inferred — normalize it here so every
+  // consumer of this directory can safely read partner.profiles.full_name.
+  for (const partner of rows) {
+    if (Array.isArray(partner.profiles)) partner.profiles = partner.profiles[0] || null;
+  }
   const byId = new Map(rows.map((partner) => [partner.id, partner]));
+  const childrenOf = new Map<string, string[]>();
   const directTeamCount = new Map<string, number>();
   for (const partner of rows) {
     if (partner.sponsor_id) {
       directTeamCount.set(partner.sponsor_id, (directTeamCount.get(partner.sponsor_id) || 0) + 1);
+      if (!childrenOf.has(partner.sponsor_id)) childrenOf.set(partner.sponsor_id, []);
+      childrenOf.get(partner.sponsor_id)!.push(partner.id);
     }
   }
 
@@ -193,12 +213,34 @@ export async function getAllPartnersDirectory(limit = 500) {
     return level;
   }
 
-  return rows.map((partner) => ({
+  // Full downline size (every level, not just direct referrals) — this is
+  // what "team size" means for sorting the directory, so a partner with a
+  // large multi-level team surfaces above one with only a couple of direct
+  // referrals but no depth.
+  function totalTeamCount(partnerId: string): number {
+    const seen = new Set<string>([partnerId]);
+    const queue = [...(childrenOf.get(partnerId) || [])];
+    let count = 0;
+    while (queue.length > 0) {
+      const nextId = queue.shift()!;
+      if (seen.has(nextId)) continue;
+      seen.add(nextId);
+      count += 1;
+      for (const childId of childrenOf.get(nextId) || []) queue.push(childId);
+    }
+    return count;
+  }
+
+  const enriched = rows.map((partner) => ({
     ...partner,
     sponsor: partner.sponsor_id ? byId.get(partner.sponsor_id) || null : null,
     directTeamCount: directTeamCount.get(partner.id) || 0,
+    totalTeamCount: totalTeamCount(partner.id),
     levelFromRoot: levelFromRoot(partner.id),
   }));
+
+  // Whoever has the biggest team (full downline) shows first.
+  return enriched.sort((a, b) => b.totalTeamCount - a.totalTeamCount || b.directTeamCount - a.directTeamCount);
 }
 
 async function getSponsorFallbackTree(supabase: any, partnerId: string) {
@@ -226,7 +268,7 @@ async function getSponsorFallbackTree(supabase: any, partnerId: string) {
       break;
     }
 
-    tree[level] = data || [];
+    tree[level] = (data || []).map((partner: any) => normalizeProfile(partner));
     currentIds = (data || []).map((partner: any) => partner.id).filter(Boolean);
   }
 
@@ -272,7 +314,8 @@ export async function getReferralTree(partnerId: string) {
   if (selectedError) {
     console.error("Error fetching selected referral partner:", selectedError);
   }
-  
+  normalizeProfile(selectedPartner as any);
+
   // Get the partner's direct referrals (level 1)
   const { data: level1, error: error1 } = await supabase
     .from("referral_tree")
@@ -327,7 +370,7 @@ export async function getReferralTree(partnerId: string) {
       if (!tree[item.level]) {
       tree[item.level] = [];
       }
-      if (item.descendants) tree[item.level].push(item.descendants);
+      if (item.descendants) tree[item.level].push(normalizeProfile(item.descendants));
     });
   }
 
@@ -339,7 +382,7 @@ export async function getReferralTree(partnerId: string) {
 
   return {
     partner: selectedPartner,
-    level1: tree[1] || level1?.map((item: any) => item.descendants) || [],
+    level1: tree[1] || level1?.map((item: any) => normalizeProfile(item.descendants)) || [],
     tree,
     pendingMembers,
     totalReferrals: Object.values(tree).reduce((sum, partners: any) => sum + partners.length, 0),
