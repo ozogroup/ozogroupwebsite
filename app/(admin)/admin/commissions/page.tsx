@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCw, Wallet, Clock, CheckCircle2, BadgeIndianRupee } from "lucide-react";
-import { generateMissingBookingCommissions, getCommissions, updateCommissionStatus } from "@/lib/actions/commissions";
+import {
+  generateMissingBookingCommissions,
+  generateMissingMembershipReferralCommissions,
+  getCommissions,
+  updateCommissionStatus,
+} from "@/lib/actions/commissions";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
 
 function money(value: number) {
@@ -30,10 +35,16 @@ function allowedStatuses(status: string) {
   return [status];
 }
 
+function profileName(value: any) {
+  const profile = Array.isArray(value) ? value[0] : value;
+  return profile?.full_name || "Unknown";
+}
+
 export default function AdminCommissionsPage() {
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generatingMemberships, setGeneratingMemberships] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "paid" | "rejected">("all");
   const [search, setSearch] = useState("");
@@ -83,6 +94,20 @@ export default function AdminCommissionsPage() {
     }
   }
 
+  async function handleGenerateMissingMemberships() {
+    setGeneratingMemberships(true);
+    setMessage(null);
+    try {
+      const result = await generateMissingMembershipReferralCommissions();
+      await loadCommissions(false);
+      setMessage(`Checked ${result.scanned} paid active memberships and created ${result.created} missing Rs. ${Number(result.bonusAmount).toLocaleString("en-IN")} referral commission rows.`);
+    } catch (error: any) {
+      setMessage(error?.message || "Unable to generate missing referral commissions.");
+    } finally {
+      setGeneratingMemberships(false);
+    }
+  }
+
   const summary = useMemo(() => {
     const pending = commissions.filter((c) => c.status === "pending");
     const approved = commissions.filter((c) => c.status === "approved");
@@ -105,7 +130,7 @@ export default function AdminCommissionsPage() {
       rows = rows.filter((c) => {
         const haystack = [
           c.partner?.partner_code,
-          c.partner?.profiles?.full_name,
+          profileName(c.partner?.profiles),
           c.source_booking?.customer_name,
           c.source_booking?.booking_id,
           c.source_membership?.full_name,
@@ -134,6 +159,16 @@ export default function AdminCommissionsPage() {
         title="Commissions"
         description="Every partner's earnings, traced from source (booking or new member) to payout status."
         actions={
+          <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleGenerateMissingMemberships}
+            disabled={generatingMemberships}
+            className="inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2.5 text-sm font-medium text-brand-ink transition-all hover:border-brand-accent disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${generatingMemberships ? "animate-spin" : ""}`} />
+            {generatingMemberships ? "Checking..." : "Generate Missing Referral Rs. 500"}
+          </button>
           <button
             type="button"
             onClick={handleGenerateMissing}
@@ -143,6 +178,7 @@ export default function AdminCommissionsPage() {
             <RefreshCw className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} />
             {generating ? "Checking..." : "Generate Missing Booking Commissions"}
           </button>
+          </div>
         }
       />
 
@@ -214,10 +250,10 @@ export default function AdminCommissionsPage() {
                     <td className="px-4 py-4 font-medium text-brand-ink sm:px-6">
                       <div className="flex items-center gap-2.5">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
-                          {(commission.partner?.profiles?.full_name || "P")[0]}
+                          {(profileName(commission.partner?.profiles) || "P")[0]}
                         </div>
                         <div>
-                          <p>{commission.partner?.profiles?.full_name || "Unknown"}</p>
+                          <p>{profileName(commission.partner?.profiles)}</p>
                           <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">
                             {commission.partner?.partner_code || "—"}
                           </p>

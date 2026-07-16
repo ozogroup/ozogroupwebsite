@@ -65,6 +65,11 @@ export default function AdminPayoutsPage() {
     return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
   }
 
+  function profileName(value: any) {
+    const profile = Array.isArray(value) ? value[0] : value;
+    return profile?.full_name || "Unknown";
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -83,7 +88,7 @@ export default function AdminPayoutsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Gross Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">15% Deduction</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Net Payable</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Referral Kit / Level Breakup</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Referral / Booking Breakup</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Wallet / Paid</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Bank / UPI</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
@@ -99,7 +104,7 @@ export default function AdminPayoutsPage() {
                 payouts.map((payout) => (
                   <tr key={payout.id} className="align-top hover:bg-brand-surface/30 transition-colors">
                     <td className="px-4 py-4">
-                      <p className="font-medium text-brand-ink">{payout.partner?.profiles?.full_name || "Unknown"}</p>
+                      <p className="font-medium text-brand-ink">{profileName(payout.partner?.profiles)}</p>
                       <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
                     </td>
                     <td className="px-4 py-4 text-sm">
@@ -119,8 +124,17 @@ export default function AdminPayoutsPage() {
                       <p className="mt-1 text-xs text-brand-muted">This is the amount partner receives.</p>
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted min-w-[280px]">
-                      {payout.partner_summary?.kitSummary?.length ? (
+                      {payout.partner_summary?.membershipSummary?.length || payout.partner_summary?.kitSummary?.length ? (
                         <div className="space-y-3">
+                          {payout.partner_summary?.membershipSummary?.map((item: any) => (
+                            <div key={`${item.membershipId}-${item.memberName}`} className="rounded-lg border border-brand-border bg-green-50/60 p-3">
+                              <p className="font-semibold text-brand-ink">Referral Bonus Rs. 500</p>
+                              <p className="mt-1">{item.memberName} | {item.membershipId}</p>
+                              <p>{item.city}</p>
+                              <p className="mt-1">Commission gross: {money(item.commissionAmount)}</p>
+                              <p>Level {item.level} | {item.status}</p>
+                            </div>
+                          ))}
                           {payout.partner_summary.kitSummary.map((item: any) => (
                             <div key={item.kitName} className="rounded-lg border border-brand-border bg-brand-surface/40 p-3">
                               <p className="font-semibold text-brand-ink">{item.kitName}</p>
@@ -135,7 +149,7 @@ export default function AdminPayoutsPage() {
                           ))}
                         </div>
                       ) : (
-                        <p>No referral booking commission yet.</p>
+                        <p>No referral or booking commission yet.</p>
                       )}
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted">

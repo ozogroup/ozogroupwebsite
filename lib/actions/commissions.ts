@@ -211,6 +211,96 @@ export async function generateMissingBookingCommissions() {
   };
 }
 
+export async function generateMissingMembershipReferralCommissions() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const { data: settings } = await supabase
+    .from("system_settings" as any)
+    .select("membership_referral_bonus_amount")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const bonusAmount = Number((settings as any)?.membership_referral_bonus_amount ?? 500);
+  if (!(bonusAmount > 0)) {
+    throw new Error("Membership referral bonus amount is not configured.");
+  }
+
+  const { data: memberships, error } = await supabase
+    .from("memberships" as any)
+    .select("id, amount, payment_amount, sponsor_id, membership_status, payment_status")
+    .eq("membership_status", "active")
+    .eq("payment_status", "paid")
+    .not("sponsor_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1000);
+
+  if (error) {
+    console.error("Error loading memberships for referral commission generation:", error);
+    throw new Error(error.message || "Unable to load eligible memberships.");
+  }
+
+  let scanned = 0;
+  let created = 0;
+  for (const membership of ((memberships || []) as any[])) {
+    scanned += 1;
+    const sponsorId = membership.sponsor_id;
+    if (!sponsorId) continue;
+
+    const { data: existing, error: existingError } = await supabase
+      .from("commissions" as any)
+      .select("id")
+      .eq("source_type", "membership")
+      .eq("source_id", membership.id)
+      .eq("partner_id", sponsorId)
+      .eq("level", 1)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error("Error checking membership referral commission:", existingError);
+      continue;
+    }
+    if (existing) continue;
+
+    const { data: sponsor } = await supabase
+      .from("partners" as any)
+      .select("status, is_active, deleted_at, membership_expires_at")
+      .eq("id", sponsorId)
+      .maybeSingle();
+    const sp = sponsor as any;
+    const sponsorEligible =
+      sp &&
+      sp.status === "active" &&
+      sp.is_active !== false &&
+      !sp.deleted_at &&
+      (!sp.membership_expires_at || new Date(sp.membership_expires_at).getTime() >= Date.now());
+    if (!sponsorEligible) continue;
+
+    const { error: insertError } = await supabase.from("commissions" as any).insert({
+      partner_id: sponsorId,
+      source_type: "membership",
+      source_id: membership.id,
+      source_amount: Number(membership.payment_amount ?? membership.amount ?? 0),
+      level: 1,
+      percentage: 0,
+      amount: bonusAmount,
+      status: "pending",
+    });
+
+    if (insertError) {
+      if (insertError.code === "23505") continue;
+      console.error("Error creating missing membership referral commission:", insertError);
+      continue;
+    }
+    created += 1;
+  }
+
+  revalidateMoneyPaths();
+
+  return { scanned, created, bonusAmount };
+}
+
 // Change a commission's status via the atomic, row-locked
 // kia_set_commission_status RPC (see supabase/kia-financial-repair). Falls
 // back to the unlocked JS read-then-write path only if that RPC is missing

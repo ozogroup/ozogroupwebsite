@@ -44,6 +44,29 @@ export default async function PartnerIncomePage() {
       .maybeSingle(),
   ]);
 
+  const bookingIds = (commissions || [])
+    .filter((commission: any) => commission.source_type === "booking" && commission.source_id)
+    .map((commission: any) => commission.source_id);
+  const membershipIds = (commissions || [])
+    .filter((commission: any) => commission.source_type === "membership" && commission.source_id)
+    .map((commission: any) => commission.source_id);
+  const [{ data: commissionBookings }, { data: commissionMemberships }] = await Promise.all([
+    bookingIds.length
+      ? supabase
+          .from("bookings" as any)
+          .select("id, booking_id, customer_name, treatment_name, payment_amount, treatment_price")
+          .in("id", Array.from(new Set(bookingIds)))
+      : { data: [] },
+    membershipIds.length
+      ? supabase
+          .from("memberships" as any)
+          .select("id, membership_id, full_name, city, payment_amount, amount")
+          .in("id", Array.from(new Set(membershipIds)))
+      : { data: [] },
+  ]);
+  const bookingById = new Map((commissionBookings || []).map((booking: any) => [booking.id, booking]));
+  const membershipById = new Map((commissionMemberships || []).map((membership: any) => [membership.id, membership]));
+
   const deductionRate = Number((settings as any)?.payout_deduction_rate ?? DEFAULT_DEDUCTION_RATE);
 
   const eligibleCommissions = (commissions || []).filter(
@@ -165,9 +188,21 @@ export default async function PartnerIncomePage() {
                       {new Date(commission.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3 text-sm text-brand-ink">
-                      {commission.source_type === "membership"
-                        ? "Membership"
-                        : "Product / Treatment Booking"}
+                      {commission.source_type === "membership" ? (
+                        <div>
+                          <p className="font-medium">Referral Bonus Rs. 500</p>
+                          <p className="text-xs text-brand-muted">
+                            {(membershipById.get(commission.source_id) as any)?.full_name || "New member"} | {(membershipById.get(commission.source_id) as any)?.membership_id || commission.source_id}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-medium">Product / Treatment Booking</p>
+                          <p className="text-xs text-brand-muted">
+                            {(bookingById.get(commission.source_id) as any)?.customer_name || "Customer"} | {(bookingById.get(commission.source_id) as any)?.treatment_name || "Treatment"}
+                          </p>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-brand-muted">Level {commission.level || 1}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-brand-primaryDark">{formatCurrency(commissionAmount(commission))}</td>

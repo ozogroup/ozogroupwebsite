@@ -1,5 +1,5 @@
 import { requirePartner } from "@/lib/auth/helpers";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -12,18 +12,39 @@ function money(value: number) {
 }
 
 export default async function PartnerCommissionsPage() {
-  await requirePartner();
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return <div>User not found</div>;
+  const profile = await requirePartner();
+  const supabase = getSupabaseServiceClient();
+  const partnerId = profile.id;
 
   const { data: commissions } = await supabase
     .from("commissions" as any)
     .select("*")
-    .eq("partner_id", user.id)
+    .eq("partner_id", partnerId)
     .order("created_at", { ascending: false });
+
+  const bookingIds = (commissions || [])
+    .filter((commission: any) => commission.source_type === "booking" && commission.source_id)
+    .map((commission: any) => commission.source_id);
+  const membershipIds = (commissions || [])
+    .filter((commission: any) => commission.source_type === "membership" && commission.source_id)
+    .map((commission: any) => commission.source_id);
+
+  const [{ data: bookings }, { data: memberships }] = await Promise.all([
+    bookingIds.length
+      ? supabase
+          .from("bookings" as any)
+          .select("id, booking_id, treatment_order_id, customer_name, treatment_name, payment_amount, treatment_price")
+          .in("id", Array.from(new Set(bookingIds)))
+      : { data: [] },
+    membershipIds.length
+      ? supabase
+          .from("memberships" as any)
+          .select("id, membership_id, full_name, city, payment_amount, amount")
+          .in("id", Array.from(new Set(membershipIds)))
+      : { data: [] },
+  ]);
+  const bookingById = new Map((bookings || []).map((booking: any) => [booking.id, booking]));
+  const membershipById = new Map((memberships || []).map((membership: any) => [membership.id, membership]));
 
   const activeCommissions = (commissions || []).filter(
     (commission: any) => !commission.reversed && commission.deleted_at == null && commission.status !== "rejected"
@@ -75,10 +96,26 @@ export default async function PartnerCommissionsPage() {
                 commissions.map((commission: any) => (
                   <tr key={commission.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 text-sm text-slate-900">
-                      {commission.source_type === "membership" ? "Membership" : "Treatment booking"}
+                      {commission.source_type === "membership" ? (
+                        <div>
+                          <p className="font-medium">Referral Bonus Rs. 500</p>
+                          <p className="text-xs text-slate-500">
+                            {(membershipById.get(commission.source_id) as any)?.full_name || "New member"} | {(membershipById.get(commission.source_id) as any)?.membership_id || commission.source_id}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-medium">Treatment Booking</p>
+                          <p className="text-xs text-slate-500">
+                            {(bookingById.get(commission.source_id) as any)?.customer_name || "Customer"} | {(bookingById.get(commission.source_id) as any)?.treatment_name || "Treatment"}
+                          </p>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">Level {commission.level || 1}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{Number(commission.percentage || 0)}%</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">
+                      {commission.source_type === "membership" ? "Flat" : `${Number(commission.percentage || 0)}%`}
+                    </td>
                     <td className="px-6 py-4 text-sm font-semibold text-green-600">{money(amount(commission))}</td>
                     <td className="px-6 py-4">
                       <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusClass(commission.status)}`}>

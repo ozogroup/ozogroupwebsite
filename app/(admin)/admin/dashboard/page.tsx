@@ -130,7 +130,7 @@ export default async function AdminDashboardPage({
   const [{ data: periodBookings }, { data: periodCommissions }, { data: periodPayoutRows }, { data: walletPartners }, { data: periodSales }] =
     await Promise.all([
       (supabase as any).from("bookings").select("payment_amount,treatment_price,payment_status,created_at"),
-      (supabase as any).from("commissions").select("amount,level,status,created_at"),
+      (supabase as any).from("commissions").select("amount,level,status,source_type,created_at"),
       (supabase as any).from("payouts").select("amount,status,created_at"),
       (supabase as any).from("partners").select("id,partner_code,wallet_balance,profiles(full_name)"),
       (supabase as any).from("bookings").select("referred_by,partner_code,treatment_price,payment_amount,booking_status,created_at"),
@@ -164,6 +164,9 @@ export default async function AdminDashboardPage({
   // Commission still owed to partners (pending + approved, not yet paid out).
   const commissionLiability = (periodCommissions || [])
     .filter((row: any) => ["pending", "approved"].includes(String(row.status)))
+    .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const referralBonusLiability = (periodCommissions || [])
+    .filter((row: any) => row.source_type === "membership" && ["pending", "approved"].includes(String(row.status)))
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
   const actionItemsCount = pendingKycCount + pendingPayoutsCount;
 
@@ -263,6 +266,7 @@ export default async function AdminDashboardPage({
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Paid Booking Sales" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} icon={Calendar} tone="sage" hint="Selected period" />
         <StatCard label="Commission Owed" value={`Rs. ${commissionLiability.toLocaleString("en-IN")}`} icon={BadgeIndianRupee} tone="amber" hint="Pending + approved, unpaid" />
+        <StatCard label="Referral Rs. 500 Owed" value={`Rs. ${referralBonusLiability.toLocaleString("en-IN")}`} icon={Users} tone="green" hint="Successful membership referrals" />
         <StatCard label="Wallet Balance" value={`Rs. ${totalWalletBalance.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" hint="Across all partners" />
         <StatCard
           label="Action Items"
@@ -291,8 +295,12 @@ export default async function AdminDashboardPage({
           </div>
         </Card>
         <Card>
-          <CardHeader title="Level Rates" subtitle="Confirmed 4-level structure" />
+          <CardHeader title="Earning Rules" subtitle="Referral bonus and booking commission structure" />
           <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between rounded-lg bg-brand-surface/60 px-4 py-3 text-sm">
+              <span className="font-medium text-brand-ink">Successful referral</span>
+              <span className="font-semibold text-brand-accent">Rs. 500 flat</span>
+            </div>
             {[
               { level: 1, rate: "6%" },
               { level: 2, rate: "3%" },

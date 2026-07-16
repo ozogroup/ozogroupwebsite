@@ -140,6 +140,20 @@ export async function getPayouts() {
         .in("id", bookingIds)
     : { data: [] as any[] };
   const bookingById = new Map((commissionBookings || []).map((booking: any) => [booking.id, booking]));
+  const membershipIds = Array.from(
+    new Set(
+      (commissions || [])
+        .filter((c: any) => c.source_type === "membership" && c.source_id)
+        .map((c: any) => c.source_id)
+    )
+  );
+  const { data: commissionMemberships } = membershipIds.length > 0
+    ? await supabase
+        .from("memberships" as any)
+        .select("id, membership_id, full_name, city, payment_amount, amount")
+        .in("id", membershipIds)
+    : { data: [] as any[] };
+  const membershipById = new Map((commissionMemberships || []).map((membership: any) => [membership.id, membership]));
 
   const partnerIds = Array.from(
     new Set([
@@ -161,6 +175,20 @@ export async function getPayouts() {
     const membershipIncome = partnerCommissions
       .filter((c: any) => c.source_type === "membership")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const membershipSummary = partnerCommissions
+      .filter((c: any) => c.source_type === "membership")
+      .map((c: any) => {
+        const membership = membershipById.get(c.source_id);
+        return {
+          membershipId: membership?.membership_id || c.source_id,
+          memberName: membership?.full_name || "New member",
+          city: membership?.city || "-",
+          sourceAmount: Number(c.source_amount || membership?.payment_amount || membership?.amount || 0),
+          commissionAmount: Number(c.amount || 0),
+          level: Number(c.level || 1),
+          status: c.status,
+        };
+      });
     const productIncome = partnerCommissions
       .filter((c: any) => c.source_type === "booking")
       .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
@@ -222,6 +250,7 @@ export async function getPayouts() {
       pendingPayout,
       requestedPayout,
       kitSummary,
+      membershipSummary,
       payoutStatus: requestedPayout > 0 ? "pending" : pendingPayout > 0 ? "available" : paidAmount >= netPayable && netPayable > 0 ? "paid" : "open",
     });
   }
