@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 
@@ -20,26 +20,22 @@ function commissionAmount(commission: any) {
 }
 
 export default async function PartnerIncomePage() {
-  await requirePartner();
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return <div>User not found</div>;
+  const profile = await requirePartner();
+  const supabase = getSupabaseServiceClient();
+  const partnerId = profile.id;
 
   const [{ data: commissions }, { data: payouts }, { data: partner }, { data: settings }] = await Promise.all([
     supabase
       .from("commissions" as any)
       .select("*")
-      .eq("partner_id", user.id)
+      .eq("partner_id", partnerId)
       .order("created_at", { ascending: false }),
     supabase
       .from("payouts" as any)
       .select("*")
-      .eq("partner_id", user.id)
+      .eq("partner_id", partnerId)
       .order("created_at", { ascending: false }),
-    supabase.from("partners" as any).select("wallet_balance").eq("id", user.id).single(),
+    supabase.from("partners" as any).select("wallet_balance, total_earnings, paid_earnings").eq("id", partnerId).single(),
     supabase
       .from("system_settings" as any)
       .select("payout_deduction_rate")
@@ -54,13 +50,13 @@ export default async function PartnerIncomePage() {
     (commission: any) =>
       commission.deleted_at == null && !commission.reversed && commission.status !== "rejected"
   );
-  const earnedCommissions = eligibleCommissions.filter((commission: any) =>
-    ["approved", "paid"].includes(String(commission.status))
+  const recordedCommissions = eligibleCommissions.filter((commission: any) =>
+    ["pending", "approved", "paid"].includes(String(commission.status))
   );
-  const membershipIncome = earnedCommissions
+  const membershipIncome = recordedCommissions
     .filter((commission: any) => commission.source_type === "membership")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
-  const productIncome = earnedCommissions
+  const productIncome = recordedCommissions
     .filter((commission: any) => commission.source_type === "booking")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const bonusIncome = 0;
@@ -72,6 +68,9 @@ export default async function PartnerIncomePage() {
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const paidIncome = eligibleCommissions
     .filter((commission: any) => commission.status === "paid")
+    .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
+  const approvedIncome = eligibleCommissions
+    .filter((commission: any) => commission.status === "approved")
     .reduce((sum: number, commission: any) => sum + commissionAmount(commission), 0);
   const pendingPayout = (payouts || [])
     .filter((payout: any) => ["pending", "requested", "processing"].includes(payout.status))
@@ -133,7 +132,7 @@ export default async function PartnerIncomePage() {
             <p className="mb-1 text-sm text-brand-muted">Available Balance</p>
             <p className="text-3xl font-bold text-brand-accent">{formatCurrency(walletBalance)}</p>
             <p className="mt-2 text-xs text-brand-muted">
-              Pending income: {formatCurrency(pendingIncome)} | Paid income: {formatCurrency(paidIncome)} | Pending payout: {formatCurrency(pendingPayout)}
+              Pending income: {formatCurrency(pendingIncome)} | Approved income: {formatCurrency(approvedIncome)} | Paid income: {formatCurrency(paidIncome)} | Pending payout: {formatCurrency(pendingPayout)}
             </p>
           </div>
           <a

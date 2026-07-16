@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSponsoredMembershipRequests } from "@/lib/actions/memberships";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 
 export const dynamic = "force-dynamic";
@@ -39,18 +39,19 @@ function toTeamMemberFromMembership(membership: any) {
   };
 }
 
+function firstProfile(value: any) {
+  return Array.isArray(value) ? value[0] || null : value || null;
+}
+
 export default async function PartnerDirectTeamPage() {
-  await requirePartner();
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return <div>User not found</div>;
+  const profile = await requirePartner();
+  const supabase = getSupabaseServiceClient();
+  const partnerId = profile.id;
 
   const { data: tree } = await supabase
     .from("referral_tree" as any)
     .select("descendant_id")
-    .eq("ancestor_id", user.id)
+    .eq("ancestor_id", partnerId)
     .eq("level", 1);
 
   const descendantIds = (tree || []).map((t: any) => t.descendant_id);
@@ -71,8 +72,8 @@ export default async function PartnerDirectTeamPage() {
       .filter((member) => !sponsoredPartnerIds.has(member.id))
       .map((member) => ({
         id: member.id,
-        name: member.profiles?.full_name || "-",
-        phone: member.profiles?.phone || "-",
+        name: firstProfile(member.profiles)?.full_name || "-",
+        phone: firstProfile(member.profiles)?.phone || "-",
         city: member.city || "-",
         partnerCode: member.partner_code,
         joinDate: member.created_at,

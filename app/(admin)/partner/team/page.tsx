@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSponsoredMembershipRequests } from "@/lib/actions/memberships";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 
 export const dynamic = "force-dynamic";
@@ -27,13 +27,35 @@ function statusClass(status: string) {
   return "bg-amber-100 text-amber-800";
 }
 
+function firstProfile(value: any) {
+  return Array.isArray(value) ? value[0] || null : value || null;
+}
+
+function buildHierarchyRows(treeRows: any[], partners: any[], memberships: any[]) {
+  const partnerMap = new Map(partners.map((partner) => [partner.id, partner]));
+  const membershipMap = new Map(memberships.map((membership) => [membership.partner_id, membership]));
+
+  return treeRows.map((row) => {
+    const partner = partnerMap.get(row.descendant_id) || null;
+    const profile = firstProfile(partner?.profiles);
+    const membership = membershipMap.get(row.descendant_id) || null;
+
+    return {
+      id: row.descendant_id,
+      level: row.level,
+      created_at: row.created_at,
+      name: profile?.full_name || membership?.full_name || "-",
+      partnerCode: partner?.partner_code || "KIA ID pending",
+      city: partner?.city || membership?.city || "-",
+      status: partner?.status || membership?.membership_status || "active",
+    };
+  });
+}
+
 export default async function PartnerTeamPage() {
-  await requirePartner();
-  const supabase = await getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return <div>User not found</div>;
+  const profile = await requirePartner();
+  const supabase = getSupabaseServiceClient();
+  const partnerId = profile.id;
 
   const levels = [1, 2, 3, 4];
   const counts: Record<number, number> = {};
@@ -41,18 +63,34 @@ export default async function PartnerTeamPage() {
     const { count } = await supabase
       .from("referral_tree" as any)
       .select("*", { count: "exact", head: true })
-      .eq("ancestor_id", user.id)
+      .eq("ancestor_id", partnerId)
       .eq("level", level);
     counts[level] = count || 0;
   }
 
-  const { data: teamRows } = await supabase
+  const { data: treeRowsRaw } = await supabase
     .from("referral_tree" as any)
-    .select("level, created_at, descendant:partners!referral_tree_descendant_id_fkey(id, partner_code, status, created_at, city, profiles(full_name, phone))")
-    .eq("ancestor_id", user.id)
+    .select("level, descendant_id, created_at")
+    .eq("ancestor_id", partnerId)
     .order("level", { ascending: true })
     .order("created_at", { ascending: false });
 
+  const treeRows = treeRowsRaw || [];
+  const descendantIds = Array.from(new Set(treeRows.map((row: any) => row.descendant_id).filter(Boolean)));
+  const [{ data: treePartners }, { data: treeMemberships }] = descendantIds.length
+    ? await Promise.all([
+        supabase
+          .from("partners" as any)
+          .select("id, partner_code, status, created_at, city, profiles(full_name, phone, email)")
+          .in("id", descendantIds),
+        supabase
+          .from("memberships" as any)
+          .select("partner_id, full_name, mobile, city, membership_status, payment_status")
+          .in("partner_id", descendantIds),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const teamRows = buildHierarchyRows(treeRows, treePartners || [], treeMemberships || []);
   const sponsoredMemberships = (await getSponsoredMembershipRequests(100)) as any[];
   const pendingMemberships = sponsoredMemberships.filter((membership) =>
     ["pending approval", "pending", "pending_payment"].includes(getTeamStatus(membership).toLowerCase())
@@ -148,7 +186,7 @@ export default async function PartnerTeamPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
-              {!teamRows || teamRows.length === 0 ? (
+              {teamRows.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                     No approved hierarchy members found yet.
@@ -156,16 +194,15 @@ export default async function PartnerTeamPage() {
                 </tr>
               ) : (
                 teamRows.map((row: any) => {
-                  const descendant = row.descendant || {};
                   return (
-                    <tr key={`${row.level}-${descendant.id}`} className="hover:bg-slate-50">
+                    <tr key={`${row.level}-${row.id}`} className="hover:bg-slate-50">
                       <td className="px-6 py-4 text-sm font-semibold text-brand-primaryDark">Level {row.level}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{descendant.profiles?.full_name || "-"}</td>
-                      <td className="px-6 py-4 font-mono text-sm text-brand-accent">{descendant.partner_code || "-"}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{descendant.city || "-"}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{row.name}</td>
+                      <td className="px-6 py-4 font-mono text-sm text-brand-accent">{row.partnerCode}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.city}</td>
                       <td className="px-6 py-4">
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${statusClass(descendant.status || "active")}`}>
-                          {descendant.status || "active"}
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${statusClass(row.status || "active")}`}>
+                          {String(row.status || "active").replace("_", " ")}
                         </span>
                       </td>
                     </tr>

@@ -23,7 +23,7 @@ import BookNowButton from "@/components/booking/BookNowButton";
 import AutoRefreshRoute from "@/components/AutoRefreshRoute";
 import PartnerDashboardCharts from "@/components/partner/PartnerDashboardCharts";
 import { getSponsoredMembershipRequests } from "@/lib/actions/memberships";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceClient } from "@/lib/supabase/server";
 import { requirePartner } from "@/lib/auth/helpers";
 import { getReferralUrl } from "@/lib/referral-url";
 import { treatmentKitCatalog } from "@/lib/treatments/catalog";
@@ -64,18 +64,14 @@ export default async function PartnerDashboardPage({
   searchParams?: Promise<{ range?: string; from?: string; to?: string }>;
 }) {
   const profile = await requirePartner();
-  const supabase = await getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
   const resolvedSearchParams = await searchParams;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return <div>User not found</div>;
+  const partnerId = profile.id;
 
   const { data: partner } = await supabase
     .from("partners" as any)
     .select("*")
-    .eq("id", user.id)
+    .eq("id", partnerId)
     .single();
 
   const partnerData = partner as any;
@@ -119,15 +115,15 @@ export default async function PartnerDashboardPage({
 
   const [referrals, directTeam, referralTreeData, commissionsData, payoutsData, bookingsData, sponsoredMemberships] =
     await Promise.all([
-      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id),
-      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", user.id).eq("level", 1),
-      supabase.from("referral_tree" as any).select("level,created_at").eq("ancestor_id", user.id),
-      supabase.from("commissions" as any).select("amount,status,created_at,level").eq("partner_id", user.id),
-      supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", user.id),
+      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", partnerId),
+      supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", partnerId).eq("level", 1),
+      supabase.from("referral_tree" as any).select("level,created_at").eq("ancestor_id", partnerId),
+      supabase.from("commissions" as any).select("amount,status,created_at,level").eq("partner_id", partnerId),
+      supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", partnerId),
       supabase
         .from("bookings" as any)
         .select("id,customer_name,customer_phone,booking_status,payment_status,created_at,treatment_name,treatment_price,payment_amount")
-        .eq("referred_by", user.id)
+        .eq("referred_by", partnerId)
         .order("created_at", { ascending: false }),
       getSponsoredMembershipRequests(100),
     ]);
