@@ -470,6 +470,113 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   return data;
 }
 
+// Lets an admin create a payout request on a partner's behalf, without
+// waiting for the partner to log into the partner portal and submit their
+// own request. Deliberately does NOT apply the KYC/bank-verified gate that
+// requestPartnerPayout enforces — the admin is taking direct responsibility
+// for this payout (often paying via a method outside the portal and simply
+// recording it here), matching how the pre-existing createPayout() action
+// already worked with no gating. The created row still goes through the
+// normal admin payout list and the same tested updatePayoutStatus flow
+// (FIFO commission settlement, wallet debit, audit trail) once marked paid.
+export async function adminCreatePayoutForPartner(
+  partnerId: string,
+  amount?: number,
+  paymentMethod?: "bank" | "upi",
+  note?: string
+) {
+  const admin = await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const { data: partner, error } = await supabase
+    .from("partners" as any)
+    .select("wallet_balance, bank_account_holder, bank_account_number, bank_ifsc, upi_id, partner_code")
+    .eq("id", partnerId)
+    .maybeSingle();
+  if (error || !partner) return { error: "Partner not found." };
+
+  const p = partner as any;
+  const wallet = Number(p.wallet_balance || 0);
+  const requestedAmount = amount != null && Number.isFinite(Number(amount)) ? Number(amount) : wallet;
+  if (!(requestedAmount > 0)) return { error: "Enter a valid payout amount." };
+  if (requestedAmount > wallet + 0.009) {
+    return { error: `Payout amount cannot exceed the partner's wallet balance (Rs. ${wallet.toLocaleString("en-IN")}).` };
+  }
+
+  const { data: existingRequest, error: existingError } = await supabase
+    .from("payouts" as any)
+    .select("id, status")
+    .eq("partner_id", partnerId)
+    .in("status", ["requested", "processing"])
+    .limit(1)
+    .maybeSingle();
+  if (existingError) return { error: existingError.message };
+  if (existingRequest) {
+    return { error: "This partner already has an open payout request. Process that existing row instead of creating a new one." };
+  }
+
+  const payoutSettings = await getPayoutSettings(supabase);
+  const { gross: grossAmount, deduction: deductionAmount, net: netAmount } = computePayoutBreakdown(requestedAmount, payoutSettings.deductionRate);
+
+  const hasBank = Boolean(p.bank_account_holder && p.bank_account_number && p.bank_ifsc);
+  const hasUpi = Boolean(p.upi_id);
+  const method = paymentMethod || (hasBank ? "bank" : hasUpi ? "upi" : "bank");
+  const paymentDetails =
+    (method === "upi"
+      ? [p.upi_id ? `UPI: ${p.upi_id}` : null].filter(Boolean).join(" | ")
+      : [p.bank_account_holder, p.bank_account_number, p.bank_ifsc].filter(Boolean).join(" | ")) ||
+    "Admin-initiated: no bank/UPI on file, confirm payment details manually";
+
+  const payoutPayload: Record<string, unknown> = {
+    partner_id: partnerId,
+    amount: netAmount,
+    gross_amount: grossAmount,
+    deduction_rate: payoutSettings.deductionRate,
+    deduction_amount: deductionAmount,
+    net_amount: netAmount,
+    available_balance: wallet,
+    payment_method: method,
+    payment_details: paymentDetails,
+    status: "requested",
+    admin_notes: note || `Payout created by admin on behalf of ${p.partner_code || partnerId}.`,
+  };
+
+  let { data: insertedPayout, error: insertError } = await supabase
+    .from("payouts" as any)
+    .insert(payoutPayload)
+    .select("id")
+    .single();
+
+  if (insertError && /gross_amount|deduction_rate|deduction_amount|net_amount|admin_notes/i.test(insertError.message || "")) {
+    const fallbackPayload = {
+      partner_id: partnerId,
+      amount: netAmount,
+      available_balance: wallet,
+      payment_method: method,
+      payment_details: `${paymentDetails} | Gross: Rs. ${grossAmount.toLocaleString("en-IN")} | Deduction: Rs. ${deductionAmount.toLocaleString("en-IN")}`,
+      status: "requested",
+    };
+    const fallbackResult = await supabase.from("payouts" as any).insert(fallbackPayload).select("id").single();
+    insertedPayout = fallbackResult.data;
+    insertError = fallbackResult.error;
+  }
+
+  if (insertError) return { error: insertError.message };
+
+  await supabase.from("activity_logs" as any).insert({
+    actor_id: (admin as any)?.id || null,
+    actor_role: "admin",
+    action: "admin_payout_created",
+    entity_type: "payout",
+    entity_id: (insertedPayout as any)?.id || partnerId,
+    new_value: { partner_id: partnerId, gross_amount: grossAmount, deduction_amount: deductionAmount, net_amount: netAmount, payment_method: method },
+  });
+
+  revalidatePath("/admin/payouts");
+  revalidatePath("/partner/payouts");
+  return { success: true, id: (insertedPayout as any)?.id };
+}
+
 export async function createPayout(payout: any) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();

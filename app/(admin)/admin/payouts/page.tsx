@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
+import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
 
 export default function AdminPayoutsPage() {
   const [payouts, setPayouts] = useState<any[]>([]);
@@ -37,6 +37,34 @@ export default function AdminPayoutsPage() {
       await loadPayouts(false);
     } catch (error: any) {
       alert(error?.message || "Error updating payout status");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleCreatePayoutForPartner(payout: any) {
+    const defaultAmount = Number(payout.available_balance || payout.partner_summary?.walletBalance || 0);
+    const input = window.prompt(
+      `Create a payout request for ${payout.partner?.profiles?.full_name || payout.partner?.partner_code || "this partner"}.\n\nAmount to pay out (Rs.), max ${defaultAmount.toLocaleString("en-IN")}:`,
+      String(defaultAmount)
+    );
+    if (input == null) return; // cancelled
+    const amount = Number(input);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Enter a valid amount greater than 0.");
+      return;
+    }
+
+    setBusy(payout.id);
+    try {
+      const result = await adminCreatePayoutForPartner(payout.partner_id, amount);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        await loadPayouts(false);
+      }
+    } catch (error: any) {
+      alert(error?.message || "Unable to create payout for this partner.");
     } finally {
       setBusy(null);
     }
@@ -173,8 +201,18 @@ export default function AdminPayoutsPage() {
                     </td>
                     <td className="px-4 py-4">
                       {payout.is_summary ? (
-                        <div className="min-w-[240px] rounded-lg border border-brand-border bg-brand-surface/50 px-3 py-2 text-xs text-brand-muted">
-                          Waiting for partner payout request.
+                        <div className="min-w-[240px] space-y-2">
+                          <p className="rounded-lg border border-brand-border bg-brand-surface/50 px-3 py-2 text-xs text-brand-muted">
+                            No payout request from this partner yet.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleCreatePayoutForPartner(payout)}
+                            disabled={busy === payout.id}
+                            className="w-full rounded-lg bg-gradient-to-r from-brand-ink to-brand-muted px-3 py-2 text-xs font-medium text-white transition-all hover:shadow-glow disabled:opacity-50"
+                          >
+                            {busy === payout.id ? "Creating..." : "Create Payout for Partner"}
+                          </button>
                         </div>
                       ) : (
                       <div className="space-y-2 min-w-[240px]">
