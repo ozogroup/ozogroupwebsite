@@ -130,13 +130,14 @@ export default async function AdminDashboardPage({
   const [{ data: periodBookings }, { data: periodCommissions }, { data: periodPayoutRows }, { data: walletPartners }, { data: periodSales }] =
     await Promise.all([
       (supabase as any).from("bookings").select("payment_amount,treatment_price,payment_status,created_at"),
-      (supabase as any).from("commissions").select("amount,level,status,source_type,created_at"),
+      (supabase as any).from("commissions").select("amount,level,status,source_type,created_at,reversed,deleted_at"),
       (supabase as any).from("payouts").select("amount,status,created_at"),
       (supabase as any).from("partners").select("id,partner_code,wallet_balance,profiles(full_name)"),
       (supabase as any).from("bookings").select("referred_by,partner_code,treatment_price,payment_amount,booking_status,created_at"),
     ]);
   const filteredBookings = (periodBookings || []).filter((row: any) => range.includes(row.created_at));
-  const filteredCommissions = (periodCommissions || []).filter((row: any) => range.includes(row.created_at) && ["approved", "paid"].includes(String(row.status)));
+  const activeCommissions = (periodCommissions || []).filter((row: any) => !row.reversed && !row.deleted_at);
+  const filteredCommissions = activeCommissions.filter((row: any) => range.includes(row.created_at) && ["approved", "paid"].includes(String(row.status)));
   const filteredPayouts = (periodPayoutRows || []).filter((row: any) => range.includes(row.created_at));
   const filteredSales = (periodSales || []).filter((row: any) => range.includes(row.created_at) && ["confirmed", "completed"].includes(row.booking_status));
   const paidBookingSales = filteredBookings
@@ -165,10 +166,10 @@ export default async function AdminDashboardPage({
     .slice(0, 5);
 
   // Commission still owed to partners (pending + approved, not yet paid out).
-  const commissionLiability = (periodCommissions || [])
+  const commissionLiability = activeCommissions
     .filter((row: any) => ["pending", "approved"].includes(String(row.status)))
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const referralBonusLiability = (periodCommissions || [])
+  const referralBonusLiability = activeCommissions
     .filter((row: any) => row.source_type === "membership" && ["pending", "approved"].includes(String(row.status)))
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
   const actionItemsCount = pendingKycCount + pendingPayoutsCount;
@@ -199,7 +200,7 @@ export default async function AdminDashboardPage({
     const m = new Date(row.created_at).toLocaleDateString("en-IN", { month: "short" });
     if (m in salesByMonth) salesByMonth[m] += Number(row.payment_amount || row.treatment_price || 0);
   }
-  for (const row of (periodCommissions || []) as any[]) {
+  for (const row of activeCommissions as any[]) {
     if (!["approved", "paid"].includes(String(row.status))) continue;
     const m = new Date(row.created_at).toLocaleDateString("en-IN", { month: "short" });
     if (m in commissionsByMonth) commissionsByMonth[m] += Number(row.amount || 0);
@@ -220,9 +221,10 @@ export default async function AdminDashboardPage({
     income: filteredCommissions.filter((row: any) => Number(row.level) === level).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0),
   }));
 
+  const periodActiveCommissions = activeCommissions.filter((row: any) => range.includes(row.created_at));
   const statusMix = ["pending", "approved", "paid"].map((status) => ({
     name: status.charAt(0).toUpperCase() + status.slice(1),
-    value: (periodCommissions || [])
+    value: periodActiveCommissions
       .filter((row: any) => row.status === status)
       .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0),
   }));

@@ -231,13 +231,37 @@ export async function getAllPartnersDirectory(limit = 500) {
     return count;
   }
 
-  const enriched = rows.map((partner) => ({
-    ...partner,
-    sponsor: partner.sponsor_id ? byId.get(partner.sponsor_id) || null : null,
-    directTeamCount: directTeamCount.get(partner.id) || 0,
-    totalTeamCount: totalTeamCount(partner.id),
-    levelFromRoot: levelFromRoot(partner.id),
-  }));
+  function teamCountByLevel(partnerId: string): { l1: number; l2: number; l3: number; l4: number } {
+    const counts = { l1: 0, l2: 0, l3: 0, l4: 0 };
+    let currentLevel = [partnerId];
+    for (let depth = 1; depth <= 4 && currentLevel.length > 0; depth++) {
+      const nextLevel: string[] = [];
+      for (const id of currentLevel) {
+        for (const childId of childrenOf.get(id) || []) nextLevel.push(childId);
+      }
+      if (depth === 1) counts.l1 = nextLevel.length;
+      else if (depth === 2) counts.l2 = nextLevel.length;
+      else if (depth === 3) counts.l3 = nextLevel.length;
+      else if (depth === 4) counts.l4 = nextLevel.length;
+      currentLevel = nextLevel;
+    }
+    return counts;
+  }
+
+  const enriched = rows.map((partner) => {
+    const levels = teamCountByLevel(partner.id);
+    return {
+      ...partner,
+      sponsor: partner.sponsor_id ? byId.get(partner.sponsor_id) || null : null,
+      directTeamCount: directTeamCount.get(partner.id) || 0,
+      totalTeamCount: totalTeamCount(partner.id),
+      levelFromRoot: levelFromRoot(partner.id),
+      l1Count: levels.l1,
+      l2Count: levels.l2,
+      l3Count: levels.l3,
+      l4Count: levels.l4,
+    };
+  });
 
   // Whoever has the biggest team (full downline) shows first.
   return enriched.sort((a, b) => b.totalTeamCount - a.totalTeamCount || b.directTeamCount - a.directTeamCount);

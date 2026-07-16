@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Network, Search, Users, GitBranch, UserCheck, Link2,
-  DollarSign, Wallet, CreditCard, Clock, CheckCircle,
+  DollarSign, Wallet, Clock, CheckCircle,
   Download, ChevronLeft, ChevronRight, Award, ShoppingBag,
-  AlertCircle, Layers,
+  AlertCircle, Layers, Eye, BarChart3,
 } from "lucide-react";
 import { getAllPartnersDirectory, getReferralOverview, getReferralTree, getReferralNetworkSummary } from "@/lib/actions/referrals";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
@@ -76,7 +76,8 @@ function PartnerCard({ partner, onView }: { partner: any; onView: (partner: any)
 function exportCSV(directory: any[], earningsByPartner: Record<string, any>) {
   const headers = [
     "Partner Name", "Partner ID", "Mobile", "Email", "City",
-    "Sponsor Name", "Sponsor ID", "Direct Referrals", "Total Team",
+    "Sponsor Name", "Sponsor ID", "Direct Referrals",
+    "L1 Count", "L2 Count", "L3 Count", "L4 Count", "Total Team",
     "Membership Rewards", "Booking Commissions", "Current Wallet",
     "Reserved Payout", "Paid Payout", "KYC Status", "Status", "Join Date",
   ];
@@ -91,6 +92,10 @@ function exportCSV(directory: any[], earningsByPartner: Record<string, any>) {
       p.sponsor ? partnerName(p.sponsor) : "",
       p.sponsor?.partner_code || "",
       p.directTeamCount,
+      p.l1Count || 0,
+      p.l2Count || 0,
+      p.l3Count || 0,
+      p.l4Count || 0,
       p.totalTeamCount,
       earnings.membershipRewards || 0,
       earnings.bookingCommissions || 0,
@@ -134,6 +139,8 @@ export default function AdminReferralsPage() {
   const [treeLoading, setTreeLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [sortField, setSortField] = useState<string>("totalTeamCount");
+  const [sortAsc, setSortAsc] = useState(false);
 
   const commissionLevels = overview?.commissionLevels;
 
@@ -214,6 +221,15 @@ export default function AdminReferralsPage() {
     setReferralTree(null);
   }
 
+  function handleSort(field: string) {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(false);
+    }
+  }
+
   const filteredDirectory = useMemo(() => {
     let rows = directory;
     if (levelFilter !== "all") {
@@ -232,8 +248,21 @@ export default function AdminReferralsPage() {
           .includes(term)
       );
     }
-    return rows;
-  }, [directory, directorySearch, levelFilter, statusFilter]);
+    const sorted = [...rows].sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sortField) {
+        case "name": aVal = partnerName(a).toLowerCase(); bVal = partnerName(b).toLowerCase(); break;
+        case "wallet_balance": aVal = Number(a.wallet_balance || 0); bVal = Number(b.wallet_balance || 0); break;
+        case "membershipRewards": aVal = Number(earningsByPartner[a.id]?.membershipRewards || 0); bVal = Number(earningsByPartner[b.id]?.membershipRewards || 0); break;
+        case "bookingCommissions": aVal = Number(earningsByPartner[a.id]?.bookingCommissions || 0); bVal = Number(earningsByPartner[b.id]?.bookingCommissions || 0); break;
+        default: aVal = Number(a[sortField] || 0); bVal = Number(b[sortField] || 0);
+      }
+      if (aVal < bVal) return sortAsc ? -1 : 1;
+      if (aVal > bVal) return sortAsc ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [directory, directorySearch, levelFilter, statusFilter, sortField, sortAsc, earningsByPartner]);
 
   const totalPages = Math.max(1, Math.ceil(filteredDirectory.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -249,9 +278,11 @@ export default function AdminReferralsPage() {
     );
   }
 
+  // ── Selected Partner Detail View ──
   if (selectedPartner) {
     const tree = referralTree?.tree || {};
     const partnerEarnings = earningsByPartner[selectedPartner.id] || {};
+    const sponsorPartner = directory.find((p) => p.id === selectedPartner.sponsor_id);
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-4">
@@ -273,6 +304,30 @@ export default function AdminReferralsPage() {
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
+        {/* Sponsor details */}
+        {sponsorPartner && (
+          <div className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-brand-muted">Sponsored By</h3>
+            <div className="mt-3 flex items-center gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-sm font-semibold text-white">
+                {partnerName(sponsorPartner)[0]}
+              </div>
+              <div>
+                <p className="font-medium text-brand-ink">{partnerName(sponsorPartner)}</p>
+                <p className="font-mono text-xs text-brand-muted">{sponsorPartner.partner_code}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleViewTree(sponsorPartner)}
+                className="ml-auto rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent"
+              >
+                Open Their Tree
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Financial summary cards */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
           <StatCard label="Wallet Balance" value={money(selectedPartner.wallet_balance)} icon={Wallet} tone="green" />
           <StatCard label="Total Earnings" value={money(selectedPartner.total_earnings)} icon={DollarSign} tone="sage" />
@@ -282,6 +337,7 @@ export default function AdminReferralsPage() {
           <StatCard label="Paid Payout" value={money(partnerEarnings.paidPayout)} icon={CheckCircle} tone="green" />
         </div>
 
+        {/* Level rate cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {levelRates.map((item) => (
             <div key={item.level} className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
@@ -293,6 +349,20 @@ export default function AdminReferralsPage() {
           ))}
         </div>
 
+        {/* Quick actions */}
+        <div className="flex flex-wrap gap-2">
+          <a href={`/admin/partners`} className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent">
+            View Partner Profile
+          </a>
+          <a href={`/admin/commissions`} className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent">
+            View Earnings
+          </a>
+          <a href={`/admin/payouts`} className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent">
+            View Wallet / Payouts
+          </a>
+        </div>
+
+        {/* Referral tree */}
         <div className="rounded-xl border border-brand-border bg-white p-6 shadow-soft">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
@@ -315,7 +385,7 @@ export default function AdminReferralsPage() {
               return (
                 <div key={level} className="rounded-lg border border-brand-border bg-brand-surface/40 p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-medium text-brand-ink">Level {level}</h3>
+                    <h3 className="font-medium text-brand-ink">Level {level} &mdash; {levelRates[level - 1]?.rate}%</h3>
                     <span className="text-sm text-brand-muted">{partners.length} partners</span>
                   </div>
                   {partners.length === 0 ? (
@@ -356,8 +426,24 @@ export default function AdminReferralsPage() {
     );
   }
 
+  // ── Main Landing View ──
   const totals = overview?.totals || {};
   const lc = summary?.levelCounts || {};
+
+  function SortHeader({ field, children, align }: { field: string; children: React.ReactNode; align?: "right" }) {
+    const active = sortField === field;
+    return (
+      <th
+        className={`px-3 py-3 text-xs font-semibold uppercase tracking-wider text-brand-ink cursor-pointer select-none hover:text-brand-accent ${align === "right" ? "text-right" : "text-left"}`}
+        onClick={() => handleSort(field)}
+      >
+        <span className="inline-flex items-center gap-1">
+          {children}
+          {active && <span className="text-brand-accent">{sortAsc ? "▲" : "▼"}</span>}
+        </span>
+      </th>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -370,34 +456,35 @@ export default function AdminReferralsPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      {/* Partner counts */}
+      {/* Row 1: Partner counts (6 cards) */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Total Partners" value={totals.partners || 0} icon={Users} tone="sage" />
         <StatCard label="Active Partners" value={totals.activePartners || 0} icon={UserCheck} tone="green" />
         <StatCard label="Pending Partners" value={summary?.pendingPartners || 0} icon={AlertCircle} tone="amber" />
-        <StatCard label="Level 1 Partners" value={lc[1] || 0} icon={Layers} tone="purple" hint="Direct referral links" />
-        <StatCard label="Level 2 Partners" value={lc[2] || 0} icon={Layers} tone="teal" hint="2nd-degree links" />
-        <StatCard label="Level 3-4 Partners" value={(lc[3] || 0) + (lc[4] || 0)} icon={Layers} tone="slate" hint="3rd + 4th degree links" />
+        <StatCard label="Level 1 Count" value={lc[1] || 0} icon={Layers} tone="purple" hint="Direct referral links" />
+        <StatCard label="Level 2 Count" value={lc[2] || 0} icon={Layers} tone="teal" hint="2nd-degree links" />
+        <StatCard label="Level 3 Count" value={lc[3] || 0} icon={Layers} tone="slate" hint="3rd-degree links" />
       </div>
 
-      {/* Financial summary */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+      {/* Row 2: Financial + Level 4 (7 cards) */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+        <StatCard label="Level 4 Count" value={lc[4] || 0} icon={Layers} tone="slate" hint="4th-degree links" />
         <StatCard
           label="Membership Rewards"
           value={money(summary?.totalMembershipRewardLiability)}
           icon={Award}
           tone="green"
-          hint={`${summary?.membershipRewardsGenerated || 0} rewards generated`}
+          hint={`${summary?.membershipRewardsGenerated || 0} generated`}
         />
         <StatCard
           label="Booking Commissions"
           value={money(summary?.totalBookingCommissionLiability)}
           icon={ShoppingBag}
           tone="purple"
-          hint={`${summary?.bookingCommissionsGenerated || 0} commissions generated`}
+          hint={`${summary?.bookingCommissionsGenerated || 0} generated`}
         />
         <StatCard
-          label="Total Wallet Liability"
+          label="Wallet Liability"
           value={money(summary?.totalWalletLiability)}
           icon={Wallet}
           tone="amber"
@@ -417,6 +504,7 @@ export default function AdminReferralsPage() {
           tone="green"
           hint="Successfully disbursed"
         />
+        <StatCard label="Sponsor Links" value={totals.treeLinks || 0} icon={GitBranch} tone="sage" hint="referral_tree rows" />
       </div>
 
       {/* Commission level rates */}
@@ -441,7 +529,7 @@ export default function AdminReferralsPage() {
           <div>
             <h2 className="font-display text-lg font-semibold text-brand-ink">All Business Accounts</h2>
             <p className="text-sm text-brand-muted">
-              {filteredDirectory.length} partner{filteredDirectory.length !== 1 ? "s" : ""} found, sorted by biggest full team first.
+              {filteredDirectory.length} partner{filteredDirectory.length !== 1 ? "s" : ""} found. Click column headers to sort.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -489,31 +577,34 @@ export default function AdminReferralsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1600px]">
+          <table className="w-full min-w-[2000px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Partner (ID)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Mobile / Email</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Sponsor</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Level</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Direct</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Team</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">City</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Membership Rewards</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Booking Comm.</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Wallet</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Reserved</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Paid</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">KYC</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Joined</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Actions</th>
+                <SortHeader field="name">Partner (ID)</SortHeader>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Mobile / Email</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Sponsor</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">City</th>
+                <SortHeader field="directTeamCount">Direct</SortHeader>
+                <SortHeader field="l1Count">L1</SortHeader>
+                <SortHeader field="l2Count">L2</SortHeader>
+                <SortHeader field="l3Count">L3</SortHeader>
+                <SortHeader field="l4Count">L4</SortHeader>
+                <SortHeader field="totalTeamCount">Team</SortHeader>
+                <SortHeader field="membershipRewards" align="right">Memb. Rewards</SortHeader>
+                <SortHeader field="bookingCommissions" align="right">Book. Comm.</SortHeader>
+                <SortHeader field="wallet_balance" align="right">Wallet</SortHeader>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Reserved</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Paid</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">KYC</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Joined</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border bg-white">
               {pagedDirectory.length === 0 ? (
                 <tr>
-                  <td colSpan={16} className="px-6 py-12">
+                  <td colSpan={19} className="px-6 py-12">
                     <EmptyState icon={Users} title="No accounts found" description="Try a different search or filter." />
                   </td>
                 </tr>
@@ -522,76 +613,94 @@ export default function AdminReferralsPage() {
                   const earnings = earningsByPartner[partner.id] || {};
                   return (
                     <tr key={partner.id} className="transition-colors hover:bg-brand-surface/30">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-[10px] font-semibold text-white">
                             {partnerName(partner)[0]}
                           </div>
                           <div>
-                            <p className="font-medium text-brand-ink text-sm">{partnerName(partner)}</p>
-                            <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">{partner.partner_code || "---"}</p>
+                            <p className="font-medium text-brand-ink text-sm leading-tight">{partnerName(partner)}</p>
+                            <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{partner.partner_code || "---"}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-brand-muted">
+                      <td className="px-3 py-3 text-[11px] text-brand-muted">
                         <p>{partnerPhone(partner)}</p>
-                        <p className="mt-0.5 truncate max-w-[140px]">{partnerEmail(partner)}</p>
+                        <p className="truncate max-w-[130px]">{partnerEmail(partner)}</p>
                       </td>
-                      <td className="px-4 py-3 text-sm">
+                      <td className="px-3 py-3 text-sm">
                         {partner.sponsor ? (
-                          <div className="flex items-center gap-1.5">
-                            <Link2 className="h-3.5 w-3.5 shrink-0 text-brand-muted" />
+                          <div className="flex items-center gap-1">
+                            <Link2 className="h-3 w-3 shrink-0 text-brand-muted" />
                             <div>
-                              <p className="text-brand-ink text-xs">{partnerName(partner.sponsor)}</p>
-                              <p className="font-mono text-xs text-brand-muted">{partner.sponsor.partner_code}</p>
+                              <p className="text-brand-ink text-[11px] leading-tight">{partnerName(partner.sponsor)}</p>
+                              <p className="font-mono text-[10px] text-brand-muted">{partner.sponsor.partner_code}</p>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-xs text-brand-muted">Root</span>
+                          <span className="text-[11px] text-brand-muted">Root</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-brand-muted">
-                        {partner.levelFromRoot === 0 ? "Root" : `L${partner.levelFromRoot}`}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-brand-muted">{partner.directTeamCount}</td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-full bg-brand-light/60 px-2.5 py-1 text-sm font-semibold text-brand-primaryDark">
+                      <td className="px-3 py-3 text-[11px] text-brand-muted">{partner.city || "---"}</td>
+                      <td className="px-3 py-3 text-sm text-brand-muted text-center">{partner.directTeamCount}</td>
+                      <td className="px-3 py-3 text-sm text-brand-muted text-center">{partner.l1Count || 0}</td>
+                      <td className="px-3 py-3 text-sm text-brand-muted text-center">{partner.l2Count || 0}</td>
+                      <td className="px-3 py-3 text-sm text-brand-muted text-center">{partner.l3Count || 0}</td>
+                      <td className="px-3 py-3 text-sm text-brand-muted text-center">{partner.l4Count || 0}</td>
+                      <td className="px-3 py-3 text-center">
+                        <span className="rounded-full bg-brand-light/60 px-2 py-0.5 text-sm font-semibold text-brand-primaryDark">
                           {partner.totalTeamCount}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-brand-muted">{partner.city || "---"}</td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-brand-ink">
+                      <td className="px-3 py-3 text-right text-sm font-medium text-brand-ink">
                         {earnings.membershipRewards ? money(earnings.membershipRewards) : <span className="text-brand-muted">---</span>}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-brand-ink">
+                      <td className="px-3 py-3 text-right text-sm font-medium text-brand-ink">
                         {earnings.bookingCommissions ? money(earnings.bookingCommissions) : <span className="text-brand-muted">---</span>}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(partner.wallet_balance)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-brand-muted">
+                      <td className="px-3 py-3 text-right text-sm font-semibold text-brand-ink">{money(partner.wallet_balance)}</td>
+                      <td className="px-3 py-3 text-right text-sm text-brand-muted">
                         {earnings.reservedPayout ? money(earnings.reservedPayout) : "---"}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-brand-muted">
+                      <td className="px-3 py-3 text-right text-sm text-brand-muted">
                         {earnings.paidPayout ? money(earnings.paidPayout) : "---"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Badge variant={partner.kyc_status === "verified" ? "success" : partner.kyc_status === "pending" ? "warning" : "neutral"}>
                           {partner.kyc_status || "N/A"}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Badge variant={statusVariant(partner.status)} dot>{partner.status || "unknown"}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-xs text-brand-muted whitespace-nowrap">
+                      <td className="px-3 py-3 text-[11px] text-brand-muted whitespace-nowrap">
                         {partner.created_at ? new Date(partner.created_at).toLocaleDateString("en-IN") : "---"}
                       </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleViewTree(partner)}
-                          className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent"
-                        >
-                          View Tree
-                        </button>
+                      <td className="px-3 py-3">
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleViewTree(partner)}
+                            title="View Tree"
+                            className="rounded-lg border border-brand-border p-1.5 text-brand-muted transition-colors hover:border-brand-accent hover:text-brand-accent"
+                          >
+                            <Network className="h-3.5 w-3.5" />
+                          </button>
+                          <a
+                            href="/admin/payouts"
+                            title="View Wallet"
+                            className="rounded-lg border border-brand-border p-1.5 text-brand-muted transition-colors hover:border-brand-accent hover:text-brand-accent"
+                          >
+                            <Wallet className="h-3.5 w-3.5" />
+                          </a>
+                          <a
+                            href="/admin/commissions"
+                            title="View Earnings"
+                            className="rounded-lg border border-brand-border p-1.5 text-brand-muted transition-colors hover:border-brand-accent hover:text-brand-accent"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -605,7 +714,7 @@ export default function AdminReferralsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-brand-border px-4 py-3">
             <p className="text-sm text-brand-muted">
-              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredDirectory.length)} of {filteredDirectory.length}
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}&ndash;{Math.min(currentPage * PAGE_SIZE, filteredDirectory.length)} of {filteredDirectory.length}
             </p>
             <div className="flex items-center gap-2">
               <button

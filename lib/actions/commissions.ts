@@ -486,3 +486,138 @@ export async function updateCommissionStatus(id: string, status: string) {
       throw new Error(`Unsupported commission status: ${status}`);
   }
 }
+
+export async function reconcileMembershipRewards() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const [{ data: memberships }, { data: commissions }, { data: partners }] = await Promise.all([
+    supabase
+      .from("memberships" as any)
+      .select("id, membership_id, full_name, mobile, city, membership_status, payment_status, sponsor_id, partner_id, created_at")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("commissions" as any)
+      .select("id, partner_id, source_type, source_id, level, amount, status, reversed, deleted_at")
+      .eq("source_type", "membership")
+      .is("deleted_at", null),
+    supabase
+      .from("partners" as any)
+      .select("id, partner_code, status, wallet_balance, profiles(full_name)")
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const partnerById = new Map(
+    ((partners || []) as any[]).map((p) => {
+      const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+      return [p.id, { ...p, name: profile?.full_name || "Unnamed" }];
+    })
+  );
+
+  const commissionRows = ((commissions || []) as any[]).filter((c) => !c.reversed);
+
+  type RewardEntry = {
+    membershipId: string;
+    memberName: string;
+    memberCity: string;
+    membershipStatus: string;
+    paymentStatus: string;
+    sponsorId: string | null;
+    sponsorCode: string;
+    sponsorName: string;
+    expectedAmount: number;
+    actualAmount: number;
+    commissionStatus: string | null;
+    commissionId: string | null;
+    eligible: boolean;
+    gap: number;
+    createdAt: string;
+  };
+
+  const entries: RewardEntry[] = [];
+
+  for (const m of (memberships || []) as any[]) {
+    const sponsorId = m.sponsor_id;
+    const sponsor = sponsorId ? partnerById.get(sponsorId) : null;
+
+    const eligible = m.membership_status === "active" && m.payment_status === "paid" && !!sponsorId;
+    const expectedAmount = eligible ? 500 : 0;
+
+    const matchingCommission = commissionRows.find(
+      (c: any) => c.source_id === m.id && c.partner_id === sponsorId && c.level === 1
+    );
+
+    entries.push({
+      membershipId: m.membership_id || m.id,
+      memberName: m.full_name || "Unknown",
+      memberCity: m.city || "-",
+      membershipStatus: m.membership_status || "unknown",
+      paymentStatus: m.payment_status || "unknown",
+      sponsorId,
+      sponsorCode: sponsor?.partner_code || "-",
+      sponsorName: sponsor?.name || "-",
+      expectedAmount,
+      actualAmount: matchingCommission ? Number(matchingCommission.amount || 0) : 0,
+      commissionStatus: matchingCommission?.status || null,
+      commissionId: matchingCommission?.id || null,
+      eligible,
+      gap: expectedAmount - (matchingCommission ? Number(matchingCommission.amount || 0) : 0),
+      createdAt: m.created_at,
+    });
+  }
+
+  type PartnerSummary = {
+    partnerCode: string;
+    partnerName: string;
+    partnerId: string;
+    expectedRewards: number;
+    actualRewards: number;
+    gap: number;
+    rewardCount: number;
+    missingCount: number;
+    walletBalance: number;
+  };
+
+  const partnerSummaryMap = new Map<string, PartnerSummary>();
+  for (const entry of entries) {
+    if (!entry.sponsorId || !entry.eligible) continue;
+    let ps = partnerSummaryMap.get(entry.sponsorId);
+    if (!ps) {
+      const partner = partnerById.get(entry.sponsorId);
+      ps = {
+        partnerId: entry.sponsorId,
+        partnerCode: partner?.partner_code || "-",
+        partnerName: partner?.name || "-",
+        expectedRewards: 0,
+        actualRewards: 0,
+        gap: 0,
+        rewardCount: 0,
+        missingCount: 0,
+        walletBalance: Number(partner?.wallet_balance || 0),
+      };
+      partnerSummaryMap.set(entry.sponsorId, ps);
+    }
+    ps.expectedRewards += entry.expectedAmount;
+    ps.actualRewards += entry.actualAmount;
+    ps.gap += entry.gap;
+    ps.rewardCount += entry.actualAmount > 0 ? 1 : 0;
+    ps.missingCount += entry.gap > 0 ? 1 : 0;
+  }
+
+  const partnerSummaries = Array.from(partnerSummaryMap.values()).sort(
+    (a, b) => b.expectedRewards - a.expectedRewards
+  );
+
+  const totalExpected = partnerSummaries.reduce((s, p) => s + p.expectedRewards, 0);
+  const totalActual = partnerSummaries.reduce((s, p) => s + p.actualRewards, 0);
+  const totalGap = totalExpected - totalActual;
+  const totalMissing = partnerSummaries.reduce((s, p) => s + p.missingCount, 0);
+
+  return {
+    entries,
+    partnerSummaries,
+    totals: { totalExpected, totalActual, totalGap, totalMissing },
+    scannedMemberships: (memberships || []).length,
+    eligibleMemberships: entries.filter((e) => e.eligible).length,
+  };
+}

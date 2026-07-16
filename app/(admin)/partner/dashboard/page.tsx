@@ -5,6 +5,7 @@ import {
   BadgeIndianRupee,
   CalendarCheck,
   CheckCircle2,
+  Clock,
   Copy,
   Crown,
   Gem,
@@ -118,7 +119,7 @@ export default async function PartnerDashboardPage({
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", partnerId),
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", partnerId).eq("level", 1),
       supabase.from("referral_tree" as any).select("level,created_at").eq("ancestor_id", partnerId),
-      supabase.from("commissions" as any).select("amount,status,created_at,level").eq("partner_id", partnerId),
+      supabase.from("commissions" as any).select("amount,status,created_at,level,source_type,reversed,deleted_at").eq("partner_id", partnerId),
       supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", partnerId),
       supabase
         .from("bookings" as any)
@@ -133,8 +134,9 @@ export default async function PartnerDashboardPage({
   const sales = (bookingsData as any)?.data || [];
   const bookings = sales.slice(0, 8);
   const referralRows = (referralTreeData as any)?.data || [];
+  const activeCommissions = commissions.filter((c: any) => !c.reversed && !c.deleted_at);
   const range = resolveDateRange(resolvedSearchParams);
-  const filteredCommissions = commissions.filter((row: any) => range.includes(row.created_at));
+  const filteredCommissions = activeCommissions.filter((row: any) => range.includes(row.created_at));
   const filteredSales = sales.filter((row: any) => range.includes(row.created_at));
   const filteredReferrals = referralRows.filter((row: any) => range.includes(row.created_at));
   const filteredPayouts = payouts.filter((row: any) => range.includes(row.created_at));
@@ -144,13 +146,21 @@ export default async function PartnerDashboardPage({
   const approvedRegistrations = (sponsoredMemberships as any[]).filter(
     (membership: any) => membership.membership_status === "active"
   );
-
-  const totalEarnings = commissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
-  const pendingEarnings = commissions
+  const totalEarnings = activeCommissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const pendingEarnings = activeCommissions
     .filter((c: any) => c.status === "pending")
     .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
-  const paidEarnings = commissions
+  const approvedEarnings = activeCommissions
+    .filter((c: any) => c.status === "approved")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const paidEarnings = activeCommissions
     .filter((c: any) => c.status === "paid")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const membershipRewardTotal = activeCommissions
+    .filter((c: any) => c.source_type === "membership")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const bookingCommissionTotal = activeCommissions
+    .filter((c: any) => c.source_type === "booking")
     .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
   const pendingPayout = payouts
     .filter((p: any) => p.status === "requested" || p.status === "processing")
@@ -161,7 +171,7 @@ export default async function PartnerDashboardPage({
 
   const totalSales = sales.reduce((sum: number, s: any) => sum + Number(s.payment_amount || s.treatment_price || 0), 0);
   const confirmedTreatments = sales.filter((s: any) => ["confirmed", "completed"].includes(s.booking_status)).length;
-  const thisMonthEarnings = commissions
+  const thisMonthEarnings = activeCommissions
     .filter((c: any) => {
       const d = new Date(c.created_at);
       const now = new Date();
@@ -178,21 +188,19 @@ export default async function PartnerDashboardPage({
   }, {});
   const topSellingKit = Object.entries(kitStats).sort((a: any, b: any) => b[1].count - a[1].count)[0]?.[0] || "No sales yet";
 
+  const filteredActiveCommissions = activeCommissions.filter((c: any) => range.includes(c.created_at));
   const levelIncome = [1, 2, 3, 4].map((level) => {
-    const income = filteredCommissions
-      .filter((c: any) => {
-        const commissionLevel = Number(c.level || 1);
-        return commissionLevel === level;
-      })
-      .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
-    const partners = filteredReferrals.filter((row: any) => {
-      const rowLevel = Number(row.level || 1);
-      return rowLevel === level;
-    }).length;
+    const levelCommissions = filteredActiveCommissions.filter((c: any) => Number(c.level || 1) === level);
+    const income = levelCommissions.reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const membershipIncome = levelCommissions.filter((c: any) => c.source_type === "membership").reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const bookingIncome = levelCommissions.filter((c: any) => c.source_type === "booking").reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+    const partners = filteredReferrals.filter((row: any) => Number(row.level || 1) === level).length;
 
     return {
       level: `Level ${level}`,
       income,
+      membershipIncome,
+      bookingIncome,
       partners,
     };
   });
@@ -215,7 +223,7 @@ export default async function PartnerDashboardPage({
     const bucket = monthlyMap.get(monthKey(new Date(sale.created_at)));
     if (bucket) bucket.sales += Number(sale.payment_amount || sale.treatment_price || 0);
   });
-  commissions.forEach((commission: any) => {
+  activeCommissions.forEach((commission: any) => {
     if (!commission.created_at) return;
     const bucket = monthlyMap.get(monthKey(new Date(commission.created_at)));
     if (bucket) bucket.earnings += Number(commission.amount || 0);
@@ -255,14 +263,14 @@ export default async function PartnerDashboardPage({
     }));
 
   const stats = [
-    { label: "Total Sales", value: formatCurrency(totalSales), icon: TrendingUp, tone: "primary" },
-    { label: "Total Bookings", value: bookings.length, icon: CalendarCheck, tone: "accent" },
-    { label: "Total Referrals", value: referrals.count || 0, icon: Users, tone: "rose" },
-    { label: "Earnings", value: formatCurrency(totalEarnings), icon: BadgeIndianRupee, tone: "green" },
-    { label: "Pending Payout", value: formatCurrency(pendingPayout), icon: Wallet, tone: "orange" },
-    { label: "Paid Payout", value: formatCurrency(paidPayout), icon: CheckCircle2, tone: "primary" },
+    { label: "Membership Rewards", value: formatCurrency(membershipRewardTotal), icon: Crown, tone: "green" },
+    { label: "Booking Commissions", value: formatCurrency(bookingCommissionTotal), icon: BadgeIndianRupee, tone: "primary" },
+    { label: "Total Earnings", value: formatCurrency(totalEarnings), icon: TrendingUp, tone: "accent" },
+    { label: "Pending Approval", value: formatCurrency(pendingEarnings), icon: Clock, tone: "orange" },
+    { label: "Approved / Wallet", value: formatCurrency(approvedEarnings), icon: CheckCircle2, tone: "green" },
+    { label: "Paid Out", value: formatCurrency(paidEarnings), icon: Wallet, tone: "primary" },
     { label: "Wallet Balance", value: formatCurrency(walletBalance), icon: Gem, tone: "accent" },
-    { label: "Confirmed Treatments", value: confirmedTreatments, icon: PackageCheck, tone: "green" },
+    { label: "Total Referrals", value: referrals.count || 0, icon: Users, tone: "rose" },
   ] as const;
 
   return (
@@ -450,9 +458,11 @@ export default async function PartnerDashboardPage({
 
       <PartnerDashboardCharts
         earningsBreakdown={[
+          { name: "Membership Rewards", value: membershipRewardTotal },
+          { name: "Booking Commissions", value: bookingCommissionTotal },
           { name: "Pending", value: pendingEarnings },
+          { name: "Approved", value: approvedEarnings },
           { name: "Paid", value: paidEarnings },
-          { name: "Wallet", value: walletBalance },
         ]}
         monthlyTrend={monthlyTrend}
         levelIncome={levelIncome}
@@ -475,6 +485,10 @@ export default async function PartnerDashboardPage({
                       <p className="text-xs text-brand-muted">{item.partners} partners in this level</p>
                     </div>
                     <p className="font-semibold text-brand-primary">{formatCurrency(item.income)}</p>
+                  </div>
+                  <div className="mt-2 flex gap-4 text-xs text-brand-muted">
+                    <span>Membership: {formatCurrency(item.membershipIncome)}</span>
+                    <span>Booking: {formatCurrency(item.bookingIncome)}</span>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
                     <div

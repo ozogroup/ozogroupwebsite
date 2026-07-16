@@ -55,16 +55,20 @@ export default function PartnerPayoutsPage() {
     setError("");
     setSuccess("");
     setSubmitting(true);
-
-    const result = await requestPartnerPayout(Number(amount), paymentMethod);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setSuccess("Payout request submitted successfully.");
-      setAmount("");
-      await load();
+    try {
+      const result = await requestPartnerPayout(Number(amount), paymentMethod);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setSuccess("Payout request submitted successfully.");
+        setAmount("");
+        await load();
+      }
+    } catch (err: any) {
+      setError(err?.message || "Unable to submit payout request. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   }
 
   if (loading) {
