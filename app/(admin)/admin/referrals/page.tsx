@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Network, Search, Users, GitBranch, UserCheck, Link2 } from "lucide-react";
-import { getAllPartnersDirectory, getReferralOverview, getReferralTree } from "@/lib/actions/referrals";
+import {
+  Network, Search, Users, GitBranch, UserCheck, Link2,
+  DollarSign, Wallet, CreditCard, Clock, CheckCircle,
+  Download, ChevronLeft, ChevronRight, Award, ShoppingBag,
+  AlertCircle, Layers,
+} from "lucide-react";
+import { getAllPartnersDirectory, getReferralOverview, getReferralTree, getReferralNetworkSummary } from "@/lib/actions/referrals";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
+
+const PAGE_SIZE = 25;
 
 function money(value: number | string | null | undefined) {
   return `Rs. ${Number(value || 0).toLocaleString("en-IN")}`;
@@ -26,11 +33,18 @@ function statusVariant(status?: string | null): "success" | "warning" | "danger"
 }
 
 function partnerName(partner: any) {
-  return partner?.profiles?.full_name || partner?.full_name || "Unnamed Partner";
+  const p = Array.isArray(partner?.profiles) ? partner.profiles[0] : partner?.profiles;
+  return p?.full_name || partner?.full_name || "Unnamed Partner";
 }
 
 function partnerPhone(partner: any) {
-  return partner?.profiles?.phone || partner?.phone || "-";
+  const p = Array.isArray(partner?.profiles) ? partner.profiles[0] : partner?.profiles;
+  return p?.phone || partner?.phone || "-";
+}
+
+function partnerEmail(partner: any) {
+  const p = Array.isArray(partner?.profiles) ? partner.profiles[0] : partner?.profiles;
+  return p?.email || partner?.email || "-";
 }
 
 function PartnerCard({ partner, onView }: { partner: any; onView: (partner: any) => void }) {
@@ -59,19 +73,69 @@ function PartnerCard({ partner, onView }: { partner: any; onView: (partner: any)
   );
 }
 
+function exportCSV(directory: any[], earningsByPartner: Record<string, any>) {
+  const headers = [
+    "Partner Name", "Partner ID", "Mobile", "Email", "City",
+    "Sponsor Name", "Sponsor ID", "Direct Referrals", "Total Team",
+    "Membership Rewards", "Booking Commissions", "Current Wallet",
+    "Reserved Payout", "Paid Payout", "KYC Status", "Status", "Join Date",
+  ];
+  const rows = directory.map((p) => {
+    const earnings = earningsByPartner[p.id] || {};
+    return [
+      partnerName(p),
+      p.partner_code || "",
+      partnerPhone(p),
+      partnerEmail(p),
+      p.city || "",
+      p.sponsor ? partnerName(p.sponsor) : "",
+      p.sponsor?.partner_code || "",
+      p.directTeamCount,
+      p.totalTeamCount,
+      earnings.membershipRewards || 0,
+      earnings.bookingCommissions || 0,
+      p.wallet_balance || 0,
+      earnings.reservedPayout || 0,
+      earnings.paidPayout || 0,
+      p.kyc_status || "not_submitted",
+      p.status || "unknown",
+      p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN") : "",
+    ];
+  });
+
+  const csv = [headers, ...rows].map((row) =>
+    row.map((cell: any) => {
+      const str = String(cell);
+      return str.includes(",") || str.includes('"') || str.includes("\n")
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    }).join(",")
+  ).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `referral-network-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminReferralsPage() {
   const [overview, setOverview] = useState<any>(null);
+  const [summary, setSummary] = useState<any>(null);
   const [directory, setDirectory] = useState<any[]>([]);
   const [directorySearch, setDirectorySearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<"all" | number>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [referralTree, setReferralTree] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [treeLoading, setTreeLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const commissionLevels = overview?.commissionLevels;
-  const totals = overview?.totals || {};
 
   const levelRates = useMemo(
     () => [
@@ -83,14 +147,18 @@ export default function AdminReferralsPage() {
     [commissionLevels],
   );
 
+  const earningsByPartner = summary?.earningsByPartner || {};
+
   const loadAll = useCallback(async () => {
     try {
-      const [overviewData, directoryData] = await Promise.all([
+      const [overviewData, directoryData, summaryData] = await Promise.all([
         getReferralOverview(),
         getAllPartnersDirectory(),
+        getReferralNetworkSummary(),
       ]);
       setOverview(overviewData);
       setDirectory(directoryData);
+      setSummary(summaryData);
       setError(null);
     } catch (err: any) {
       setError(err?.message || "Unable to load referral network.");
@@ -151,10 +219,13 @@ export default function AdminReferralsPage() {
     if (levelFilter !== "all") {
       rows = rows.filter((p) => (levelFilter === 4 ? p.levelFromRoot >= 4 : p.levelFromRoot === levelFilter));
     }
+    if (statusFilter !== "all") {
+      rows = rows.filter((p) => p.status === statusFilter);
+    }
     const term = directorySearch.trim().toLowerCase();
     if (term) {
       rows = rows.filter((p) =>
-        [p.partner_code, partnerName(p), partnerPhone(p), p.sponsor?.partner_code, partnerName(p.sponsor), p.city]
+        [p.partner_code, partnerName(p), partnerPhone(p), partnerEmail(p), p.sponsor?.partner_code, partnerName(p.sponsor), p.city]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
@@ -162,7 +233,13 @@ export default function AdminReferralsPage() {
       );
     }
     return rows;
-  }, [directory, directorySearch, levelFilter]);
+  }, [directory, directorySearch, levelFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredDirectory.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedDirectory = filteredDirectory.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [directorySearch, levelFilter, statusFilter]);
 
   if (loading) {
     return (
@@ -174,6 +251,7 @@ export default function AdminReferralsPage() {
 
   if (selectedPartner) {
     const tree = referralTree?.tree || {};
+    const partnerEarnings = earningsByPartner[selectedPartner.id] || {};
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-4">
@@ -181,7 +259,7 @@ export default function AdminReferralsPage() {
             onClick={handleBack}
             className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-muted transition-colors hover:text-brand-ink"
           >
-            ← Back to all accounts
+            &larr; Back to all accounts
           </button>
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-ink">{partnerName(selectedPartner)}</h1>
@@ -195,12 +273,22 @@ export default function AdminReferralsPage() {
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <StatCard label="Wallet Balance" value={money(selectedPartner.wallet_balance)} icon={Wallet} tone="green" />
+          <StatCard label="Total Earnings" value={money(selectedPartner.total_earnings)} icon={DollarSign} tone="sage" />
+          <StatCard label="Membership Rewards" value={money(partnerEarnings.membershipRewards)} icon={Award} tone="purple" />
+          <StatCard label="Booking Commissions" value={money(partnerEarnings.bookingCommissions)} icon={ShoppingBag} tone="teal" />
+          <StatCard label="Reserved Payout" value={money(partnerEarnings.reservedPayout)} icon={Clock} tone="amber" />
+          <StatCard label="Paid Payout" value={money(partnerEarnings.paidPayout)} icon={CheckCircle} tone="green" />
+        </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {levelRates.map((item) => (
             <div key={item.level} className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
               <p className="text-sm font-semibold text-brand-ink">Level {item.level}</p>
               <p className="mt-2 text-3xl font-bold text-brand-accent">{item.rate}%</p>
               <p className="mt-1 text-xs text-brand-muted">{item.label}</p>
+              <p className="mt-2 text-sm font-medium text-brand-ink">{(tree[item.level] || []).length} partners</p>
             </div>
           ))}
         </div>
@@ -268,6 +356,9 @@ export default function AdminReferralsPage() {
     );
   }
 
+  const totals = overview?.totals || {};
+  const lc = summary?.levelCounts || {};
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -279,32 +370,91 @@ export default function AdminReferralsPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Total Accounts" value={totals.partners || 0} icon={Users} tone="sage" />
-        <StatCard label="Active Accounts" value={totals.activePartners || 0} icon={UserCheck} tone="green" />
-        <StatCard label="Pending Members" value={totals.pendingMembers || 0} icon={Network} tone="amber" />
-        <StatCard label="Sponsor Links" value={totals.treeLinks || 0} icon={GitBranch} tone="purple" />
+      {/* Partner counts */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <StatCard label="Total Partners" value={totals.partners || 0} icon={Users} tone="sage" />
+        <StatCard label="Active Partners" value={totals.activePartners || 0} icon={UserCheck} tone="green" />
+        <StatCard label="Pending Partners" value={summary?.pendingPartners || 0} icon={AlertCircle} tone="amber" />
+        <StatCard label="Level 1 Partners" value={lc[1] || 0} icon={Layers} tone="purple" hint="Direct referral links" />
+        <StatCard label="Level 2 Partners" value={lc[2] || 0} icon={Layers} tone="teal" hint="2nd-degree links" />
+        <StatCard label="Level 3-4 Partners" value={(lc[3] || 0) + (lc[4] || 0)} icon={Layers} tone="slate" hint="3rd + 4th degree links" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      {/* Financial summary */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <StatCard
+          label="Membership Rewards"
+          value={money(summary?.totalMembershipRewardLiability)}
+          icon={Award}
+          tone="green"
+          hint={`${summary?.membershipRewardsGenerated || 0} rewards generated`}
+        />
+        <StatCard
+          label="Booking Commissions"
+          value={money(summary?.totalBookingCommissionLiability)}
+          icon={ShoppingBag}
+          tone="purple"
+          hint={`${summary?.bookingCommissionsGenerated || 0} commissions generated`}
+        />
+        <StatCard
+          label="Total Wallet Liability"
+          value={money(summary?.totalWalletLiability)}
+          icon={Wallet}
+          tone="amber"
+          hint="Sum of all partner wallets"
+        />
+        <StatCard
+          label="Pending Payout"
+          value={money(summary?.pendingPayoutLiability)}
+          icon={Clock}
+          tone="rose"
+          hint="Requested + processing"
+        />
+        <StatCard
+          label="Paid Payouts"
+          value={money(summary?.paidPayouts)}
+          icon={CheckCircle}
+          tone="green"
+          hint="Successfully disbursed"
+        />
+      </div>
+
+      {/* Commission level rates */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {levelRates.map((item) => (
           <div key={item.level} className="rounded-xl border border-brand-border bg-white p-5 shadow-soft">
-            <p className="font-display text-lg font-semibold text-brand-ink">Level {item.level}</p>
+            <div className="flex items-center justify-between">
+              <p className="font-display text-lg font-semibold text-brand-ink">Level {item.level}</p>
+              <span className="rounded-full bg-brand-light px-2.5 py-0.5 text-xs font-semibold text-brand-primaryDark">
+                {lc[item.level] || 0} links
+              </span>
+            </div>
             <p className="mt-2 text-3xl font-bold text-brand-accent">{item.rate}%</p>
             <p className="mt-1 text-sm text-brand-muted">{item.label}</p>
           </div>
         ))}
       </div>
 
+      {/* Directory table */}
       <Card noPadding>
         <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-lg font-semibold text-brand-ink">All Business Accounts</h2>
             <p className="text-sm text-brand-muted">
-              Every partner account, sorted by biggest full team first (Total Team = every level below them, Direct = only people they personally referred).
+              {filteredDirectory.length} partner{filteredDirectory.length !== 1 ? "s" : ""} found, sorted by biggest full team first.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
             <select
               value={levelFilter === "all" ? "all" : String(levelFilter)}
               onChange={(e) => setLevelFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
@@ -327,87 +477,159 @@ export default function AdminReferralsPage() {
                 className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none transition-all focus:border-brand-accent focus:ring-2 focus:ring-brand-accent sm:w-72"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => exportCSV(filteredDirectory, earningsByPartner)}
+              className="flex items-center gap-1.5 rounded-lg border border-brand-border px-3 py-2 text-sm font-medium text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent"
+            >
+              <Download className="h-4 w-4" />
+              CSV
+            </button>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px]">
+          <table className="w-full min-w-[1600px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Account (Member ID)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Referred By (Sponsor)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Level</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Total Team ▾</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Direct</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">City</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Wallet</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink sm:px-6">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Partner (ID)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Mobile / Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Sponsor</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Level</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Direct</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Team</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">City</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Membership Rewards</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Booking Comm.</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Wallet</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Reserved</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-brand-ink">Paid</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">KYC</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Joined</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border bg-white">
-              {filteredDirectory.length === 0 ? (
+              {pagedDirectory.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12">
-                    <EmptyState icon={Users} title="No accounts found" description="Try a different search or level filter." />
+                  <td colSpan={16} className="px-6 py-12">
+                    <EmptyState icon={Users} title="No accounts found" description="Try a different search or filter." />
                   </td>
                 </tr>
               ) : (
-                filteredDirectory.map((partner) => (
-                  <tr key={partner.id} className="transition-colors hover:bg-brand-surface/30">
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
-                          {partnerName(partner)[0]}
-                        </div>
-                        <div>
-                          <p className="font-medium text-brand-ink">{partnerName(partner)}</p>
-                          <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">{partner.partner_code || "—"}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm sm:px-6">
-                      {partner.sponsor ? (
-                        <div className="flex items-center gap-1.5">
-                          <Link2 className="h-3.5 w-3.5 shrink-0 text-brand-muted" />
+                pagedDirectory.map((partner) => {
+                  const earnings = earningsByPartner[partner.id] || {};
+                  return (
+                    <tr key={partner.id} className="transition-colors hover:bg-brand-surface/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-xs font-semibold text-white">
+                            {partnerName(partner)[0]}
+                          </div>
                           <div>
-                            <p className="text-brand-ink">{partnerName(partner.sponsor)}</p>
-                            <p className="font-mono text-xs text-brand-muted">{partner.sponsor.partner_code}</p>
+                            <p className="font-medium text-brand-ink text-sm">{partnerName(partner)}</p>
+                            <p className="mt-0.5 font-mono text-xs font-semibold text-brand-primaryDark">{partner.partner_code || "---"}</p>
                           </div>
                         </div>
-                      ) : (
-                        <span className="text-xs text-brand-muted">Root account (no sponsor)</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">
-                      {partner.levelFromRoot === 0 ? "Root" : `L${partner.levelFromRoot}`}
-                    </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <span className="rounded-full bg-brand-light/60 px-2.5 py-1 text-sm font-semibold text-brand-primaryDark">
-                        {partner.totalTeamCount}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.directTeamCount}</td>
-                    <td className="px-4 py-4 text-sm text-brand-muted sm:px-6">{partner.city || "—"}</td>
-                    <td className="px-4 py-4 text-sm font-medium text-brand-ink sm:px-6">{money(partner.wallet_balance)}</td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <Badge variant={statusVariant(partner.status)} dot>{partner.status || "unknown"}</Badge>
-                    </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <button
-                        type="button"
-                        onClick={() => handleViewTree(partner)}
-                        className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent"
-                      >
-                        View Tree
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-3 text-xs text-brand-muted">
+                        <p>{partnerPhone(partner)}</p>
+                        <p className="mt-0.5 truncate max-w-[140px]">{partnerEmail(partner)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {partner.sponsor ? (
+                          <div className="flex items-center gap-1.5">
+                            <Link2 className="h-3.5 w-3.5 shrink-0 text-brand-muted" />
+                            <div>
+                              <p className="text-brand-ink text-xs">{partnerName(partner.sponsor)}</p>
+                              <p className="font-mono text-xs text-brand-muted">{partner.sponsor.partner_code}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-brand-muted">Root</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-muted">
+                        {partner.levelFromRoot === 0 ? "Root" : `L${partner.levelFromRoot}`}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-muted">{partner.directTeamCount}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full bg-brand-light/60 px-2.5 py-1 text-sm font-semibold text-brand-primaryDark">
+                          {partner.totalTeamCount}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-brand-muted">{partner.city || "---"}</td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-brand-ink">
+                        {earnings.membershipRewards ? money(earnings.membershipRewards) : <span className="text-brand-muted">---</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-medium text-brand-ink">
+                        {earnings.bookingCommissions ? money(earnings.bookingCommissions) : <span className="text-brand-muted">---</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(partner.wallet_balance)}</td>
+                      <td className="px-4 py-3 text-right text-sm text-brand-muted">
+                        {earnings.reservedPayout ? money(earnings.reservedPayout) : "---"}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm text-brand-muted">
+                        {earnings.paidPayout ? money(earnings.paidPayout) : "---"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={partner.kyc_status === "verified" ? "success" : partner.kyc_status === "pending" ? "warning" : "neutral"}>
+                          {partner.kyc_status || "N/A"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={statusVariant(partner.status)} dot>{partner.status || "unknown"}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-brand-muted whitespace-nowrap">
+                        {partner.created_at ? new Date(partner.created_at).toLocaleDateString("en-IN") : "---"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => handleViewTree(partner)}
+                          className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink transition-colors hover:border-brand-accent hover:text-brand-accent"
+                        >
+                          View Tree
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-brand-border px-4 py-3">
+            <p className="text-sm text-brand-muted">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredDirectory.length)} of {filteredDirectory.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="rounded-lg border border-brand-border p-2 text-brand-muted transition-colors hover:text-brand-ink disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-medium text-brand-ink">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="rounded-lg border border-brand-border p-2 text-brand-muted transition-colors hover:text-brand-ink disabled:opacity-40"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

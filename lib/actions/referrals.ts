@@ -243,6 +243,96 @@ export async function getAllPartnersDirectory(limit = 500) {
   return enriched.sort((a, b) => b.totalTeamCount - a.totalTeamCount || b.directTeamCount - a.directTeamCount);
 }
 
+// Financial summary for the referral network landing page — aggregates
+// commissions, payouts, and partner counts by level in a single call.
+export async function getReferralNetworkSummary() {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const [
+    { data: commissions },
+    { data: payouts },
+    { data: partners },
+    { data: treeRows },
+  ] = await Promise.all([
+    supabase
+      .from("commissions")
+      .select("partner_id, source_type, amount, status, level, reversed, deleted_at")
+      .is("deleted_at", null),
+    supabase
+      .from("payouts")
+      .select("partner_id, amount, gross_amount, status"),
+    supabase
+      .from("partners")
+      .select("id, status, wallet_balance, kyc_status"),
+    supabase
+      .from("referral_tree")
+      .select("ancestor_id, descendant_id, level"),
+  ]);
+
+  const commissionRows = (commissions || []) as any[];
+  const payoutRows = (payouts || []) as any[];
+  const partnerRows = (partners || []) as any[];
+
+  const activeCommissions = commissionRows.filter(
+    (c) => !c.reversed && ["pending", "approved", "paid"].includes(c.status)
+  );
+  const membershipRewards = activeCommissions.filter((c) => c.source_type === "membership");
+  const bookingCommissions = activeCommissions.filter((c) => c.source_type === "booking");
+
+  const sum = (rows: any[]) => rows.reduce((s, r) => s + Number(r.amount || 0), 0);
+
+  const totalMembershipRewardLiability = sum(membershipRewards.filter((c) => ["pending", "approved"].includes(c.status)));
+  const totalBookingCommissionLiability = sum(bookingCommissions.filter((c) => ["pending", "approved"].includes(c.status)));
+  const totalWalletLiability = partnerRows.reduce((s, p) => s + Number(p.wallet_balance || 0), 0);
+  const pendingPayoutLiability = payoutRows
+    .filter((p) => ["requested", "processing"].includes(p.status))
+    .reduce((s, p) => s + Number(p.gross_amount || p.amount || 0), 0);
+  const paidPayouts = payoutRows
+    .filter((p) => p.status === "paid")
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  // Per-partner earnings for the directory table
+  const earningsByPartner = new Map<string, { membershipRewards: number; bookingCommissions: number; reservedPayout: number; paidPayout: number }>();
+  for (const c of activeCommissions) {
+    const entry = earningsByPartner.get(c.partner_id) || { membershipRewards: 0, bookingCommissions: 0, reservedPayout: 0, paidPayout: 0 };
+    if (c.source_type === "membership") entry.membershipRewards += Number(c.amount || 0);
+    else entry.bookingCommissions += Number(c.amount || 0);
+    earningsByPartner.set(c.partner_id, entry);
+  }
+  for (const p of payoutRows) {
+    const entry = earningsByPartner.get(p.partner_id) || { membershipRewards: 0, bookingCommissions: 0, reservedPayout: 0, paidPayout: 0 };
+    if (["requested", "processing"].includes(p.status)) entry.reservedPayout += Number(p.amount || 0);
+    if (p.status === "paid") entry.paidPayout += Number(p.amount || 0);
+    earningsByPartner.set(p.partner_id, entry);
+  }
+
+  // Level counts from referral_tree
+  const levelCounts = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<number, number>;
+  const descendantsByLevel = new Set<string>();
+  for (const row of (treeRows || []) as any[]) {
+    const level = Number(row.level);
+    if (level >= 1 && level <= 4) {
+      levelCounts[level] = (levelCounts[level] || 0) + 1;
+    }
+  }
+
+  const pendingPartners = partnerRows.filter((p) => p.status === "pending").length;
+
+  return {
+    membershipRewardsGenerated: membershipRewards.length,
+    totalMembershipRewardLiability: Math.round(totalMembershipRewardLiability * 100) / 100,
+    bookingCommissionsGenerated: bookingCommissions.length,
+    totalBookingCommissionLiability: Math.round(totalBookingCommissionLiability * 100) / 100,
+    totalWalletLiability: Math.round(totalWalletLiability * 100) / 100,
+    pendingPayoutLiability: Math.round(pendingPayoutLiability * 100) / 100,
+    paidPayouts: Math.round(paidPayouts * 100) / 100,
+    pendingPartners,
+    levelCounts,
+    earningsByPartner: Object.fromEntries(earningsByPartner),
+  };
+}
+
 async function getSponsorFallbackTree(supabase: any, partnerId: string) {
   const tree: Record<number, any[]> = { 1: [], 2: [], 3: [], 4: [] };
   let currentIds = [partnerId];

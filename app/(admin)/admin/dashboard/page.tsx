@@ -151,7 +151,10 @@ export default async function AdminDashboardPage({
     return acc;
   }, {});
   const partnerLookup = new Map<string, string>(
-    (walletPartners || []).map((row: any) => [String(row.id), String(row.profiles?.full_name || row.partner_code)])
+    (walletPartners || []).map((row: any) => {
+      const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+      return [String(row.id), String(prof?.full_name || row.partner_code)];
+    })
   );
   const topPeriodPartners: Array<{ name: string; amount: number }> = Object.entries(partnerSales)
     .map(([id, amount]) => ({
@@ -614,10 +617,10 @@ export default async function AdminDashboardPage({
                   <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold text-white">{p.profiles?.full_name?.[0] || "P"}</span>
+                        <span className="text-xs font-semibold text-white">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name?.[0] || "P"}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{p.profiles?.full_name || "—"}</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name || "—"}</p>
                         <p className="text-xs text-slate-500 mt-0.5 font-mono">{p.partner_code}</p>
                       </div>
                     </div>
@@ -642,7 +645,7 @@ export default async function AdminDashboardPage({
                 {pendingPayouts.map((p: any) => (
                   <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{p.partner?.profiles?.full_name || "—"}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{(Array.isArray(p.partner?.profiles) ? p.partner.profiles[0] : p.partner?.profiles)?.full_name || "—"}</p>
                       <p className="text-xs text-slate-500 mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
                     </div>
                     <span className="text-sm font-semibold text-slate-900 tabular-nums">₹{p.amount}</span>

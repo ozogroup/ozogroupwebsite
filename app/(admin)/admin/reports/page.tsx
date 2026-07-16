@@ -71,7 +71,7 @@ export default async function AdminReportsPage() {
     const gross = partnerCommissions.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
     const partnerDeduction = Math.round(gross * deductionRate * 100) / 100;
     return {
-      partner: partner.profiles?.full_name || partner.partner_code,
+      partner: (Array.isArray(partner.profiles) ? partner.profiles[0] : partner.profiles)?.full_name || partner.partner_code,
       partner_code: partner.partner_code,
       gross,
       deduction: partnerDeduction,

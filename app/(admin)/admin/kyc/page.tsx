@@ -71,7 +71,7 @@ export default function AdminKycPage() {
                   <tr key={item.id} className="align-top">
                     <td className="px-4 py-4">
                       <p className="font-semibold text-brand-ink">
-                        {item.partner?.profiles?.full_name || item.full_name}
+                        {(Array.isArray(item.partner?.profiles) ? item.partner.profiles[0] : item.partner?.profiles)?.full_name || item.full_name}
                       </p>
                       <p className="text-xs text-brand-muted">{item.partner?.partner_code}</p>
                       <p className="text-xs text-brand-muted">{item.mobile_number}</p>

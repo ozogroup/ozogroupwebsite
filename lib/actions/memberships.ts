@@ -394,11 +394,10 @@ export async function createSponsoredMembership(
   return result;
 }
 
-// Flat commission paid to the direct sponsor only when a new paid membership
-// is approved (confirmed 2026-07-15: Rs 500, level 1 only, no 4-level split,
-// same pending->approved->paid lifecycle as booking commissions). Mirrors the
-// insert done inside the kia_approve_paid_membership RPC so behavior matches
-// whether the RPC path or this JS fallback path runs.
+// Flat ₹500 reward paid to the direct sponsor when a new paid membership is
+// approved. Created as "approved" and wallet credited immediately — the admin
+// approving the membership IS the approval of the reward, no second approval
+// step required. Idempotent: duplicate calls for the same membership are safe.
 async function generateMembershipReferralCommission(
   supabase: ReturnType<typeof getSupabaseServiceClient>,
   membership: { id: string; amount: number | null; sponsor_id: string | null }
@@ -407,7 +406,7 @@ async function generateMembershipReferralCommission(
 
   const { data: sponsor } = await supabase
     .from("partners" as any)
-    .select("status, is_active, deleted_at, membership_expires_at")
+    .select("status, is_active, deleted_at, membership_expires_at, wallet_balance, total_earnings")
     .eq("id", membership.sponsor_id)
     .maybeSingle();
   const sp = sponsor as any;
@@ -439,7 +438,7 @@ async function generateMembershipReferralCommission(
     .maybeSingle();
   if (existing) return;
 
-  const { error } = await supabase.from("commissions" as any).insert({
+  const { data: inserted, error } = await supabase.from("commissions" as any).insert({
     partner_id: membership.sponsor_id,
     source_type: "membership",
     source_id: membership.id,
@@ -447,11 +446,39 @@ async function generateMembershipReferralCommission(
     level: 1,
     percentage: 0,
     amount: bonusAmount,
-    status: "pending",
-  });
-  if (error && error.code !== "23505") {
+    status: "approved",
+  }).select("id").single();
+  if (error) {
+    if (error.code === "23505") return;
     console.error("Error creating membership referral commission:", error);
+    return;
   }
+
+  // Credit wallet immediately — the membership approval IS the reward approval.
+  const walletBefore = Number(sp.wallet_balance || 0);
+  const walletAfter = Math.round((walletBefore + bonusAmount) * 100) / 100;
+  const totalBefore = Number(sp.total_earnings || 0);
+  const now = new Date().toISOString();
+
+  await supabase
+    .from("partners" as any)
+    .update({
+      wallet_balance: walletAfter,
+      total_earnings: Math.round((totalBefore + bonusAmount) * 100) / 100,
+      updated_at: now,
+    })
+    .eq("id", membership.sponsor_id);
+
+  await supabase.from("wallet_transactions" as any).insert({
+    partner_id: membership.sponsor_id,
+    transaction_type: "commission_credit",
+    amount: bonusAmount,
+    balance_before: walletBefore,
+    balance_after: walletAfter,
+    reference_type: "commission",
+    reference_id: (inserted as any)?.id || null,
+    notes: `Membership referral reward Rs. ${bonusAmount} auto-approved`,
+  });
 }
 
 // JS fallback for kia_approve_paid_membership. The RPC is tried first (it is

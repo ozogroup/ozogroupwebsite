@@ -6,6 +6,16 @@ import Breadcrumb from "@/components/admin/Breadcrumb";
 import PartnerPasswordManager from "@/components/admin/PartnerPasswordManager";
 import { getReferralUrl } from "@/lib/referral-url";
 
+function profileName(value: any) {
+  const profile = Array.isArray(value) ? value[0] : value;
+  return profile?.full_name || null;
+}
+
+function profileField(value: any, field: string) {
+  const profile = Array.isArray(value) ? value[0] : value;
+  return profile?.[field] || null;
+}
+
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,9 +88,9 @@ export default function AdminPartnersPage() {
 
   const filteredPartners = partners.filter((partner) => {
     const matchesSearch =
-      partner.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      profileName(partner.profiles)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       partner.partner_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      partner.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      profileField(partner.profiles, 'email')?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || partner.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -194,8 +204,8 @@ export default function AdminPartnersPage() {
                 <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 sm:px-6 py-4">
                     <div>
-                      <p className="font-semibold text-slate-900">{partner.profiles?.full_name || "—"}</p>
-                      <p className="text-xs text-slate-500">{partner.profiles?.email || partner.profiles?.phone || "—"}</p>
+                      <p className="font-semibold text-slate-900">{profileName(partner.profiles) || "—"}</p>
+                      <p className="text-xs text-slate-500">{profileField(partner.profiles, 'email') || profileField(partner.profiles, 'phone') || "—"}</p>
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4">
@@ -331,7 +341,7 @@ export default function AdminPartnersPage() {
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{selectedPartner.profiles?.full_name || "—"}</h2>
+                  <h2 className="text-xl font-bold text-slate-900">{profileName(selectedPartner.profiles) || "—"}</h2>
                   <p className="text-sm text-slate-500 mt-1">Partner ID: <code className="bg-slate-100 px-2 py-0.5 rounded">{selectedPartner.partner_code}</code></p>
                 </div>
                 <button
@@ -397,11 +407,11 @@ export default function AdminPartnersPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">Phone</p>
-                    <p className="font-medium text-slate-900">{selectedPartner.profiles?.phone || "Not provided"}</p>
+                    <p className="font-medium text-slate-900">{profileField(selectedPartner.profiles, 'phone') || "Not provided"}</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">Email</p>
-                    <p className="font-medium text-slate-900">{selectedPartner.profiles?.email || "Not provided"}</p>
+                    <p className="font-medium text-slate-900">{profileField(selectedPartner.profiles, 'email') || "Not provided"}</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <p className="text-xs text-slate-600 mb-1">City</p>

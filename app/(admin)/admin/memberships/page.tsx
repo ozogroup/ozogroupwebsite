@@ -278,7 +278,7 @@ export default function AdminMembershipsPage() {
                             <span className="font-mono font-semibold text-brand-primaryDark">
                               {membership.sponsor?.partner_code || membership.referral_code}
                             </span>
-                            {membership.sponsor?.profiles?.full_name && ` · ${membership.sponsor.profiles.full_name}`}
+                            {(() => { const sp = Array.isArray(membership.sponsor?.profiles) ? membership.sponsor.profiles[0] : membership.sponsor?.profiles; return sp?.full_name ? ` · ${sp.full_name}` : null; })()}
                           </>
                         ) : (
                           "No referrer"

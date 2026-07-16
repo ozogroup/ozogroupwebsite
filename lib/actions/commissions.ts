@@ -265,7 +265,7 @@ export async function generateMissingMembershipReferralCommissions() {
 
     const { data: sponsor } = await supabase
       .from("partners" as any)
-      .select("status, is_active, deleted_at, membership_expires_at")
+      .select("status, is_active, deleted_at, membership_expires_at, wallet_balance, total_earnings")
       .eq("id", sponsorId)
       .maybeSingle();
     const sp = sponsor as any;
@@ -277,7 +277,7 @@ export async function generateMissingMembershipReferralCommissions() {
       (!sp.membership_expires_at || new Date(sp.membership_expires_at).getTime() >= Date.now());
     if (!sponsorEligible) continue;
 
-    const { error: insertError } = await supabase.from("commissions" as any).insert({
+    const { data: inserted, error: insertError } = await supabase.from("commissions" as any).insert({
       partner_id: sponsorId,
       source_type: "membership",
       source_id: membership.id,
@@ -285,14 +285,37 @@ export async function generateMissingMembershipReferralCommissions() {
       level: 1,
       percentage: 0,
       amount: bonusAmount,
-      status: "pending",
-    });
+      status: "approved",
+    }).select("id").single();
 
     if (insertError) {
       if (insertError.code === "23505") continue;
       console.error("Error creating missing membership referral commission:", insertError);
       continue;
     }
+
+    // Credit wallet immediately — membership approval IS reward approval.
+    const walletBefore = Number(sp.wallet_balance || 0);
+    const walletAfter = roundMoney(walletBefore + bonusAmount);
+    const now = new Date().toISOString();
+    await supabase
+      .from("partners" as any)
+      .update({
+        wallet_balance: walletAfter,
+        total_earnings: roundMoney(Number(sp.total_earnings || 0) + bonusAmount),
+        updated_at: now,
+      })
+      .eq("id", sponsorId);
+    await supabase.from("wallet_transactions" as any).insert({
+      partner_id: sponsorId,
+      transaction_type: "commission_credit",
+      amount: bonusAmount,
+      balance_before: walletBefore,
+      balance_after: walletAfter,
+      reference_type: "commission",
+      reference_id: (inserted as any)?.id || null,
+      notes: `Membership referral reward Rs. ${bonusAmount} auto-approved (backfill)`,
+    });
     created += 1;
   }
 

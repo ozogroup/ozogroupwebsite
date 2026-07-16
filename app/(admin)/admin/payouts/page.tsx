@@ -45,7 +45,7 @@ export default function AdminPayoutsPage() {
   async function handleCreatePayoutForPartner(payout: any) {
     const defaultAmount = Number(payout.available_balance || payout.partner_summary?.walletBalance || 0);
     const input = window.prompt(
-      `Create a payout request for ${payout.partner?.profiles?.full_name || payout.partner?.partner_code || "this partner"}.\n\nAmount to pay out (Rs.), max ${defaultAmount.toLocaleString("en-IN")}:`,
+      `Create a payout request for ${profileName(payout.partner?.profiles) !== "Unknown" ? profileName(payout.partner?.profiles) : payout.partner?.partner_code || "this partner"}.\n\nAmount to pay out (Rs.), max ${defaultAmount.toLocaleString("en-IN")}:`,
       String(defaultAmount)
     );
     if (input == null) return; // cancelled
