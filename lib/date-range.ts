@@ -13,6 +13,17 @@ export function resolveDateRange(params: DateRangeParams = {}) {
   if (range === "today") {
     from = new Date(now);
     from.setHours(0, 0, 0, 0);
+  } else if (range === "current_month") {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    from.setHours(0, 0, 0, 0);
+  } else if (range === "previous_month") {
+    from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    from.setHours(0, 0, 0, 0);
+    to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  } else if (range === "financial_year") {
+    const fyStartYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    from = new Date(fyStartYear, 3, 1);
+    from.setHours(0, 0, 0, 0);
   } else if (range === "yesterday") {
     from = new Date(now);
     from.setDate(from.getDate() - 1);

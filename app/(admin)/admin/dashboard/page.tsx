@@ -135,17 +135,43 @@ export default async function AdminDashboardPage({
       (supabase as any).from("partners").select("id,partner_code,wallet_balance,profiles(full_name)"),
       (supabase as any).from("bookings").select("referred_by,partner_code,treatment_price,payment_amount,booking_status,created_at"),
     ]);
+  const [{ data: periodMembershipRows }, { data: periodFranchiseRows }, { data: periodPartnerRows }] = await Promise.all([
+    (supabase as any).from("memberships").select("amount,payment_amount,payment_status,membership_status,created_at"),
+    (supabase as any).from("franchise_leads").select("status,investment_budget,created_at"),
+    (supabase as any).from("partners").select("id,status,kyc_status,created_at"),
+  ]);
   const filteredBookings = (periodBookings || []).filter((row: any) => range.includes(row.created_at));
   const activeCommissions = (periodCommissions || []).filter((row: any) => !row.reversed && !row.deleted_at);
   const filteredCommissions = activeCommissions.filter((row: any) => range.includes(row.created_at) && ["approved", "paid"].includes(String(row.status)));
   const filteredPayouts = (periodPayoutRows || []).filter((row: any) => range.includes(row.created_at));
   const filteredSales = (periodSales || []).filter((row: any) => range.includes(row.created_at) && ["confirmed", "completed"].includes(row.booking_status));
+  const filteredMemberships = (periodMembershipRows || []).filter((row: any) => range.includes(row.created_at));
+  const filteredFranchise = (periodFranchiseRows || []).filter((row: any) => range.includes(row.created_at));
+  const filteredPartners = (periodPartnerRows || []).filter((row: any) => range.includes(row.created_at));
+  const parseMoney = (input: unknown) => Number(String(input || "0").replace(/[^0-9.]/g, "")) || 0;
+  const payoutDeductionRate = 0.15;
+  const paidBookingRows = filteredBookings.filter((row: any) => row.payment_status === "paid");
   const paidBookingSales = filteredBookings
     .filter((row: any) => row.payment_status === "paid")
     .reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.treatment_price || 0), 0);
+  const paidMembershipRows = filteredMemberships.filter((row: any) => row.payment_status === "paid");
+  const activeMembershipRows = filteredMemberships.filter((row: any) => ["active", "approved"].includes(String(row.membership_status || "")));
+  const membershipRevenue = paidMembershipRows.reduce((sum: number, row: any) => sum + Number(row.payment_amount || row.amount || 0), 0);
+  const approvedFranchiseRows = filteredFranchise.filter((row: any) => ["approved", "converted", "closed"].includes(String(row.status || "")));
+  const franchiseBusiness = approvedFranchiseRows.reduce((sum: number, row: any) => sum + parseMoney(row.investment_budget), 0);
   const totalWalletBalance = (walletPartners || []).reduce((sum: number, row: any) => sum + Number(row.wallet_balance || 0), 0);
   const periodPendingPayouts = filteredPayouts.filter((row: any) => ["requested", "processing"].includes(row.status));
   const periodPaidPayouts = filteredPayouts.filter((row: any) => row.status === "paid");
+  const periodGrossPayout = activeCommissions
+    .filter((row: any) => range.includes(row.created_at) && ["pending", "approved"].includes(String(row.status)))
+    .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const periodDeduction = Math.round(periodGrossPayout * payoutDeductionRate * 100) / 100;
+  const periodNetPayable = Math.round((periodGrossPayout - periodDeduction) * 100) / 100;
+  const paidDistributedPayout = periodPaidPayouts.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const newPartners = filteredPartners.length;
+  const activePartnersInPeriod = (periodPartnerRows || []).filter((row: any) => row.status === "active").length;
+  const pendingKycInPeriod = (periodPartnerRows || []).filter((row: any) => row.kyc_status === "pending").length;
+  const approvedKycInPeriod = (periodPartnerRows || []).filter((row: any) => ["verified", "approved"].includes(String(row.kyc_status || ""))).length;
   const partnerSales = filteredSales.reduce((acc: Record<string, number>, row: any) => {
     const partnerKey = row.referred_by || row.partner_code || "direct";
     acc[partnerKey] = (acc[partnerKey] || 0) + Number(row.payment_amount || row.treatment_price || 0);
@@ -266,6 +292,51 @@ export default async function AdminDashboardPage({
       </div>
 
       <DateRangeFilter range={range.range} from={resolvedSearchParams?.from} to={resolvedSearchParams?.to} />
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Current Period Financial Summary</h2>
+          <p className="mt-1 text-sm text-brand-muted">All figures use verified live database records in the selected date range.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+          <StatCard label="Kit Booking Sales" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} icon={Calendar} href="/admin/bookings" tone="sage" hint={`${paidBookingRows.length} paid booking${paidBookingRows.length === 1 ? "" : "s"}`} />
+          <StatCard label="Total Memberships" value={`Rs. ${membershipRevenue.toLocaleString("en-IN")}`} icon={Users} href="/admin/memberships" tone="green" hint={`${activeMembershipRows.length} active/approved`} />
+          <StatCard label="Franchise Business" value={`Rs. ${franchiseBusiness.toLocaleString("en-IN")}`} icon={Award} href="/admin/franchise-leads" tone="amber" hint={`${approvedFranchiseRows.length} approved franchise`} />
+          <StatCard label="Gross Payout" value={`Rs. ${periodGrossPayout.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" hint="Before deduction" />
+          <StatCard label="15% Deduction" value={`Rs. ${periodDeduction.toLocaleString("en-IN")}`} icon={BadgeIndianRupee} href="/admin/payouts" tone="rose" hint="Admin/service fee" />
+          <StatCard label="Net Payable" value={`Rs. ${periodNetPayable.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/payouts" tone="green" hint="Payable after deduction" />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Business Opportunity Counts" subtitle="Operational counts for the selected period" />
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <MiniMetric label="Kit Bookings" value={paidBookingRows.length} />
+            <MiniMetric label="Memberships" value={paidMembershipRows.length} />
+            <MiniMetric label="Franchise" value={approvedFranchiseRows.length} />
+            <MiniMetric label="Salary Achievers" value="Not Configured" />
+            <MiniMetric label="Bonus Achievers" value="Not Configured" />
+          </div>
+          <p className="mt-3 text-xs text-brand-muted">Salary/bonus achiever rules are not yet defined in a canonical database setting, so no fake zero is shown.</p>
+        </Card>
+        <Card>
+          <CardHeader title="Monthly Live Partner System" subtitle="Driven by the selected date range/month" />
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <MiniMetric label="Kit Booking Business" value={`Rs. ${paidBookingSales.toLocaleString("en-IN")}`} />
+            <MiniMetric label="Membership Business" value={`Rs. ${membershipRevenue.toLocaleString("en-IN")}`} />
+            <MiniMetric label="Total Gross Payout" value={`Rs. ${periodGrossPayout.toLocaleString("en-IN")}`} />
+            <MiniMetric label="Distributed/Paid" value={`Rs. ${paidDistributedPayout.toLocaleString("en-IN")}`} />
+            <MiniMetric label="Franchise Business" value={`Rs. ${franchiseBusiness.toLocaleString("en-IN")}`} />
+            <MiniMetric label="New Partners" value={newPartners} />
+            <MiniMetric label="Active Partners" value={activePartnersInPeriod} />
+            <MiniMetric label="Pending KYC" value={pendingKycInPeriod} />
+            <MiniMetric label="Approved KYC" value={approvedKycInPeriod} />
+            <MiniMetric label="Payout Requests" value={periodPendingPayouts.length} />
+            <MiniMetric label="Completed Payouts" value={periodPaidPayouts.length} />
+          </div>
+        </Card>
+      </div>
 
       {/* Hero KPIs */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -660,6 +731,15 @@ export default async function AdminDashboardPage({
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-xl border border-brand-border bg-brand-surface/50 px-4 py-3">
+      <p className="text-xs font-medium text-brand-muted">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-brand-ink">{value}</p>
     </div>
   );
 }

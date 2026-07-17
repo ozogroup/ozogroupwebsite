@@ -21,6 +21,36 @@ import {
 const DEFAULT_PAYOUT_DEDUCTION_RATE = 0.15;
 const DEFAULT_PAYOUT_MINIMUM_AMOUNT = 1000;
 
+function maskAccount(input?: string | null) {
+  const clean = String(input || "").replace(/\s+/g, "");
+  if (!clean) return null;
+  return `XXXX${clean.slice(-4)}`;
+}
+
+function maskUpi(input?: string | null) {
+  const clean = String(input || "").trim().toLowerCase();
+  const [name, handle] = clean.split("@");
+  if (!name || !handle) return clean || null;
+  return `${name.slice(0, 2)}***@${handle}`;
+}
+
+function profileFrom(row: any) {
+  return Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
+}
+
+function maskedPartner(partner: any) {
+  if (!partner) return partner;
+  return {
+    ...partner,
+    profiles: profileFrom(partner),
+    bank_account_number: partner.bank_account_number ? maskAccount(partner.bank_account_number) : null,
+    upi_id: partner.upi_id ? maskUpi(partner.upi_id) : null,
+    payment_destination_masked: partner.upi_id
+      ? `UPI: ${maskUpi(partner.upi_id)}`
+      : [partner.bank_account_holder, maskAccount(partner.bank_account_number), partner.bank_ifsc].filter(Boolean).join(" | "),
+  };
+}
+
 type PayoutSettings = {
   deductionRate: number;
   minimumAmount: number;
@@ -103,7 +133,7 @@ export async function getPayouts() {
     .from("payouts" as any)
     .select(`
       *,
-      partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name))
+      partner:partners(partner_code, kyc_status, bank_verified, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name, phone))
     `)
     .order("created_at", { ascending: false });
   
@@ -123,7 +153,7 @@ export async function getPayouts() {
       .select("partner_id, amount, gross_amount, status"),
     supabase
       .from("partners" as any)
-      .select("id, partner_code, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name)")
+      .select("id, partner_code, status, kyc_status, bank_verified, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name, phone)")
   ]);
 
   const bookingIds = Array.from(
@@ -259,19 +289,35 @@ export async function getPayouts() {
     const grossAmount = Number(payout.gross_amount || payout.amount || 0);
     const deductionAmount = Number(payout.deduction_amount ?? roundMoney(grossAmount * deductionRate));
     const netAmount = Number(payout.net_amount || payout.amount || roundMoney(grossAmount - deductionAmount));
+    const partner = maskedPartner(payout.partner);
+    const hasPaymentDestination = Boolean(partner?.payment_destination_masked);
+    const kycOk = ["verified", "approved"].includes(String(partner?.kyc_status || ""));
+    const selectable = ["requested", "processing", "approved"].includes(String(payout.status || "")) && kycOk && hasPaymentDestination;
     return {
       ...payout,
+      partner,
+      payment_details: partner?.payment_destination_masked || "Payment destination missing",
       gross_amount: grossAmount,
       deduction_rate: Number(payout.deduction_rate ?? deductionRate),
       deduction_amount: deductionAmount,
       net_amount: netAmount,
+      selectable,
+      selection_block_reason: selectable
+        ? null
+        : payout.status === "paid" || payout.status === "rejected"
+          ? "Already final"
+          : !kycOk
+            ? "KYC incomplete"
+            : !hasPaymentDestination
+              ? "Payment destination missing"
+              : "Not eligible for export/settlement",
       partner_summary: summaryByPartner.get(payout.partner_id),
     };
   });
 
   const openPayoutPartnerIds = new Set(
     payouts
-      .filter((p: any) => ["requested", "processing"].includes(String(p.status || "")))
+      .filter((p: any) => ["requested", "approved", "processing"].includes(String(p.status || "")))
       .map((p: any) => p.partner_id)
   );
   for (const partnerId of partnerIds) {
@@ -282,10 +328,11 @@ export async function getPayouts() {
     if (!summary || walletBalance <= 0) continue;
     const walletDeduction = roundMoney(walletBalance * deductionRate);
     const walletNet = roundMoney(walletBalance - walletDeduction);
+    const safePartner = maskedPartner(partner);
     rows.push({
       id: `summary-${partnerId}`,
       partner_id: partnerId,
-      partner,
+      partner: safePartner,
       amount: walletNet,
       gross_amount: walletBalance,
       deduction_rate: deductionRate,
@@ -293,15 +340,12 @@ export async function getPayouts() {
       net_amount: walletNet,
       available_balance: walletBalance,
       payment_method: partner?.upi_id ? "upi" : "bank",
-      payment_details: [
-        partner?.bank_account_holder,
-        partner?.bank_account_number,
-        partner?.bank_ifsc,
-        partner?.upi_id ? `UPI: ${partner.upi_id}` : null,
-      ].filter(Boolean).join(" | "),
+      payment_details: safePartner?.payment_destination_masked || "Payment destination missing",
       status: "available",
       created_at: null,
       is_summary: true,
+      selectable: false,
+      selection_block_reason: "Partner has not requested payout yet",
       partner_summary: summary,
     });
   }
@@ -316,6 +360,12 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
   const now = new Date().toISOString();
+  if (!["requested", "approved", "processing", "paid", "rejected"].includes(status)) {
+    throw new Error("Unsupported payout status.");
+  }
+  if (status === "paid" && !transactionReference?.trim()) {
+    throw new Error("UTR / transaction reference is required before marking a payout paid.");
+  }
 
   const { data: existingPayout, error: existingError } = await supabase
     .from("payouts" as any)
@@ -341,7 +391,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     updateData.transaction_reference = transactionReference;
   }
   
-  if (status === "processing") updateData.approved_at = now;
+  if (status === "approved" || status === "processing") updateData.approved_at = now;
   if (status === "rejected") updateData.rejected_at = now;
   if (status === "paid") {
     updateData.paid_at = now;
@@ -507,7 +557,7 @@ export async function adminCreatePayoutForPartner(
     .from("payouts" as any)
     .select("id, status")
     .eq("partner_id", partnerId)
-    .in("status", ["requested", "processing"])
+    .in("status", ["requested", "approved", "processing"])
     .limit(1)
     .maybeSingle();
   if (existingError) return { error: existingError.message };
@@ -617,7 +667,15 @@ export async function getPartnerPayoutContext() {
       .order("created_at", { ascending: false }),
   ]);
 
-  return { partner: partner as any, kyc: null, payouts: payouts || [] };
+  const safePartner = partner
+    ? {
+        ...(partner as any),
+        bank_account_number: maskAccount((partner as any).bank_account_number),
+        upi_id: maskUpi((partner as any).upi_id),
+      }
+    : null;
+
+  return { partner: safePartner as any, kyc: null, payouts: payouts || [] };
 }
 
 export async function requestPartnerPayout(amount: number, paymentMethod?: "bank" | "upi") {
@@ -650,7 +708,7 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
       .from("payouts" as any)
       .select("id")
       .eq("partner_id", profile.id)
-      .in("status", ["requested", "processing"])
+      .in("status", ["requested", "approved", "processing"])
       .limit(1)
       .maybeSingle();
     if (existingRequestError) return { error: existingRequestError.message };

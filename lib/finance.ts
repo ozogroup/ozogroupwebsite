@@ -105,7 +105,7 @@ export function evaluatePayoutRequestEligibility(
   const { walletBalance, requestedAmount, kycStatus, bankVerified, membershipActive, hasOpenRequest, settings } = input;
   const minimumLabel = settings.minimumAmount.toLocaleString("en-IN");
 
-  if (settings.kycRequired && kycStatus !== "verified") {
+  if (settings.kycRequired && !["verified", "approved"].includes(String(kycStatus || ""))) {
     return { allowed: false, error: "KYC approval is required before withdrawal." };
   }
   if (settings.bankRequired && !bankVerified) {

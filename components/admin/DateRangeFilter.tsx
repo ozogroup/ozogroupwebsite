@@ -16,6 +16,9 @@ export default function DateRangeFilter({
           <option value="yesterday">Yesterday</option>
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
+          <option value="current_month">Current month</option>
+          <option value="previous_month">Previous month</option>
+          <option value="financial_year">Financial year</option>
           <option value="3m">Last 3 months</option>
           <option value="6m">Last 6 months</option>
           <option value="all">All time</option>

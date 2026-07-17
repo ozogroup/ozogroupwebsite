@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search, Wallet, ChevronLeft, ChevronRight, DollarSign,
-  Clock, CheckCircle, AlertCircle, Users,
+  Clock, CheckCircle, AlertCircle, Users, Download, FileText, Printer,
 } from "lucide-react";
 import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
 import { getAdminWalletDirectory } from "@/lib/actions/wallets";
@@ -23,6 +23,7 @@ function profileName(value: any) {
 function getStatusColor(status: string) {
   switch (status) {
     case "requested": return "bg-yellow-100 text-yellow-700";
+    case "approved": return "bg-blue-100 text-blue-700";
     case "processing": return "bg-brand-light text-brand-primaryDark";
     case "paid": return "bg-emerald-100 text-emerald-700";
     case "rejected": return "bg-red-100 text-red-700";
@@ -42,6 +43,7 @@ export default function AdminPayoutsPage() {
   const [searchB, setSearchB] = useState("");
   const [pageA, setPageA] = useState(1);
   const [pageB, setPageB] = useState(1);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const loadAll = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -65,12 +67,44 @@ export default function AdminPayoutsPage() {
   }, [loadAll]);
 
   async function handleUpdateStatus(id: string, status: string) {
+    if (status === "paid") {
+      const reference = refs[id]?.trim();
+      if (!reference) {
+        alert("Enter UTR / transaction reference before marking paid.");
+        return;
+      }
+      if (!window.confirm("Final settlement: mark this payout as paid and update partner wallet/dashboard?")) return;
+    }
     setBusy(id);
     try {
       await updatePayoutStatus(id, status, refs[id], notes[id]);
       await loadAll(false);
     } catch (error: any) {
       alert(error?.message || "Error updating payout status");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleBulkStatus(status: "approved" | "processing" | "paid" | "rejected") {
+    const ids = Object.keys(selected).filter((id) => selected[id]);
+    if (ids.length === 0) {
+      alert("Select payout rows first.");
+      return;
+    }
+    const reference = status === "paid" ? window.prompt("Enter common UTR / transaction reference for selected payouts:") : "";
+    if (status === "paid" && !reference?.trim()) return;
+    const note = window.prompt("Optional admin note:", notes[ids[0]] || "") || "";
+    if (!window.confirm(`Apply "${status}" to ${ids.length} selected payout(s)?`)) return;
+    setBusy("bulk");
+    try {
+      for (const id of ids) {
+        await updatePayoutStatus(id, status, status === "paid" ? reference || "" : refs[id], note || notes[id]);
+      }
+      setSelected({});
+      await loadAll(false);
+    } catch (error: any) {
+      alert(error?.message || "Bulk payout update failed.");
     } finally {
       setBusy(null);
     }
@@ -137,6 +171,10 @@ export default function AdminPayoutsPage() {
   const cpB = Math.min(pageB, totalPagesB);
   const pagedPayouts = filteredPayouts.slice((cpB - 1) * PAGE_SIZE, cpB * PAGE_SIZE);
   useEffect(() => { setPageB(1); }, [searchB]);
+  const selectablePagedPayouts = pagedPayouts.filter((p: any) => p.selectable);
+  const selectedIds = Object.keys(selected).filter((id) => selected[id]);
+  const exportIds = selectedIds.length > 0 ? selectedIds : filteredPayouts.filter((p: any) => p.selectable).map((p: any) => p.id);
+  const exportQuery = exportIds.map((id) => `id=${encodeURIComponent(id)}`).join("&");
 
   // Summary stats
   const totalWalletLiability = walletPartners.reduce((s, r) => s + Number(r.wallet_balance || 0), 0);
@@ -289,22 +327,59 @@ export default function AdminPayoutsPage() {
               <h2 className="font-display text-lg font-semibold text-brand-ink">Payout Requests</h2>
               <p className="text-sm text-brand-muted">Only real database payout rows. Approve, reject, or mark as paid.</p>
             </div>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
-              <input
-                type="text"
-                value={searchB}
-                onChange={(e) => setSearchB(e.target.value)}
-                placeholder="Search partner..."
-                className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-64"
-              />
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+                <input
+                  type="text"
+                  value={searchB}
+                  onChange={(e) => setSearchB(e.target.value)}
+                  placeholder="Search partner..."
+                  className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-64"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a href={`/api/admin/payouts/export?format=csv&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
+                  <Download className="h-3.5 w-3.5" /> CSV
+                </a>
+                <a href={`/api/admin/payouts/export?format=xlsx&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
+                  <Download className="h-3.5 w-3.5" /> Excel
+                </a>
+                <a href={`/api/admin/payouts/export?format=pdf&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
+                  <FileText className="h-3.5 w-3.5" /> PDF
+                </a>
+                <button type="button" onClick={() => window.open(`/api/admin/payouts/export?format=print&${exportQuery}`, "_blank")} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
+                  <Printer className="h-3.5 w-3.5" /> Print
+                </button>
+              </div>
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-b border-brand-border bg-brand-surface/40 px-4 py-3 text-xs">
+            <span className="font-medium text-brand-ink">{selectedIds.length} selected</span>
+            <button type="button" onClick={() => handleBulkStatus("approved")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-brand-ink ring-1 ring-brand-border disabled:opacity-50">Bulk approve</button>
+            <button type="button" onClick={() => handleBulkStatus("processing")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-brand-ink ring-1 ring-brand-border disabled:opacity-50">Mark processing</button>
+            <button type="button" onClick={() => handleBulkStatus("paid")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-brand-ink px-3 py-1.5 text-white disabled:opacity-50">Mark paid</button>
+            <button type="button" onClick={() => handleBulkStatus("rejected")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-red-50 px-3 py-1.5 text-red-700 ring-1 ring-red-100 disabled:opacity-50">Reject</button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1400px]">
               <thead className="bg-brand-surface/50 border-b border-brand-border">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
+                    <input
+                      type="checkbox"
+                      checked={selectablePagedPayouts.length > 0 && selectablePagedPayouts.every((p: any) => selected[p.id])}
+                      onChange={(event) => {
+                        const checked = event.target.checked;
+                        setSelected((prev) => {
+                          const next = { ...prev };
+                          for (const payout of selectablePagedPayouts) next[payout.id] = checked;
+                          return next;
+                        });
+                      }}
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Gross Amount</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">15% Deduction</th>
@@ -318,9 +393,19 @@ export default function AdminPayoutsPage() {
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {pagedPayouts.length === 0 ? (
-                  <tr><td colSpan={9} className="px-6 py-12"><EmptyState icon={DollarSign} title="No payout requests" description="Payout requests from partners or admin-created payouts will appear here." /></td></tr>
+                  <tr><td colSpan={10} className="px-6 py-12"><EmptyState icon={DollarSign} title="No payout requests" description="Payout requests from partners or admin-created payouts will appear here." /></td></tr>
                 ) : pagedPayouts.map((payout: any) => (
                   <tr key={payout.id} className="align-top hover:bg-brand-surface/30 transition-colors">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selected[payout.id])}
+                        disabled={!payout.selectable}
+                        title={payout.selection_block_reason || "Select payout"}
+                        onChange={(event) => setSelected((prev) => ({ ...prev, [payout.id]: event.target.checked }))}
+                      />
+                      {!payout.selectable && <p className="mt-1 max-w-[120px] text-[10px] text-brand-muted">{payout.selection_block_reason}</p>}
+                    </td>
                     <td className="px-4 py-4">
                       <p className="font-medium text-brand-ink">{profileName(payout.partner?.profiles)}</p>
                       <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
@@ -392,6 +477,7 @@ export default function AdminPayoutsPage() {
                           className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent outline-none disabled:opacity-50"
                         >
                           <option value="requested">Requested</option>
+                          <option value="approved">Approved</option>
                           <option value="processing">Approve / Processing</option>
                           <option value="paid">Mark Paid</option>
                           <option value="rejected">Reject</option>

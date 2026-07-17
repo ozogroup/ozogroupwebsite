@@ -1,17 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { Search, ShieldCheck, FileText, CheckCircle, XCircle, RotateCcw } from "lucide-react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { getKycSubmissions, reviewKycSubmission } from "@/lib/actions/kyc";
+import { Badge, Card, EmptyState, StatCard } from "@/components/admin/ui";
+
+type KycRow = any;
+
+function statusBadge(status: string) {
+  if (status === "verified" || status === "approved") return "success";
+  if (status === "rejected" || status === "resubmission_required") return "danger";
+  if (status === "pending" || status === "under_review") return "warning";
+  return "neutral";
+}
 
 export default function AdminKycPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<KycRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
   async function load() {
@@ -20,7 +34,11 @@ export default function AdminKycPage() {
     setLoading(false);
   }
 
-  async function review(id: string, status: "verified" | "rejected" | "pending") {
+  async function review(id: string, status: "verified" | "rejected" | "pending" | "under_review" | "resubmission_required") {
+    if ((status === "rejected" || status === "resubmission_required") && !reason[id]?.trim()) {
+      alert("Please enter a reason first.");
+      return;
+    }
     setBusy(id);
     try {
       await reviewKycSubmission(id, status, reason[id]);
@@ -32,122 +50,156 @@ export default function AdminKycPage() {
     }
   }
 
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return items.filter((item) => {
+      const haystack = [
+        item.full_name,
+        item.partner?.partner_code,
+        item.mobile_number,
+        item.email,
+        item.payment_method,
+        item.kyc_status,
+      ].filter(Boolean).join(" ").toLowerCase();
+      const matchesSearch = !term || haystack.includes(term);
+      const matchesFilter = filter === "all" || item.kyc_status === filter || item.payment_method === filter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [items, search, filter]);
+
+  const counts = {
+    submitted: items.filter((i) => ["pending", "under_review"].includes(i.kyc_status)).length,
+    approved: items.filter((i) => ["verified", "approved"].includes(i.kyc_status)).length,
+    rejected: items.filter((i) => ["rejected", "resubmission_required"].includes(i.kyc_status)).length,
+    missing: items.filter((i) => !i.documents?.pan || !i.documents?.aadhaar_front || !i.documents?.selfie).length,
+  };
+
   return (
     <div className="space-y-6">
       <Breadcrumb items={[{ label: "KYC Management" }]} />
       <div>
         <h1 className="text-2xl font-bold text-brand-ink">KYC Management</h1>
-        <p className="text-brand-muted">Review partner documents and bank verification.</p>
+        <p className="text-brand-muted">Review private partner documents, payout method, and bank or UPI eligibility.</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <StatCard label="Submitted / Review" value={counts.submitted} icon={ShieldCheck} tone="amber" />
+        <StatCard label="Approved KYC" value={counts.approved} icon={CheckCircle} tone="green" />
+        <StatCard label="Rejected / Resubmit" value={counts.rejected} icon={XCircle} tone="rose" />
+        <StatCard label="Missing Document" value={counts.missing} icon={FileText} tone="slate" />
+      </div>
+
+      <Card noPadding>
+        <div className="flex flex-col gap-3 border-b border-brand-border p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-brand-ink">KYC Queue</h2>
+            <p className="text-sm text-brand-muted">Document links are short-lived signed links generated after admin authorization.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name, Partner ID, mobile..."
+                className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-72"
+              />
+            </div>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm text-brand-ink"
+            >
+              <option value="all">All status</option>
+              <option value="pending">Pending</option>
+              <option value="under_review">Under review</option>
+              <option value="verified">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="resubmission_required">Resubmission required</option>
+              <option value="bank">Bank mode</option>
+              <option value="upi">UPI mode</option>
+            </select>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px]">
-            <thead className="bg-slate-50 border-b border-brand-border">
+          <table className="w-full min-w-[1400px]">
+            <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Bank</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Payment Method</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Documents</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Submitted</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Submission</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Decision</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-brand-muted">
-                    Loading...
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-brand-muted">
-                    No KYC submissions yet
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-brand-muted">Loading...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-12"><EmptyState icon={ShieldCheck} title="No KYC submissions found" description="Try a different filter or search." /></td></tr>
               ) : (
-                items.map((item) => (
-                  <tr key={item.id} className="align-top">
+                filtered.map((item) => (
+                  <tr key={item.id} className="align-top hover:bg-brand-surface/30">
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-brand-ink">
-                        {(Array.isArray(item.partner?.profiles) ? item.partner.profiles[0] : item.partner?.profiles)?.full_name || item.full_name}
-                      </p>
-                      <p className="text-xs text-brand-muted">{item.partner?.partner_code}</p>
+                      <p className="font-semibold text-brand-ink">{item.full_name || "Unknown"}</p>
+                      <p className="font-mono text-xs text-brand-primaryDark">{item.partner?.partner_code || "-"}</p>
+                      <p className="text-xs text-brand-muted">{item.email}</p>
                       <p className="text-xs text-brand-muted">{item.mobile_number}</p>
                     </td>
                     <td className="px-4 py-4 text-sm text-brand-muted">
-                      <p className="font-medium text-brand-ink">{item.account_holder_name}</p>
-                      <p>{item.bank_name}</p>
-                      <p>AC: {item.account_number}</p>
-                      <p>IFSC: {item.bank_ifsc}</p>
-                      <div className="mt-2 rounded-lg bg-brand-light/50 p-2 text-xs text-brand-ink">
-                        <p className="font-semibold text-brand-ink">UPI</p>
-                        <p>Holder: {item.upi_holder_name || "-"}</p>
-                        <p>Mobile: {item.upi_mobile || "-"}</p>
-                        <p>ID: {item.upi_id || "-"}</p>
-                        <p>App: {item.upi_app || "-"}</p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col gap-2 text-sm">
-                        <DocLink href={item.pan_card_url} label="PAN Card" />
-                        <DocLink href={item.aadhaar_front_url} label="Aadhaar Front" />
-                        <DocLink href={item.aadhaar_back_url} label="Aadhaar Back" />
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted">
-                      {item.created_at ? new Date(item.created_at).toLocaleDateString() : "-"}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          item.status === "verified"
-                            ? "bg-green-100 text-green-700"
-                            : item.status === "rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
-                      {item.rejection_reason && (
-                        <p className="mt-2 text-xs text-red-600 max-w-[180px]">
-                          {item.rejection_reason}
-                        </p>
+                      <Badge variant="info">{item.payment_method === "upi" ? "UPI" : "Bank"}</Badge>
+                      {item.payment_method === "upi" ? (
+                        <div className="mt-2 space-y-1">
+                          <p className="font-medium text-brand-ink">{item.upi_holder_name || "-"}</p>
+                          <p>UPI: {item.masked_upi_id || "-"}</p>
+                          <p>Mobile: {item.upi_mobile || "-"}</p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-1">
+                          <p className="font-medium text-brand-ink">{item.account_holder_name || "-"}</p>
+                          <p>{item.bank_name || "-"}</p>
+                          <p>AC: {item.masked_account_number || "-"}</p>
+                          <p>IFSC: {item.bank_ifsc || "-"}</p>
+                          <p>Branch: {item.branch_name || "-"}</p>
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="space-y-2 min-w-[220px]">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <DocLink href={item.pan_card_url} label="PAN" />
+                        <DocLink href={item.aadhaar_front_url} label="Aadhaar Front" />
+                        <DocLink href={item.aadhaar_back_url} label="Aadhaar Back" optional />
+                        <DocLink href={item.selfie_url} label="Selfie" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-xs text-brand-muted">
+                      <p>Submitted: {item.created_at ? new Date(item.created_at).toLocaleString("en-IN") : "-"}</p>
+                      <p>Updated: {item.updated_at ? new Date(item.updated_at).toLocaleString("en-IN") : "-"}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge variant={statusBadge(item.kyc_status) as any} dot>{String(item.kyc_status || "unknown").replace(/_/g, " ")}</Badge>
+                      {(item.rejection_reason || item.resubmission_reason) && (
+                        <p className="mt-2 max-w-[220px] text-xs text-red-600">{item.rejection_reason || item.resubmission_reason}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="min-w-[260px] space-y-2">
                         <textarea
                           value={reason[item.id] || ""}
                           onChange={(e) => setReason((r) => ({ ...r, [item.id]: e.target.value }))}
-                          placeholder="Rejection / resubmission reason"
+                          placeholder="Reason required for reject/resubmission"
                           rows={2}
-                          className="w-full px-3 py-2 border border-brand-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-brand-accent"
+                          className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-accent"
                         />
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => review(item.id, "verified")}
-                            disabled={busy === item.id}
-                            className="px-3 py-1.5 text-xs rounded-lg bg-brand-ink text-white border border-brand-ink hover:bg-brand-muted disabled:opacity-50"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => review(item.id, "rejected")}
-                            disabled={busy === item.id}
-                            className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                          <button
-                            onClick={() => review(item.id, "pending")}
-                            disabled={busy === item.id}
-                            className="px-3 py-1.5 text-xs rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 disabled:opacity-50"
-                          >
-                            Resubmit
-                          </button>
+                          <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "under_review")}>Start Review</ActionButton>
+                          <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Approve</ActionButton>
+                          <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
+                          <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
+                            <RotateCcw className="h-3 w-3" /> Resubmit
+                          </ActionButton>
                         </div>
                       </div>
                     </td>
@@ -157,21 +209,47 @@ export default function AdminKycPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
 
-function DocLink({ href, label }: { href?: string | null; label: string }) {
-  if (!href) return <span className="text-slate-400">{label}: missing</span>;
+function DocLink({ href, label, optional }: { href?: string | null; label: string; optional?: boolean }) {
+  if (!href) return <span className={optional ? "text-slate-400" : "text-red-500"}>{label}: {optional ? "optional" : "missing"}</span>;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-brand-accent font-medium hover:underline"
-    >
+    <a href={href} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-brand-border bg-white px-3 py-2 font-medium text-brand-accent hover:bg-brand-surface">
       View {label}
     </a>
+  );
+}
+
+function ActionButton({
+  children,
+  onClick,
+  disabled,
+  danger,
+  warning,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  warning?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
+        danger
+          ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+          : warning
+            ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+            : "border-brand-border bg-brand-ink text-white hover:bg-brand-muted"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
