@@ -369,7 +369,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
 
   const { data: existingPayout, error: existingError } = await supabase
     .from("payouts" as any)
-    .select("*")
+    .select("*, partner:partners(partner_code, profiles(full_name, email, phone))")
     .eq("id", id)
     .single();
   if (existingError || !existingPayout) throw existingError || new Error("Payout not found.");
@@ -415,10 +415,17 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       );
     }
 
+    const rpcPartner = Array.isArray((existingPayout as any).partner) ? (existingPayout as any).partner[0] : (existingPayout as any).partner;
+    const rpcProfile = Array.isArray(rpcPartner?.profiles) ? rpcPartner.profiles[0] : rpcPartner?.profiles;
     await syncPayoutUpdated({
       id: (existingPayout as any).id,
       partner_id: (existingPayout as any).partner_id,
+      partner_code: rpcPartner?.partner_code,
+      partner_name: rpcProfile?.full_name,
+      partner_email: rpcProfile?.email,
       amount: Number((existingPayout as any).amount || 0),
+      gross_amount: Number((existingPayout as any).gross_amount || 0),
+      deduction_amount: Number((existingPayout as any).deduction_amount || 0),
       status,
       payment_method: (existingPayout as any).payment_method,
       payment_reference: transactionReference || (existingPayout as any).transaction_reference,
@@ -499,10 +506,17 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     }
   }
 
+  const fbPartner = Array.isArray((existingPayout as any).partner) ? (existingPayout as any).partner[0] : (existingPayout as any).partner;
+  const fbProfile = Array.isArray(fbPartner?.profiles) ? fbPartner.profiles[0] : fbPartner?.profiles;
   await syncPayoutUpdated({
     id: (data as any).id,
     partner_id: (data as any).partner_id,
+    partner_code: fbPartner?.partner_code,
+    partner_name: fbProfile?.full_name,
+    partner_email: fbProfile?.email,
     amount: Number((data as any).amount || 0),
+    gross_amount: Number((data as any).gross_amount || (existingPayout as any).gross_amount || 0),
+    deduction_amount: Number((data as any).deduction_amount || (existingPayout as any).deduction_amount || 0),
     status,
     payment_method: (data as any).payment_method,
     payment_reference: transactionReference || (data as any).transaction_reference,

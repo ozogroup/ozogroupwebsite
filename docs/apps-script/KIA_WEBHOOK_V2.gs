@@ -167,7 +167,93 @@ function kiaSendEventEmails_(eventName, data) {
   if (data.email && eventName === "membership.created") {
     sent = kiaSendEmail_(data.email, "KIA Skin Care membership request received", adminBody, eventName + ".customer", data.request_id) || sent;
   }
+  if (data.email && eventName === "partner.approved") {
+    sent = kiaSendEmail_(data.email, "Welcome to KIA Skin Care — Your Partner ID: " + (data.partner_code || ""), kiaPartnerWelcomeHtml_(data), eventName + ".partner", data.partner_id) || sent;
+  }
+  if (data.email && eventName === "payout.updated" && String(data.status || "").toLowerCase() === "paid") {
+    sent = kiaSendEmail_(data.email, "KIA Skin Care — Payout Processed Successfully", kiaPayoutPaidHtml_(data), eventName + ".partner", data.payout_id) || sent;
+  }
   return sent;
+}
+
+function kiaPartnerWelcomeHtml_(data) {
+  var name = kiaEscapeHtml_(data.full_name || "Partner");
+  var code = kiaEscapeHtml_(data.partner_code || "N/A");
+  var email = kiaEscapeHtml_(data.email || "");
+  return '<div style="font-family:\'Segoe UI\',Arial,sans-serif;max-width:600px;margin:0 auto;color:#3f3632">'
+    + '<div style="background:linear-gradient(135deg,#4F4542,#6F625C);padding:32px 24px;border-radius:16px 16px 0 0;text-align:center">'
+    + '<h1 style="color:#f6e7b6;font-size:28px;margin:0">KIA Skin Care</h1>'
+    + '<p style="color:#e0d8cc;margin:8px 0 0;font-size:14px">Premium Skincare Partner Program</p>'
+    + '</div>'
+    + '<div style="background:#ffffff;padding:32px 24px;border:1px solid #e0d8cc;border-top:none">'
+    + '<h2 style="color:#4F4542;margin:0 0 16px">Welcome, ' + name + '!</h2>'
+    + '<p style="font-size:15px;line-height:1.6;color:#5a4a3a">Congratulations! Your KIA Skin Care Partner membership has been approved. You are now part of our premium skincare referral network.</p>'
+    + '<div style="background:#f9f6f0;border:2px solid #d4c5a0;border-radius:12px;padding:24px;margin:24px 0;text-align:center">'
+    + '<p style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#8b7355;margin:0 0 8px">Your Partner ID</p>'
+    + '<p style="font-size:36px;font-weight:700;color:#4F4542;margin:0;font-family:monospace;letter-spacing:3px">' + code + '</p>'
+    + '</div>'
+    + '<div style="background:#f4eee4;border-radius:8px;padding:16px;margin:16px 0">'
+    + '<p style="margin:0 0 8px;font-weight:600;color:#4F4542">Your Login Details:</p>'
+    + '<p style="margin:4px 0;font-size:14px"><strong>Portal:</strong> <a href="https://kiaskincare.com/partner/login" style="color:#8b7355">kiaskincare.com/partner/login</a></p>'
+    + '<p style="margin:4px 0;font-size:14px"><strong>Email:</strong> ' + email + '</p>'
+    + '<p style="margin:4px 0;font-size:14px"><strong>Password:</strong> The password you set during registration</p>'
+    + '</div>'
+    + '<h3 style="color:#4F4542;margin:24px 0 12px">What You Can Do Now:</h3>'
+    + '<ul style="font-size:14px;line-height:1.8;color:#5a4a3a;padding-left:20px">'
+    + '<li>Share your referral link and earn on every booking</li>'
+    + '<li>Refer new members and earn Rs. 500 per approved membership</li>'
+    + '<li>Track your team, income, and payouts in your dashboard</li>'
+    + '<li>Complete your KYC to unlock payout requests</li>'
+    + '</ul>'
+    + '<div style="text-align:center;margin:32px 0 16px">'
+    + '<a href="https://kiaskincare.com/partner/dashboard" style="display:inline-block;background:#4F4542;color:#f6e7b6;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Open Your Dashboard</a>'
+    + '</div>'
+    + '</div>'
+    + '<div style="background:#f4eee4;padding:16px 24px;border-radius:0 0 16px 16px;text-align:center;font-size:12px;color:#8b7355">'
+    + '<p style="margin:0">KIA Skin Care | Premium Partner Program</p>'
+    + '<p style="margin:4px 0 0">Questions? Contact us at supportkiaskincare@gmail.com</p>'
+    + '</div></div>';
+}
+
+function kiaPayoutPaidHtml_(data) {
+  var name = kiaEscapeHtml_(data.partner_name || "Partner");
+  var code = kiaEscapeHtml_(data.partner_code || "");
+  var amount = Number(data.amount || 0).toLocaleString("en-IN");
+  var gross = Number(data.gross_amount || data.amount || 0).toLocaleString("en-IN");
+  var deduction = Number(data.deduction_amount || 0).toLocaleString("en-IN");
+  var ref = kiaEscapeHtml_(data.payment_reference || "N/A");
+  var method = kiaEscapeHtml_(data.payment_method || "bank");
+  var date = data.updated_at ? new Date(data.updated_at).toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}) : new Date().toLocaleDateString("en-IN");
+  return '<div style="font-family:\'Segoe UI\',Arial,sans-serif;max-width:600px;margin:0 auto;color:#3f3632">'
+    + '<div style="background:linear-gradient(135deg,#047857,#065f46);padding:32px 24px;border-radius:16px 16px 0 0;text-align:center">'
+    + '<h1 style="color:#ffffff;font-size:28px;margin:0">Payout Processed</h1>'
+    + '<p style="color:#a7f3d0;margin:8px 0 0;font-size:14px">KIA Skin Care Partner Program</p>'
+    + '</div>'
+    + '<div style="background:#ffffff;padding:32px 24px;border:1px solid #e0d8cc;border-top:none">'
+    + '<h2 style="color:#047857;margin:0 0 16px">Hello, ' + name + '!</h2>'
+    + '<p style="font-size:15px;line-height:1.6;color:#5a4a3a">Great news! Your payout has been successfully processed and transferred to your registered ' + method.toUpperCase() + ' account.</p>'
+    + '<div style="background:#ecfdf5;border:2px solid #a7f3d0;border-radius:12px;padding:24px;margin:24px 0;text-align:center">'
+    + '<p style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:#047857;margin:0 0 8px">Amount Credited</p>'
+    + '<p style="font-size:36px;font-weight:700;color:#047857;margin:0">Rs. ' + amount + '</p>'
+    + '</div>'
+    + '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Partner ID</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:600">' + code + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Gross Amount</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:600">Rs. ' + gross + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">15% Deduction</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#dc2626">- Rs. ' + deduction + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Net Paid</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:700;color:#047857">Rs. ' + amount + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Payment Mode</td><td style="padding:10px;border-bottom:1px solid #e0d8cc">' + method.toUpperCase() + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Transaction Ref</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-family:monospace">' + ref + '</td></tr>'
+    + '<tr><td style="padding:10px;color:#8b7355">Date</td><td style="padding:10px;font-weight:600">' + date + '</td></tr>'
+    + '</table>'
+    + '<p style="font-size:13px;color:#8b7355;margin:16px 0 0">Your wallet has been reset. Continue sharing and earning — new commissions will be credited automatically!</p>'
+    + '<div style="text-align:center;margin:32px 0 16px">'
+    + '<a href="https://kiaskincare.com/partner/dashboard" style="display:inline-block;background:#047857;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">View Dashboard</a>'
+    + '</div>'
+    + '</div>'
+    + '<div style="background:#ecfdf5;padding:16px 24px;border-radius:0 0 16px 16px;text-align:center;font-size:12px;color:#047857">'
+    + '<p style="margin:0">KIA Skin Care | Premium Partner Program</p>'
+    + '<p style="margin:4px 0 0">Questions? Contact us at supportkiaskincare@gmail.com</p>'
+    + '</div></div>';
 }
 
 function kiaEventHtml_(eventName, data) {

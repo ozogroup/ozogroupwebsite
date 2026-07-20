@@ -272,7 +272,10 @@ export async function syncPayoutUpdated(payout: {
   partner_id: string;
   partner_code?: string;
   partner_name?: string;
+  partner_email?: string;
   amount: number;
+  gross_amount?: number;
+  deduction_amount?: number;
   status: string;
   payment_method?: string;
   payment_reference?: string;
@@ -283,7 +286,10 @@ export async function syncPayoutUpdated(payout: {
     partner_id: payout.partner_id,
     partner_code: payout.partner_code,
     partner_name: payout.partner_name,
+    email: payout.partner_email,
     amount: payout.amount,
+    gross_amount: payout.gross_amount,
+    deduction_amount: payout.deduction_amount,
     status: payout.status,
     payment_method: payout.payment_method,
     payment_reference: payout.payment_reference,
