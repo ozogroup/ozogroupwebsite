@@ -26,6 +26,12 @@ export async function getAdminWalletDirectory() {
         wallet_balance,
         total_earnings,
         paid_earnings,
+        bank_account_holder,
+        bank_account_number,
+        bank_ifsc,
+        bank_name,
+        bank_branch_name,
+        upi_id,
         created_at
       `)
       .order("created_at", { ascending: false }),
@@ -138,6 +144,13 @@ export async function getAdminWalletDirectory() {
       kyc_status: partner.kyc_status,
       wallet_balance: Number(partner.wallet_balance || 0),
       lifetime_earnings: Number(partner.total_earnings || 0),
+      payment_method: partner.upi_id ? "upi" : partner.bank_account_number ? "bank" : "none",
+      bank_account_holder: partner.bank_account_holder || null,
+      bank_account_number: partner.bank_account_number || null,
+      bank_ifsc: partner.bank_ifsc || null,
+      bank_name: partner.bank_name || null,
+      bank_branch_name: partner.bank_branch_name || null,
+      upi_id: partner.upi_id || null,
       ...wallet,
     };
   });

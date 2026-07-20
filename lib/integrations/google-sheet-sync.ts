@@ -21,7 +21,8 @@ type WebhookEvent =
   | 'partner.approved'
   | 'commission.created'
   | 'commission.updated'
-  | 'payout.updated';
+  | 'payout.updated'
+  | 'kyc.submitted';
 
 interface WebhookPayload {
   event: WebhookEvent;
@@ -279,6 +280,11 @@ export async function syncPayoutUpdated(payout: {
   status: string;
   payment_method?: string;
   payment_reference?: string;
+  bank_account_holder?: string;
+  bank_account_number?: string;
+  bank_ifsc?: string;
+  bank_name?: string;
+  upi_id?: string;
   updated_at: string;
 }): Promise<void> {
   await postToGoogleSheet('payout.updated', {
@@ -293,6 +299,48 @@ export async function syncPayoutUpdated(payout: {
     status: payout.status,
     payment_method: payout.payment_method,
     payment_reference: payout.payment_reference,
+    bank_account_holder: payout.bank_account_holder,
+    bank_account_number: payout.bank_account_number,
+    bank_ifsc: payout.bank_ifsc,
+    bank_name: payout.bank_name,
+    upi_id: payout.upi_id,
     updated_at: payout.updated_at,
+  });
+}
+
+/**
+ * Sync KYC submission details to Google Sheet for record keeping.
+ */
+export async function syncKycSubmitted(kyc: {
+  partner_id: string;
+  partner_code: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  payment_method: string;
+  bank_account_holder?: string;
+  bank_account_number?: string;
+  bank_ifsc?: string;
+  bank_name?: string;
+  bank_branch_name?: string;
+  upi_id?: string;
+  upi_holder_name?: string;
+  submitted_at: string;
+}): Promise<void> {
+  await postToGoogleSheet('kyc.submitted' as WebhookEvent, {
+    partner_id: kyc.partner_id,
+    partner_code: kyc.partner_code,
+    full_name: kyc.full_name,
+    email: kyc.email,
+    phone: kyc.phone,
+    payment_method: kyc.payment_method,
+    bank_account_holder: kyc.bank_account_holder,
+    bank_account_number: kyc.bank_account_number,
+    bank_ifsc: kyc.bank_ifsc,
+    bank_name: kyc.bank_name,
+    bank_branch_name: kyc.bank_branch_name,
+    upi_id: kyc.upi_id,
+    upi_holder_name: kyc.upi_holder_name,
+    submitted_at: kyc.submitted_at,
   });
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { syncKycSubmitted } from "@/lib/integrations/google-sheet-sync";
 
 const KYC_BUCKET = "partner-kyc-private";
 const LEGACY_KYC_BUCKET = "kyc-documents";
@@ -319,6 +320,33 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
   } catch (e: any) {
     console.error("KYC submission failed:", e?.message || e);
     return { success: false, error: e?.message || "KYC submission failed. Please check your details and try again." };
+  }
+
+  // Sync KYC details to Google Sheet (non-blocking)
+  try {
+    const { data: partnerRow } = await supabase
+      .from("partners" as any)
+      .select("partner_code")
+      .eq("id", profile.id)
+      .maybeSingle();
+    await syncKycSubmitted({
+      partner_id: profile.id,
+      partner_code: (partnerRow as any)?.partner_code || "",
+      full_name: value(formData, "full_name"),
+      email: value(formData, "email").toLowerCase(),
+      phone: mobileNumber,
+      payment_method: method,
+      bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : undefined,
+      bank_account_number: method === "bank" ? accountNumber : undefined,
+      bank_ifsc: method === "bank" ? bankIfsc : undefined,
+      bank_name: method === "bank" ? value(formData, "bank_name") : undefined,
+      bank_branch_name: method === "bank" ? value(formData, "branch_name") : undefined,
+      upi_id: method === "upi" ? upiId : undefined,
+      upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : undefined,
+      submitted_at: new Date().toISOString(),
+    });
+  } catch (syncErr) {
+    console.error("KYC Google Sheet sync failed (non-fatal):", syncErr);
   }
 
   revalidatePath("/partner/kyc");

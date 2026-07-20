@@ -305,17 +305,16 @@ export default function AdminPayoutsPage() {
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Gross Wallet</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">15% Deduction</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Net Payable</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Payment Details</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">KYC</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Eligibility</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Reserved</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Paid</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border bg-white">
                 {pagedWallets.length === 0 ? (
-                  <tr><td colSpan={10} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search or filter." /></td></tr>
+                  <tr><td colSpan={9} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search or filter." /></td></tr>
                 ) : pagedWallets.map((r) => {
                   const wallet = Number(r.wallet_balance || 0);
                   const deduction = Math.round(wallet * 0.15 * 100) / 100;
@@ -333,15 +332,33 @@ export default function AdminPayoutsPage() {
                       <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(wallet)}</td>
                       <td className="px-4 py-3 text-right text-sm text-red-600">-{money(deduction)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(net)}</td>
+                      <td className="px-4 py-3 max-w-[240px]">
+                        {r.payment_method === "upi" ? (
+                          <div className="space-y-0.5">
+                            <Badge variant="info">UPI</Badge>
+                            <p className="mt-1 text-xs font-medium text-brand-ink break-all">{r.upi_id || "-"}</p>
+                          </div>
+                        ) : r.payment_method === "bank" ? (
+                          <div className="space-y-0.5">
+                            <Badge variant="neutral">Bank</Badge>
+                            <p className="mt-1 text-xs font-medium text-brand-ink">{r.bank_account_holder || "-"}</p>
+                            <p className="text-[10px] text-brand-muted">AC: <span className="font-mono font-semibold text-brand-ink">{r.bank_account_number || "-"}</span></p>
+                            <p className="text-[10px] text-brand-muted">IFSC: <span className="font-mono">{r.bank_ifsc || "-"}</span></p>
+                            {r.bank_name && <p className="text-[10px] text-brand-muted">{r.bank_name}{r.bank_branch_name ? ` - ${r.bank_branch_name}` : ""}</p>}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-red-500">Not submitted</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <Badge variant={getKycBadge(r.kyc_status)}>
                           {r.kyc_status || "N/A"}
                         </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={r.status === "active" ? "success" : r.status === "pending" ? "warning" : "neutral"} dot>
-                          {r.status || "unknown"}
-                        </Badge>
+                        <div className="mt-1">
+                          <Badge variant={r.status === "active" ? "success" : r.status === "pending" ? "warning" : "neutral"} dot>
+                            {r.status || "unknown"}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {eligible ? (
@@ -352,7 +369,6 @@ export default function AdminPayoutsPage() {
                           <span className="text-[10px] text-red-600">{blockReason}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-brand-muted">{r.reservedPayout ? money(r.reservedPayout) : "---"}</td>
                       <td className="px-4 py-3 text-right text-sm text-brand-muted">{r.paidPayout ? money(r.paidPayout) : "---"}</td>
                       <td className="px-4 py-3">
                         {wallet > 0 ? (
@@ -512,11 +528,22 @@ export default function AdminPayoutsPage() {
                     <td className="px-4 py-4 text-right text-sm font-semibold text-brand-ink">
                       {money(payout.net_amount || payout.amount)}
                     </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted max-w-[200px]">
+                    <td className="px-4 py-4 text-sm text-brand-muted max-w-[280px]">
                       <Badge variant={payout.payment_method === "upi" ? "info" : "neutral"}>
                         {payout.payment_method === "upi" ? "UPI" : "Bank"}
                       </Badge>
-                      <p className="mt-1 text-[10px] break-all">{payout.payment_details || "-"}</p>
+                      {payout.payment_method === "upi" ? (
+                        <div className="mt-2 space-y-0.5 text-xs">
+                          <p className="font-medium text-brand-ink">{payout.partner?.upi_id_raw || payout.partner?.upi_id || "-"}</p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-0.5 text-xs">
+                          <p className="font-medium text-brand-ink">{payout.partner?.bank_account_holder || "-"}</p>
+                          <p>AC: <span className="font-mono font-semibold text-brand-ink">{payout.partner?.bank_account_number_raw || payout.partner?.bank_account_number || "-"}</span></p>
+                          <p>IFSC: <span className="font-mono">{payout.partner?.bank_ifsc || "-"}</span></p>
+                          {payout.partner?.bank_name && <p>{payout.partner.bank_name}</p>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>

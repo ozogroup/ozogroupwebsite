@@ -43,6 +43,8 @@ function maskedPartner(partner: any) {
   return {
     ...partner,
     profiles: profileFrom(partner),
+    bank_account_number_raw: partner.bank_account_number || null,
+    upi_id_raw: partner.upi_id || null,
     bank_account_number: partner.bank_account_number ? maskAccount(partner.bank_account_number) : null,
     upi_id: partner.upi_id ? maskUpi(partner.upi_id) : null,
     payment_destination_masked: partner.upi_id
@@ -133,7 +135,7 @@ export async function getPayouts() {
     .from("payouts" as any)
     .select(`
       *,
-      partner:partners(partner_code, kyc_status, bank_verified, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name, phone))
+      partner:partners(partner_code, kyc_status, bank_verified, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id, profiles(full_name, phone, email))
     `)
     .order("created_at", { ascending: false });
   
@@ -153,7 +155,7 @@ export async function getPayouts() {
       .select("partner_id, amount, gross_amount, status"),
     supabase
       .from("partners" as any)
-      .select("id, partner_code, status, kyc_status, bank_verified, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, upi_id, profiles(full_name, phone)")
+      .select("id, partner_code, status, kyc_status, bank_verified, wallet_balance, total_earnings, paid_earnings, bank_account_holder, bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id, profiles(full_name, phone, email)")
   ]);
 
   const bookingIds = Array.from(
@@ -429,6 +431,11 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       status,
       payment_method: (existingPayout as any).payment_method,
       payment_reference: transactionReference || (existingPayout as any).transaction_reference,
+      bank_account_holder: rpcPartner?.bank_account_holder,
+      bank_account_number: rpcPartner?.bank_account_number,
+      bank_ifsc: rpcPartner?.bank_ifsc,
+      bank_name: rpcPartner?.bank_name,
+      upi_id: rpcPartner?.upi_id,
       updated_at: now,
     });
 
@@ -520,6 +527,11 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     status,
     payment_method: (data as any).payment_method,
     payment_reference: transactionReference || (data as any).transaction_reference,
+    bank_account_holder: fbPartner?.bank_account_holder,
+    bank_account_number: fbPartner?.bank_account_number,
+    bank_ifsc: fbPartner?.bank_ifsc,
+    bank_name: fbPartner?.bank_name,
+    upi_id: fbPartner?.upi_id,
     updated_at: now,
   });
 

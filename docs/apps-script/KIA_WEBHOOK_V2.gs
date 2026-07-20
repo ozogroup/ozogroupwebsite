@@ -105,13 +105,42 @@ function kiaProcessWebhookEvent_(eventName, data) {
         "Payout ID": data.payout_id,
         "Partner ID": data.partner_code || data.partner_id,
         "Partner Name": data.partner_name,
-        "Amount": data.amount,
+        "Email": data.email,
+        "Gross Amount": data.gross_amount || data.amount,
+        "Deduction": data.deduction_amount || 0,
+        "Net Amount": data.amount,
         "Payment Mode": data.payment_method,
-        "UPI/Bank Details": data.payment_reference,
+        "Bank Holder": data.bank_account_holder || "",
+        "Account Number": data.bank_account_number || "",
+        "IFSC": data.bank_ifsc || "",
+        "Bank Name": data.bank_name || "",
+        "UPI ID": data.upi_id || "",
+        "UTR/Reference": data.payment_reference || "",
         "Status": data.status,
         "Requested Date": data.updated_at,
         "Paid Date": String(data.status || "").toLowerCase() === "paid" ? data.updated_at : "",
         "Supabase ID": data.payout_id
+      };
+      break;
+    case "kyc.submitted":
+      sheet = "KYC Submissions";
+      keyHeader = "Supabase ID";
+      keyValue = data.partner_id;
+      values = {
+        "Partner ID": data.partner_code || data.partner_id,
+        "Name": data.full_name,
+        "Email": data.email,
+        "Phone": data.phone,
+        "Payment Method": data.payment_method,
+        "Bank Holder": data.bank_account_holder || "",
+        "Account Number": data.bank_account_number || "",
+        "IFSC": data.bank_ifsc || "",
+        "Bank Name": data.bank_name || "",
+        "Branch": data.bank_branch_name || "",
+        "UPI ID": data.upi_id || "",
+        "UPI Holder": data.upi_holder_name || "",
+        "Submitted Date": data.submitted_at,
+        "Supabase ID": data.partner_id
       };
       break;
     default:
