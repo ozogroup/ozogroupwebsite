@@ -50,11 +50,17 @@ export default function PartnerKycPage() {
     setLoading(true);
     try {
       const data = await getPartnerKycStatus();
+      if (!data.success) {
+        setError(data.error || "Failed to load KYC data.");
+        setLoading(false);
+        return;
+      }
+      setError("");
       setPartner(data.partner);
       setKyc(data.kyc);
       setProfile(data.profile);
-      setMaskedAccount(data.maskedAccount);
-      setMaskedUpi(data.maskedUpi);
+      setMaskedAccount(data.maskedAccount ?? null);
+      setMaskedUpi(data.maskedUpi ?? null);
 
       const k = data.kyc;
       const p = data.partner;

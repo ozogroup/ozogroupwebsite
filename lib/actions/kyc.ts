@@ -326,11 +326,33 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
   return { success: true };
 }
 
-export async function getPartnerKycStatus() {
-  const profile = await requirePartner();
+export async function getPartnerKycStatus(): Promise<{
+  success: boolean;
+  error?: string;
+  partner?: any;
+  kyc?: any;
+  profile?: any;
+  maskedAccount?: string | null;
+  maskedUpi?: string | null;
+}> {
+  let profile: any;
+  try {
+    profile = await requirePartner();
+  } catch {
+    return { success: false, error: "Please log in as a partner to access KYC." };
+  }
+
   const supabase = getSupabaseServiceClient();
 
-  const { data: partner } = await supabase.from("partners" as any).select("*").eq("id", profile.id).single();
+  const { data: partner, error: partnerError } = await supabase
+    .from("partners" as any)
+    .select("*")
+    .eq("id", profile.id)
+    .maybeSingle();
+
+  if (partnerError || !partner) {
+    return { success: false, error: "Could not load partner profile. Please try refreshing." };
+  }
 
   let kyc: any = null;
   try {
@@ -341,9 +363,10 @@ export async function getPartnerKycStatus() {
   }
 
   return {
+    success: true,
     partner: partner as any,
     kyc: kyc as any,
-    profile,
+    profile: { id: profile.id, full_name: profile.full_name, email: profile.email, phone: profile.phone, role: profile.role },
     maskedAccount: maskAccount((kyc as any)?.account_number || (partner as any)?.bank_account_number),
     maskedUpi: maskUpi((kyc as any)?.upi_id || (partner as any)?.upi_id),
   };
