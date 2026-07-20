@@ -392,57 +392,77 @@ export default async function AdminDashboardPage({
         </Card>
       </div>
 
-      {/* Content Stats */}
-      <div>
-        <div className="flex items-baseline justify-between mb-4">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Content Library</h2>
-          <Link href="/admin/content" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
-            Manage all <ArrowRight className="w-3 h-3" />
-          </Link>
+      {/* Urgent Action Items */}
+      {actionItemsCount > 0 && (
+        <div className="rounded-2xl border-2 border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50 p-5 shadow-soft">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+              <ShieldCheck className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-amber-900">Requires Your Attention</h2>
+              <p className="text-xs text-amber-700">{actionItemsCount} item{actionItemsCount === 1 ? "" : "s"} pending review</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {pendingKycCount > 0 && (
+              <Link href="/admin/kyc" className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100"><ShieldCheck className="h-4 w-4 text-amber-600" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-brand-ink">{pendingKycCount} KYC Pending</p>
+                    <p className="text-xs text-brand-muted">Review partner documents</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-amber-500" />
+              </Link>
+            )}
+            {pendingPayoutsCount > 0 && (
+              <Link href="/admin/payouts" className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 transition-all hover:shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100"><Wallet className="h-4 w-4 text-amber-600" /></div>
+                  <div>
+                    <p className="text-sm font-semibold text-brand-ink">{pendingPayoutsCount} Payouts Pending</p>
+                    <p className="text-xs text-brand-muted">Process partner payments</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-amber-500" />
+              </Link>
+            )}
+          </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard label="Treatments" value={treatmentsCount} icon={Sparkles} href="/admin/treatments" tone="sage" hint={treatmentsCount > 0 ? "Live on website" : "No data"} />
-          <StatCard label="Testimonials" value={testimonialsCount} icon={Star} href="/admin/testimonials" tone="purple" hint={testimonialsCount > 0 ? "Live on website" : "No data"} />
-          <StatCard label="FAQs" value={faqsCount} icon={MessageCircleQuestion} href="/admin/faqs" tone="amber" hint={faqsCount > 0 ? "Live on website" : "No data"} />
-          <StatCard label="Content Items" value={siteContentCount} icon={FileText} href="/admin/content" tone="teal" hint={siteContentCount > 0 ? "Live on website" : "No data"} />
-          <StatCard label="Contact Settings" value={contactSettingsCount} icon={Phone} href="/admin/contact" tone="rose" hint={contactSettingsCount > 0 ? "Configured" : "Not set"} />
-        </div>
+      )}
+
+      {/* Business Overview Grid */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <StatCard label="Total Bookings" value={bookingsCount} icon={Calendar} href="/admin/bookings" tone="sage" hint={`${todayBookingsCount} today`} />
+        <StatCard label="Memberships" value={membershipsCount} icon={CreditCard} href="/admin/memberships" tone="amber" hint={`${activeMembershipRows.length} active`} />
+        <StatCard label="Partners" value={partnersCount} icon={Users} href="/admin/partners" tone="green" hint={`${activePartnersCount} active`} />
+        <StatCard label="Monthly Revenue" value={`Rs. ${monthlyRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/bookings" tone="purple" hint="This month paid bookings" />
+        <StatCard label="Total Paid Out" value={`Rs. ${totalPayoutAmount.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="rose" hint={`${payoutsCount} total payouts`} />
       </div>
 
-      {/* Business Operations */}
-      <div>
-        <div className="flex items-baseline justify-between mb-4">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Business Operations</h2>
-          <Link href="/admin/bookings" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
-            View bookings <ArrowRight className="w-3 h-3" />
-          </Link>
+      {/* Highlights Row */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5">
+          <Sparkles className="absolute -right-2 -top-2 h-16 w-16 text-emerald-100" />
+          <p className="relative text-xs font-semibold uppercase tracking-wider text-emerald-600">Top Treatment</p>
+          <p className="relative mt-2 text-lg font-bold text-brand-ink truncate">{topSellingTreatment}</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard label="Bookings" value={bookingsCount} icon={Calendar} href="/admin/bookings" tone="sage" />
-          <StatCard label="Membership Requests" value={membershipsCount} icon={CreditCard} href="/admin/memberships" tone="amber" />
-          <StatCard label="Referral Partners" value={partnersCount} icon={Users} href="/admin/partners" tone="green" />
-          <StatCard label="Commissions" value={commissionsCount} icon={BadgeIndianRupee} href="/admin/commissions" tone="purple" />
-          <StatCard label="Payouts" value={payoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
+        <div className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5">
+          <Award className="absolute -right-2 -top-2 h-16 w-16 text-violet-100" />
+          <p className="relative text-xs font-semibold uppercase tracking-wider text-violet-600">Top Partner</p>
+          <p className="relative mt-2 text-lg font-bold text-brand-ink truncate">{topPerformingPartner}</p>
         </div>
-      </div>
-
-      <div>
-        <div className="flex items-baseline justify-between mb-4">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-[0.08em]">Live Partner System</h2>
-          <Link href="/admin/kyc" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">
-            Review KYC <ArrowRight className="w-3 h-3" />
-          </Link>
+        <div className="relative overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5">
+          <FileText className="absolute -right-2 -top-2 h-16 w-16 text-sky-100" />
+          <p className="relative text-xs font-semibold uppercase tracking-wider text-sky-600">Website Content</p>
+          <p className="relative mt-2 text-lg font-bold text-brand-ink">{treatmentsCount + testimonialsCount + faqsCount + siteContentCount} items</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <StatCard label="Active Partners" value={activePartnersCount} icon={Users} href="/admin/partners" tone="green" />
-          <StatCard label="Expired Memberships" value={expiredMembershipsCount} icon={CreditCard} href="/admin/partners" tone="rose" />
-          <StatCard label="Today Bookings" value={todayBookingsCount} icon={Calendar} href="/admin/bookings" tone="sage" />
-          <StatCard label="Monthly Revenue" value={`₹${monthlyRevenue.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/bookings" tone="amber" />
-          <StatCard label="Total Payouts" value={`₹${totalPayoutAmount.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" />
-          <StatCard label="Pending KYC" value={pendingKycCount} icon={CreditCard} href="/admin/kyc" tone="amber" />
-          <StatCard label="Pending Payouts" value={pendingPayoutsCount} icon={Wallet} href="/admin/payouts" tone="rose" />
-          <StatCard label="Top Treatment" value={topSellingTreatment} icon={Sparkles} href="/admin/treatments" tone="sage" />
-          <StatCard label="Top Partner" value={topPerformingPartner} icon={Award} href="/admin/partners" tone="green" />
+        <div className="relative overflow-hidden rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-5">
+          <Users className="absolute -right-2 -top-2 h-16 w-16 text-rose-100" />
+          <p className="relative text-xs font-semibold uppercase tracking-wider text-rose-600">Expired Members</p>
+          <p className="relative mt-2 text-lg font-bold text-brand-ink">{expiredMembershipsCount}</p>
         </div>
       </div>
 
@@ -521,215 +541,114 @@ export default async function AdminDashboardPage({
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <Link href="/admin/treatments" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Manage Treatments</span>
-          </Link>
-          <Link href="/admin/treatments" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Add Treatment</span>
-          </Link>
-          <Link href="/admin/testimonials" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Manage Testimonials</span>
-          </Link>
-          <Link href="/admin/faqs" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Manage FAQs</span>
-          </Link>
-          <Link href="/admin/content" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Edit Website Content</span>
-          </Link>
-          <Link href="/admin/contact" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">Contact Settings</span>
-          </Link>
-          <Link href="/admin/system-health" className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-brand-accent hover:bg-slate-50 transition-colors">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm font-medium text-slate-700">System Health</span>
-          </Link>
+      <div className="relative overflow-hidden rounded-2xl border border-brand-border bg-white p-6 shadow-soft">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-accent/5 blur-2xl" />
+        <h2 className="relative text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 mb-4">Quick Actions</h2>
+        <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { href: "/admin/treatments", icon: Sparkles, label: "Treatments", color: "from-emerald-500 to-teal-600" },
+            { href: "/admin/bookings", icon: Calendar, label: "Bookings", color: "from-blue-500 to-indigo-600" },
+            { href: "/admin/memberships", icon: CreditCard, label: "Memberships", color: "from-amber-500 to-orange-600" },
+            { href: "/admin/partners", icon: Users, label: "Partners", color: "from-violet-500 to-purple-600" },
+            { href: "/admin/payouts", icon: Wallet, label: "Payouts", color: "from-rose-500 to-pink-600" },
+            { href: "/admin/kyc", icon: ShieldCheck, label: "KYC Review", color: "from-cyan-500 to-blue-600" },
+            { href: "/admin/commissions", icon: BadgeIndianRupee, label: "Commissions", color: "from-green-500 to-emerald-600" },
+            { href: "/admin/content", icon: FileText, label: "Content", color: "from-slate-500 to-gray-600" },
+          ].map((item) => (
+            <Link key={item.href} href={item.href} className="group flex items-center gap-3 rounded-xl border border-brand-border bg-white p-4 transition-all hover:border-brand-accent hover:shadow-md">
+              <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${item.color} shadow-sm`}>
+                <item.icon className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-sm font-semibold text-brand-ink group-hover:text-brand-primaryDark">{item.label}</span>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Recent Data Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card>
-          <CardHeader
-            title="Recent Treatments"
-            subtitle="Latest 5 services added"
-            action={<Link href="/admin/treatments" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {recentTreatments.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {recentTreatments.map((t: any) => (
-                  <li key={t.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+      {/* Recent Activity Feed */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 mb-4">Recent Activity</h2>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-4">
+          <Card>
+            <CardHeader
+              title="Bookings"
+              action={<Link href="/admin/bookings" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>}
+            />
+            <div className="mt-3 space-y-1">
+              {recentBookings.length > 0 ? recentBookings.map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between rounded-lg p-2.5 hover:bg-brand-surface/40 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-brand-ink truncate">{b.customer_name}</p>
+                    <p className="text-[11px] text-brand-muted mt-0.5">{b.city || "—"} &middot; {b.created_at ? new Date(b.created_at).toLocaleDateString("en-IN") : "—"}</p>
+                  </div>
+                  <Badge variant="info" dot>{b.booking_status || "pending"}</Badge>
+                </div>
+              )) : <EmptyState icon={Calendar} title="No bookings" />}
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Memberships"
+              action={<Link href="/admin/memberships" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>}
+            />
+            <div className="mt-3 space-y-1">
+              {recentMemberships.length > 0 ? recentMemberships.map((m: any) => {
+                const v = m.membership_status === "active" ? "success" : m.membership_status === "rejected" ? "danger" : "warning";
+                return (
+                  <div key={m.id} className="flex items-center justify-between rounded-lg p-2.5 hover:bg-brand-surface/40 transition-colors">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{t.title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 capitalize">{t.type?.replace("_", " ")} • {t.price_label || `₹${t.price}`}</p>
+                      <p className="text-sm font-medium text-brand-ink truncate">{m.full_name}</p>
+                      <p className="text-[11px] text-brand-muted mt-0.5">{m.city}</p>
                     </div>
-                    <Badge variant={t.active ? "success" : "neutral"} dot>{t.active ? "Active" : "Inactive"}</Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Sparkles} title="No treatments yet" description="Add your first treatment to get started." />
-            )}
-          </div>
-        </Card>
+                    <Badge variant={v as any} dot>{m.membership_status || "pending"}</Badge>
+                  </div>
+                );
+              }) : <EmptyState icon={CreditCard} title="No requests" />}
+            </div>
+          </Card>
 
-        <Card>
-          <CardHeader
-            title="Recent Testimonials"
-            subtitle="Latest 3 customer reviews"
-            action={<Link href="/admin/testimonials" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {recentTestimonials.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {recentTestimonials.map((t: any) => (
-                  <li key={t.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+          <Card>
+            <CardHeader
+              title="Partners"
+              action={<Link href="/admin/partners" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>}
+            />
+            <div className="mt-3 space-y-1">
+              {recentPartners.length > 0 ? recentPartners.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg p-2.5 hover:bg-brand-surface/40 transition-colors">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent">
+                      <span className="text-[10px] font-bold text-white">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name?.[0] || "P"}</span>
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{t.city} • {t.treatment}</p>
+                      <p className="text-sm font-medium text-brand-ink truncate">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name || "—"}</p>
+                      <p className="text-[11px] font-mono text-brand-muted">{p.partner_code}</p>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-xs font-medium text-slate-700 tabular-nums">{t.rating}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Star} title="No testimonials yet" />
-            )}
-          </div>
-        </Card>
-      </div>
+                  </div>
+                  <Badge variant={p.status === "active" ? "success" : "neutral"} dot>{p.status || "—"}</Badge>
+                </div>
+              )) : <EmptyState icon={Users} title="No partners" />}
+            </div>
+          </Card>
 
-      {/* Recent Operational Data */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card>
-          <CardHeader
-            title="Recent Bookings"
-            action={<Link href="/admin/bookings" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {recentBookings.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {recentBookings.map((b: any) => (
-                  <li key={b.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{b.customer_name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{b.city || "—"} • {b.created_at ? new Date(b.created_at).toLocaleDateString() : "—"}</p>
-                    </div>
-                    <Badge variant="info" dot>{b.booking_status || "pending"}</Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Calendar} title="No bookings yet" />
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Recent Membership Requests"
-            action={<Link href="/admin/memberships" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {recentMemberships.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {recentMemberships.map((m: any) => {
-                  const v = m.membership_status === "active" ? "success" : m.membership_status === "rejected" ? "danger" : "warning";
-                  return (
-                    <li key={m.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{m.full_name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{m.mobile} • {m.city}</p>
-                      </div>
-                      <Badge variant={v as any} dot>{m.membership_status || "pending"}</Badge>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <EmptyState icon={CreditCard} title="No membership requests" />
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Recent Referral Partners"
-            action={<Link href="/admin/partners" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {recentPartners.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {recentPartners.map((p: any) => (
-                  <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary to-brand-accent flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold text-white">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name?.[0] || "P"}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{(Array.isArray(p.profiles) ? p.profiles[0] : p.profiles)?.full_name || "—"}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 font-mono">{p.partner_code}</p>
-                      </div>
-                    </div>
-                    <Badge variant={p.status === "active" ? "success" : "neutral"} dot>{p.status || "—"}</Badge>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Users} title="No partners yet" />
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Pending Payouts"
-            action={<Link href="/admin/payouts" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">View all <ArrowRight className="w-3 h-3" /></Link>}
-          />
-          <div className="mt-4 -mx-2">
-            {pendingPayouts.length > 0 ? (
-              <ul className="divide-y divide-slate-100">
-                {pendingPayouts.map((p: any) => (
-                  <li key={p.id} className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{(Array.isArray(p.partner?.profiles) ? p.partner.profiles[0] : p.partner?.profiles)?.full_name || "—"}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{new Date(p.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-900 tabular-nums">₹{p.amount}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Wallet} title="No pending payouts" />
-            )}
-          </div>
-        </Card>
+          <Card>
+            <CardHeader
+              title="Payouts Queue"
+              action={<Link href="/admin/payouts" className="text-xs font-medium text-brand-accent hover:underline inline-flex items-center gap-1">All <ArrowRight className="w-3 h-3" /></Link>}
+            />
+            <div className="mt-3 space-y-1">
+              {pendingPayouts.length > 0 ? pendingPayouts.map((p: any) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg p-2.5 hover:bg-brand-surface/40 transition-colors">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-brand-ink truncate">{(Array.isArray(p.partner?.profiles) ? p.partner.profiles[0] : p.partner?.profiles)?.full_name || "—"}</p>
+                    <p className="text-[11px] text-brand-muted mt-0.5">{new Date(p.created_at).toLocaleDateString("en-IN")}</p>
+                  </div>
+                  <span className="text-sm font-bold text-brand-primaryDark tabular-nums">Rs. {Number(p.amount).toLocaleString("en-IN")}</span>
+                </div>
+              )) : <EmptyState icon={Wallet} title="No pending payouts" />}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
