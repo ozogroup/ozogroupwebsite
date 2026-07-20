@@ -5,11 +5,12 @@ import { getSupabaseServiceClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 function money(value: unknown) {
-  return Number(value || 0).toFixed(2);
+  return Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function csvCell(value: unknown) {
-  const text = String(value ?? "");
+function csvSanitize(value: unknown) {
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
   return `"${text.replace(/"/g, '""')}"`;
 }
 
@@ -32,31 +33,105 @@ function pdfEscape(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 
-function buildSimplePdf(lines: string[]) {
-  const objects: string[] = [];
-  const content = [
-    "BT",
-    "/F1 10 Tf",
-    "40 800 Td",
-    ...lines.slice(0, 56).map((line, index) => `${index === 0 ? "" : "0 -13 Td"}(${pdfEscape(line)}) Tj`),
-    "ET",
-  ].join("\n");
-  objects.push("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj");
-  objects.push("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj");
-  objects.push("3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj");
-  objects.push("4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj");
-  objects.push(`5 0 obj << /Length ${Buffer.byteLength(content)} >> stream\n${content}\nendstream endobj`);
+function truncate(value: string, max: number) {
+  return value.length > max ? value.slice(0, max - 2) + ".." : value;
+}
 
-  let offset = "%PDF-1.4\n".length;
+// Multi-page PDF builder with proper headers per page
+function buildMultiPagePdf(headerLines: string[], tableHeaders: string[], rows: string[][], footerLine: string) {
+  const MARGIN_LEFT = 30;
+  const MARGIN_TOP = 560;
+  const LINE_HEIGHT = 12;
+  const HEADER_HEIGHT = headerLines.length * 14 + 30;
+  const LINES_PER_PAGE = Math.floor((MARGIN_TOP - 40 - HEADER_HEIGHT) / LINE_HEIGHT);
+  const TABLE_HEADER_LINE = tableHeaders.join("  |  ");
+
+  const pages: string[][] = [];
+  let currentPage: string[] = [];
+  let lineCount = 0;
+
+  function newPage() {
+    if (currentPage.length > 0) pages.push(currentPage);
+    currentPage = [];
+    lineCount = 0;
+    for (const hl of headerLines) {
+      currentPage.push(hl);
+      lineCount++;
+    }
+    currentPage.push("");
+    lineCount++;
+    currentPage.push(TABLE_HEADER_LINE);
+    lineCount++;
+    currentPage.push("-".repeat(120));
+    lineCount++;
+  }
+
+  newPage();
+  for (const row of rows) {
+    if (lineCount >= LINES_PER_PAGE) newPage();
+    currentPage.push(row.join("  |  "));
+    lineCount++;
+  }
+  currentPage.push("");
+  currentPage.push(footerLine);
+  pages.push(currentPage);
+
+  const objects: string[] = [];
+  const pageRefs: string[] = [];
+  let objNum = 0;
+
+  function addObj(content: string) {
+    objNum++;
+    objects.push(`${objNum} 0 obj ${content} endobj`);
+    return objNum;
+  }
+
+  const catalogRef = addObj("<< /Type /Catalog /Pages 2 0 R >>");
+  const pagesObjPlaceholder = objects.length;
+  addObj("PAGES_PLACEHOLDER");
+  const fontRef = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const fontBoldRef = addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+  for (let p = 0; p < pages.length; p++) {
+    const pageLines = pages[p];
+    const content = [
+      "BT",
+      `/F2 11 Tf`,
+      `${MARGIN_LEFT} ${MARGIN_TOP + 15} Td`,
+      `(${pdfEscape(`KIA Skin Care - Payout Report`)}) Tj`,
+      `/F1 8 Tf`,
+      `0 -14 Td`,
+      `(${pdfEscape(`Page ${p + 1} of ${pages.length}`)}) Tj`,
+      "0 -6 Td",
+      ...pageLines.map((line, i) => {
+        const isHeader = i < headerLines.length;
+        const fontCmd = isHeader ? "/F2 8 Tf" : "/F1 7.5 Tf";
+        return `${fontCmd} 0 -${LINE_HEIGHT} Td (${pdfEscape(truncate(line, 160))}) Tj`;
+      }),
+      "ET",
+    ].join("\n");
+
+    const streamRef = addObj(`<< /Length ${Buffer.byteLength(content)} >> stream\n${content}\nendstream`);
+    const pageRef = addObj(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /Font << /F1 ${fontRef} 0 R /F2 ${fontBoldRef} 0 R >> >> /Contents ${streamRef} 0 R >>`
+    );
+    pageRefs.push(`${pageRef} 0 R`);
+  }
+
+  objects[pagesObjPlaceholder] = `2 0 obj << /Type /Pages /Kids [${pageRefs.join(" ")}] /Count ${pageRefs.length} >> endobj`;
+
+  const header = "%PDF-1.4\n";
+  let offset = Buffer.byteLength(header);
   const xref = ["0000000000 65535 f "];
   const body = objects.map((obj) => {
     xref.push(String(offset).padStart(10, "0") + " 00000 n ");
-    offset += Buffer.byteLength(obj + "\n");
-    return obj;
-  }).join("\n") + "\n";
+    const line = obj + "\n";
+    offset += Buffer.byteLength(line);
+    return line;
+  }).join("");
   const xrefOffset = offset;
-  const trailer = `xref\n0 ${objects.length + 1}\n${xref.join("\n")}\ntrailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-  return Buffer.from("%PDF-1.4\n" + body + trailer);
+  const trailer = `xref\n0 ${objects.length + 1}\n${xref.join("\n")}\ntrailer << /Size ${objects.length + 1} /Root ${catalogRef} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return Buffer.from(header + body + trailer);
 }
 
 async function loadRows(ids: string[]) {
@@ -109,11 +184,13 @@ export async function GET(request: NextRequest) {
       branch: partner?.bank_branch_name || "",
       upiId: method === "upi" ? partner?.upi_id || "" : "",
       maskedUpi: maskUpi(partner?.upi_id),
+      upiHolder: "", // not stored on partner
       gross,
       deductionRate,
       deduction,
       net,
-      requestDate: row.created_at || "",
+      requestDate: row.created_at ? new Date(row.created_at).toLocaleDateString("en-IN") : "",
+      paidDate: row.paid_at ? new Date(row.paid_at).toLocaleDateString("en-IN") : "",
       kycStatus: partner?.kyc_status || "",
       payoutStatus: row.status || "",
       adminNote: row.admin_notes || row.transaction_note || "",
@@ -129,6 +206,10 @@ export async function GET(request: NextRequest) {
     }),
     { gross: 0, deduction: 0, net: 0 }
   );
+  const bankCount = exportRows.filter((r) => r.paymentMode === "bank").length;
+  const upiCount = exportRows.filter((r) => r.paymentMode === "upi").length;
+  const statusCounts: Record<string, number> = {};
+  for (const row of exportRows) statusCounts[row.payoutStatus] = (statusCounts[row.payoutStatus] || 0) + 1;
 
   const generatedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
   const filenameDate = new Date().toISOString().slice(0, 10);
@@ -144,75 +225,104 @@ export async function GET(request: NextRequest) {
       new_value: { format, row_count: exportRows.length, generated_at: generatedAt },
     });
   } catch {
-    // Export must not fail if the optional audit table is unavailable.
+    // non-fatal
   }
 
   if (format === "pdf") {
-    const lines = [
-      "KIA Skin Care - Payout Statement",
+    const headerLines = [
       `Generated: ${generatedAt}`,
       `Generated By: ${(admin as any)?.email || "Admin"}`,
-      `Total Partners: ${exportRows.length}`,
-      `Total Gross Payout: Rs. ${money(totals.gross)}`,
-      `Total 15% Deduction: Rs. ${money(totals.deduction)}`,
-      `Total Net Payable: Rs. ${money(totals.net)}`,
-      " ",
-      "Sr | Payout ID | Partner | Partner ID | Mode | Gross | Deduction | Net | Status | Reference",
-      ...exportRows.map((row) =>
-        [
-          row.sr,
-          row.payoutId.slice(0, 8),
-          row.partnerName,
-          row.partnerCode,
-          row.paymentMode,
-          money(row.gross),
-          money(row.deduction),
-          money(row.net),
-          row.payoutStatus,
-          row.transactionReference,
-        ].join(" | ")
-      ),
-      " ",
-      "Prepared by KIA Skin Care Admin",
-      "Approved By: ____________________    Date: ____________",
+      `Total Partners: ${exportRows.length} (Bank: ${bankCount}, UPI: ${upiCount})`,
+      `Gross Total: Rs. ${money(totals.gross)}  |  15% Deduction: Rs. ${money(totals.deduction)}  |  Net Payable: Rs. ${money(totals.net)}`,
+      `Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`,
     ];
-    return new NextResponse(buildSimplePdf(lines), {
+    const tableHeaders = ["Sr", "Partner", "ID", "Mode", "Gross", "Deduction", "Net", "Status", "UTR"];
+    const tableRows = exportRows.map((row) => [
+      String(row.sr),
+      truncate(row.partnerName, 20),
+      row.partnerCode,
+      row.paymentMode,
+      `Rs.${money(row.gross)}`,
+      `Rs.${money(row.deduction)}`,
+      `Rs.${money(row.net)}`,
+      row.payoutStatus,
+      truncate(row.transactionReference, 15),
+    ]);
+    const footer = `Prepared by KIA Skin Care Admin  |  Approved By: _______________  Date: ___________`;
+
+    return new NextResponse(buildMultiPagePdf(headerLines, tableHeaders, tableRows, footer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="kia-payout-statement-${filenameDate}.pdf"`,
+        "Content-Disposition": `attachment; filename="KIA-Payout-Report-${filenameDate}.pdf"`,
       },
     });
   }
 
   if (format === "print") {
-    const body = `<!doctype html><html><head><meta charset="utf-8"><title>KIA Payout Report</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#3f3632}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #ddd;padding:6px;text-align:left}th{background:#f4eee4}.totals{margin:16px 0;font-weight:700}</style></head><body><h1>KIA Skin Care Payout Report</h1><p>Generated: ${generatedAt}</p><div class="totals">Gross Rs. ${money(totals.gross)} | Deduction Rs. ${money(totals.deduction)} | Net Rs. ${money(totals.net)}</div><table><thead><tr><th>Sr</th><th>Payout ID</th><th>Partner</th><th>Partner ID</th><th>Mode</th><th>Gross</th><th>Deduction</th><th>Net</th><th>Status</th></tr></thead><tbody>${exportRows.map((row) => `<tr><td>${row.sr}</td><td>${row.payoutId}</td><td>${row.partnerName}</td><td>${row.partnerCode}</td><td>${row.paymentMode}</td><td>${money(row.gross)}</td><td>${money(row.deduction)}</td><td>${money(row.net)}</td><td>${row.payoutStatus}</td></tr>`).join("")}</tbody></table><script>window.print()</script></body></html>`;
+    const statusSummary = Object.entries(statusCounts).map(([k, v]) => `<span class="badge">${k}: ${v}</span>`).join(" ");
+    const body = `<!doctype html><html><head><meta charset="utf-8"><title>KIA Payout Report - ${filenameDate}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;padding:24px;color:#3f3632;font-size:12px}
+h1{font-size:18px;color:#3f3632;margin-bottom:4px}
+.subtitle{color:#8b7355;margin-bottom:16px}
+.meta{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px;font-size:11px;color:#666}
+.totals{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f9f6f0;border-radius:8px;font-weight:600}
+.totals .amount{font-size:14px;color:#3f3632}
+.totals .label{font-size:10px;color:#8b7355;text-transform:uppercase}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;background:#f0ebe0;font-size:10px;margin-right:4px}
+table{border-collapse:collapse;width:100%;font-size:11px;margin-top:8px}
+td,th{border:1px solid #e0d8cc;padding:6px 8px;text-align:left}
+th{background:#f4eee4;font-weight:600;font-size:10px;text-transform:uppercase;color:#5a4a3a}
+.text-right{text-align:right}
+.paid{color:#047857}
+.rejected{color:#dc2626}
+.footer{margin-top:24px;padding-top:16px;border-top:2px solid #e0d8cc;display:flex;justify-content:space-between;font-size:10px;color:#8b7355}
+@media print{body{padding:12px}table{font-size:9px}td,th{padding:4px 6px}}
+</style></head><body>
+<h1>KIA Skin Care — Payout Report</h1>
+<p class="subtitle">Generated: ${generatedAt} by ${(admin as any)?.email || "Admin"}</p>
+<div class="meta"><span>Partners: ${exportRows.length}</span><span>Bank: ${bankCount}</span><span>UPI: ${upiCount}</span>${statusSummary}</div>
+<div class="totals">
+<div><div class="label">Gross Total</div><div class="amount">Rs. ${money(totals.gross)}</div></div>
+<div><div class="label">15% Deduction</div><div class="amount">Rs. ${money(totals.deduction)}</div></div>
+<div><div class="label">Net Payable</div><div class="amount">Rs. ${money(totals.net)}</div></div>
+</div>
+<table><thead><tr>
+<th>Sr</th><th>Partner</th><th>Partner ID</th><th>Mobile</th><th>Mode</th>
+<th>Account / UPI</th><th class="text-right">Gross</th><th class="text-right">Deduction</th>
+<th class="text-right">Net</th><th>Status</th><th>UTR</th><th>Paid Date</th>
+</tr></thead><tbody>
+${exportRows.map((r) => `<tr>
+<td>${r.sr}</td><td>${r.partnerName}</td><td>${r.partnerCode}</td><td>${r.mobile}</td>
+<td>${r.paymentMode}</td>
+<td>${r.paymentMode === "upi" ? r.maskedUpi : `${r.maskedAccount} ${r.ifsc}`}</td>
+<td class="text-right">Rs. ${money(r.gross)}</td><td class="text-right">Rs. ${money(r.deduction)}</td>
+<td class="text-right"><strong>Rs. ${money(r.net)}</strong></td>
+<td class="${r.payoutStatus === "paid" ? "paid" : r.payoutStatus === "rejected" ? "rejected" : ""}">${r.payoutStatus}</td>
+<td>${r.transactionReference}</td><td>${r.paidDate}</td>
+</tr>`).join("")}
+<tr style="font-weight:700;background:#f4eee4">
+<td colspan="6" class="text-right">TOTAL</td>
+<td class="text-right">Rs. ${money(totals.gross)}</td><td class="text-right">Rs. ${money(totals.deduction)}</td>
+<td class="text-right">Rs. ${money(totals.net)}</td><td colspan="3"></td>
+</tr>
+</tbody></table>
+<div class="footer"><span>Prepared by KIA Skin Care Admin</span><span>Approved By: _______________&nbsp;&nbsp;&nbsp;Date: ___________</span></div>
+<script>window.print()</script></body></html>`;
     return new NextResponse(body, { headers: { "Content-Type": "text/html; charset=utf-8" } });
   }
 
+  // CSV Export (default)
   const headers = [
-    "Sr. No.",
-    "Payout ID",
-    "Partner Name",
-    "Partner ID",
-    "Registered Mobile",
-    "Payment Mode",
-    "Account Holder Name",
-    "Bank Name",
-    "Account Number",
-    "IFSC Code",
-    "Branch Name",
-    "UPI ID",
-    "Gross Amount",
-    "Deduction Percentage",
-    "Deduction Amount",
-    "Net Payable",
-    "Request Date",
-    "KYC Status",
-    "Payout Status",
-    "Admin Note",
+    "Sr. No.", "Payout ID", "Partner Name", "Partner ID", "Registered Mobile",
+    "Payment Mode", "Account Holder Name", "Bank Name", "Account Number", "IFSC Code",
+    "Branch Name", "UPI ID", "Gross Amount", "Deduction %", "Deduction Amount",
+    "Net Payable", "Request Date", "Paid Date", "KYC Status", "Payout Status",
+    "Transaction Reference", "Admin Note",
   ];
   const csv = [
-    headers.map(csvCell).join(","),
+    headers.map(csvSanitize).join(","),
     ...exportRows.map((row) => [
       row.sr,
       row.payoutId,
@@ -227,20 +337,29 @@ export async function GET(request: NextRequest) {
       row.branch,
       row.upiId,
       money(row.gross),
-      `${money(row.deductionRate * 100)}%`,
+      `${(row.deductionRate * 100).toFixed(1)}%`,
       money(row.deduction),
       money(row.net),
       row.requestDate,
+      row.paidDate,
       row.kycStatus,
       row.payoutStatus,
+      row.transactionReference,
       row.adminNote,
-    ].map(csvCell).join(",")),
+    ].map(csvSanitize).join(",")),
+    // Totals row
+    [
+      "", "", "", "", "", "", "", "", "", "", "",
+      "TOTAL",
+      money(totals.gross), "", money(totals.deduction), money(totals.net),
+      "", "", "", "", "", "",
+    ].map(csvSanitize).join(","),
   ].join("\r\n");
 
-  return new NextResponse("\uFEFF" + csv, {
+  return new NextResponse("﻿" + csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="kia-payout-export-${filenameDate}.csv"`,
+      "Content-Disposition": `attachment; filename="KIA-Payout-Export-${filenameDate}.csv"`,
     },
   });
 }

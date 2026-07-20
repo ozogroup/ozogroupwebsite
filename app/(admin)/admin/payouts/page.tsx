@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search, Wallet, ChevronLeft, ChevronRight, DollarSign,
   Clock, CheckCircle, AlertCircle, Users, Download, FileText, Printer,
+  Filter, ShieldCheck, Ban, CreditCard,
 } from "lucide-react";
 import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
 import { getAdminWalletDirectory } from "@/lib/actions/wallets";
@@ -31,6 +32,13 @@ function getStatusColor(status: string) {
   }
 }
 
+function getKycBadge(status: string) {
+  if (status === "verified" || status === "approved") return "success" as const;
+  if (status === "pending" || status === "under_review") return "warning" as const;
+  if (status === "rejected") return "danger" as const;
+  return "neutral" as const;
+}
+
 export default function AdminPayoutsPage() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [walletPartners, setWalletPartners] = useState<any[]>([]);
@@ -45,15 +53,24 @@ export default function AdminPayoutsPage() {
   const [pageB, setPageB] = useState(1);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
+  // New filters
+  const [filterKyc, setFilterKyc] = useState("all");
+  const [filterMethod, setFilterMethod] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterBalance, setFilterBalance] = useState("all");
+
   const loadAll = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
-    const [payoutData, walletData] = await Promise.all([
-      getPayouts(),
-      getAdminWalletDirectory(),
-    ]);
-    // Filter to real payout rows only (no synthetic)
-    setPayouts(payoutData.filter((p: any) => !p.is_summary));
-    setWalletPartners(walletData);
+    try {
+      const [payoutData, walletData] = await Promise.all([
+        getPayouts(),
+        getAdminWalletDirectory(),
+      ]);
+      setPayouts(payoutData.filter((p: any) => !p.is_summary));
+      setWalletPartners(walletData);
+    } catch (e: any) {
+      console.error("Failed to load payouts:", e);
+    }
     if (showLoader) setLoading(false);
   }, []);
 
@@ -73,7 +90,7 @@ export default function AdminPayoutsPage() {
         alert("Enter UTR / transaction reference before marking paid.");
         return;
       }
-      if (!window.confirm("Final settlement: mark this payout as paid and update partner wallet/dashboard?")) return;
+      if (!window.confirm("Final settlement: mark this payout as paid?\n\nThis will:\n- Debit the partner's wallet\n- Record the transaction\n- Mark commissions as settled (FIFO)\n\nThis cannot be undone.")) return;
     }
     setBusy(id);
     try {
@@ -92,14 +109,18 @@ export default function AdminPayoutsPage() {
       alert("Select payout rows first.");
       return;
     }
-    const reference = status === "paid" ? window.prompt("Enter common UTR / transaction reference for selected payouts:") : "";
-    if (status === "paid" && !reference?.trim()) return;
-    const note = window.prompt("Optional admin note:", notes[ids[0]] || "") || "";
-    if (!window.confirm(`Apply "${status}" to ${ids.length} selected payout(s)?`)) return;
+    let reference = "";
+    if (status === "paid") {
+      reference = window.prompt("Enter common UTR / transaction reference for selected payouts:") || "";
+      if (!reference.trim()) return;
+    }
+    const note = window.prompt("Optional admin note:", "") || "";
+    const netTotal = payouts.filter((p: any) => ids.includes(p.id)).reduce((s: number, p: any) => s + Number(p.net_amount || p.amount || 0), 0);
+    if (!window.confirm(`Apply "${status}" to ${ids.length} payout(s)?\n\nTotal net amount: ${money(netTotal)}\n\n${status === "paid" ? "This will debit partner wallets and cannot be undone." : ""}`)) return;
     setBusy("bulk");
     try {
       for (const id of ids) {
-        await updatePayoutStatus(id, status, status === "paid" ? reference || "" : refs[id], note || notes[id]);
+        await updatePayoutStatus(id, status, status === "paid" ? reference : refs[id], note || notes[id]);
       }
       setSelected({});
       await loadAll(false);
@@ -113,7 +134,7 @@ export default function AdminPayoutsPage() {
   async function handleCreatePayoutForPartner(partner: any) {
     const walletBalance = Number(partner.wallet_balance || 0);
     const input = window.prompt(
-      `Create a payout request for ${partner.name || partner.partner_code || "this partner"}.\n\nAmount to pay out (Rs.), max ${walletBalance.toLocaleString("en-IN")}:`,
+      `Create payout for ${partner.name || partner.partner_code}.\n\nWallet: Rs. ${walletBalance.toLocaleString("en-IN")}\nAmount to pay (gross):`,
       String(walletBalance)
     );
     if (input == null) return;
@@ -122,13 +143,13 @@ export default function AdminPayoutsPage() {
       alert("Enter a valid amount greater than 0.");
       return;
     }
-
     setBusy(partner.id);
     try {
       const result = await adminCreatePayoutForPartner(partner.id, amount);
       if (result.error) {
         alert(result.error);
       } else {
+        setTab("requests");
         await loadAll(false);
       }
     } catch (error: any) {
@@ -138,39 +159,40 @@ export default function AdminPayoutsPage() {
     }
   }
 
-  // Section A: wallet liability
+  // Section A: wallet liability with enhanced filters
   const filteredWallets = useMemo(() => {
     const term = searchA.trim().toLowerCase();
-    let data = walletPartners;
-    if (term) {
-      data = data.filter((r) =>
-        [r.name, r.partner_code, r.phone, r.sponsor_code].filter(Boolean).join(" ").toLowerCase().includes(term)
-      );
-    }
-    return data.sort((a, b) => Number(b.wallet_balance || 0) - Number(a.wallet_balance || 0));
-  }, [walletPartners, searchA]);
+    return walletPartners
+      .filter((r) => {
+        if (term && ![r.name, r.partner_code, r.phone, r.sponsor_code].filter(Boolean).join(" ").toLowerCase().includes(term)) return false;
+        if (filterKyc !== "all" && r.kyc_status !== filterKyc) return false;
+        if (filterBalance === "positive" && Number(r.wallet_balance || 0) <= 0) return false;
+        if (filterBalance === "zero" && Number(r.wallet_balance || 0) > 0) return false;
+        return true;
+      })
+      .sort((a, b) => Number(b.wallet_balance || 0) - Number(a.wallet_balance || 0));
+  }, [walletPartners, searchA, filterKyc, filterBalance]);
 
   const totalPagesA = Math.max(1, Math.ceil(filteredWallets.length / PAGE_SIZE));
   const cpA = Math.min(pageA, totalPagesA);
   const pagedWallets = filteredWallets.slice((cpA - 1) * PAGE_SIZE, cpA * PAGE_SIZE);
-  useEffect(() => { setPageA(1); }, [searchA]);
+  useEffect(() => { setPageA(1); }, [searchA, filterKyc, filterBalance]);
 
-  // Section B: actual payout requests
+  // Section B: actual payout requests with status filter
   const filteredPayouts = useMemo(() => {
     const term = searchB.trim().toLowerCase();
-    let data = payouts;
-    if (term) {
-      data = data.filter((p: any) =>
-        [profileName(p.partner?.profiles), p.partner?.partner_code].filter(Boolean).join(" ").toLowerCase().includes(term)
-      );
-    }
-    return data;
-  }, [payouts, searchB]);
+    return payouts.filter((p: any) => {
+      if (term && ![profileName(p.partner?.profiles), p.partner?.partner_code].filter(Boolean).join(" ").toLowerCase().includes(term)) return false;
+      if (filterStatus !== "all" && p.status !== filterStatus) return false;
+      if (filterMethod !== "all" && p.payment_method !== filterMethod) return false;
+      return true;
+    });
+  }, [payouts, searchB, filterStatus, filterMethod]);
 
   const totalPagesB = Math.max(1, Math.ceil(filteredPayouts.length / PAGE_SIZE));
   const cpB = Math.min(pageB, totalPagesB);
   const pagedPayouts = filteredPayouts.slice((cpB - 1) * PAGE_SIZE, cpB * PAGE_SIZE);
-  useEffect(() => { setPageB(1); }, [searchB]);
+  useEffect(() => { setPageB(1); }, [searchB, filterStatus, filterMethod]);
   const selectablePagedPayouts = pagedPayouts.filter((p: any) => p.selectable);
   const selectedIds = Object.keys(selected).filter((id) => selected[id]);
   const exportIds = selectedIds.length > 0 ? selectedIds : filteredPayouts.filter((p: any) => p.selectable).map((p: any) => p.id);
@@ -181,6 +203,22 @@ export default function AdminPayoutsPage() {
   const requestedTotal = payouts.filter((p: any) => ["requested", "processing"].includes(p.status)).reduce((s: number, p: any) => s + Number(p.gross_amount || p.amount || 0), 0);
   const paidTotal = payouts.filter((p: any) => p.status === "paid").reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
   const partnersWithBalance = walletPartners.filter((r) => Number(r.wallet_balance || 0) > 0).length;
+  const kycApprovedCount = walletPartners.filter((r) => ["verified", "approved"].includes(r.kyc_status)).length;
+  const eligibleForPayout = walletPartners.filter((r) => Number(r.wallet_balance || 0) > 0 && ["verified", "approved"].includes(r.kyc_status)).length;
+  const blockedCount = walletPartners.filter((r) => Number(r.wallet_balance || 0) > 0 && !["verified", "approved"].includes(r.kyc_status)).length;
+
+  // Selected total (for Section B)
+  const selectedNetTotal = useMemo(() => {
+    return payouts
+      .filter((p: any) => selectedIds.includes(p.id))
+      .reduce((s: number, p: any) => s + Number(p.net_amount || p.amount || 0), 0);
+  }, [payouts, selectedIds]);
+
+  const selectedGrossTotal = useMemo(() => {
+    return payouts
+      .filter((p: any) => selectedIds.includes(p.id))
+      .reduce((s: number, p: any) => s + Number(p.gross_amount || p.amount || 0), 0);
+  }, [payouts, selectedIds]);
 
   if (loading) {
     return (
@@ -194,14 +232,17 @@ export default function AdminPayoutsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Payouts"
-        description="Section A shows all partner wallets (available liability). Section B shows actual payout requests from the database."
+        description="Section A: All partner wallets and eligibility. Section B: Payout requests to process."
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Total Wallet Liability" value={money(totalWalletLiability)} icon={Wallet} tone="amber" hint={`${partnersWithBalance} partners with balance`} />
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+        <StatCard label="Total Wallet Liability" value={money(totalWalletLiability)} icon={Wallet} tone="amber" hint={`${partnersWithBalance} with balance`} />
         <StatCard label="Requested / Processing" value={money(requestedTotal)} icon={Clock} tone="rose" hint={`${payouts.filter((p: any) => ["requested", "processing"].includes(p.status)).length} requests`} />
         <StatCard label="Paid Payouts" value={money(paidTotal)} icon={CheckCircle} tone="green" hint={`${payouts.filter((p: any) => p.status === "paid").length} completed`} />
-        <StatCard label="Total Partners" value={walletPartners.length} icon={Users} tone="sage" />
+        <StatCard label="KYC Approved" value={kycApprovedCount} icon={ShieldCheck} tone="green" hint={`of ${walletPartners.length} total`} />
+        <StatCard label="Eligible for Payout" value={eligibleForPayout} icon={CreditCard} tone="sage" hint="Balance + KYC OK" />
+        <StatCard label="Blocked (KYC)" value={blockedCount} icon={Ban} tone="rose" hint="Has balance, no KYC" />
       </div>
 
       {/* Tab switcher */}
@@ -211,14 +252,14 @@ export default function AdminPayoutsPage() {
           onClick={() => setTab("wallets")}
           className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${tab === "wallets" ? "bg-brand-ink text-white" : "bg-brand-surface text-brand-muted hover:bg-brand-light"}`}
         >
-          Section A: All Partner Wallets ({partnersWithBalance} with balance)
+          Section A: All Partner Wallets ({filteredWallets.length})
         </button>
         <button
           type="button"
           onClick={() => setTab("requests")}
           className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${tab === "requests" ? "bg-brand-ink text-white" : "bg-brand-surface text-brand-muted hover:bg-brand-light"}`}
         >
-          Section B: Payout Requests ({payouts.length})
+          Section B: Payout Requests ({filteredPayouts.length})
         </button>
       </div>
 
@@ -230,15 +271,29 @@ export default function AdminPayoutsPage() {
               <h2 className="font-display text-lg font-semibold text-brand-ink">All Partner Wallets — Available Liability</h2>
               <p className="text-sm text-brand-muted">Every partner wallet including Rs. 0 balances. 15% deduction shown for reference.</p>
             </div>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
-              <input
-                type="text"
-                value={searchA}
-                onChange={(e) => setSearchA(e.target.value)}
-                placeholder="Search name, ID, phone..."
-                className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-64"
-              />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
+                <input
+                  type="text"
+                  value={searchA}
+                  onChange={(e) => setSearchA(e.target.value)}
+                  placeholder="Search name, ID, phone..."
+                  className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-56"
+                />
+              </div>
+              <select value={filterKyc} onChange={(e) => setFilterKyc(e.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm">
+                <option value="all">All KYC</option>
+                <option value="verified">KYC Approved</option>
+                <option value="pending">KYC Pending</option>
+                <option value="not_submitted">KYC Not Submitted</option>
+                <option value="rejected">KYC Rejected</option>
+              </select>
+              <select value={filterBalance} onChange={(e) => setFilterBalance(e.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm">
+                <option value="all">All Balances</option>
+                <option value="positive">With Balance</option>
+                <option value="zero">Zero Balance</option>
+              </select>
             </div>
           </div>
 
@@ -252,6 +307,7 @@ export default function AdminPayoutsPage() {
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Net Payable</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">KYC</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Eligibility</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Reserved</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Paid</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
@@ -259,22 +315,26 @@ export default function AdminPayoutsPage() {
               </thead>
               <tbody className="divide-y divide-brand-border bg-white">
                 {pagedWallets.length === 0 ? (
-                  <tr><td colSpan={9} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search." /></td></tr>
+                  <tr><td colSpan={10} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search or filter." /></td></tr>
                 ) : pagedWallets.map((r) => {
                   const wallet = Number(r.wallet_balance || 0);
                   const deduction = Math.round(wallet * 0.15 * 100) / 100;
                   const net = Math.round((wallet - deduction) * 100) / 100;
+                  const kycOk = ["verified", "approved"].includes(r.kyc_status);
+                  const eligible = wallet > 0 && kycOk;
+                  const blockReason = wallet <= 0 ? "No balance" : !kycOk ? "KYC not approved" : null;
                   return (
                     <tr key={r.id} className="hover:bg-brand-surface/30 transition-colors">
                       <td className="px-4 py-3">
                         <p className="font-medium text-brand-ink text-sm">{r.name}</p>
                         <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{r.partner_code}</p>
+                        <p className="text-[10px] text-brand-muted">{r.phone}</p>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(wallet)}</td>
                       <td className="px-4 py-3 text-right text-sm text-red-600">-{money(deduction)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(net)}</td>
                       <td className="px-4 py-3">
-                        <Badge variant={r.kyc_status === "verified" ? "success" : r.kyc_status === "pending" ? "warning" : "neutral"}>
+                        <Badge variant={getKycBadge(r.kyc_status)}>
                           {r.kyc_status || "N/A"}
                         </Badge>
                       </td>
@@ -282,6 +342,15 @@ export default function AdminPayoutsPage() {
                         <Badge variant={r.status === "active" ? "success" : r.status === "pending" ? "warning" : "neutral"} dot>
                           {r.status || "unknown"}
                         </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        {eligible ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                            <CheckCircle className="h-3.5 w-3.5" /> Eligible
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-red-600">{blockReason}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right text-sm text-brand-muted">{r.reservedPayout ? money(r.reservedPayout) : "---"}</td>
                       <td className="px-4 py-3 text-right text-sm text-brand-muted">{r.paidPayout ? money(r.paidPayout) : "---"}</td>
@@ -325,7 +394,7 @@ export default function AdminPayoutsPage() {
           <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-display text-lg font-semibold text-brand-ink">Payout Requests</h2>
-              <p className="text-sm text-brand-muted">Only real database payout rows. Approve, reject, or mark as paid.</p>
+              <p className="text-sm text-brand-muted">Approve, reject, or mark as paid. UTR is mandatory for paid settlement.</p>
             </div>
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
               <div className="relative">
@@ -335,15 +404,25 @@ export default function AdminPayoutsPage() {
                   value={searchB}
                   onChange={(e) => setSearchB(e.target.value)}
                   placeholder="Search partner..."
-                  className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-64"
+                  className="w-full rounded-lg border border-brand-border py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-accent sm:w-52"
                 />
               </div>
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm">
+                <option value="all">All Status</option>
+                <option value="requested">Requested</option>
+                <option value="approved">Approved</option>
+                <option value="processing">Processing</option>
+                <option value="paid">Paid</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <select value={filterMethod} onChange={(e) => setFilterMethod(e.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm">
+                <option value="all">All Methods</option>
+                <option value="bank">Bank</option>
+                <option value="upi">UPI</option>
+              </select>
               <div className="flex flex-wrap gap-2">
                 <a href={`/api/admin/payouts/export?format=csv&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
                   <Download className="h-3.5 w-3.5" /> CSV
-                </a>
-                <a href={`/api/admin/payouts/export?format=xlsx&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
-                  <Download className="h-3.5 w-3.5" /> Excel
                 </a>
                 <a href={`/api/admin/payouts/export?format=pdf&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
                   <FileText className="h-3.5 w-3.5" /> PDF
@@ -354,12 +433,24 @@ export default function AdminPayoutsPage() {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 border-b border-brand-border bg-brand-surface/40 px-4 py-3 text-xs">
-            <span className="font-medium text-brand-ink">{selectedIds.length} selected</span>
-            <button type="button" onClick={() => handleBulkStatus("approved")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-brand-ink ring-1 ring-brand-border disabled:opacity-50">Bulk approve</button>
-            <button type="button" onClick={() => handleBulkStatus("processing")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-brand-ink ring-1 ring-brand-border disabled:opacity-50">Mark processing</button>
-            <button type="button" onClick={() => handleBulkStatus("paid")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-brand-ink px-3 py-1.5 text-white disabled:opacity-50">Mark paid</button>
-            <button type="button" onClick={() => handleBulkStatus("rejected")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-red-50 px-3 py-1.5 text-red-700 ring-1 ring-red-100 disabled:opacity-50">Reject</button>
+
+          {/* Sticky Bulk Action + Selected Total Bar */}
+          <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b border-brand-border bg-white px-4 py-3 shadow-sm">
+            <span className="font-medium text-brand-ink text-sm">{selectedIds.length} selected</span>
+            {selectedIds.length > 0 && (
+              <span className="rounded-lg bg-brand-accent/10 px-3 py-1 text-sm font-semibold text-brand-accent">
+                Gross: {money(selectedGrossTotal)} | Net: {money(selectedNetTotal)}
+              </span>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => handleBulkStatus("approved")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-xs text-brand-ink ring-1 ring-brand-border disabled:opacity-50 hover:ring-brand-accent">Bulk Approve</button>
+              <button type="button" onClick={() => handleBulkStatus("processing")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-xs text-brand-ink ring-1 ring-brand-border disabled:opacity-50 hover:ring-brand-accent">Mark Processing</button>
+              <button type="button" onClick={() => handleBulkStatus("paid")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-brand-ink px-3 py-1.5 text-xs text-white disabled:opacity-50">Mark Paid (with UTR)</button>
+              <button type="button" onClick={() => handleBulkStatus("rejected")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs text-red-700 ring-1 ring-red-100 disabled:opacity-50">Reject</button>
+            </div>
+            {selectedIds.length > 0 && (
+              <button type="button" onClick={() => setSelected({})} className="text-xs text-brand-muted hover:text-brand-ink">Clear selection</button>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -381,21 +472,20 @@ export default function AdminPayoutsPage() {
                     />
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Gross Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">15% Deduction</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Net Payable</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Breakup</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Gross</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Deduction</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Net Payable</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Bank / UPI</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Requested</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {pagedPayouts.length === 0 ? (
-                  <tr><td colSpan={10} className="px-6 py-12"><EmptyState icon={DollarSign} title="No payout requests" description="Payout requests from partners or admin-created payouts will appear here." /></td></tr>
+                  <tr><td colSpan={9} className="px-6 py-12"><EmptyState icon={DollarSign} title="No payout requests" description="Payout requests from partners or admin-created payouts will appear here." /></td></tr>
                 ) : pagedPayouts.map((payout: any) => (
-                  <tr key={payout.id} className="align-top hover:bg-brand-surface/30 transition-colors">
+                  <tr key={payout.id} className={`align-top transition-colors ${selected[payout.id] ? "bg-brand-accent/5" : "hover:bg-brand-surface/30"}`}>
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
@@ -404,84 +494,76 @@ export default function AdminPayoutsPage() {
                         title={payout.selection_block_reason || "Select payout"}
                         onChange={(event) => setSelected((prev) => ({ ...prev, [payout.id]: event.target.checked }))}
                       />
-                      {!payout.selectable && <p className="mt-1 max-w-[120px] text-[10px] text-brand-muted">{payout.selection_block_reason}</p>}
                     </td>
                     <td className="px-4 py-4">
                       <p className="font-medium text-brand-ink">{profileName(payout.partner?.profiles)}</p>
                       <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
                     </td>
-                    <td className="px-4 py-4 text-sm">
+                    <td className="px-4 py-4 text-right text-sm">
                       <p className="font-semibold text-brand-ink">{money(payout.gross_amount || payout.amount)}</p>
-                      <div className="mt-1 text-xs text-brand-muted">
+                      <div className="mt-1 text-[10px] text-brand-muted">
                         <p>Membership: {money(payout.partner_summary?.membershipIncome)}</p>
                         <p>Bookings: {money(payout.partner_summary?.productIncome)}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-red-600">
-                      <p className="font-semibold">-{money(payout.deduction_amount)}</p>
+                    <td className="px-4 py-4 text-right text-sm text-red-600 font-semibold">
+                      -{money(payout.deduction_amount)}
                     </td>
-                    <td className="px-4 py-4 text-sm">
-                      <p className="font-semibold text-brand-ink">{money(payout.net_amount || payout.amount)}</p>
+                    <td className="px-4 py-4 text-right text-sm font-semibold text-brand-ink">
+                      {money(payout.net_amount || payout.amount)}
                     </td>
-                    <td className="px-4 py-4 text-xs text-brand-muted min-w-[240px]">
-                      {payout.partner_summary?.membershipSummary?.length || payout.partner_summary?.kitSummary?.length ? (
-                        <div className="space-y-2">
-                          {payout.partner_summary?.membershipSummary?.map((item: any) => (
-                            <div key={`${item.membershipId}-${item.memberName}`} className="rounded-lg border border-brand-border bg-green-50/60 p-2">
-                              <p className="font-semibold text-brand-ink">Referral Rs. 500</p>
-                              <p>{item.memberName} | L{item.level} | {item.status}</p>
-                            </div>
-                          ))}
-                          {payout.partner_summary?.kitSummary?.map((item: any) => (
-                            <div key={item.kitName} className="rounded-lg border border-brand-border bg-brand-surface/40 p-2">
-                              <p className="font-semibold text-brand-ink">{item.kitName}</p>
-                              <p>Comm: {money(item.commissionAmount)}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p>No commission details</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-brand-muted max-w-xs">
-                      <p>{payout.payment_details || "-"}</p>
-                      <p className="mt-1 text-xs">Method: {payout.payment_method || "-"}</p>
+                    <td className="px-4 py-4 text-sm text-brand-muted max-w-[200px]">
+                      <Badge variant={payout.payment_method === "upi" ? "info" : "neutral"}>
+                        {payout.payment_method === "upi" ? "UPI" : "Bank"}
+                      </Badge>
+                      <p className="mt-1 text-[10px] break-all">{payout.payment_details || "-"}</p>
                     </td>
                     <td className="px-4 py-4">
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
                         {payout.status}
                       </span>
+                      {payout.transaction_reference && payout.status === "paid" && (
+                        <p className="mt-1 text-[10px] text-brand-muted">UTR: {payout.transaction_reference}</p>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted whitespace-nowrap">
                       {payout.created_at ? new Date(payout.created_at).toLocaleDateString("en-IN") : "-"}
+                      {payout.paid_at && <p className="text-[10px] text-green-700">Paid: {new Date(payout.paid_at).toLocaleDateString("en-IN")}</p>}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="space-y-2 min-w-[240px]">
+                      <div className="space-y-2 min-w-[220px]">
                         <input
                           value={refs[payout.id] || payout.transaction_reference || ""}
                           onChange={(e) => setRefs((r) => ({ ...r, [payout.id]: e.target.value }))}
-                          placeholder="Transaction/reference ID"
-                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent"
+                          placeholder="UTR / Reference ID"
+                          disabled={payout.status === "paid" || payout.status === "rejected"}
+                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50 disabled:bg-slate-50"
                         />
                         <textarea
                           value={notes[payout.id] || payout.transaction_note || ""}
                           onChange={(e) => setNotes((n) => ({ ...n, [payout.id]: e.target.value }))}
                           placeholder="Admin note"
-                          rows={2}
-                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent"
+                          rows={1}
+                          disabled={payout.status === "paid" || payout.status === "rejected"}
+                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50 disabled:bg-slate-50"
                         />
-                        <select
-                          value={payout.status}
-                          disabled={busy === payout.id}
-                          onChange={(e) => handleUpdateStatus(payout.id, e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent outline-none disabled:opacity-50"
-                        >
-                          <option value="requested">Requested</option>
-                          <option value="approved">Approved</option>
-                          <option value="processing">Approve / Processing</option>
-                          <option value="paid">Mark Paid</option>
-                          <option value="rejected">Reject</option>
-                        </select>
+                        {payout.status !== "paid" && payout.status !== "rejected" && (
+                          <select
+                            value={payout.status}
+                            disabled={busy === payout.id}
+                            onChange={(e) => handleUpdateStatus(payout.id, e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg focus:ring-2 focus:ring-brand-accent outline-none disabled:opacity-50"
+                          >
+                            <option value="requested">Requested</option>
+                            <option value="approved">Approved</option>
+                            <option value="processing">Processing</option>
+                            <option value="paid">Mark Paid (Final)</option>
+                            <option value="rejected">Reject</option>
+                          </select>
+                        )}
+                        {(payout.status === "paid" || payout.status === "rejected") && (
+                          <p className="text-[10px] text-brand-muted italic">Status is final</p>
+                        )}
                       </div>
                     </td>
                   </tr>

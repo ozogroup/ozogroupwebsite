@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -11,6 +10,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 
 type ReviewStatus = "verified" | "rejected" | "pending" | "under_review" | "resubmission_required";
+type KycResult = { success: boolean; error?: string };
 
 function value(formData: FormData, key: string) {
   return ((formData.get(key) as string | null) || "").trim();
@@ -50,12 +50,25 @@ function profileFrom(row: any) {
   return Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
 }
 
+async function ensureBucketExists(supabase: any) {
+  const { data } = await supabase.storage.getBucket(KYC_BUCKET);
+  if (data) return true;
+  const { error } = await supabase.storage.createBucket(KYC_BUCKET, {
+    public: false,
+    fileSizeLimit: MAX_FILE_SIZE,
+    allowedMimeTypes: Array.from(ALLOWED_TYPES),
+  });
+  return !error;
+}
+
 async function uploadKycFile(partnerId: string, file: File | null, documentType: string, version: number) {
   if (!file || file.size === 0) return null;
   if (file.size > MAX_FILE_SIZE) throw new Error(`${documentType} must be 10MB or smaller.`);
   if (!ALLOWED_TYPES.has(file.type)) throw new Error(`${documentType} must be JPG, PNG, WebP, or PDF.`);
 
   const supabase = getSupabaseServiceClient();
+  await ensureBucketExists(supabase);
+
   const ext = file.name.split(".").pop()?.toLowerCase() || (file.type === "application/pdf" ? "pdf" : "jpg");
   const safeType = documentType.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const path = `partners/${partnerId}/${safeType}/${version}.${ext}`;
@@ -66,7 +79,7 @@ async function uploadKycFile(partnerId: string, file: File | null, documentType:
     upsert: true,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(`Upload failed for ${documentType}: ${error.message}`);
   return { path, mimeType: file.type, fileSize: file.size };
 }
 
@@ -104,16 +117,27 @@ async function upsertDocumentRow(input: {
   );
 }
 
-export async function submitPartnerKyc(formData: FormData) {
-  const profile = await requirePartner();
+export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
+  let profile: any;
+  try {
+    profile = await requirePartner();
+  } catch {
+    return { success: false, error: "Please log in to submit KYC." };
+  }
+
   const supabase = getSupabaseServiceClient();
 
-  const { data: existingKyc } = await supabase
-    .from("partner_kyc" as any)
-    .select("*")
-    .eq("partner_id", profile.id)
-    .maybeSingle();
-  const existingKycRow = existingKyc as any;
+  let existingKycRow: any = null;
+  try {
+    const { data } = await supabase
+      .from("partner_kyc" as any)
+      .select("*")
+      .eq("partner_id", profile.id)
+      .maybeSingle();
+    existingKycRow = data as any;
+  } catch {
+    // partner_kyc table may not exist yet — proceed without it
+  }
 
   const method = value(formData, "payment_method") === "upi" ? "upi" : "bank";
   const mobileNumber = normalizeMobile(value(formData, "mobile_number"));
@@ -126,39 +150,42 @@ export async function submitPartnerKyc(formData: FormData) {
   const panNumber = normalizePan(value(formData, "pan_number"));
 
   if (!value(formData, "full_name") || !mobileNumber || !value(formData, "email")) {
-    redirect(`/partner/kyc?error=${encodeURIComponent("Please complete personal details.")}`);
+    return { success: false, error: "Please complete personal details (name, mobile, email)." };
   }
-  if (!/^\d{10}$/.test(mobileNumber) || !/^\d{10}$/.test(registeredMobile)) {
-    redirect(`/partner/kyc?error=${encodeURIComponent("Enter valid 10 digit mobile numbers.")}`);
+  if (!/^\d{10}$/.test(mobileNumber)) {
+    return { success: false, error: "Enter a valid 10-digit mobile number." };
+  }
+  if (registeredMobile && !/^\d{10}$/.test(registeredMobile)) {
+    return { success: false, error: "Enter a valid 10-digit registered mobile number." };
   }
   if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber)) {
-    redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid PAN number.")}`);
+    return { success: false, error: "Enter a valid PAN number (e.g. ABCDE1234F)." };
   }
 
   if (method === "bank") {
-    if (!value(formData, "account_holder_name") || !value(formData, "bank_name") || !accountNumber || !bankIfsc || !value(formData, "branch_name")) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Please complete all bank account fields.")}`);
+    if (!value(formData, "account_holder_name") || !value(formData, "bank_name") || !accountNumber || !bankIfsc) {
+      return { success: false, error: "Please complete all bank account fields (holder name, bank name, account number, IFSC)." };
     }
     if (accountNumber !== confirmAccountNumber) {
-      redirect("/partner/kyc?error=Account numbers do not match");
+      return { success: false, error: "Account numbers do not match." };
     }
     if (!/^[0-9]{9,18}$/.test(accountNumber)) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid bank account number.")}`);
+      return { success: false, error: "Enter a valid bank account number (9-18 digits)." };
     }
     if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid IFSC code.")}`);
+      return { success: false, error: "Enter a valid IFSC code (e.g. SBIN0001234)." };
     }
   }
 
   if (method === "upi") {
     if (!value(formData, "upi_holder_name") || !upiId) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Please complete all UPI fields.")}`);
+      return { success: false, error: "Please complete all UPI fields (holder name, UPI ID)." };
     }
     if (upiId !== confirmUpiId) {
-      redirect("/partner/kyc?error=UPI IDs do not match");
+      return { success: false, error: "UPI IDs do not match." };
     }
     if (!/^[a-z0-9._-]{2,}@[a-z0-9.-]{2,}$/i.test(upiId)) {
-      redirect(`/partner/kyc?error=${encodeURIComponent("Enter a valid UPI ID.")}`);
+      return { success: false, error: "Enter a valid UPI ID (e.g. name@bank)." };
     }
   }
 
@@ -172,7 +199,7 @@ export async function submitPartnerKyc(formData: FormData) {
   const hasSelfie = Boolean(selfieFile?.size || existingKycRow?.selfie_path);
 
   if (!hasPan || !hasAadhaar || !hasSelfie) {
-    redirect(`/partner/kyc?error=${encodeURIComponent("PAN card, Aadhaar card, and selfie are required.")}`);
+    return { success: false, error: "PAN card, Aadhaar front, and selfie are required documents." };
   }
 
   try {
@@ -183,85 +210,135 @@ export async function submitPartnerKyc(formData: FormData) {
       uploadKycFile(profile.id, selfieFile, "selfie", currentVersion),
     ]);
 
-    const payload: Record<string, unknown> = {
-      partner_id: profile.id,
-      full_name: value(formData, "full_name"),
-      mobile_number: mobileNumber,
-      email: value(formData, "email").toLowerCase(),
-      payment_method: method,
-      account_holder_name: method === "bank" ? value(formData, "account_holder_name") : null,
-      bank_name: method === "bank" ? value(formData, "bank_name") : null,
-      account_number: method === "bank" ? accountNumber : null,
-      account_last4: method === "bank" ? accountNumber.slice(-4) : null,
+    // Try to save in partner_kyc table (may not exist if migration not run)
+    let savedKycId: string | null = null;
+    try {
+      const payload: Record<string, unknown> = {
+        partner_id: profile.id,
+        full_name: value(formData, "full_name"),
+        mobile_number: mobileNumber,
+        email: value(formData, "email").toLowerCase(),
+        payment_method: method,
+        account_holder_name: method === "bank" ? value(formData, "account_holder_name") : null,
+        bank_name: method === "bank" ? value(formData, "bank_name") : null,
+        account_number: method === "bank" ? accountNumber : null,
+        account_last4: method === "bank" ? accountNumber.slice(-4) : null,
+        bank_ifsc: method === "bank" ? bankIfsc : null,
+        branch_name: method === "bank" ? value(formData, "branch_name") : null,
+        upi_id: method === "upi" ? upiId : null,
+        upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : null,
+        upi_mobile: method === "upi" ? registeredMobile : null,
+        registered_mobile: registeredMobile,
+        pan_number: panNumber || null,
+        pan_card_path: panUpload?.path || existingKycRow?.pan_card_path || null,
+        aadhaar_front_path: aadhaarFrontUpload?.path || existingKycRow?.aadhaar_front_path || null,
+        aadhaar_back_path: aadhaarBackUpload?.path || existingKycRow?.aadhaar_back_path || null,
+        selfie_path: selfieUpload?.path || existingKycRow?.selfie_path || null,
+        status: "pending",
+        rejection_reason: null,
+        resubmission_reason: null,
+        submitted_at: new Date().toISOString(),
+        current_version: currentVersion,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: kycRow, error: upsertError } = await supabase
+        .from("partner_kyc" as any)
+        .upsert(payload, { onConflict: "partner_id" })
+        .select("id")
+        .single();
+
+      if (upsertError) {
+        console.error("partner_kyc upsert failed (falling back to partners-only):", upsertError.message);
+      } else {
+        savedKycId = (kycRow as any)?.id || null;
+      }
+    } catch (kycTableError: any) {
+      console.error("partner_kyc table unavailable (falling back to partners-only):", kycTableError?.message);
+    }
+
+    if (savedKycId) {
+      await Promise.all([
+        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "pan_card", upload: panUpload, version: currentVersion }),
+        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_front", upload: aadhaarFrontUpload, version: currentVersion }),
+        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_back", upload: aadhaarBackUpload, version: currentVersion }),
+        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "selfie", upload: selfieUpload, version: currentVersion }),
+      ]).catch((docErr) => {
+        console.error("Document row save failed (non-fatal):", docErr?.message);
+      });
+    }
+
+    // Always update the partners table (core columns that exist since launch)
+    const partnerUpdate: Record<string, unknown> = {
+      kyc_status: "pending",
+      bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : null,
+      bank_account_number: method === "bank" ? accountNumber : null,
       bank_ifsc: method === "bank" ? bankIfsc : null,
-      branch_name: method === "bank" ? value(formData, "branch_name") : null,
       upi_id: method === "upi" ? upiId : null,
-      upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : null,
-      upi_mobile: method === "upi" ? registeredMobile : null,
-      registered_mobile: registeredMobile,
       pan_number: panNumber || null,
-      pan_card_path: panUpload?.path || existingKycRow?.pan_card_path || null,
-      aadhaar_front_path: aadhaarFrontUpload?.path || existingKycRow?.aadhaar_front_path || null,
-      aadhaar_back_path: aadhaarBackUpload?.path || existingKycRow?.aadhaar_back_path || null,
-      selfie_path: selfieUpload?.path || existingKycRow?.selfie_path || null,
-      status: "pending",
-      rejection_reason: null,
-      resubmission_reason: null,
-      submitted_at: new Date().toISOString(),
-      current_version: currentVersion,
+      bank_verified: false,
+      payout_hold_reason: null,
       updated_at: new Date().toISOString(),
     };
 
-    const { data: kycRow, error: upsertError } = await supabase
-      .from("partner_kyc" as any)
-      .upsert(payload, { onConflict: "partner_id" })
-      .select("id")
-      .single();
-    if (upsertError) throw upsertError;
-    const savedKyc = kycRow as any;
-
-    await Promise.all([
-      upsertDocumentRow({ partnerId: profile.id, kycId: savedKyc?.id, documentType: "pan_card", upload: panUpload, version: currentVersion }),
-      upsertDocumentRow({ partnerId: profile.id, kycId: savedKyc?.id, documentType: "aadhaar_front", upload: aadhaarFrontUpload, version: currentVersion }),
-      upsertDocumentRow({ partnerId: profile.id, kycId: savedKyc?.id, documentType: "aadhaar_back", upload: aadhaarBackUpload, version: currentVersion }),
-      upsertDocumentRow({ partnerId: profile.id, kycId: savedKyc?.id, documentType: "selfie", upload: selfieUpload, version: currentVersion }),
-    ]);
-
-    await supabase
+    const { error: partnerError } = await supabase
       .from("partners" as any)
-      .update({
-        kyc_status: "pending",
-        kyc_submitted_at: new Date().toISOString(),
-        bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : null,
-        bank_account_number: method === "bank" ? accountNumber : null,
-        bank_ifsc: method === "bank" ? bankIfsc : null,
-        bank_name: method === "bank" ? value(formData, "bank_name") : null,
-        bank_branch_name: method === "bank" ? value(formData, "branch_name") : null,
-        upi_id: method === "upi" ? upiId : null,
-        pan_number: panNumber || null,
-        bank_verified: false,
-        payout_hold_reason: null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(partnerUpdate)
       .eq("id", profile.id);
+
+    if (partnerError) {
+      console.error("Partner update failed:", partnerError.message);
+      // Try a minimal update with only guaranteed columns
+      await supabase
+        .from("partners" as any)
+        .update({
+          kyc_status: "pending",
+          bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : null,
+          bank_account_number: method === "bank" ? accountNumber : null,
+          bank_ifsc: method === "bank" ? bankIfsc : null,
+          upi_id: method === "upi" ? upiId : null,
+          bank_verified: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.id);
+    }
+
+    // Try setting migration-added columns separately (won't fail the whole flow)
+    try {
+      await supabase
+        .from("partners" as any)
+        .update({
+          kyc_submitted_at: new Date().toISOString(),
+          bank_name: method === "bank" ? value(formData, "bank_name") : null,
+          bank_branch_name: method === "bank" ? value(formData, "branch_name") : null,
+        })
+        .eq("id", profile.id);
+    } catch {
+      // These columns may not exist if migration hasn't been run — non-fatal
+    }
   } catch (e: any) {
     console.error("KYC submission failed:", e?.message || e);
-    redirect(`/partner/kyc?error=${encodeURIComponent(e?.message || "KYC submission failed. Please check your details and try again.")}`);
+    return { success: false, error: e?.message || "KYC submission failed. Please check your details and try again." };
   }
 
   revalidatePath("/partner/kyc");
   revalidatePath("/admin/kyc");
-  redirect("/partner/kyc?success=KYC submitted for admin review");
+  return { success: true };
 }
 
 export async function getPartnerKycStatus() {
   const profile = await requirePartner();
   const supabase = getSupabaseServiceClient();
 
-  const [{ data: partner }, { data: kyc }] = await Promise.all([
-    supabase.from("partners" as any).select("*").eq("id", profile.id).single(),
-    supabase.from("partner_kyc" as any).select("*").eq("partner_id", profile.id).maybeSingle(),
-  ]);
+  const { data: partner } = await supabase.from("partners" as any).select("*").eq("id", profile.id).single();
+
+  let kyc: any = null;
+  try {
+    const { data } = await supabase.from("partner_kyc" as any).select("*").eq("partner_id", profile.id).maybeSingle();
+    kyc = data as any;
+  } catch {
+    // table may not exist
+  }
 
   return {
     partner: partner as any,
@@ -276,15 +353,32 @@ export async function getKycSubmissions() {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
 
+  // Try to get from partner_kyc joined data first
+  let hasKycTable = true;
+  try {
+    const { error: probeError } = await supabase
+      .from("partner_kyc" as any)
+      .select("id")
+      .limit(0);
+    if (probeError) hasKycTable = false;
+  } catch {
+    hasKycTable = false;
+  }
+
   const { data, error } = await supabase
     .from("partners" as any)
-    .select(`
-      id, partner_code, status, kyc_status, bank_verified, bank_account_holder,
-      bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id,
-      kyc_submitted_at, kyc_reviewed_at, payout_hold_reason, created_at, updated_at,
-      profiles(full_name,email,phone),
-      partner_kyc(*)
-    `)
+    .select(
+      hasKycTable
+        ? `id, partner_code, status, kyc_status, bank_verified, bank_account_holder,
+           bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id,
+           kyc_submitted_at, kyc_reviewed_at, payout_hold_reason, created_at, updated_at,
+           profiles(full_name,email,phone),
+           partner_kyc(*)`
+        : `id, partner_code, status, kyc_status, bank_verified, bank_account_holder,
+           bank_account_number, bank_ifsc, upi_id,
+           payout_hold_reason, created_at, updated_at,
+           profiles(full_name,email,phone)`
+    )
     .neq("kyc_status", "not_submitted")
     .order("updated_at", { ascending: false });
 
@@ -364,20 +458,24 @@ export async function reviewKycSubmission(id: string, status: ReviewStatus, reas
     .eq("id", id);
   if (partnerError) throw partnerError;
 
-  await supabase
-    .from("partner_kyc" as any)
-    .update({
-      status,
-      review_started_at: status === "under_review" ? now : undefined,
-      approved_at: status === "verified" ? now : null,
-      rejected_at: status === "rejected" ? now : null,
-      reviewed_by: (admin as any)?.id || null,
-      reviewed_at: status === "verified" || status === "rejected" || status === "resubmission_required" ? now : null,
-      rejection_reason: status === "rejected" ? cleanReason : null,
-      resubmission_reason: status === "resubmission_required" ? cleanReason : null,
-      updated_at: now,
-    })
-    .eq("partner_id", id);
+  try {
+    await supabase
+      .from("partner_kyc" as any)
+      .update({
+        status,
+        review_started_at: status === "under_review" ? now : undefined,
+        approved_at: status === "verified" ? now : null,
+        rejected_at: status === "rejected" ? now : null,
+        reviewed_by: (admin as any)?.id || null,
+        reviewed_at: status === "verified" || status === "rejected" || status === "resubmission_required" ? now : null,
+        rejection_reason: status === "rejected" ? cleanReason : null,
+        resubmission_reason: status === "resubmission_required" ? cleanReason : null,
+        updated_at: now,
+      })
+      .eq("partner_id", id);
+  } catch {
+    // partner_kyc table may not exist — partners table update above is sufficient
+  }
 
   await supabase.from("activity_logs" as any).insert({
     actor_id: (admin as any)?.id || null,
