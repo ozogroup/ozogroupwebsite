@@ -120,7 +120,7 @@ export default async function PartnerDashboardPage({
       supabase.from("referral_tree" as any).select("*", { count: "exact", head: true }).eq("ancestor_id", partnerId).eq("level", 1),
       supabase.from("referral_tree" as any).select("level,created_at").eq("ancestor_id", partnerId),
       supabase.from("commissions" as any).select("amount,status,created_at,level,source_type,reversed,deleted_at").eq("partner_id", partnerId),
-      supabase.from("payouts" as any).select("amount,status,created_at").eq("partner_id", partnerId),
+      supabase.from("payouts" as any).select("id,amount,gross_amount,deduction_amount,net_amount,status,created_at,paid_at,transaction_reference").eq("partner_id", partnerId).order("created_at", { ascending: false }),
       supabase
         .from("bookings" as any)
         .select("id,customer_name,customer_phone,booking_status,payment_status,created_at,treatment_name,treatment_price,payment_amount")
@@ -582,6 +582,54 @@ export default async function PartnerDashboardPage({
           </div>
         </Panel>
       </section>
+
+      <Panel title="Payment History" eyebrow="Payout Records" action={
+        <Link href="/partner/payouts" className="text-sm font-semibold text-brand-primary hover:text-brand-accent">
+          Request Payout
+        </Link>
+      }>
+        {payouts.length === 0 ? (
+          <EmptyState title="No payouts yet" text="Once you request a payout and it is processed, your payment history will appear here." />
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-brand-border">
+            <div className="hidden grid-cols-[0.8fr_1fr_1fr_0.8fr_1fr] bg-brand-surface px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-brand-muted md:grid">
+              <span>Date</span>
+              <span className="text-right">Net Amount</span>
+              <span className="text-right">Gross / Deduction</span>
+              <span>Status</span>
+              <span>Reference</span>
+            </div>
+            <div className="divide-y divide-brand-border">
+              {payouts.slice(0, 10).map((payout: any) => {
+                const net = Number(payout.net_amount || payout.amount || 0);
+                const gross = Number(payout.gross_amount || payout.amount || 0);
+                const deduction = Number(payout.deduction_amount || gross * 0.15);
+                const statusClass = payout.status === "paid"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                  : payout.status === "rejected"
+                    ? "bg-red-50 text-red-700 border-red-100"
+                    : "bg-brand-surface text-brand-muted border-brand-border";
+                return (
+                  <div key={payout.id} className="grid gap-2 px-4 py-4 md:grid-cols-[0.8fr_1fr_1fr_0.8fr_1fr] md:items-center">
+                    <p className="text-sm text-brand-muted">
+                      {payout.created_at ? new Date(payout.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
+                    </p>
+                    <p className="text-right text-sm font-semibold text-brand-ink">{formatCurrency(net)}</p>
+                    <div className="text-right text-xs text-brand-muted">
+                      <span>Gross: {formatCurrency(gross)}</span>
+                      <span className="ml-2 text-red-600">-{formatCurrency(deduction)}</span>
+                    </div>
+                    <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusClass}`}>
+                      {(payout.status || "pending").replace("_", " ")}
+                    </span>
+                    <p className="truncate text-xs text-brand-muted font-mono">{payout.transaction_reference || "-"}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </Panel>
 
       <section className="grid gap-4 lg:grid-cols-3">
         {[

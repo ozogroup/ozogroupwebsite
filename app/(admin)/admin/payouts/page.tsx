@@ -496,8 +496,8 @@ export default function AdminPayoutsPage() {
                       />
                     </td>
                     <td className="px-4 py-4">
-                      <p className="font-medium text-brand-ink">{profileName(payout.partner?.profiles)}</p>
-                      <p className="text-xs text-brand-muted font-mono">{payout.partner?.partner_code || "-"}</p>
+                      <p className="font-mono text-sm font-bold text-brand-primaryDark">{payout.partner?.partner_code || "-"}</p>
+                      <p className="font-medium text-brand-ink text-sm">{profileName(payout.partner?.profiles)}</p>
                     </td>
                     <td className="px-4 py-4 text-right text-sm">
                       <p className="font-semibold text-brand-ink">{money(payout.gross_amount || payout.amount)}</p>

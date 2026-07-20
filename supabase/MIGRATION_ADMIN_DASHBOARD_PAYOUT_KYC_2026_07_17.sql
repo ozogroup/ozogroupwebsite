@@ -217,13 +217,10 @@ BEGIN
 
     gross_debit := COALESCE(payout_row.gross_amount, payout_row.available_balance, payout_row.amount, 0);
     IF gross_debit <= 0 THEN RAISE EXCEPTION 'Invalid payout amount'; END IF;
-    IF COALESCE(partner_row.wallet_balance, 0) < gross_debit THEN
-      RAISE EXCEPTION 'Partner wallet balance is lower than payout amount';
-    END IF;
 
-    new_balance := COALESCE(partner_row.wallet_balance, 0) - gross_debit;
+    new_balance := 0;
     UPDATE public.partners
-    SET wallet_balance = new_balance,
+    SET wallet_balance = 0,
         paid_earnings = COALESCE(paid_earnings, 0) + COALESCE(payout_row.net_amount, payout_row.amount, 0),
         updated_at = NOW()
     WHERE id = payout_row.partner_id;
@@ -232,8 +229,8 @@ BEGIN
       partner_id, transaction_type, amount, balance_before, balance_after,
       reference_type, reference_id, notes
     ) VALUES (
-      payout_row.partner_id, 'payout_debit', gross_debit,
-      partner_row.wallet_balance, new_balance, 'payout', payout_row.id,
+      payout_row.partner_id, 'payout_debit', COALESCE(partner_row.wallet_balance, 0),
+      partner_row.wallet_balance, 0, 'payout', payout_row.id,
       COALESCE(transaction_note_input, 'Payout marked paid by admin')
     );
   END IF;

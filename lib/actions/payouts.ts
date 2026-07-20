@@ -451,9 +451,6 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       throw partnerReadError || new Error("Partner wallet could not be loaded.");
     }
     if (fallbackGrossDebit <= 0) throw new Error("Invalid payout amount.");
-    if (fallbackGrossDebit > Number((partner as any).wallet_balance || 0)) {
-      throw new Error("Partner wallet balance is lower than the requested gross payout.");
-    }
     fallbackPartner = partner;
   }
 
@@ -476,11 +473,11 @@ export async function updatePayoutStatus(id: string, status: string, transaction
 
     if (partner) {
       const balanceBefore = Number(partner.wallet_balance || 0);
-      const balanceAfter = Math.max(0, balanceBefore - grossDebit);
+      const balanceAfter = 0;
       const { error: partnerError } = await supabase
         .from("partners" as any)
         .update({
-          wallet_balance: balanceAfter,
+          wallet_balance: 0,
           paid_earnings: Number(partner.paid_earnings || 0) + Number(payout.amount || 0),
           updated_at: now,
         })
@@ -490,9 +487,9 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       await supabase.from("wallet_transactions" as any).insert({
         partner_id: payout.partner_id,
         transaction_type: "payout_debit",
-        amount: grossDebit,
+        amount: balanceBefore,
         balance_before: balanceBefore,
-        balance_after: balanceAfter,
+        balance_after: 0,
         reference_type: "payout",
         reference_id: payout.id,
         notes: transactionReference ? `Paid: ${transactionReference}` : "Payout marked paid by admin",
