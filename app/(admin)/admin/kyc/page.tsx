@@ -2,25 +2,27 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Search, ShieldCheck, FileText, CheckCircle, XCircle, RotateCcw, Clock, Filter } from "lucide-react";
+import { Search, ShieldCheck, FileText, CheckCircle, XCircle, RotateCcw, Clock, RefreshCw } from "lucide-react";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { getKycSubmissions, reviewKycSubmission } from "@/lib/actions/kyc";
 import { Badge, Card, EmptyState, StatCard } from "@/components/admin/ui";
 import KycReviewDrawer from "@/components/admin/KycReviewDrawer";
 
 type KycRow = any;
-type Tab = "pending" | "approved" | "rejected";
+type Tab = "pending" | "approved" | "rejected" | "resubmit";
 
 function statusBadge(status: string) {
   if (status === "verified" || status === "approved") return "success";
-  if (status === "rejected" || status === "resubmission_required") return "danger";
+  if (status === "rejected") return "danger";
+  if (status === "resubmission_required") return "warning";
   if (status === "pending" || status === "under_review") return "warning";
   return "neutral";
 }
 
 const isPending = (item: any) => ["pending", "under_review"].includes(item.kyc_status) && !item.bank_verified;
 const isApproved = (item: any) => ["verified", "approved"].includes(item.kyc_status) || item.bank_verified === true;
-const isRejected = (item: any) => ["rejected", "resubmission_required"].includes(item.kyc_status) && !item.bank_verified;
+const isRejected = (item: any) => item.kyc_status === "rejected" && !item.bank_verified;
+const isResubmit = (item: any) => item.kyc_status === "resubmission_required" && !item.bank_verified;
 
 export default function AdminKycPage() {
   const [items, setItems] = useState<KycRow[]>([]);
@@ -59,7 +61,7 @@ export default function AdminKycPage() {
     pending: items.filter((i) => isPending(i)).length,
     approved: items.filter((i) => isApproved(i)).length,
     rejected: items.filter((i) => isRejected(i)).length,
-    missing: items.filter((i) => !i.documents?.pan || !i.documents?.aadhaar_front || !i.documents?.selfie).length,
+    resubmit: items.filter((i) => isResubmit(i)).length,
   }), [items]);
 
   const filtered = useMemo(() => {
@@ -68,7 +70,8 @@ export default function AdminKycPage() {
       const matchesTab =
         tab === "pending" ? isPending(item) :
         tab === "approved" ? isApproved(item) :
-        isRejected(item);
+        tab === "rejected" ? isRejected(item) :
+        isResubmit(item);
       if (!matchesTab) return false;
       if (!term) return true;
       const haystack = [
@@ -82,8 +85,23 @@ export default function AdminKycPage() {
   const tabConfig: { key: Tab; label: string; count: number; icon: typeof Clock; color: string }[] = [
     { key: "pending", label: "Pending Review", count: counts.pending, icon: Clock, color: "text-amber-600" },
     { key: "approved", label: "Approved", count: counts.approved, icon: CheckCircle, color: "text-emerald-600" },
+    { key: "resubmit", label: "Resubmit", count: counts.resubmit, icon: RefreshCw, color: "text-orange-500" },
     { key: "rejected", label: "Rejected", count: counts.rejected, icon: XCircle, color: "text-red-600" },
   ];
+
+  const tabTitles: Record<Tab, { title: string; desc: string }> = {
+    pending: { title: "KYC Queue", desc: "Review documents and approve or reject KYC submissions." },
+    approved: { title: "Approved KYC", desc: "Partners with approved KYC. You can still reject or ask for resubmission." },
+    resubmit: { title: "Awaiting Resubmission", desc: "Partners asked to resubmit documents. They will move to Pending once they upload again." },
+    rejected: { title: "Rejected KYC", desc: "Permanently rejected submissions." },
+  };
+
+  const emptyStates: Record<Tab, { icon: typeof Clock; title: string; desc: string }> = {
+    pending: { icon: ShieldCheck, title: "No pending KYC submissions", desc: "All caught up! No submissions awaiting review." },
+    approved: { icon: CheckCircle, title: "No approved KYC yet", desc: "Approved submissions will appear here." },
+    resubmit: { icon: RefreshCw, title: "No resubmissions pending", desc: "No partners are awaiting document resubmission." },
+    rejected: { icon: XCircle, title: "No rejected KYC submissions", desc: "Rejected submissions will appear here." },
+  };
 
   return (
     <div className="space-y-6">
@@ -96,18 +114,18 @@ export default function AdminKycPage() {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Pending Review" value={counts.pending} icon={ShieldCheck} tone="amber" />
         <StatCard label="Approved KYC" value={counts.approved} icon={CheckCircle} tone="green" />
-        <StatCard label="Rejected / Resubmit" value={counts.rejected} icon={XCircle} tone="rose" />
-        <StatCard label="Missing Document" value={counts.missing} icon={FileText} tone="slate" />
+        <StatCard label="Resubmit Required" value={counts.resubmit} icon={RefreshCw} tone="amber" />
+        <StatCard label="Rejected" value={counts.rejected} icon={XCircle} tone="rose" />
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-brand-border">
+      <div className="flex items-center gap-1 border-b border-brand-border overflow-x-auto">
         {tabConfig.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
               tab === t.key
                 ? "border-brand-accent text-brand-accent"
                 : "border-transparent text-brand-muted hover:text-brand-ink"
@@ -127,16 +145,8 @@ export default function AdminKycPage() {
       <Card noPadding>
         <div className="flex flex-col gap-3 border-b border-brand-border p-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="font-display text-lg font-semibold text-brand-ink">
-              {tab === "pending" ? "KYC Queue" : tab === "approved" ? "Approved KYC" : "Rejected KYC"}
-            </h2>
-            <p className="text-sm text-brand-muted">
-              {tab === "pending"
-                ? "Review documents and approve or reject KYC submissions."
-                : tab === "approved"
-                  ? "Partners with approved KYC verification."
-                  : "Rejected submissions. Partners can resubmit after correction."}
-            </p>
+            <h2 className="font-display text-lg font-semibold text-brand-ink">{tabTitles[tab].title}</h2>
+            <p className="text-sm text-brand-muted">{tabTitles[tab].desc}</p>
           </div>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
@@ -158,29 +168,19 @@ export default function AdminKycPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Documents</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Submission</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
-                {tab === "pending" && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Decision</th>
-                )}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-border">
               {loading ? (
-                <tr><td colSpan={tab === "pending" ? 6 : 5} className="px-4 py-12 text-center text-brand-muted">Loading...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-brand-muted">Loading...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={tab === "pending" ? 6 : 5} className="px-6 py-12">
+                  <td colSpan={6} className="px-6 py-12">
                     <EmptyState
-                      icon={tab === "pending" ? ShieldCheck : tab === "approved" ? CheckCircle : XCircle}
-                      title={
-                        tab === "pending" ? "No pending KYC submissions"
-                        : tab === "approved" ? "No approved KYC yet"
-                        : "No rejected KYC submissions"
-                      }
-                      description={
-                        tab === "pending" ? "All caught up! No submissions awaiting review."
-                        : tab === "approved" ? "Approved submissions will appear here."
-                        : "Rejected submissions will appear here."
-                      }
+                      icon={emptyStates[tab].icon}
+                      title={emptyStates[tab].title}
+                      description={emptyStates[tab].desc}
                     />
                   </td>
                 </tr>
@@ -230,27 +230,63 @@ export default function AdminKycPage() {
                         <p className="mt-2 max-w-[220px] text-xs text-red-600">{item.rejection_reason || item.resubmission_reason}</p>
                       )}
                     </td>
-                    {tab === "pending" && (
-                      <td className="px-4 py-4">
-                        <div className="min-w-[260px] space-y-2">
+                    <td className="px-4 py-4">
+                      <div className="min-w-[240px] space-y-2">
+                        {/* Reason textarea — needed for reject/resubmit actions */}
+                        {(tab === "pending" || tab === "approved") && (
                           <textarea
                             value={reason[item.id] || ""}
                             onChange={(e) => setReason((r) => ({ ...r, [item.id]: e.target.value }))}
-                            placeholder="Reason required for reject/resubmission"
+                            placeholder="Reason (required for reject / resubmit)"
                             rows={2}
                             className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-accent"
                           />
-                          <div className="flex flex-wrap gap-2">
-                            <ActionButton disabled={busy === item.id} onClick={() => { review(item.id, "under_review"); setReviewItem(item); }}>Start Review</ActionButton>
-                            <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Approve</ActionButton>
-                            <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
-                            <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
-                              <RotateCcw className="h-3 w-3" /> Resubmit
-                            </ActionButton>
-                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-2">
+                          {/* PENDING: all actions */}
+                          {tab === "pending" && (
+                            <>
+                              <ActionButton disabled={busy === item.id} onClick={() => { review(item.id, "under_review"); setReviewItem(item); }}>Start Review</ActionButton>
+                              <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Approve</ActionButton>
+                              <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
+                              <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
+                                <RotateCcw className="h-3 w-3" /> Resubmit
+                              </ActionButton>
+                            </>
+                          )}
+
+                          {/* APPROVED: can reject or ask resubmit */}
+                          {tab === "approved" && (
+                            <>
+                              <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
+                              <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
+                                <RotateCcw className="h-3 w-3" /> Ask Resubmit
+                              </ActionButton>
+                            </>
+                          )}
+
+                          {/* RESUBMIT: can approve if docs look ok, or reject */}
+                          {tab === "resubmit" && (
+                            <>
+                              <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Approve</ActionButton>
+                              <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
+                              <p className="w-full text-[10px] text-orange-600 italic">Waiting for partner to upload corrected documents.</p>
+                            </>
+                          )}
+
+                          {/* REJECTED: can re-approve or move to resubmit */}
+                          {tab === "rejected" && (
+                            <>
+                              <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Re-approve</ActionButton>
+                              <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
+                                <RotateCcw className="h-3 w-3" /> Ask Resubmit
+                              </ActionButton>
+                            </>
+                          )}
                         </div>
-                      </td>
-                    )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
