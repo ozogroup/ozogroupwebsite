@@ -184,6 +184,29 @@ async function loadRows(ids: string[], dateRange?: { from?: string; to?: string 
   return data || [];
 }
 
+async function loadIncomeBreakdown(partnerIds: string[]) {
+  if (partnerIds.length === 0) return new Map<string, { membership: number; booking: number; level: number }>();
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("commissions" as any)
+    .select("partner_id, source_type, amount, level, status, reversed, deleted_at")
+    .in("partner_id", partnerIds)
+    .is("deleted_at", null);
+  const map = new Map<string, { membership: number; booking: number; level: number }>();
+  for (const c of (data || []) as any[]) {
+    if (c.reversed || !["pending", "approved", "paid"].includes(c.status)) continue;
+    const amt = Number(c.amount || 0);
+    let entry = map.get(c.partner_id);
+    if (!entry) { entry = { membership: 0, booking: 0, level: 0 }; map.set(c.partner_id, entry); }
+    if (c.source_type === "membership") entry.membership += amt;
+    else {
+      entry.booking += amt;
+      if (Number(c.level || 1) >= 1) entry.level += amt;
+    }
+  }
+  return map;
+}
+
 export async function GET(request: NextRequest) {
   const admin = await requireAdmin();
   const params = request.nextUrl.searchParams;
@@ -191,6 +214,8 @@ export async function GET(request: NextRequest) {
   const ids = params.getAll("id").filter((id) => /^[0-9a-f-]{20,}$/i.test(id));
   const dateRange = getDateRange(params.get("range"), params.get("from"), params.get("to"));
   const rows = await loadRows(ids, dateRange);
+  const partnerIds = [...new Set(rows.map((r: any) => r.partner_id).filter(Boolean))];
+  const incomeMap = await loadIncomeBreakdown(partnerIds);
 
   const exportRows = rows.map((row: any, index: number) => {
     const partner = Array.isArray(row.partner) ? row.partner[0] : row.partner;
@@ -200,6 +225,7 @@ export async function GET(request: NextRequest) {
     const deductionRate = Number(row.deduction_rate ?? 0.15);
     const deduction = Number(row.deduction_amount ?? gross * deductionRate);
     const net = Number(row.net_amount || row.amount || gross - deduction);
+    const income = incomeMap.get(row.partner_id) || { membership: 0, booking: 0, level: 0 };
     return {
       sr: index + 1,
       payoutId: row.id,
@@ -215,7 +241,10 @@ export async function GET(request: NextRequest) {
       branch: partner?.bank_branch_name || "",
       upiId: method === "upi" ? partner?.upi_id || "" : "",
       maskedUpi: maskUpi(partner?.upi_id),
-      upiHolder: "", // not stored on partner
+      upiHolder: "",
+      membershipIncome: income.membership,
+      bookingIncome: income.booking,
+      levelIncome: income.level,
       gross,
       deductionRate,
       deduction,
@@ -363,7 +392,10 @@ ${exportRows.map((r) => `<tr>
       row.paymentMode === "bank" ? row.accountNumber : row.upiId,
       row.ifsc,
       row.branch,
-      "", "", "", "", "",
+      money(row.membershipIncome),
+      money(row.bookingIncome),
+      "", "",
+      money(row.levelIncome),
       money(row.gross),
       money(row.deduction),
       money(row.net),
