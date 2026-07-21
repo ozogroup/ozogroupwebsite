@@ -226,7 +226,7 @@ export async function GET(request: NextRequest) {
       payoutStatus: row.status || "",
       adminNote: row.admin_notes || row.transaction_note || "",
       transactionReference: row.transaction_reference || "",
-      kiaPayoutId: row.admin_notes?.match(/KIA-PAY-\S+/)?.[0] || "",
+      kiaPayoutId: row.admin_notes?.match(/KIA-\S+/)?.[0] || "",
     };
   });
 

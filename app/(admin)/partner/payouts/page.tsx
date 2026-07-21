@@ -239,7 +239,7 @@ export default function PartnerPayoutsPage() {
                 </tr>
               ) : (
                 payouts.map((payout) => {
-                  const kiaId = payout.admin_notes?.match(/KIA-PAY-\S+/)?.[0] || null;
+                  const kiaId = payout.admin_notes?.match(/KIA-\S+/)?.[0] || null;
                   const gross = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
                   const deduction = Number(payout.deduction_amount || 0);
                   const net = Number(payout.net_amount || payout.amount || 0);

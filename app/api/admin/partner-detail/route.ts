@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     date: py.paid_at
       ? new Date(py.paid_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
       : new Date(py.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
-    kia_payout_id: py.admin_notes?.match(/KIA-PAY-\S+/)?.[0] || null,
+    kia_payout_id: py.admin_notes?.match(/KIA-\S+/)?.[0] || null,
   }));
 
   return NextResponse.json({

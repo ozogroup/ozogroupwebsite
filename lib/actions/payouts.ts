@@ -38,12 +38,15 @@ function profileFrom(row: any) {
   return Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
 }
 
-function generatePayoutId(): string {
+async function generatePayoutId(supabase: any): Promise<string> {
   const now = new Date();
-  const date = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const rand = String(Math.floor(1000 + Math.random() * 9000));
-  const ms = String(now.getMilliseconds()).padStart(3, "0");
-  return `KIA-PAY-${date}-${rand}${ms}`;
+  const year = now.getFullYear();
+  const { count } = await supabase
+    .from("payouts" as any)
+    .select("*", { count: "exact", head: true })
+    .eq("status", "paid");
+  const seq = String((count || 0) + 1).padStart(4, "0");
+  return `KIA-${year}-${seq}`;
 }
 
 function maskedPartner(partner: any) {
@@ -366,7 +369,7 @@ export async function getPayouts() {
   });
 }
 
-export async function updatePayoutStatus(id: string, status: string, transactionReference?: string, note?: string) {
+export async function updatePayoutStatus(id: string, status: string, _unused?: string, note?: string) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();
   const now = new Date().toISOString();
@@ -374,7 +377,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     throw new Error("Unsupported payout status.");
   }
 
-  const kiaPayoutId = status === "paid" ? generatePayoutId() : undefined;
+  const kiaPayoutId = status === "paid" ? await generatePayoutId(supabase) : undefined;
 
   const { data: existingPayout, error: existingError } = await supabase
     .from("payouts" as any)
@@ -396,9 +399,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     transaction_note: note || null,
   };
 
-  if (transactionReference?.trim()) {
-    updateData.transaction_reference = transactionReference.trim();
-  } else if (kiaPayoutId) {
+  if (kiaPayoutId) {
     updateData.transaction_reference = kiaPayoutId;
   }
 
@@ -410,7 +411,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     if (kiaPayoutId) updateData.admin_notes = `KIA Payout ID: ${kiaPayoutId}${note ? ` | ${note}` : ""}`;
   }
   
-  const effectiveReference = transactionReference?.trim() || kiaPayoutId || null;
+  const effectiveReference = kiaPayoutId || null;
   const { data: rpcData, error: rpcError } = await (supabase as any).rpc("process_partner_payout", {
     payout_id_input: id,
     new_status_input: status,
@@ -518,7 +519,7 @@ export async function updatePayoutStatus(id: string, status: string, transaction
         balance_after: 0,
         reference_type: "payout",
         reference_id: payout.id,
-        notes: transactionReference ? `Paid: ${transactionReference}` : "Payout marked paid by admin",
+        notes: kiaPayoutId ? `Paid: ${kiaPayoutId}` : "Payout marked paid by admin",
       });
 
       await markApprovedCommissionsPaid(supabase, payout.partner_id, grossDebit, payout.id);

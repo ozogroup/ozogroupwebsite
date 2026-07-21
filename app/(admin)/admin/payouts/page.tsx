@@ -45,7 +45,6 @@ export default function AdminPayoutsPage() {
   const [walletPartners, setWalletPartners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [refs, setRefs] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [tab, setTab] = useState<"wallets" | "requests">("wallets");
   const [searchA, setSearchA] = useState("");
@@ -99,7 +98,7 @@ export default function AdminPayoutsPage() {
     }
     setBusy(id);
     try {
-      await updatePayoutStatus(id, status, refs[id], notes[id]);
+      await updatePayoutStatus(id, status, undefined, notes[id]);
       await loadAll(false);
     } catch (error: any) {
       alert(error?.message || "Error updating payout status");
@@ -124,7 +123,7 @@ export default function AdminPayoutsPage() {
     setBusy("bulk");
     try {
       for (const id of ids) {
-        await updatePayoutStatus(id, status, refs[id], note || notes[id]);
+        await updatePayoutStatus(id, status, undefined, note || notes[id]);
       }
       setSelected({});
       await loadAll(false);
@@ -580,9 +579,9 @@ export default function AdminPayoutsPage() {
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
                         {payout.status}
                       </span>
-                      {payout.status === "paid" && payout.admin_notes && /KIA-PAY-/.test(payout.admin_notes) && (
+                      {payout.status === "paid" && payout.admin_notes && /KIA-/.test(payout.admin_notes) && (
                         <p className="mt-1 font-mono text-[10px] font-semibold text-emerald-700">
-                          {payout.admin_notes.match(/KIA-PAY-\S+/)?.[0]}
+                          {payout.admin_notes.match(/KIA-\S+/)?.[0]}
                         </p>
                       )}
                       {payout.transaction_reference && payout.status === "paid" && (
@@ -595,13 +594,9 @@ export default function AdminPayoutsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="space-y-2 min-w-[220px]">
-                        <input
-                          value={refs[payout.id] || payout.transaction_reference || ""}
-                          onChange={(e) => setRefs((r) => ({ ...r, [payout.id]: e.target.value }))}
-                          placeholder="UTR / Bank Ref (optional)"
-                          disabled={payout.status === "paid" || payout.status === "rejected"}
-                          className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50 disabled:bg-slate-50"
-                        />
+                        {payout.transaction_reference && (
+                          <p className="font-mono text-xs text-brand-primaryDark bg-brand-surface/60 px-3 py-1.5 rounded-lg">{payout.transaction_reference}</p>
+                        )}
                         <textarea
                           value={notes[payout.id] || payout.transaction_note || ""}
                           onChange={(e) => setNotes((n) => ({ ...n, [payout.id]: e.target.value }))}
