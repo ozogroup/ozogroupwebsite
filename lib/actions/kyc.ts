@@ -126,101 +126,101 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     return { success: false, error: "Please log in to submit KYC." };
   }
 
-  const supabase = getSupabaseServiceClient();
-
-  let existingKycRow: any = null;
   try {
-    const { data } = await supabase
-      .from("partner_kyc" as any)
-      .select("*")
-      .eq("partner_id", profile.id)
-      .maybeSingle();
-    existingKycRow = data as any;
-  } catch {
-    // partner_kyc table may not exist yet — proceed without it
-  }
+    const supabase = getSupabaseServiceClient();
 
-  const method = value(formData, "payment_method") === "upi" ? "upi" : "bank";
-  const mobileNumber = normalizeMobile(value(formData, "mobile_number"));
-  const registeredMobile = normalizeMobile(value(formData, "registered_mobile") || value(formData, "mobile_number"));
-  const accountNumber = normalizeAccount(value(formData, "account_number"));
-  const confirmAccountNumber = normalizeAccount(value(formData, "confirm_account_number"));
-  const bankIfsc = value(formData, "bank_ifsc").toUpperCase().replace(/\s+/g, "");
-  const upiId = normalizeUpi(value(formData, "upi_id"));
-  const confirmUpiId = normalizeUpi(value(formData, "confirm_upi_id"));
-  const panNumber = normalizePan(value(formData, "pan_number"));
+    let existingKycRow: any = null;
+    try {
+      const { data } = await supabase
+        .from("partner_kyc" as any)
+        .select("*")
+        .eq("partner_id", profile.id)
+        .maybeSingle();
+      existingKycRow = data as any;
+    } catch {
+      // partner_kyc table may not exist yet — proceed without it
+    }
 
-  if (!value(formData, "full_name") || !mobileNumber || !value(formData, "email")) {
-    return { success: false, error: "Please complete personal details (name, mobile, email)." };
-  }
-  if (!/^\d{10}$/.test(mobileNumber)) {
-    return { success: false, error: "Enter a valid 10-digit mobile number." };
-  }
-  if (registeredMobile && !/^\d{10}$/.test(registeredMobile)) {
-    return { success: false, error: "Enter a valid 10-digit registered mobile number." };
-  }
-  if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber)) {
-    return { success: false, error: "Enter a valid PAN number (e.g. ABCDE1234F)." };
-  }
+    const method = value(formData, "payment_method") === "upi" ? "upi" : "bank";
+    const mobileNumber = normalizeMobile(value(formData, "mobile_number"));
+    const registeredMobile = normalizeMobile(value(formData, "registered_mobile") || value(formData, "mobile_number"));
+    const accountNumber = normalizeAccount(value(formData, "account_number"));
+    const confirmAccountNumber = normalizeAccount(value(formData, "confirm_account_number"));
+    const bankIfsc = value(formData, "bank_ifsc").toUpperCase().replace(/\s+/g, "");
+    const upiId = normalizeUpi(value(formData, "upi_id"));
+    const confirmUpiId = normalizeUpi(value(formData, "confirm_upi_id"));
+    const panNumber = normalizePan(value(formData, "pan_number"));
 
-  if (method === "bank") {
-    if (!value(formData, "account_holder_name") || !value(formData, "bank_name") || !accountNumber || !bankIfsc) {
-      return { success: false, error: "Please complete all bank account fields (holder name, bank name, account number, IFSC)." };
+    if (!value(formData, "full_name") || !mobileNumber || !value(formData, "email")) {
+      return { success: false, error: "Please complete personal details (name, mobile, email)." };
     }
-    if (accountNumber !== confirmAccountNumber) {
-      return { success: false, error: "Account numbers do not match." };
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      return { success: false, error: "Enter a valid 10-digit mobile number." };
     }
-    if (!/^[0-9]{9,18}$/.test(accountNumber)) {
-      return { success: false, error: "Enter a valid bank account number (9-18 digits)." };
+    if (registeredMobile && !/^\d{10}$/.test(registeredMobile)) {
+      return { success: false, error: "Enter a valid 10-digit registered mobile number." };
     }
-    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) {
-      return { success: false, error: "Enter a valid IFSC code (e.g. SBIN0001234)." };
+    if (panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(panNumber)) {
+      return { success: false, error: "Enter a valid PAN number (e.g. ABCDE1234F)." };
     }
-  }
 
-  if (method === "upi") {
-    if (!value(formData, "upi_holder_name") || !upiId) {
-      return { success: false, error: "Please complete all UPI fields (holder name, UPI ID)." };
+    if (method === "bank") {
+      if (!value(formData, "account_holder_name") || !value(formData, "bank_name") || !accountNumber || !bankIfsc) {
+        return { success: false, error: "Please complete all bank account fields (holder name, bank name, account number, IFSC)." };
+      }
+      if (accountNumber !== confirmAccountNumber) {
+        return { success: false, error: "Account numbers do not match." };
+      }
+      if (!/^[0-9]{9,18}$/.test(accountNumber)) {
+        return { success: false, error: "Enter a valid bank account number (9-18 digits)." };
+      }
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfsc)) {
+        return { success: false, error: "Enter a valid IFSC code (e.g. SBIN0001234)." };
+      }
     }
-    if (upiId !== confirmUpiId) {
-      return { success: false, error: "UPI IDs do not match." };
-    }
-    if (!/^[a-z0-9._-]{2,}@[a-z0-9.-]{2,}$/i.test(upiId)) {
-      return { success: false, error: "Enter a valid UPI ID (e.g. name@bank)." };
-    }
-    const upiMobile = normalizeMobile(value(formData, "upi_mobile"));
-    if (!upiMobile || !/^\d{10}$/.test(upiMobile)) {
-      return { success: false, error: "Enter a valid 10-digit UPI registered mobile number." };
-    }
-  }
 
-  // Duplicate submission guard: reject if submitted within last 30 seconds
-  if (existingKycRow?.submitted_at) {
-    const lastSubmit = new Date(existingKycRow.submitted_at).getTime();
-    if (Date.now() - lastSubmit < 30_000) {
-      return { success: false, error: "KYC was already submitted moments ago. Please wait before resubmitting." };
+    if (method === "upi") {
+      if (!value(formData, "upi_holder_name") || !upiId) {
+        return { success: false, error: "Please complete all UPI fields (holder name, UPI ID)." };
+      }
+      if (upiId !== confirmUpiId) {
+        return { success: false, error: "UPI IDs do not match." };
+      }
+      if (!/^[a-z0-9._-]{2,}@[a-z0-9.-]{2,}$/i.test(upiId)) {
+        return { success: false, error: "Enter a valid UPI ID (e.g. name@bank)." };
+      }
+      const upiMobile = normalizeMobile(value(formData, "upi_mobile"));
+      if (!upiMobile || !/^\d{10}$/.test(upiMobile)) {
+        return { success: false, error: "Enter a valid 10-digit UPI registered mobile number." };
+      }
     }
-  }
 
-  const currentVersion = Number(existingKycRow?.current_version || 0) + 1;
-  const panFile = formData.get("pan_card") as File | null;
-  const aadhaarFrontFile = formData.get("aadhaar_front") as File | null;
-  const aadhaarBackFile = formData.get("aadhaar_back") as File | null;
-  const selfieFile = formData.get("selfie") as File | null;
-  const chequeFile = formData.get("cheque_or_passbook") as File | null;
-  const hasPan = Boolean(panFile?.size || existingKycRow?.pan_card_path);
-  const hasAadhaarFront = Boolean(aadhaarFrontFile?.size || existingKycRow?.aadhaar_front_path);
-  const hasAadhaarBack = Boolean(aadhaarBackFile?.size || existingKycRow?.aadhaar_back_path);
-  const hasSelfie = Boolean(selfieFile?.size || existingKycRow?.selfie_path);
-  const hasCheque = Boolean(chequeFile?.size || existingKycRow?.cheque_path);
+    // Duplicate submission guard: reject if submitted within last 30 seconds
+    if (existingKycRow?.submitted_at) {
+      const lastSubmit = new Date(existingKycRow.submitted_at).getTime();
+      if (Date.now() - lastSubmit < 30_000) {
+        return { success: false, error: "KYC was already submitted moments ago. Please wait before resubmitting." };
+      }
+    }
 
-  if (!hasPan) return { success: false, error: "PAN card document is required." };
-  if (!hasAadhaarFront) return { success: false, error: "Aadhaar front document is required." };
-  if (!hasAadhaarBack) return { success: false, error: "Aadhaar back document is required." };
-  if (!hasSelfie) return { success: false, error: "Live selfie is required." };
-  if (method === "bank" && !hasCheque) return { success: false, error: "Cancelled cheque or passbook image is required for bank payout method." };
+    const currentVersion = Number(existingKycRow?.current_version || 0) + 1;
+    const panFile = formData.get("pan_card") as File | null;
+    const aadhaarFrontFile = formData.get("aadhaar_front") as File | null;
+    const aadhaarBackFile = formData.get("aadhaar_back") as File | null;
+    const selfieFile = formData.get("selfie") as File | null;
+    const chequeFile = formData.get("cheque_or_passbook") as File | null;
+    const hasPan = Boolean(panFile?.size || existingKycRow?.pan_card_path);
+    const hasAadhaarFront = Boolean(aadhaarFrontFile?.size || existingKycRow?.aadhaar_front_path);
+    const hasAadhaarBack = Boolean(aadhaarBackFile?.size || existingKycRow?.aadhaar_back_path);
+    const hasSelfie = Boolean(selfieFile?.size || existingKycRow?.selfie_path);
+    const hasCheque = Boolean(chequeFile?.size || existingKycRow?.cheque_path);
 
-  try {
+    if (!hasPan) return { success: false, error: "PAN card document is required." };
+    if (!hasAadhaarFront) return { success: false, error: "Aadhaar front document is required." };
+    if (!hasAadhaarBack) return { success: false, error: "Aadhaar back document is required." };
+    if (!hasSelfie) return { success: false, error: "Live selfie is required." };
+    if (method === "bank" && !hasCheque) return { success: false, error: "Cancelled cheque or passbook image is required for bank payout method." };
+
     const [panUpload, aadhaarFrontUpload, aadhaarBackUpload, selfieUpload, chequeUpload] = await Promise.all([
       uploadKycFile(profile.id, panFile, "pan-card", currentVersion),
       uploadKycFile(profile.id, aadhaarFrontFile, "aadhaar-front", currentVersion),
@@ -278,15 +278,17 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     }
 
     if (savedKycId) {
-      await Promise.all([
-        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "pan_card", upload: panUpload, version: currentVersion }),
-        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_front", upload: aadhaarFrontUpload, version: currentVersion }),
-        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_back", upload: aadhaarBackUpload, version: currentVersion }),
-        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "selfie", upload: selfieUpload, version: currentVersion }),
-        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "cheque_or_passbook", upload: chequeUpload, version: currentVersion }),
-      ]).catch((docErr) => {
+      try {
+        await Promise.all([
+          upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "pan_card", upload: panUpload, version: currentVersion }),
+          upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_front", upload: aadhaarFrontUpload, version: currentVersion }),
+          upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_back", upload: aadhaarBackUpload, version: currentVersion }),
+          upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "selfie", upload: selfieUpload, version: currentVersion }),
+          upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "cheque_or_passbook", upload: chequeUpload, version: currentVersion }),
+        ]);
+      } catch (docErr: any) {
         console.error("Document row save failed (non-fatal):", docErr?.message);
-      });
+      }
     }
 
     // Always update the partners table (core columns that exist since launch)
@@ -309,8 +311,7 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
 
     if (partnerError) {
       console.error("Partner update failed:", partnerError.message);
-      // Try a minimal update with only guaranteed columns
-      await supabase
+      const { error: fallbackError } = await supabase
         .from("partners" as any)
         .update({
           kyc_status: "pending",
@@ -322,6 +323,10 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id);
+      if (fallbackError) {
+        console.error("Fallback partner update also failed:", fallbackError.message);
+        return { success: false, error: "Failed to update partner details. Please try again." };
+      }
     }
 
     // Try setting migration-added columns separately (won't fail the whole flow)
@@ -337,41 +342,41 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     } catch {
       // These columns may not exist if migration hasn't been run — non-fatal
     }
+
+    // Sync KYC details to Google Sheet (non-blocking)
+    try {
+      const { data: partnerRow } = await supabase
+        .from("partners" as any)
+        .select("partner_code")
+        .eq("id", profile.id)
+        .maybeSingle();
+      await syncKycSubmitted({
+        partner_id: profile.id,
+        partner_code: (partnerRow as any)?.partner_code || "",
+        full_name: value(formData, "full_name"),
+        email: value(formData, "email").toLowerCase(),
+        phone: mobileNumber,
+        payment_method: method,
+        bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : undefined,
+        bank_account_number: method === "bank" ? accountNumber : undefined,
+        bank_ifsc: method === "bank" ? bankIfsc : undefined,
+        bank_name: method === "bank" ? value(formData, "bank_name") : undefined,
+        bank_branch_name: method === "bank" ? value(formData, "branch_name") : undefined,
+        upi_id: method === "upi" ? upiId : undefined,
+        upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : undefined,
+        submitted_at: new Date().toISOString(),
+      });
+    } catch (syncErr) {
+      console.error("KYC Google Sheet sync failed (non-fatal):", syncErr);
+    }
+
+    revalidatePath("/partner/kyc");
+    revalidatePath("/admin/kyc");
+    return { success: true };
   } catch (e: any) {
     console.error("KYC submission failed:", e?.message || e);
     return { success: false, error: e?.message || "KYC submission failed. Please check your details and try again." };
   }
-
-  // Sync KYC details to Google Sheet (non-blocking)
-  try {
-    const { data: partnerRow } = await supabase
-      .from("partners" as any)
-      .select("partner_code")
-      .eq("id", profile.id)
-      .maybeSingle();
-    await syncKycSubmitted({
-      partner_id: profile.id,
-      partner_code: (partnerRow as any)?.partner_code || "",
-      full_name: value(formData, "full_name"),
-      email: value(formData, "email").toLowerCase(),
-      phone: mobileNumber,
-      payment_method: method,
-      bank_account_holder: method === "bank" ? value(formData, "account_holder_name") : undefined,
-      bank_account_number: method === "bank" ? accountNumber : undefined,
-      bank_ifsc: method === "bank" ? bankIfsc : undefined,
-      bank_name: method === "bank" ? value(formData, "bank_name") : undefined,
-      bank_branch_name: method === "bank" ? value(formData, "branch_name") : undefined,
-      upi_id: method === "upi" ? upiId : undefined,
-      upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : undefined,
-      submitted_at: new Date().toISOString(),
-    });
-  } catch (syncErr) {
-    console.error("KYC Google Sheet sync failed (non-fatal):", syncErr);
-  }
-
-  revalidatePath("/partner/kyc");
-  revalidatePath("/admin/kyc");
-  return { success: true };
 }
 
 export async function getPartnerKycStatus(): Promise<{

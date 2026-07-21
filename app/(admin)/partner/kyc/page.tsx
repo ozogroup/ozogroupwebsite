@@ -287,7 +287,24 @@ export default function PartnerKycPage() {
       if (cheque.file) formData.set("cheque_or_passbook", cheque.file);
 
       setSubmitPhase("uploading");
-      const result = await submitPartnerKyc(formData);
+      let result: { success: boolean; error?: string };
+      try {
+        result = await submitPartnerKyc(formData);
+      } catch (serverErr: any) {
+        setSubmitPhase("idle");
+        const msg = serverErr?.message || "";
+        if (msg.includes("Failed to fetch") || msg.includes("network") || msg.includes("Load failed")) {
+          setError("Network error — please check your internet connection and try again.");
+        } else if (msg.includes("body") || msg.includes("size") || msg.includes("too large") || msg.includes("413")) {
+          setError("Files are too large. Please reduce file sizes (max 5MB each) and try again.");
+        } else {
+          setError("Server error while submitting KYC. Please try again or contact support.");
+        }
+        setSubmitting(false);
+        submitGuardRef.current = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       if (!result.success) {
         setSubmitPhase("idle");
         setError(result.error || "KYC submission failed.");

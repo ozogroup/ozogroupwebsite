@@ -5,8 +5,10 @@ const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  serverActions: {
-    bodySizeLimit: "10mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
   images: {
     remotePatterns: [
