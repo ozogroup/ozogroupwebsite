@@ -9,6 +9,7 @@ import {
 import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
 import { getAdminWalletDirectory } from "@/lib/actions/wallets";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
+import PartnerDrawer from "@/components/admin/PartnerDrawer";
 
 const PAGE_SIZE = 20;
 
@@ -52,6 +53,7 @@ export default function AdminPayoutsPage() {
   const [pageA, setPageA] = useState(1);
   const [pageB, setPageB] = useState(1);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [drawerPartnerId, setDrawerPartnerId] = useState<string | null>(null);
 
   // New filters
   const [filterKyc, setFilterKyc] = useState("all");
@@ -335,8 +337,10 @@ export default function AdminPayoutsPage() {
                   return (
                     <tr key={r.id} className="hover:bg-brand-surface/30 transition-colors">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-brand-ink text-sm">{r.name}</p>
-                        <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{r.partner_code}</p>
+                        <button type="button" onClick={() => setDrawerPartnerId(r.id)} className="text-left hover:underline">
+                          <p className="font-medium text-brand-ink text-sm">{r.name}</p>
+                          <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{r.partner_code}</p>
+                        </button>
                         <p className="text-[10px] text-brand-muted">{r.phone}</p>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(wallet)}</td>
@@ -537,8 +541,10 @@ export default function AdminPayoutsPage() {
                       />
                     </td>
                     <td className="px-4 py-4">
-                      <p className="font-mono text-sm font-bold text-brand-primaryDark">{payout.partner?.partner_code || "-"}</p>
-                      <p className="font-medium text-brand-ink text-sm">{profileName(payout.partner?.profiles)}</p>
+                      <button type="button" onClick={() => setDrawerPartnerId(payout.partner_id)} className="text-left hover:underline">
+                        <p className="font-mono text-sm font-bold text-brand-primaryDark">{payout.partner?.partner_code || "-"}</p>
+                        <p className="font-medium text-brand-ink text-sm">{profileName(payout.partner?.profiles)}</p>
+                      </button>
                     </td>
                     <td className="px-4 py-4 text-right text-sm">
                       <p className="font-semibold text-brand-ink">{money(payout.gross_amount || payout.amount)}</p>
@@ -641,6 +647,8 @@ export default function AdminPayoutsPage() {
           )}
         </Card>
       )}
+
+      <PartnerDrawer partnerId={drawerPartnerId} onClose={() => setDrawerPartnerId(null)} />
     </div>
   );
 }
