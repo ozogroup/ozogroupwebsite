@@ -35,7 +35,7 @@ const navigation = [
   { name: "Referral Network", href: "/admin/referrals", icon: Network, section: "referral" },
   { name: "Commissions", href: "/admin/commissions", icon: BadgeIndianRupee, section: "referral" },
   { name: "Wallets", href: "/admin/wallets", icon: CreditCard, section: "referral" },
-  { name: "KYC Approvals", href: "/admin/kyc", icon: ShieldCheck, section: "referral" },
+  { name: "KYC Center", href: "/admin/kyc", icon: ShieldCheck, section: "referral" },
   { name: "Payouts", href: "/admin/payouts", icon: Wallet, section: "referral" },
   { name: "Reports", href: "/admin/reports", icon: BarChart3, section: "referral" },
   { name: "Media Library", href: "/admin/media", icon: ImageIcon, section: "settings" },

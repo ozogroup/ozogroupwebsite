@@ -221,13 +221,11 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     if (!hasSelfie) return { success: false, error: "Live selfie is required." };
     if (method === "bank" && !hasCheque) return { success: false, error: "Cancelled cheque or passbook image is required for bank payout method." };
 
-    const [panUpload, aadhaarFrontUpload, aadhaarBackUpload, selfieUpload, chequeUpload] = await Promise.all([
-      uploadKycFile(profile.id, panFile, "pan-card", currentVersion),
-      uploadKycFile(profile.id, aadhaarFrontFile, "aadhaar-front", currentVersion),
-      uploadKycFile(profile.id, aadhaarBackFile, "aadhaar-back", currentVersion),
-      uploadKycFile(profile.id, selfieFile, "selfie", currentVersion),
-      uploadKycFile(profile.id, chequeFile, "cheque-or-passbook", currentVersion),
-    ]);
+    const panUpload = await uploadKycFile(profile.id, panFile, "pan-card", currentVersion);
+    const aadhaarFrontUpload = await uploadKycFile(profile.id, aadhaarFrontFile, "aadhaar-front", currentVersion);
+    const aadhaarBackUpload = await uploadKycFile(profile.id, aadhaarBackFile, "aadhaar-back", currentVersion);
+    const selfieUpload = await uploadKycFile(profile.id, selfieFile, "selfie", currentVersion);
+    const chequeUpload = await uploadKycFile(profile.id, chequeFile, "cheque-or-passbook", currentVersion);
 
     // Try to save in partner_kyc table (may not exist if migration not run)
     let savedKycId: string | null = null;
@@ -341,6 +339,31 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
         .eq("id", profile.id);
     } catch {
       // These columns may not exist if migration hasn't been run — non-fatal
+    }
+
+    // Auto-verify: if all required fields and documents are present, set verified
+    const allDocsPresent = hasPan && hasAadhaarFront && hasAadhaarBack && hasSelfie && (method === "upi" || hasCheque);
+    const allFieldsPresent = Boolean(
+      value(formData, "full_name") && mobileNumber && value(formData, "email") &&
+      (method === "bank" ? (accountNumber && bankIfsc && value(formData, "account_holder_name") && value(formData, "bank_name")) : (upiId && value(formData, "upi_holder_name")))
+    );
+    if (allDocsPresent && allFieldsPresent) {
+      await supabase.from("partners" as any).update({
+        kyc_status: "verified",
+        bank_verified: true,
+        kyc_reviewed_at: new Date().toISOString(),
+        payout_hold_reason: null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", profile.id);
+
+      try {
+        await supabase.from("partner_kyc" as any).update({
+          status: "verified",
+          approved_at: new Date().toISOString(),
+          reviewed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq("partner_id", profile.id);
+      } catch {}
     }
 
     // Sync KYC details to Google Sheet (non-blocking)

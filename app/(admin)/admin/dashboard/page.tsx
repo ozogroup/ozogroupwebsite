@@ -81,7 +81,7 @@ export default async function AdminDashboardPage({
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [activePartnersCount, expiredMembershipsCount, todayBookingsCount, pendingKycCount, pendingPayoutsCount, monthlyBookings, allPayouts, allSales] = await Promise.all([
+  const [activePartnersCount, expiredMembershipsCount, todayBookingsCount, pendingKycCount, pendingPayoutsCount, monthlyBookings, allPayouts, allSales, verifiedKycCount, rejectedKycCount] = await Promise.all([
     safeCount("partners").then(async () => {
       const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).eq("status", "active");
       return r.count ?? 0;
@@ -105,6 +105,14 @@ export default async function AdminDashboardPage({
     safeQuery(() => (supabase as any).from("bookings").select("payment_amount,treatment_name,treatment_price,created_at").gte("created_at", monthStart.toISOString())),
     safeQuery(() => (supabase as any).from("payouts").select("amount,status")),
     safeQuery(() => (supabase as any).from("bookings").select("treatment_name,treatment_price,payment_amount,booking_status,payment_status,referred_by,partner_code")),
+    (async () => {
+      const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).in("kyc_status", ["verified", "approved"]);
+      return r.count ?? 0;
+    })(),
+    (async () => {
+      const r = await (supabase as any).from("partners").select("*", { count: "exact", head: true }).eq("kyc_status", "rejected");
+      return r.count ?? 0;
+    })(),
   ]);
 
   const monthlyRevenue = monthlyBookings.reduce((sum: number, b: any) => sum + Number(b.payment_amount || b.treatment_price || 0), 0);
@@ -199,6 +207,10 @@ export default async function AdminDashboardPage({
     .filter((row: any) => row.source_type === "membership" && ["pending", "approved"].includes(String(row.status)))
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
   const actionItemsCount = pendingKycCount + pendingPayoutsCount;
+  const netPayoutDue = Math.round(totalWalletBalance * 0.85 * 100) / 100;
+  const paidThisMonth = (periodPayoutRows || [])
+    .filter((row: any) => row.status === "paid" && new Date(row.created_at) >= monthStart)
+    .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
 
   // Last 6 calendar months, independent of the date-range filter above.
   const sixMonthsAgo = new Date();
@@ -306,6 +318,16 @@ export default async function AdminDashboardPage({
           <StatCard label="15% Deduction" value={`Rs. ${periodDeduction.toLocaleString("en-IN")}`} icon={BadgeIndianRupee} href="/admin/payouts" tone="rose" hint="Admin/service fee" />
           <StatCard label="Net Payable" value={`Rs. ${periodNetPayable.toLocaleString("en-IN")}`} icon={IndianRupee} href="/admin/payouts" tone="green" hint="Payable after deduction" />
         </div>
+      </div>
+
+      {/* Operational KYC & Payout Stats */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="KYC Completed" value={verifiedKycCount} icon={ShieldCheck} href="/admin/kyc" tone="green" hint="Verified partners" />
+        <StatCard label="KYC Rejected" value={rejectedKycCount} icon={ShieldCheck} href="/admin/kyc" tone="rose" hint="Need resubmission" />
+        <StatCard label="KYC Pending" value={pendingKycCount} icon={ShieldCheck} href="/admin/kyc" tone="amber" hint="Awaiting review" />
+        <StatCard label="Net Payout Due" value={`Rs. ${netPayoutDue.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="purple" hint="After 15% deduction" />
+        <StatCard label="Paid This Month" value={`Rs. ${paidThisMonth.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="green" hint="Current month" />
+        <StatCard label="Wallet Liability" value={`Rs. ${totalWalletBalance.toLocaleString("en-IN")}`} icon={Wallet} href="/admin/payouts" tone="amber" hint="All partner wallets" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -551,7 +573,7 @@ export default async function AdminDashboardPage({
             { href: "/admin/memberships", icon: CreditCard, label: "Memberships", color: "from-amber-500 to-orange-600" },
             { href: "/admin/partners", icon: Users, label: "Partners", color: "from-violet-500 to-purple-600" },
             { href: "/admin/payouts", icon: Wallet, label: "Payout Center", color: "from-rose-500 to-pink-600" },
-            { href: "/admin/kyc", icon: ShieldCheck, label: "Review KYC", color: "from-cyan-500 to-blue-600" },
+            { href: "/admin/kyc", icon: ShieldCheck, label: "KYC Center", color: "from-cyan-500 to-blue-600" },
             { href: "/admin/commissions", icon: BadgeIndianRupee, label: "Commissions", color: "from-green-500 to-emerald-600" },
             { href: "/api/admin/payouts/export?format=csv&range=previous_month", icon: FileText, label: "Last Month Report", color: "from-slate-500 to-gray-600" },
           ].map((item) => (

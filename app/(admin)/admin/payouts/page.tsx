@@ -333,89 +333,81 @@ export default function AdminPayoutsPage() {
             <table className="w-full min-w-[1200px]">
               <thead className="border-b border-brand-border bg-brand-surface/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Partner</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Gross Wallet</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">15% Deduction</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Net Payable</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Payment Details</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">KYC</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Eligibility</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase">Paid</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase">Partner</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Membership</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Kit Booking</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Level Income</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Gross</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">15% Ded.</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Net Payable</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase">Payment</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase">KYC</th>
+                  <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase">Paid</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border bg-white">
                 {pagedWallets.length === 0 ? (
-                  <tr><td colSpan={9} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search or filter." /></td></tr>
+                  <tr><td colSpan={11} className="px-6 py-12"><EmptyState icon={Wallet} title="No partners found" description="Try a different search or filter." /></td></tr>
                 ) : pagedWallets.map((r) => {
                   const wallet = Number(r.wallet_balance || 0);
                   const deduction = Math.round(wallet * 0.15 * 100) / 100;
                   const net = Math.round((wallet - deduction) * 100) / 100;
                   const kycOk = ["verified", "approved"].includes(r.kyc_status);
-                  const eligible = wallet > 0 && kycOk;
-                  const blockReason = wallet <= 0 ? "No balance" : !kycOk ? "KYC not approved" : null;
+                  const levelIncome = Number(r.l1Income || 0) + Number(r.l2Income || 0) + Number(r.l3Income || 0) + Number(r.l4Income || 0);
                   return (
                     <tr key={r.id} className="hover:bg-brand-surface/30 transition-colors">
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">
                         <button type="button" onClick={() => setDrawerPartnerId(r.id)} className="text-left hover:underline">
-                          <p className="font-medium text-brand-ink text-sm">{r.name}</p>
+                          <p className="font-medium text-brand-ink text-xs leading-tight">{r.name}</p>
                           <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{r.partner_code}</p>
                         </button>
-                        <p className="text-[10px] text-brand-muted">{r.phone}</p>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(wallet)}</td>
-                      <td className="px-4 py-3 text-right text-sm text-red-600">-{money(deduction)}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-brand-ink">{money(net)}</td>
-                      <td className="px-4 py-3 max-w-[240px]">
+                      <td className="px-3 py-2.5 text-right text-xs text-brand-ink">{money(r.membershipReward || 0)}</td>
+                      <td className="px-3 py-2.5 text-right text-xs text-brand-ink">{money(r.bookingCommission || 0)}</td>
+                      <td className="px-3 py-2.5 text-right text-xs text-brand-ink">
+                        {money(levelIncome)}
+                        {levelIncome > 0 && (
+                          <p className="text-[9px] text-brand-muted">L1-L4</p>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs font-semibold text-brand-ink">{money(wallet)}</td>
+                      <td className="px-3 py-2.5 text-right text-xs text-red-600">-{money(deduction)}</td>
+                      <td className="px-3 py-2.5 text-right text-xs font-semibold text-brand-ink">{money(net)}</td>
+                      <td className="px-3 py-2.5 max-w-[180px]">
                         {r.payment_method === "upi" ? (
-                          <div className="space-y-0.5">
+                          <div>
                             <Badge variant="info">UPI</Badge>
-                            <p className="mt-1 text-xs font-medium text-brand-ink break-all">{r.upi_id || "-"}</p>
+                            <p className="mt-0.5 text-[10px] font-medium text-brand-ink break-all">{r.upi_id || "-"}</p>
                           </div>
                         ) : r.payment_method === "bank" ? (
-                          <div className="space-y-0.5">
+                          <div>
                             <Badge variant="neutral">Bank</Badge>
-                            <p className="mt-1 text-xs font-medium text-brand-ink">{r.bank_account_holder || "-"}</p>
-                            <p className="text-[10px] text-brand-muted">AC: <span className="font-mono font-semibold text-brand-ink">{r.bank_account_number || "-"}</span></p>
+                            <p className="mt-0.5 text-[10px] text-brand-muted">AC: <span className="font-mono font-semibold text-brand-ink">{r.bank_account_number || "-"}</span></p>
                             <p className="text-[10px] text-brand-muted">IFSC: <span className="font-mono">{r.bank_ifsc || "-"}</span></p>
-                            {r.bank_name && <p className="text-[10px] text-brand-muted">{r.bank_name}{r.bank_branch_name ? ` - ${r.bank_branch_name}` : ""}</p>}
                           </div>
                         ) : (
-                          <span className="text-[10px] text-red-500">Not submitted</span>
+                          <span className="text-[10px] text-red-500">N/A</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5">
                         <Badge variant={getKycBadge(r.kyc_status)}>
-                          {r.kyc_status || "N/A"}
+                          {kycOk ? "OK" : r.kyc_status || "N/A"}
                         </Badge>
-                        <div className="mt-1">
-                          <Badge variant={r.status === "active" ? "success" : r.status === "pending" ? "warning" : "neutral"} dot>
-                            {r.status || "unknown"}
-                          </Badge>
-                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        {eligible ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                            <CheckCircle className="h-3.5 w-3.5" /> Eligible
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-red-600">{blockReason}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm text-brand-muted">{r.paidPayout ? money(r.paidPayout) : "---"}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2.5 text-right text-xs text-brand-muted">{r.paidPayout ? money(r.paidPayout) : "---"}</td>
+                      <td className="px-3 py-2.5">
                         {wallet > 0 ? (
                           <button
                             type="button"
                             onClick={() => handleCreatePayoutForPartner(r)}
                             disabled={busy === r.id}
-                            className="rounded-lg border border-brand-border px-3 py-1.5 text-xs font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent disabled:opacity-50"
+                            className="rounded-md border border-brand-border px-2 py-1 text-[10px] font-medium text-brand-ink hover:border-brand-accent hover:text-brand-accent disabled:opacity-50"
                           >
-                            {busy === r.id ? "Creating..." : "Create Payout"}
+                            {busy === r.id ? "..." : "Pay"}
                           </button>
                         ) : (
-                          <span className="text-xs text-brand-muted">No balance</span>
+                          <span className="text-[10px] text-brand-muted">-</span>
                         )}
                       </td>
                     </tr>

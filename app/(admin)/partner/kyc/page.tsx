@@ -10,11 +10,52 @@ const emptyFile: FileState = { file: null, preview: null, name: null };
 const ACCEPTED_IMAGE = "image/jpeg,image/png,image/webp";
 const ACCEPTED_ALL = "image/jpeg,image/png,image/webp,application/pdf";
 const MAX_SIZE = 10 * 1024 * 1024;
+const COMPRESS_MAX_EDGE = 1600;
+const COMPRESS_QUALITY = 0.8;
+
+function compressImage(file: File): Promise<File> {
+  if (file.type === "application/pdf") return Promise.resolve(file);
+  if (!file.type.startsWith("image/")) return Promise.resolve(file);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width <= COMPRESS_MAX_EDGE && height <= COMPRESS_MAX_EDGE && file.size < 500_000) {
+        resolve(file);
+        return;
+      }
+      if (width > COMPRESS_MAX_EDGE || height > COMPRESS_MAX_EDGE) {
+        const scale = COMPRESS_MAX_EDGE / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        COMPRESS_QUALITY,
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
 
 export default function PartnerKycPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [submitPhase, setSubmitPhase] = useState<"idle" | "validating" | "uploading" | "saving" | "done">("idle");
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "validating" | "optimising" | "uploading" | "saving" | "done">("idle");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [partner, setPartner] = useState<any>(null);
@@ -280,11 +321,12 @@ export default function PartnerKycPage() {
         formData.set("upi_mobile", upiMobile.replace(/\D/g, "").slice(-10));
       }
 
-      if (panFile.file) formData.set("pan_card", panFile.file);
-      if (aadhaarFront.file) formData.set("aadhaar_front", aadhaarFront.file);
-      if (aadhaarBack.file) formData.set("aadhaar_back", aadhaarBack.file);
-      if (selfie.file) formData.set("selfie", selfie.file);
-      if (cheque.file) formData.set("cheque_or_passbook", cheque.file);
+      setSubmitPhase("optimising");
+      if (panFile.file) formData.set("pan_card", await compressImage(panFile.file));
+      if (aadhaarFront.file) formData.set("aadhaar_front", await compressImage(aadhaarFront.file));
+      if (aadhaarBack.file) formData.set("aadhaar_back", await compressImage(aadhaarBack.file));
+      if (selfie.file) formData.set("selfie", await compressImage(selfie.file));
+      if (cheque.file) formData.set("cheque_or_passbook", await compressImage(cheque.file));
 
       setSubmitPhase("uploading");
       let result: { success: boolean; error?: string };
@@ -310,7 +352,7 @@ export default function PartnerKycPage() {
         setError(result.error || "KYC submission failed.");
       } else {
         setSubmitPhase("done");
-        setSuccess("KYC submitted successfully! Admin will review your documents.");
+        setSuccess("KYC submitted and verified successfully! You are now eligible for payouts.");
         await load();
       }
     } catch (err: any) {
@@ -528,6 +570,7 @@ export default function PartnerKycPage() {
               <span className="inline-flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 {submitPhase === "validating" && "Validating…"}
+                {submitPhase === "optimising" && "Optimising documents…"}
                 {submitPhase === "uploading" && "Uploading documents…"}
                 {submitPhase === "saving" && "Saving details…"}
                 {submitPhase === "done" && "Done!"}
