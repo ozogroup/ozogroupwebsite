@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { X, ShieldCheck, CreditCard, Wallet, User, FileText } from "lucide-react";
+import PartnerAccessPanel from "./PartnerAccessPanel";
 
 interface PartnerDrawerProps {
   partnerId: string | null;
@@ -181,6 +182,8 @@ export default function PartnerDrawer({ partnerId, onClose }: PartnerDrawerProps
                   </div>
                 </section>
               )}
+              {/* Login Access Management */}
+              <PartnerAccessPanel partnerId={partnerId!} />
             </>
           )}
         </div>

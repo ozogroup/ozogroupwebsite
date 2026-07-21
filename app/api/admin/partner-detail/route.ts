@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data: kyc } = await supabase
       .from("partner_kyc" as any)
-      .select("pan_card_path, aadhaar_front_path, aadhaar_back_path, selfie_path")
+      .select("pan_card_path, aadhaar_front_path, aadhaar_back_path, selfie_path, cheque_path")
       .eq("partner_id", partnerId)
       .maybeSingle();
     if (kyc) {
@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
         { type: "aadhaar_front", path: k.aadhaar_front_path },
         { type: "aadhaar_back", path: k.aadhaar_back_path },
         { type: "selfie", path: k.selfie_path },
+        { type: "cheque_or_passbook", path: k.cheque_path },
       ].filter((d) => d.path);
 
       const urls = await Promise.all(

@@ -188,6 +188,10 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     if (!/^[a-z0-9._-]{2,}@[a-z0-9.-]{2,}$/i.test(upiId)) {
       return { success: false, error: "Enter a valid UPI ID (e.g. name@bank)." };
     }
+    const upiMobile = normalizeMobile(value(formData, "upi_mobile"));
+    if (!upiMobile || !/^\d{10}$/.test(upiMobile)) {
+      return { success: false, error: "Enter a valid 10-digit UPI registered mobile number." };
+    }
   }
 
   // Duplicate submission guard: reject if submitted within last 30 seconds
@@ -203,20 +207,26 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
   const aadhaarFrontFile = formData.get("aadhaar_front") as File | null;
   const aadhaarBackFile = formData.get("aadhaar_back") as File | null;
   const selfieFile = formData.get("selfie") as File | null;
+  const chequeFile = formData.get("cheque_or_passbook") as File | null;
   const hasPan = Boolean(panFile?.size || existingKycRow?.pan_card_path);
-  const hasAadhaar = Boolean(aadhaarFrontFile?.size || existingKycRow?.aadhaar_front_path);
+  const hasAadhaarFront = Boolean(aadhaarFrontFile?.size || existingKycRow?.aadhaar_front_path);
+  const hasAadhaarBack = Boolean(aadhaarBackFile?.size || existingKycRow?.aadhaar_back_path);
   const hasSelfie = Boolean(selfieFile?.size || existingKycRow?.selfie_path);
+  const hasCheque = Boolean(chequeFile?.size || existingKycRow?.cheque_path);
 
-  if (!hasPan || !hasAadhaar || !hasSelfie) {
-    return { success: false, error: "PAN card, Aadhaar front, and selfie are required documents." };
-  }
+  if (!hasPan) return { success: false, error: "PAN card document is required." };
+  if (!hasAadhaarFront) return { success: false, error: "Aadhaar front document is required." };
+  if (!hasAadhaarBack) return { success: false, error: "Aadhaar back document is required." };
+  if (!hasSelfie) return { success: false, error: "Live selfie is required." };
+  if (method === "bank" && !hasCheque) return { success: false, error: "Cancelled cheque or passbook image is required for bank payout method." };
 
   try {
-    const [panUpload, aadhaarFrontUpload, aadhaarBackUpload, selfieUpload] = await Promise.all([
+    const [panUpload, aadhaarFrontUpload, aadhaarBackUpload, selfieUpload, chequeUpload] = await Promise.all([
       uploadKycFile(profile.id, panFile, "pan-card", currentVersion),
       uploadKycFile(profile.id, aadhaarFrontFile, "aadhaar-front", currentVersion),
       uploadKycFile(profile.id, aadhaarBackFile, "aadhaar-back", currentVersion),
       uploadKycFile(profile.id, selfieFile, "selfie", currentVersion),
+      uploadKycFile(profile.id, chequeFile, "cheque-or-passbook", currentVersion),
     ]);
 
     // Try to save in partner_kyc table (may not exist if migration not run)
@@ -236,13 +246,14 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
         branch_name: method === "bank" ? value(formData, "branch_name") : null,
         upi_id: method === "upi" ? upiId : null,
         upi_holder_name: method === "upi" ? value(formData, "upi_holder_name") : null,
-        upi_mobile: method === "upi" ? registeredMobile : null,
+        upi_mobile: method === "upi" ? normalizeMobile(value(formData, "upi_mobile")) : null,
         registered_mobile: registeredMobile,
         pan_number: panNumber || null,
         pan_card_path: panUpload?.path || existingKycRow?.pan_card_path || null,
         aadhaar_front_path: aadhaarFrontUpload?.path || existingKycRow?.aadhaar_front_path || null,
         aadhaar_back_path: aadhaarBackUpload?.path || existingKycRow?.aadhaar_back_path || null,
         selfie_path: selfieUpload?.path || existingKycRow?.selfie_path || null,
+        cheque_path: chequeUpload?.path || existingKycRow?.cheque_path || null,
         status: "pending",
         rejection_reason: null,
         resubmission_reason: null,
@@ -272,6 +283,7 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
         upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_front", upload: aadhaarFrontUpload, version: currentVersion }),
         upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "aadhaar_back", upload: aadhaarBackUpload, version: currentVersion }),
         upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "selfie", upload: selfieUpload, version: currentVersion }),
+        upsertDocumentRow({ partnerId: profile.id, kycId: savedKycId, documentType: "cheque_or_passbook", upload: chequeUpload, version: currentVersion }),
       ]).catch((docErr) => {
         console.error("Document row save failed (non-fatal):", docErr?.message);
       });
@@ -478,11 +490,13 @@ export async function getKycSubmissions() {
       aadhaar_front_url: await createSignedUrl(kyc?.aadhaar_front_path),
       aadhaar_back_url: await createSignedUrl(kyc?.aadhaar_back_path),
       selfie_url: await createSignedUrl(kyc?.selfie_path),
+      cheque_url: await createSignedUrl(kyc?.cheque_path),
       documents: {
         pan: Boolean(kyc?.pan_card_path),
         aadhaar_front: Boolean(kyc?.aadhaar_front_path),
         aadhaar_back: Boolean(kyc?.aadhaar_back_path),
         selfie: Boolean(kyc?.selfie_path),
+        cheque_or_passbook: Boolean(kyc?.cheque_path),
       },
       partner: {
         partner_code: row.partner_code,

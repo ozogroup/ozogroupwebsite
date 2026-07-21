@@ -54,8 +54,9 @@ export default function KycReviewDrawer({ item, onClose, onUpdated }: KycReviewD
   const docs = [
     { key: "pan", label: "PAN Card", url: item.pan_card_url, required: true },
     { key: "aadhaar_front", label: "Aadhaar Front", url: item.aadhaar_front_url, required: true },
-    { key: "aadhaar_back", label: "Aadhaar Back", url: item.aadhaar_back_url, required: false },
-    { key: "selfie", label: "Selfie / Verification", url: item.selfie_url, required: true },
+    { key: "aadhaar_back", label: "Aadhaar Back", url: item.aadhaar_back_url, required: true },
+    { key: "selfie", label: "Live Selfie", url: item.selfie_url, required: true },
+    { key: "cheque", label: "Cheque / Passbook", url: item.cheque_url, required: item.payment_method !== "upi" },
   ];
 
   const isPdf = (url: string) => /\.pdf/i.test(url.split("?")[0]);

@@ -4,12 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search, Wallet, ChevronLeft, ChevronRight, DollarSign,
   Clock, CheckCircle, AlertCircle, Users, Download, FileText, Printer,
-  Filter, ShieldCheck, Ban, CreditCard,
+  Filter, ShieldCheck, Ban, CreditCard, Mail, Loader2,
 } from "lucide-react";
-import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus } from "@/lib/actions/payouts";
+import { adminCreatePayoutForPartner, getPayouts, updatePayoutStatus, resendPayoutEmail } from "@/lib/actions/payouts";
 import { getAdminWalletDirectory } from "@/lib/actions/wallets";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
 import PartnerDrawer from "@/components/admin/PartnerDrawer";
+import PayoutConfirmModal from "@/components/admin/PayoutConfirmModal";
 
 const PAGE_SIZE = 20;
 
@@ -46,6 +47,7 @@ export default function AdminPayoutsPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [confirmPayout, setConfirmPayout] = useState<any | null>(null);
   const [tab, setTab] = useState<"wallets" | "requests">("wallets");
   const [searchA, setSearchA] = useState("");
   const [searchB, setSearchB] = useState("");
@@ -90,11 +92,7 @@ export default function AdminPayoutsPage() {
   async function handleUpdateStatus(id: string, status: string) {
     if (status === "paid") {
       const payout = payouts.find((p: any) => p.id === id);
-      const partnerName = payout ? profileName(payout.partner?.profiles) : "this partner";
-      const netAmt = payout ? money(payout.net_amount || payout.amount) : "";
-      if (!window.confirm(
-        `Mark Payout Completed for ${partnerName}?\n\nNet Amount: ${netAmt}\n\nThis will:\n• Auto-generate a KIA Payout ID\n• Debit the partner's wallet\n• Record the transaction & settle commissions (FIFO)\n• Send payout confirmation email\n\nThis action cannot be undone.`
-      )) return;
+      if (payout) { setConfirmPayout(payout); return; }
     }
     setBusy(id);
     try {
@@ -104,6 +102,29 @@ export default function AdminPayoutsPage() {
       alert(error?.message || "Error updating payout status");
     } finally {
       setBusy(null);
+    }
+  }
+
+  async function handleConfirmPaid(note: string) {
+    if (!confirmPayout) return;
+    const id = confirmPayout.id;
+    setBusy(id);
+    await updatePayoutStatus(id, "paid", undefined, note || notes[id]);
+    await loadAll(false);
+    setBusy(null);
+  }
+
+  const [resending, setResending] = useState<string | null>(null);
+
+  async function handleResendEmail(payoutId: string) {
+    setResending(payoutId);
+    try {
+      const result = await resendPayoutEmail(payoutId);
+      if (!result.success) alert(result.error || "Failed to resend email.");
+    } catch {
+      alert("Failed to resend email.");
+    } finally {
+      setResending(null);
     }
   }
 
@@ -620,7 +641,20 @@ export default function AdminPayoutsPage() {
                           </select>
                         )}
                         {(payout.status === "paid" || payout.status === "rejected") && (
-                          <p className="text-[10px] text-brand-muted italic">Status is final</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-brand-muted italic">Status is final</p>
+                            {payout.status === "paid" && (
+                              <button
+                                type="button"
+                                disabled={resending === payout.id}
+                                onClick={() => handleResendEmail(payout.id)}
+                                className="inline-flex items-center gap-1 rounded-md border border-brand-border px-2 py-1 text-[10px] font-medium text-brand-ink hover:bg-brand-surface disabled:opacity-50"
+                              >
+                                {resending === payout.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                                Resend Email
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
@@ -644,6 +678,14 @@ export default function AdminPayoutsPage() {
       )}
 
       <PartnerDrawer partnerId={drawerPartnerId} onClose={() => setDrawerPartnerId(null)} />
+
+      {confirmPayout && (
+        <PayoutConfirmModal
+          payout={confirmPayout}
+          onConfirm={handleConfirmPaid}
+          onCancel={() => setConfirmPayout(null)}
+        />
+      )}
     </div>
   );
 }

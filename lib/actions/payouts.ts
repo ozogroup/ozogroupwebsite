@@ -827,3 +827,48 @@ export async function requestPartnerPayout(amount: number, paymentMethod?: "bank
   revalidatePath("/admin/payouts");
   return { success: true };
 }
+
+export async function resendPayoutEmail(payoutId: string): Promise<{ success: boolean; error?: string }> {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const { data: payout, error: payoutErr } = await supabase
+    .from("payouts" as any)
+    .select("*, partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id, profiles(full_name, email, phone))")
+    .eq("id", payoutId)
+    .single();
+
+  if (payoutErr || !payout) return { success: false, error: "Payout not found." };
+  if ((payout as any).status !== "paid") return { success: false, error: "Can only resend email for paid payouts." };
+
+  const p = payout as any;
+  const partner = Array.isArray(p.partner) ? p.partner[0] : p.partner;
+  const profile = Array.isArray(partner?.profiles) ? partner.profiles[0] : partner?.profiles;
+  const kiaPayoutId = p.admin_notes?.match(/KIA-\S+/)?.[0] || p.transaction_reference || null;
+
+  try {
+    await syncPayoutUpdated({
+      id: p.id,
+      partner_id: p.partner_id,
+      partner_code: partner?.partner_code,
+      partner_name: profile?.full_name,
+      partner_email: profile?.email,
+      amount: Number(p.amount || 0),
+      gross_amount: Number(p.gross_amount || 0),
+      deduction_amount: Number(p.deduction_amount || 0),
+      status: "paid",
+      payment_method: p.payment_method,
+      payment_reference: p.transaction_reference,
+      bank_account_holder: partner?.bank_account_holder,
+      bank_account_number: partner?.bank_account_number,
+      bank_ifsc: partner?.bank_ifsc,
+      bank_name: partner?.bank_name,
+      upi_id: partner?.upi_id,
+      kia_payout_id: kiaPayoutId,
+      updated_at: new Date().toISOString(),
+    });
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message || "Failed to resend email." };
+  }
+}

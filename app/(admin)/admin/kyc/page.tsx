@@ -172,8 +172,9 @@ export default function AdminKycPage() {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <DocLink href={item.pan_card_url} label="PAN" />
                         <DocLink href={item.aadhaar_front_url} label="Aadhaar Front" />
-                        <DocLink href={item.aadhaar_back_url} label="Aadhaar Back" optional />
+                        <DocLink href={item.aadhaar_back_url} label="Aadhaar Back" />
                         <DocLink href={item.selfie_url} label="Selfie" />
+                        <DocLink href={item.cheque_url} label="Cheque/Passbook" optional={item.payment_method === "upi"} />
                       </div>
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted">
