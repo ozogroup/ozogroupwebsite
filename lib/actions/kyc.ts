@@ -190,6 +190,14 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
     }
   }
 
+  // Duplicate submission guard: reject if submitted within last 30 seconds
+  if (existingKycRow?.submitted_at) {
+    const lastSubmit = new Date(existingKycRow.submitted_at).getTime();
+    if (Date.now() - lastSubmit < 30_000) {
+      return { success: false, error: "KYC was already submitted moments ago. Please wait before resubmitting." };
+    }
+  }
+
   const currentVersion = Number(existingKycRow?.current_version || 0) + 1;
   const panFile = formData.get("pan_card") as File | null;
   const aadhaarFrontFile = formData.get("aadhaar_front") as File | null;

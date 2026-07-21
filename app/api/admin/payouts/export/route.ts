@@ -134,7 +134,35 @@ function buildMultiPagePdf(headerLines: string[], tableHeaders: string[], rows: 
   return Buffer.from(header + body + trailer);
 }
 
-async function loadRows(ids: string[]) {
+function getDateRange(range: string | null, from: string | null, to: string | null) {
+  const now = new Date();
+  if (range === "today") {
+    const d = now.toISOString().slice(0, 10);
+    return { from: d + "T00:00:00", to: d + "T23:59:59" };
+  }
+  if (range === "current_month") {
+    const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, "0");
+    return { from: `${y}-${m}-01T00:00:00`, to: now.toISOString() };
+  }
+  if (range === "previous_month") {
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { from: prev.toISOString().slice(0, 10) + "T00:00:00", to: last.toISOString().slice(0, 10) + "T23:59:59" };
+  }
+  if (range === "fy") {
+    const fyStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    return { from: `${fyStart}-04-01T00:00:00`, to: now.toISOString() };
+  }
+  if (from || to) {
+    return {
+      from: from ? from + "T00:00:00" : undefined,
+      to: to ? to + "T23:59:59" : undefined,
+    };
+  }
+  return {};
+}
+
+async function loadRows(ids: string[], dateRange?: { from?: string; to?: string }) {
   const supabase = getSupabaseServiceClient();
   let query = supabase
     .from("payouts" as any)
@@ -149,6 +177,8 @@ async function loadRows(ids: string[]) {
     `)
     .order("created_at", { ascending: false });
   if (ids.length > 0) query = query.in("id", ids);
+  if (dateRange?.from) query = query.gte("created_at", dateRange.from);
+  if (dateRange?.to) query = query.lte("created_at", dateRange.to);
   const { data, error } = await query;
   if (error) throw error;
   return data || [];
@@ -159,7 +189,8 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const format = params.get("format") || "csv";
   const ids = params.getAll("id").filter((id) => /^[0-9a-f-]{20,}$/i.test(id));
-  const rows = await loadRows(ids);
+  const dateRange = getDateRange(params.get("range"), params.get("from"), params.get("to"));
+  const rows = await loadRows(ids, dateRange);
 
   const exportRows = rows.map((row: any, index: number) => {
     const partner = Array.isArray(row.partner) ? row.partner[0] : row.partner;
@@ -195,6 +226,7 @@ export async function GET(request: NextRequest) {
       payoutStatus: row.status || "",
       adminNote: row.admin_notes || row.transaction_note || "",
       transactionReference: row.transaction_reference || "",
+      kiaPayoutId: row.admin_notes?.match(/KIA-PAY-\S+/)?.[0] || "",
     };
   });
 
@@ -236,7 +268,7 @@ export async function GET(request: NextRequest) {
       `Gross Total: Rs. ${money(totals.gross)}  |  15% Deduction: Rs. ${money(totals.deduction)}  |  Net Payable: Rs. ${money(totals.net)}`,
       `Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`,
     ];
-    const tableHeaders = ["Sr", "Partner", "ID", "Mode", "Gross", "Deduction", "Net", "Status", "UTR"];
+    const tableHeaders = ["Sr", "Partner", "ID", "Mode", "Gross", "Deduction", "Net", "Status", "KIA Payout ID"];
     const tableRows = exportRows.map((row) => [
       String(row.sr),
       truncate(row.partnerName, 20),
@@ -246,7 +278,7 @@ export async function GET(request: NextRequest) {
       `Rs.${money(row.deduction)}`,
       `Rs.${money(row.net)}`,
       row.payoutStatus,
-      truncate(row.transactionReference, 15),
+      truncate(row.kiaPayoutId || row.transactionReference, 22),
     ]);
     const footer = `Prepared by KIA Skin Care Admin  |  Approved By: _______________  Date: ___________`;
 
@@ -291,7 +323,7 @@ th{background:#f4eee4;font-weight:600;font-size:10px;text-transform:uppercase;co
 <table><thead><tr>
 <th>Sr</th><th>Partner</th><th>Partner ID</th><th>Mobile</th><th>Mode</th>
 <th>Account / UPI</th><th class="text-right">Gross</th><th class="text-right">Deduction</th>
-<th class="text-right">Net</th><th>Status</th><th>UTR</th><th>Paid Date</th>
+<th class="text-right">Net</th><th>Status</th><th>KIA Payout ID</th><th>Paid Date</th>
 </tr></thead><tbody>
 ${exportRows.map((r) => `<tr>
 <td>${r.sr}</td><td>${r.partnerName}</td><td>${r.partnerCode}</td><td>${r.mobile}</td>
@@ -300,7 +332,7 @@ ${exportRows.map((r) => `<tr>
 <td class="text-right">Rs. ${money(r.gross)}</td><td class="text-right">Rs. ${money(r.deduction)}</td>
 <td class="text-right"><strong>Rs. ${money(r.net)}</strong></td>
 <td class="${r.payoutStatus === "paid" ? "paid" : r.payoutStatus === "rejected" ? "rejected" : ""}">${r.payoutStatus}</td>
-<td>${r.transactionReference}</td><td>${r.paidDate}</td>
+<td style="font-family:monospace;font-size:10px">${r.kiaPayoutId || r.transactionReference}</td><td>${r.paidDate}</td>
 </tr>`).join("")}
 <tr style="font-weight:700;background:#f4eee4">
 <td colspan="6" class="text-right">TOTAL</td>
@@ -315,44 +347,37 @@ ${exportRows.map((r) => `<tr>
 
   // CSV Export (default)
   const headers = [
-    "Sr. No.", "Payout ID", "Partner Name", "Partner ID", "Registered Mobile",
-    "Payment Mode", "Account Holder Name", "Bank Name", "Account Number", "IFSC Code",
-    "Branch Name", "UPI ID", "Gross Amount", "Deduction %", "Deduction Amount",
-    "Net Payable", "Request Date", "Paid Date", "KYC Status", "Payout Status",
-    "Transaction Reference", "Admin Note",
+    "Sr. No.", "Partner Name", "Partner ID", "Bank Name", "Account Number", "IFSC Code",
+    "Branch Name", "Membership Income", "Kit Booking Income", "Salary Income",
+    "Bonus Income", "Level Income", "Gross Amount", "15% Deduction",
+    "Net Payable", "KYC Status", "Payout Status", "Payout Date",
+    "KIA Payout ID", "Action",
   ];
   const csv = [
     headers.map(csvSanitize).join(","),
     ...exportRows.map((row) => [
       row.sr,
-      row.payoutId,
       row.partnerName,
       row.partnerCode,
-      row.mobile,
-      row.paymentMode,
-      row.accountHolder,
-      row.bankName,
-      row.accountNumber,
+      row.bankName || (row.paymentMode === "upi" ? "UPI" : ""),
+      row.paymentMode === "bank" ? row.accountNumber : row.upiId,
       row.ifsc,
       row.branch,
-      row.upiId,
+      "", "", "", "", "",
       money(row.gross),
-      `${(row.deductionRate * 100).toFixed(1)}%`,
       money(row.deduction),
       money(row.net),
-      row.requestDate,
-      row.paidDate,
       row.kycStatus,
       row.payoutStatus,
-      row.transactionReference,
-      row.adminNote,
+      row.paidDate || row.requestDate,
+      row.kiaPayoutId,
+      row.payoutStatus,
     ].map(csvSanitize).join(",")),
-    // Totals row
     [
-      "", "", "", "", "", "", "", "", "", "", "",
-      "TOTAL",
-      money(totals.gross), "", money(totals.deduction), money(totals.net),
-      "", "", "", "", "", "",
+      "", "", "", "", "", "", "",
+      "", "", "", "", "",
+      money(totals.gross), money(totals.deduction), money(totals.net),
+      "", "", "", "", "",
     ].map(csvSanitize).join(","),
   ].join("\r\n");
 

@@ -220,35 +220,61 @@ export default function PartnerPayoutsPage() {
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Payout History</h2>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">KIA Payout ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Net Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Deduction</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Gross</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Deduction</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Net Paid</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Method</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Reference</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {payouts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-500">No payout requests found</td>
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">No payout requests found</td>
                 </tr>
               ) : (
-                payouts.map((payout) => (
-                  <tr key={payout.id}>
-                    <td className="px-4 py-4 text-sm text-slate-600">{new Date(payout.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-4 text-sm font-semibold text-brand-ink">Rs. {Number(payout.net_amount || payout.amount || 0).toLocaleString("en-IN")}</td>
-                    <td className="px-4 py-4 text-xs text-slate-600">
-                      Gross Rs. {Number(payout.gross_amount || payout.available_balance || payout.amount || 0).toLocaleString("en-IN")}
-                      <br />
-                      15% -Rs. {Number(payout.deduction_amount || 0).toLocaleString("en-IN")}
-                    </td>
-                    <td className="px-4 py-4 text-sm capitalize">{payout.status}</td>
-                    <td className="px-4 py-4 text-sm text-slate-600">{payout.transaction_reference || "-"}</td>
-                  </tr>
-                ))
+                payouts.map((payout) => {
+                  const kiaId = payout.admin_notes?.match(/KIA-PAY-\S+/)?.[0] || null;
+                  const gross = Number(payout.gross_amount || payout.available_balance || payout.amount || 0);
+                  const deduction = Number(payout.deduction_amount || 0);
+                  const net = Number(payout.net_amount || payout.amount || 0);
+                  return (
+                    <tr key={payout.id} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-4">
+                        {kiaId ? (
+                          <span className="font-mono text-xs font-semibold text-emerald-700">{kiaId}</span>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-slate-600 whitespace-nowrap">
+                        {new Date(payout.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                        {payout.paid_at && (
+                          <p className="text-[10px] text-green-700">Paid: {new Date(payout.paid_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-right text-sm text-slate-700">Rs. {gross.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-4 text-right text-sm text-red-600">-Rs. {deduction.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-4 text-right text-sm font-semibold text-brand-ink">Rs. {net.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-4 text-xs text-slate-600 uppercase">{payout.payment_method || "bank"}</td>
+                      <td className="px-4 py-4">
+                        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                          payout.status === "paid" ? "bg-emerald-100 text-emerald-700" :
+                          payout.status === "rejected" ? "bg-red-100 text-red-700" :
+                          payout.status === "processing" ? "bg-blue-100 text-blue-700" :
+                          "bg-yellow-100 text-yellow-700"
+                        }`}>
+                          {payout.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

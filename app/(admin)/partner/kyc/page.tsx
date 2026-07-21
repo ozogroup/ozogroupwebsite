@@ -9,6 +9,7 @@ const emptyFile: FileState = { file: null, preview: null, name: null };
 export default function PartnerKycPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "validating" | "uploading" | "saving" | "done">("idle");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [partner, setPartner] = useState<any>(null);
@@ -160,6 +161,7 @@ export default function PartnerKycPage() {
     }
 
     setSubmitting(true);
+    setSubmitPhase("validating");
     try {
       const formData = new FormData();
       formData.set("full_name", fullName.trim());
@@ -189,14 +191,18 @@ export default function PartnerKycPage() {
       if (aadhaarBack.file) formData.set("aadhaar_back", aadhaarBack.file);
       if (selfie.file) formData.set("selfie", selfie.file);
 
+      setSubmitPhase("uploading");
       const result = await submitPartnerKyc(formData);
       if (!result.success) {
+        setSubmitPhase("idle");
         setError(result.error || "KYC submission failed.");
       } else {
+        setSubmitPhase("done");
         setSuccess("KYC submitted successfully! Admin will review your documents.");
         await load();
       }
     } catch (err: any) {
+      setSubmitPhase("idle");
       setError(err?.message || "An unexpected error occurred. Please try again.");
     } finally {
       setSubmitting(false);
@@ -334,7 +340,11 @@ export default function PartnerKycPage() {
             {submitting ? (
               <span className="inline-flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Uploading & Submitting...
+                {submitPhase === "validating" && "Validating…"}
+                {submitPhase === "uploading" && "Uploading documents…"}
+                {submitPhase === "saving" && "Saving details…"}
+                {submitPhase === "done" && "Done!"}
+                {submitPhase === "idle" && "Please wait…"}
               </span>
             ) : status === "rejected" || status === "resubmission_required" ? (
               "Resubmit KYC"

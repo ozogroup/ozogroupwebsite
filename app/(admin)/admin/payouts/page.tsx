@@ -58,6 +58,9 @@ export default function AdminPayoutsPage() {
   const [filterMethod, setFilterMethod] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterBalance, setFilterBalance] = useState("all");
+  const [dateRange, setDateRange] = useState("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   const loadAll = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -195,7 +198,15 @@ export default function AdminPayoutsPage() {
   const selectablePagedPayouts = pagedPayouts.filter((p: any) => p.selectable);
   const selectedIds = Object.keys(selected).filter((id) => selected[id]);
   const exportIds = selectedIds.length > 0 ? selectedIds : filteredPayouts.filter((p: any) => p.selectable).map((p: any) => p.id);
-  const exportQuery = exportIds.map((id) => `id=${encodeURIComponent(id)}`).join("&");
+  const dateQueryParts = dateRange !== "all" && dateRange !== "custom"
+    ? [`range=${dateRange}`]
+    : dateRange === "custom"
+      ? [customFrom && `from=${customFrom}`, customTo && `to=${customTo}`].filter(Boolean) as string[]
+      : [];
+  const exportQuery = [
+    ...exportIds.map((id) => `id=${encodeURIComponent(id)}`),
+    ...dateQueryParts,
+  ].join("&");
 
   // Summary stats
   const totalWalletLiability = walletPartners.reduce((s, r) => s + Number(r.wallet_balance || 0), 0);
@@ -435,6 +446,21 @@ export default function AdminPayoutsPage() {
                 <option value="bank">Bank</option>
                 <option value="upi">UPI</option>
               </select>
+              <select value={dateRange} onChange={(e) => setDateRange(e.target.value)} className="rounded-lg border border-brand-border bg-white px-3 py-2 text-sm">
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="current_month">Current Month</option>
+                <option value="previous_month">Previous Month</option>
+                <option value="fy">Financial Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              {dateRange === "custom" && (
+                <div className="flex items-center gap-1">
+                  <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="rounded-lg border border-brand-border bg-white px-2 py-1.5 text-xs" />
+                  <span className="text-xs text-brand-muted">to</span>
+                  <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="rounded-lg border border-brand-border bg-white px-2 py-1.5 text-xs" />
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 <a href={`/api/admin/payouts/export?format=csv&${exportQuery}`} className="inline-flex items-center gap-1 rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-ink hover:border-brand-accent">
                   <Download className="h-3.5 w-3.5" /> CSV
