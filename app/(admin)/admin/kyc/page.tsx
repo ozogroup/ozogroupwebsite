@@ -18,9 +18,9 @@ function statusBadge(status: string) {
   return "neutral";
 }
 
-const isPending = (s: string) => ["pending", "under_review"].includes(s);
-const isApproved = (s: string) => ["verified", "approved"].includes(s);
-const isRejected = (s: string) => ["rejected", "resubmission_required"].includes(s);
+const isPending = (item: any) => ["pending", "under_review"].includes(item.kyc_status) && !item.bank_verified;
+const isApproved = (item: any) => ["verified", "approved"].includes(item.kyc_status) || item.bank_verified === true;
+const isRejected = (item: any) => ["rejected", "resubmission_required"].includes(item.kyc_status) && !item.bank_verified;
 
 export default function AdminKycPage() {
   const [items, setItems] = useState<KycRow[]>([]);
@@ -56,9 +56,9 @@ export default function AdminKycPage() {
   }
 
   const counts = useMemo(() => ({
-    pending: items.filter((i) => isPending(i.kyc_status)).length,
-    approved: items.filter((i) => isApproved(i.kyc_status)).length,
-    rejected: items.filter((i) => isRejected(i.kyc_status)).length,
+    pending: items.filter((i) => isPending(i)).length,
+    approved: items.filter((i) => isApproved(i)).length,
+    rejected: items.filter((i) => isRejected(i)).length,
     missing: items.filter((i) => !i.documents?.pan || !i.documents?.aadhaar_front || !i.documents?.selfie).length,
   }), [items]);
 
@@ -66,9 +66,9 @@ export default function AdminKycPage() {
     const term = search.trim().toLowerCase();
     return items.filter((item) => {
       const matchesTab =
-        tab === "pending" ? isPending(item.kyc_status) :
-        tab === "approved" ? isApproved(item.kyc_status) :
-        isRejected(item.kyc_status);
+        tab === "pending" ? isPending(item) :
+        tab === "approved" ? isApproved(item) :
+        isRejected(item);
       if (!matchesTab) return false;
       if (!term) return true;
       const haystack = [

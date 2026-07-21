@@ -455,7 +455,7 @@ export async function getKycSubmissions() {
            payout_hold_reason, created_at, updated_at,
            profiles(full_name,email,phone)`
     )
-    .neq("kyc_status", "not_submitted")
+    .or("kyc_status.neq.not_submitted,bank_verified.eq.true")
     .order("updated_at", { ascending: false });
 
   if (error) {
