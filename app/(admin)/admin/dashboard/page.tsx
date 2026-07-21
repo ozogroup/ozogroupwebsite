@@ -550,10 +550,10 @@ export default async function AdminDashboardPage({
             { href: "/admin/bookings", icon: Calendar, label: "Bookings", color: "from-blue-500 to-indigo-600" },
             { href: "/admin/memberships", icon: CreditCard, label: "Memberships", color: "from-amber-500 to-orange-600" },
             { href: "/admin/partners", icon: Users, label: "Partners", color: "from-violet-500 to-purple-600" },
-            { href: "/admin/payouts", icon: Wallet, label: "Payouts", color: "from-rose-500 to-pink-600" },
-            { href: "/admin/kyc", icon: ShieldCheck, label: "KYC Review", color: "from-cyan-500 to-blue-600" },
+            { href: "/admin/payouts", icon: Wallet, label: "Payout Center", color: "from-rose-500 to-pink-600" },
+            { href: "/admin/kyc", icon: ShieldCheck, label: "Review KYC", color: "from-cyan-500 to-blue-600" },
             { href: "/admin/commissions", icon: BadgeIndianRupee, label: "Commissions", color: "from-green-500 to-emerald-600" },
-            { href: "/admin/content", icon: FileText, label: "Content", color: "from-slate-500 to-gray-600" },
+            { href: "/api/admin/payouts/export?format=csv&range=previous_month", icon: FileText, label: "Last Month Report", color: "from-slate-500 to-gray-600" },
           ].map((item) => (
             <Link key={item.href} href={item.href} className="group flex items-center gap-3 rounded-xl border border-brand-border bg-white p-4 transition-all hover:border-brand-accent hover:shadow-md">
               <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${item.color} shadow-sm`}>
