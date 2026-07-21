@@ -523,7 +523,10 @@ export async function reviewKycSubmission(id: string, status: ReviewStatus, reas
     throw new Error("A reason is required for rejection or resubmission.");
   }
 
-  const partnerStatus = status === "verified" ? "verified" : status === "rejected" ? "rejected" : "pending";
+  const partnerStatus = status === "verified" ? "verified"
+    : status === "rejected" ? "rejected"
+    : status === "resubmission_required" ? "resubmission_required"
+    : "pending";
   const { error: partnerError } = await supabase
     .from("partners" as any)
     .update({
