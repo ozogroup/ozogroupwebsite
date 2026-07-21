@@ -144,6 +144,28 @@ function kiaProcessWebhookEvent_(eventName, data) {
         "Supabase ID": data.partner_id
       };
       break;
+    case "kyc.reviewed":
+      sheet = "KYC Submissions";
+      keyHeader = "Supabase ID";
+      keyValue = data.partner_id;
+      values = {
+        "Partner ID": data.partner_code || data.partner_id,
+        "Name": data.full_name,
+        "Email": data.email,
+        "Phone": data.phone,
+        "Payment Method": data.payment_method,
+        "Bank Holder": data.bank_account_holder || "",
+        "Account Number": data.bank_account_number || "",
+        "IFSC": data.bank_ifsc || "",
+        "Bank Name": data.bank_name || "",
+        "Branch": data.bank_branch_name || "",
+        "UPI ID": data.upi_id || "",
+        "KYC Status": data.kyc_status || "",
+        "Rejection Reason": data.rejection_reason || "",
+        "Reviewed Date": data.reviewed_at,
+        "Supabase ID": data.partner_id
+      };
+      break;
     default:
       throw new Error("Unsupported event: " + eventName);
   }

@@ -241,7 +241,9 @@ export default function PartnerKycPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm text-slate-500">Current status</p>
-            <p className="mt-1 text-lg font-semibold capitalize text-slate-900">{String(status).replace(/_/g, " ")}</p>
+            <p className="mt-1 text-lg font-semibold capitalize text-slate-900">
+              {status === "verified" ? "Verified (Approved)" : String(status).replace(/_/g, " ")}
+            </p>
             <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
               <p>Method: <span className="font-medium text-slate-900">{method === "upi" ? "UPI" : "Bank Account"}</span></p>
               {maskedAccount && <p>Account: <span className="font-mono text-slate-900">{maskedAccount}</span></p>}
@@ -256,9 +258,15 @@ export default function PartnerKycPage() {
             {partner?.payout_hold_reason || kyc?.rejection_reason || kyc?.resubmission_reason}
           </p>
         )}
-        {locked && status !== "rejected" && status !== "resubmission_required" && (
+        {status === "verified" && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+            <p className="font-semibold">Your KYC has been verified and approved!</p>
+            <p className="mt-1">You are now eligible for payouts. Your bank/UPI details are on file.</p>
+          </div>
+        )}
+        {locked && status !== "verified" && status !== "rejected" && status !== "resubmission_required" && (
           <p className="mt-4 rounded-lg border border-brand-border bg-brand-surface/70 p-3 text-sm text-brand-muted">
-            Your KYC is locked while under review or approved. Admin can request resubmission if any change is needed.
+            Your KYC is under review. Admin will verify your documents shortly.
           </p>
         )}
       </div>

@@ -694,7 +694,7 @@ function PartnerVipCard({
   const stats = [
     { label: "Wallet", value: formatCurrency(walletBalance) },
     { label: "Status", value: status || "pending" },
-    { label: "KYC", value: (kycStatus || "not_submitted").replace("_", " ") },
+    { label: "KYC", value: kycStatus === "verified" ? "Approved" : (kycStatus || "not_submitted").replace(/_/g, " ") },
     { label: "DOI", value: formatDisplayDate(dateOfJoining) },
     { label: "DOE", value: formatDisplayDate(dateOfExpiry) },
   ];

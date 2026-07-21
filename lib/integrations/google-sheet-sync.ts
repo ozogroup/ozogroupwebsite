@@ -22,7 +22,8 @@ type WebhookEvent =
   | 'commission.created'
   | 'commission.updated'
   | 'payout.updated'
-  | 'kyc.submitted';
+  | 'kyc.submitted'
+  | 'kyc.reviewed';
 
 interface WebhookPayload {
   event: WebhookEvent;
@@ -344,5 +345,44 @@ export async function syncKycSubmitted(kyc: {
     upi_id: kyc.upi_id,
     upi_holder_name: kyc.upi_holder_name,
     submitted_at: kyc.submitted_at,
+  });
+}
+
+/**
+ * Sync KYC review decision (approve/reject) to Google Sheet.
+ */
+export async function syncKycReviewed(review: {
+  partner_id: string;
+  partner_code: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  kyc_status: string;
+  payment_method: string;
+  bank_account_holder?: string;
+  bank_account_number?: string;
+  bank_ifsc?: string;
+  bank_name?: string;
+  bank_branch_name?: string;
+  upi_id?: string;
+  rejection_reason?: string;
+  reviewed_at: string;
+}): Promise<void> {
+  await postToGoogleSheet('kyc.reviewed', {
+    partner_id: review.partner_id,
+    partner_code: review.partner_code,
+    full_name: review.full_name,
+    email: review.email,
+    phone: review.phone,
+    kyc_status: review.kyc_status,
+    payment_method: review.payment_method,
+    bank_account_holder: review.bank_account_holder,
+    bank_account_number: review.bank_account_number,
+    bank_ifsc: review.bank_ifsc,
+    bank_name: review.bank_name,
+    bank_branch_name: review.bank_branch_name,
+    upi_id: review.upi_id,
+    rejection_reason: review.rejection_reason,
+    reviewed_at: review.reviewed_at,
   });
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requirePartner } from "@/lib/auth/helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/server";
-import { syncKycSubmitted } from "@/lib/integrations/google-sheet-sync";
+import { syncKycSubmitted, syncKycReviewed } from "@/lib/integrations/google-sheet-sync";
 
 const KYC_BUCKET = "partner-kyc-private";
 const LEGACY_KYC_BUCKET = "kyc-documents";
@@ -544,6 +544,38 @@ export async function reviewKycSubmission(id: string, status: ReviewStatus, reas
     entity_id: id,
     new_value: { status, reason: cleanReason || null },
   });
+
+  // Sync KYC review to Google Sheet (non-blocking)
+  try {
+    const { data: partnerRow } = await supabase
+      .from("partners" as any)
+      .select("partner_code, bank_account_holder, bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id, profiles(full_name, email, phone)")
+      .eq("id", id)
+      .maybeSingle();
+    if (partnerRow) {
+      const prof = Array.isArray((partnerRow as any).profiles) ? (partnerRow as any).profiles[0] : (partnerRow as any).profiles;
+      const p = partnerRow as any;
+      await syncKycReviewed({
+        partner_id: id,
+        partner_code: p.partner_code || "",
+        full_name: prof?.full_name || "",
+        email: prof?.email || "",
+        phone: prof?.phone || "",
+        kyc_status: status,
+        payment_method: p.upi_id ? "upi" : "bank",
+        bank_account_holder: p.bank_account_holder,
+        bank_account_number: p.bank_account_number,
+        bank_ifsc: p.bank_ifsc,
+        bank_name: p.bank_name,
+        bank_branch_name: p.bank_branch_name,
+        upi_id: p.upi_id,
+        rejection_reason: cleanReason || undefined,
+        reviewed_at: now,
+      });
+    }
+  } catch (syncErr) {
+    console.error("KYC review Google Sheet sync failed (non-fatal):", syncErr);
+  }
 
   revalidatePath("/admin/kyc");
   revalidatePath("/partner/kyc");

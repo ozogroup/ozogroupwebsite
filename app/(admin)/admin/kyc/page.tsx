@@ -6,6 +6,7 @@ import { Search, ShieldCheck, FileText, CheckCircle, XCircle, RotateCcw } from "
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { getKycSubmissions, reviewKycSubmission } from "@/lib/actions/kyc";
 import { Badge, Card, EmptyState, StatCard } from "@/components/admin/ui";
+import KycReviewDrawer from "@/components/admin/KycReviewDrawer";
 
 type KycRow = any;
 
@@ -23,6 +24,7 @@ export default function AdminKycPage() {
   const [reason, setReason] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [reviewItem, setReviewItem] = useState<KycRow | null>(null);
 
   useEffect(() => {
     void load();
@@ -194,7 +196,7 @@ export default function AdminKycPage() {
                           className="w-full rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-accent"
                         />
                         <div className="flex flex-wrap gap-2">
-                          <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "under_review")}>Start Review</ActionButton>
+                          <ActionButton disabled={busy === item.id} onClick={() => { review(item.id, "under_review"); setReviewItem(item); }}>Start Review</ActionButton>
                           <ActionButton disabled={busy === item.id} onClick={() => review(item.id, "verified")}>Approve</ActionButton>
                           <ActionButton danger disabled={busy === item.id} onClick={() => review(item.id, "rejected")}>Reject</ActionButton>
                           <ActionButton warning disabled={busy === item.id} onClick={() => review(item.id, "resubmission_required")}>
@@ -210,6 +212,14 @@ export default function AdminKycPage() {
           </table>
         </div>
       </Card>
+
+      {reviewItem && (
+        <KycReviewDrawer
+          item={reviewItem}
+          onClose={() => setReviewItem(null)}
+          onUpdated={() => void load()}
+        />
+      )}
     </div>
   );
 }
