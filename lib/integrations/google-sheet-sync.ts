@@ -285,6 +285,7 @@ export async function syncPayoutUpdated(payout: {
   bank_ifsc?: string;
   bank_name?: string;
   upi_id?: string;
+  kia_payout_id?: string;
   updated_at: string;
 }): Promise<void> {
   await postToGoogleSheet('payout.updated', {
@@ -304,6 +305,7 @@ export async function syncPayoutUpdated(payout: {
     bank_ifsc: payout.bank_ifsc,
     bank_name: payout.bank_name,
     upi_id: payout.upi_id,
+    kia_payout_id: payout.kia_payout_id,
     updated_at: payout.updated_at,
   });
 }

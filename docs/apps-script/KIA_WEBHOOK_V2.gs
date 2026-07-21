@@ -115,6 +115,7 @@ function kiaProcessWebhookEvent_(eventName, data) {
         "IFSC": data.bank_ifsc || "",
         "Bank Name": data.bank_name || "",
         "UPI ID": data.upi_id || "",
+        "KIA Payout ID": data.kia_payout_id || "",
         "UTR/Reference": data.payment_reference || "",
         "Status": data.status,
         "Requested Date": data.updated_at,
@@ -251,8 +252,17 @@ function kiaPayoutPaidHtml_(data) {
   var gross = Number(data.gross_amount || data.amount || 0).toLocaleString("en-IN");
   var deduction = Number(data.deduction_amount || 0).toLocaleString("en-IN");
   var ref = kiaEscapeHtml_(data.payment_reference || "N/A");
+  var kiaPayId = kiaEscapeHtml_(data.kia_payout_id || ref);
   var method = kiaEscapeHtml_(data.payment_method || "bank");
   var date = data.updated_at ? new Date(data.updated_at).toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}) : new Date().toLocaleDateString("en-IN");
+  var maskedDest = "";
+  if (method.toLowerCase() === "upi" && data.upi_id) {
+    var parts = String(data.upi_id).split("@");
+    maskedDest = (parts[0].length > 4 ? "XXXX" + parts[0].slice(-4) : parts[0]) + "@" + (parts[1] || "upi");
+  } else if (data.bank_account_number) {
+    var acc = String(data.bank_account_number);
+    maskedDest = (data.bank_name ? kiaEscapeHtml_(data.bank_name) + " - " : "") + "XXXX" + acc.slice(-4);
+  }
   return '<div style="font-family:\'Segoe UI\',Arial,sans-serif;max-width:600px;margin:0 auto;color:#3f3632">'
     + '<div style="background:linear-gradient(135deg,#047857,#065f46);padding:32px 24px;border-radius:16px 16px 0 0;text-align:center">'
     + '<h1 style="color:#ffffff;font-size:28px;margin:0">Payout Processed</h1>'
@@ -266,13 +276,14 @@ function kiaPayoutPaidHtml_(data) {
     + '<p style="font-size:36px;font-weight:700;color:#047857;margin:0">Rs. ' + amount + '</p>'
     + '</div>'
     + '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px">'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">KIA Payout ID</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:700;font-family:monospace;color:#047857">' + kiaPayId + '</td></tr>'
     + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Partner ID</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:600">' + code + '</td></tr>'
+    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Payout Date</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:600">' + date + '</td></tr>'
     + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Gross Amount</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:600">Rs. ' + gross + '</td></tr>'
     + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">15% Deduction</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#dc2626">- Rs. ' + deduction + '</td></tr>'
     + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Net Paid</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-weight:700;color:#047857">Rs. ' + amount + '</td></tr>'
     + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Payment Mode</td><td style="padding:10px;border-bottom:1px solid #e0d8cc">' + method.toUpperCase() + '</td></tr>'
-    + '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Transaction Ref</td><td style="padding:10px;border-bottom:1px solid #e0d8cc;font-family:monospace">' + ref + '</td></tr>'
-    + '<tr><td style="padding:10px;color:#8b7355">Date</td><td style="padding:10px;font-weight:600">' + date + '</td></tr>'
+    + (maskedDest ? '<tr><td style="padding:10px;border-bottom:1px solid #e0d8cc;color:#8b7355">Credited To</td><td style="padding:10px;border-bottom:1px solid #e0d8cc">' + maskedDest + '</td></tr>' : '')
     + '</table>'
     + '<p style="font-size:13px;color:#8b7355;margin:16px 0 0">Your wallet has been reset. Continue sharing and earning — new commissions will be credited automatically!</p>'
     + '<div style="text-align:center;margin:32px 0 16px">'

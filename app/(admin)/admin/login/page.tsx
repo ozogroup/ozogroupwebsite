@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isAdminAuthorized } from "@/lib/auth/helpers";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
+import SubmitButton from "@/components/ui/SubmitButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -146,12 +147,11 @@ export default async function AdminLoginPage({
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted hover:shadow-glow focus:ring-4 focus:ring-brand-primary/30 transition-all"
-            >
-              Sign In
-            </button>
+            <SubmitButton
+              label="Sign In"
+              pendingLabel="Signing in…"
+              className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted hover:shadow-glow focus:ring-4 focus:ring-brand-primary/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            />
           </form>
 
           <div className="mt-8 pt-6 border-t border-brand-border text-center">

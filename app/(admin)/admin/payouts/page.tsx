@@ -85,12 +85,12 @@ export default function AdminPayoutsPage() {
 
   async function handleUpdateStatus(id: string, status: string) {
     if (status === "paid") {
-      const reference = refs[id]?.trim();
-      if (!reference) {
-        alert("Enter UTR / transaction reference before marking paid.");
-        return;
-      }
-      if (!window.confirm("Final settlement: mark this payout as paid?\n\nThis will:\n- Debit the partner's wallet\n- Record the transaction\n- Mark commissions as settled (FIFO)\n\nThis cannot be undone.")) return;
+      const payout = payouts.find((p: any) => p.id === id);
+      const partnerName = payout ? profileName(payout.partner?.profiles) : "this partner";
+      const netAmt = payout ? money(payout.net_amount || payout.amount) : "";
+      if (!window.confirm(
+        `Mark Payout Completed for ${partnerName}?\n\nNet Amount: ${netAmt}\n\nThis will:\n• Auto-generate a KIA Payout ID\n• Debit the partner's wallet\n• Record the transaction & settle commissions (FIFO)\n• Send payout confirmation email\n\nThis action cannot be undone.`
+      )) return;
     }
     setBusy(id);
     try {
@@ -109,18 +109,17 @@ export default function AdminPayoutsPage() {
       alert("Select payout rows first.");
       return;
     }
-    let reference = "";
-    if (status === "paid") {
-      reference = window.prompt("Enter common UTR / transaction reference for selected payouts:") || "";
-      if (!reference.trim()) return;
-    }
     const note = window.prompt("Optional admin note:", "") || "";
     const netTotal = payouts.filter((p: any) => ids.includes(p.id)).reduce((s: number, p: any) => s + Number(p.net_amount || p.amount || 0), 0);
-    if (!window.confirm(`Apply "${status}" to ${ids.length} payout(s)?\n\nTotal net amount: ${money(netTotal)}\n\n${status === "paid" ? "This will debit partner wallets and cannot be undone." : ""}`)) return;
+    if (!window.confirm(
+      status === "paid"
+        ? `Mark ${ids.length} payout(s) as Completed?\n\nTotal net: ${money(netTotal)}\n\n• A unique KIA Payout ID will be generated for each\n• Partner wallets will be debited\n• Payout confirmation emails will be sent\n\nThis cannot be undone.`
+        : `Apply "${status}" to ${ids.length} payout(s)?\n\nTotal net amount: ${money(netTotal)}`
+    )) return;
     setBusy("bulk");
     try {
       for (const id of ids) {
-        await updatePayoutStatus(id, status, status === "paid" ? reference : refs[id], note || notes[id]);
+        await updatePayoutStatus(id, status, refs[id], note || notes[id]);
       }
       setSelected({});
       await loadAll(false);
@@ -410,7 +409,7 @@ export default function AdminPayoutsPage() {
           <div className="flex flex-col gap-3 border-b border-brand-border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-display text-lg font-semibold text-brand-ink">Payout Requests</h2>
-              <p className="text-sm text-brand-muted">Approve, reject, or mark as paid. UTR is mandatory for paid settlement.</p>
+              <p className="text-sm text-brand-muted">Approve, reject, or mark as paid. KIA Payout ID is auto-generated. UTR/bank ref is optional.</p>
             </div>
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
               <div className="relative">
@@ -461,7 +460,7 @@ export default function AdminPayoutsPage() {
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={() => handleBulkStatus("approved")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-xs text-brand-ink ring-1 ring-brand-border disabled:opacity-50 hover:ring-brand-accent">Bulk Approve</button>
               <button type="button" onClick={() => handleBulkStatus("processing")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-white px-3 py-1.5 text-xs text-brand-ink ring-1 ring-brand-border disabled:opacity-50 hover:ring-brand-accent">Mark Processing</button>
-              <button type="button" onClick={() => handleBulkStatus("paid")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-brand-ink px-3 py-1.5 text-xs text-white disabled:opacity-50">Mark Paid (with UTR)</button>
+              <button type="button" onClick={() => handleBulkStatus("paid")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-brand-ink px-3 py-1.5 text-xs text-white disabled:opacity-50">Mark Paid</button>
               <button type="button" onClick={() => handleBulkStatus("rejected")} disabled={busy === "bulk" || selectedIds.length === 0} className="rounded-lg bg-red-50 px-3 py-1.5 text-xs text-red-700 ring-1 ring-red-100 disabled:opacity-50">Reject</button>
             </div>
             {selectedIds.length > 0 && (
@@ -549,8 +548,13 @@ export default function AdminPayoutsPage() {
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(payout.status)}`}>
                         {payout.status}
                       </span>
+                      {payout.status === "paid" && payout.admin_notes && /KIA-PAY-/.test(payout.admin_notes) && (
+                        <p className="mt-1 font-mono text-[10px] font-semibold text-emerald-700">
+                          {payout.admin_notes.match(/KIA-PAY-\S+/)?.[0]}
+                        </p>
+                      )}
                       {payout.transaction_reference && payout.status === "paid" && (
-                        <p className="mt-1 text-[10px] text-brand-muted">UTR: {payout.transaction_reference}</p>
+                        <p className="mt-1 text-[10px] text-brand-muted">Ref: {payout.transaction_reference}</p>
                       )}
                     </td>
                     <td className="px-4 py-4 text-xs text-brand-muted whitespace-nowrap">
@@ -562,7 +566,7 @@ export default function AdminPayoutsPage() {
                         <input
                           value={refs[payout.id] || payout.transaction_reference || ""}
                           onChange={(e) => setRefs((r) => ({ ...r, [payout.id]: e.target.value }))}
-                          placeholder="UTR / Reference ID"
+                          placeholder="UTR / Bank Ref (optional)"
                           disabled={payout.status === "paid" || payout.status === "rejected"}
                           className="w-full px-3 py-2 text-sm border border-brand-border rounded-lg outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50 disabled:bg-slate-50"
                         />

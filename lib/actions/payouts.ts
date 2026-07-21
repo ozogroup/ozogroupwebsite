@@ -38,6 +38,14 @@ function profileFrom(row: any) {
   return Array.isArray(row?.profiles) ? row.profiles[0] : row?.profiles;
 }
 
+function generatePayoutId(): string {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const rand = String(Math.floor(1000 + Math.random() * 9000));
+  const ms = String(now.getMilliseconds()).padStart(3, "0");
+  return `KIA-PAY-${date}-${rand}${ms}`;
+}
+
 function maskedPartner(partner: any) {
   if (!partner) return partner;
   return {
@@ -365,13 +373,12 @@ export async function updatePayoutStatus(id: string, status: string, transaction
   if (!["requested", "approved", "processing", "paid", "rejected"].includes(status)) {
     throw new Error("Unsupported payout status.");
   }
-  if (status === "paid" && !transactionReference?.trim()) {
-    throw new Error("UTR / transaction reference is required before marking a payout paid.");
-  }
+
+  const kiaPayoutId = status === "paid" ? generatePayoutId() : undefined;
 
   const { data: existingPayout, error: existingError } = await supabase
     .from("payouts" as any)
-    .select("*, partner:partners(partner_code, profiles(full_name, email, phone))")
+    .select("*, partner:partners(partner_code, bank_account_holder, bank_account_number, bank_ifsc, bank_name, bank_branch_name, upi_id, profiles(full_name, email, phone))")
     .eq("id", id)
     .single();
   if (existingError || !existingPayout) throw existingError || new Error("Payout not found.");
@@ -383,27 +390,31 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     throw new Error("A rejected payout is final and cannot be reopened.");
   }
   
-  const updateData: any = { 
-    status, 
+  const updateData: any = {
+    status,
     updated_at: now,
     transaction_note: note || null,
   };
-  
-  if (transactionReference) {
-    updateData.transaction_reference = transactionReference;
+
+  if (transactionReference?.trim()) {
+    updateData.transaction_reference = transactionReference.trim();
+  } else if (kiaPayoutId) {
+    updateData.transaction_reference = kiaPayoutId;
   }
-  
+
   if (status === "approved" || status === "processing") updateData.approved_at = now;
   if (status === "rejected") updateData.rejected_at = now;
   if (status === "paid") {
     updateData.paid_at = now;
     updateData.processed_at = now;
+    if (kiaPayoutId) updateData.admin_notes = `KIA Payout ID: ${kiaPayoutId}${note ? ` | ${note}` : ""}`;
   }
   
+  const effectiveReference = transactionReference?.trim() || kiaPayoutId || null;
   const { data: rpcData, error: rpcError } = await (supabase as any).rpc("process_partner_payout", {
     payout_id_input: id,
     new_status_input: status,
-    transaction_reference_input: transactionReference || null,
+    transaction_reference_input: effectiveReference,
     transaction_note_input: note || null,
   });
 
@@ -430,12 +441,13 @@ export async function updatePayoutStatus(id: string, status: string, transaction
       deduction_amount: Number((existingPayout as any).deduction_amount || 0),
       status,
       payment_method: (existingPayout as any).payment_method,
-      payment_reference: transactionReference || (existingPayout as any).transaction_reference,
+      payment_reference: effectiveReference || (existingPayout as any).transaction_reference,
       bank_account_holder: rpcPartner?.bank_account_holder,
       bank_account_number: rpcPartner?.bank_account_number,
       bank_ifsc: rpcPartner?.bank_ifsc,
       bank_name: rpcPartner?.bank_name,
       upi_id: rpcPartner?.upi_id,
+      kia_payout_id: kiaPayoutId,
       updated_at: now,
     });
 
@@ -526,12 +538,13 @@ export async function updatePayoutStatus(id: string, status: string, transaction
     deduction_amount: Number((data as any).deduction_amount || (existingPayout as any).deduction_amount || 0),
     status,
     payment_method: (data as any).payment_method,
-    payment_reference: transactionReference || (data as any).transaction_reference,
+    payment_reference: effectiveReference || (data as any).transaction_reference,
     bank_account_holder: fbPartner?.bank_account_holder,
     bank_account_number: fbPartner?.bank_account_number,
     bank_ifsc: fbPartner?.bank_ifsc,
     bank_name: fbPartner?.bank_name,
     upi_id: fbPartner?.upi_id,
+    kia_payout_id: kiaPayoutId,
     updated_at: now,
   });
 
