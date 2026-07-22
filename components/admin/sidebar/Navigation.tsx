@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   ShieldCheck,
   Store,
+  Wrench,
 } from "lucide-react";
 
 const navigation = [
@@ -40,6 +41,7 @@ const navigation = [
   { name: "Reports", href: "/admin/reports", icon: BarChart3, section: "referral" },
   { name: "Media Library", href: "/admin/media", icon: ImageIcon, section: "settings" },
   { name: "Contact Settings", href: "/admin/contact", icon: Phone, section: "settings" },
+  { name: "Reconciliation", href: "/admin/reconciliation", icon: Wrench, section: "settings" },
   { name: "System Health", href: "/admin/system-health", icon: Activity, section: "settings" },
 ];
 
