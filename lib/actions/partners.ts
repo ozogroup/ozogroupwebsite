@@ -110,6 +110,8 @@ export async function updatePartnerAuthPassword(partnerId: string, password: str
     return { success: false, error: error.message || "Failed to update partner password." };
   }
 
+  await serviceClient.from("partners" as any).update({ panel_password: cleanPassword }).eq("id", cleanPartnerId);
+
   await serviceClient.from("activity_logs" as any).insert({
     actor_id: null,
     actor_role: "admin",
@@ -186,6 +188,8 @@ export async function generateTempPassword(partnerId: string) {
 
   const { error } = await serviceClient.auth.admin.updateUserById(cleanId, { password: tempPw });
   if (error) return { error: error.message || "Failed to set temporary password." };
+
+  await serviceClient.from("partners" as any).update({ panel_password: tempPw }).eq("id", cleanId);
 
   await serviceClient.from("activity_logs" as any).insert({
     actor_id: null,

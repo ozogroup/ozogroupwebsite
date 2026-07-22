@@ -162,6 +162,7 @@ export default function AdminMembershipsPage() {
           type: "success",
           text: `Temporary password for ${result.name || result.email}: ${pw} (copied to clipboard). Partner can login with email ${result.email} and this password.`,
         });
+        await loadMemberships();
       }
     } catch (err: any) {
       setMessage({ type: "error", text: err?.message || "Failed to generate temp password." });
@@ -292,6 +293,9 @@ export default function AdminMembershipsPage() {
                           <span>Membership ID: <span className="font-mono">{membership.membership_id || "-"}</span></span>
                           {membership.partners?.partner_code && (
                             <span>Partner ID: <span className="font-mono font-semibold text-brand-primaryDark">{membership.partners.partner_code}</span></span>
+                          )}
+                          {membership.partners?.panel_password && (
+                            <span>Password: <span className="font-mono font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{membership.partners.panel_password}</span></span>
                           )}
                         </div>
                       </div>

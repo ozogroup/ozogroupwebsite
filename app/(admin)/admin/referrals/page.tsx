@@ -577,11 +577,12 @@ export default function AdminReferralsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[2000px]">
+          <table className="w-full min-w-[2100px]">
             <thead className="border-b border-brand-border bg-brand-surface/50">
               <tr>
                 <SortHeader field="name">Partner (ID)</SortHeader>
                 <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Mobile / Email</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Password</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">Sponsor</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-brand-ink">City</th>
                 <SortHeader field="directTeamCount">Direct</SortHeader>
@@ -604,7 +605,7 @@ export default function AdminReferralsPage() {
             <tbody className="divide-y divide-brand-border bg-white">
               {pagedDirectory.length === 0 ? (
                 <tr>
-                  <td colSpan={19} className="px-6 py-12">
+                  <td colSpan={20} className="px-6 py-12">
                     <EmptyState icon={Users} title="No accounts found" description="Try a different search or filter." />
                   </td>
                 </tr>
@@ -627,6 +628,9 @@ export default function AdminReferralsPage() {
                       <td className="px-3 py-3 text-[11px] text-brand-muted">
                         <p>{partnerPhone(partner)}</p>
                         <p className="truncate max-w-[130px]">{partnerEmail(partner)}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="font-mono text-[11px] text-brand-muted">{partner.panel_password || "—"}</span>
                       </td>
                       <td className="px-3 py-3 text-sm">
                         {partner.sponsor ? (

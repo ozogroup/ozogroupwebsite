@@ -87,7 +87,7 @@ export async function getMembershipRequests() {
       "referral_code", "sponsor_id", "partner_id", "amount",
       "payment_status", "membership_status", "payment_id",
       "notes", "admin_notes", "is_active", "created_at", "updated_at",
-      "partners:partner_id(partner_code, referral_link, status)",
+      "partners:partner_id(partner_code, referral_link, status, panel_password)",
       "sponsor:partners!memberships_sponsor_id_fkey(partner_code, profiles(full_name))",
     ].join(", "))
     .order("created_at", { ascending: false });
@@ -285,6 +285,7 @@ export async function createMembership(data: MembershipRegistrationInput) {
     wallet_balance: 0,
     total_earnings: 0,
     paid_earnings: 0,
+    panel_password: data.password,
   });
 
   if (pendingPartnerError) {

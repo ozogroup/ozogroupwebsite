@@ -163,6 +163,7 @@ export async function getAllPartnersDirectory(limit = 500) {
     .select(`
       id,
       partner_code,
+      panel_password,
       profiles(full_name, phone, email),
       sponsor_id,
       status,
