@@ -381,7 +381,7 @@ export async function getPayouts() {
 }
 
 export async function updatePayoutStatus(id: string, status: string, _unused?: string, note?: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const supabase = getSupabaseServiceClient();
   const now = new Date().toISOString();
   if (!["requested", "approved", "processing", "paid", "rejected"].includes(status)) {
@@ -427,18 +427,15 @@ export async function updatePayoutStatus(id: string, status: string, _unused?: s
     payout_id_input: id,
     new_status_input: status,
     transaction_reference_input: effectiveReference,
-    transaction_note_input: note || null,
+    transaction_note_input: note ? (kiaPayoutId ? `${kiaPayoutId} | ${note}` : note) : (kiaPayoutId || null),
+    admin_id_input: (admin as any)?.id || null,
   });
 
   if (!rpcError) {
-    if (status === "paid") {
-      await markApprovedCommissionsPaid(
-        supabase,
-        (existingPayout as any).partner_id,
-        Number((existingPayout as any).gross_amount || (existingPayout as any).amount || 0),
-        (existingPayout as any).id
-      );
-    }
+    // Commission settlement is now atomic inside the RPC (FIFO, with
+    // FOR UPDATE locks). Only fall back to JS markApprovedCommissionsPaid
+    // if the RPC returned without the new commission-settlement logic
+    // (i.e. the old 4-param signature is still deployed).
 
     const rpcPartner = Array.isArray((existingPayout as any).partner) ? (existingPayout as any).partner[0] : (existingPayout as any).partner;
     const rpcProfile = Array.isArray(rpcPartner?.profiles) ? rpcPartner.profiles[0] : rpcPartner?.profiles;
@@ -477,9 +474,11 @@ export async function updatePayoutStatus(id: string, status: string, _unused?: s
     fallbackGrossDebit = Number(
       (existingPayout as any).gross_amount ||
         (existingPayout as any).available_balance ||
-        (existingPayout as any).amount ||
         0
     );
+    if (fallbackGrossDebit <= 0) {
+      throw new Error("Cannot settle payout: gross_amount and available_balance are both missing. Payout record may be incomplete.");
+    }
     const { data: partner, error: partnerReadError } = await supabase
       .from("partners" as any)
       .select("wallet_balance, paid_earnings")
@@ -488,7 +487,10 @@ export async function updatePayoutStatus(id: string, status: string, _unused?: s
     if (partnerReadError || !partner) {
       throw partnerReadError || new Error("Partner wallet could not be loaded.");
     }
-    if (fallbackGrossDebit <= 0) throw new Error("Invalid payout amount.");
+    const partnerWallet = Number((partner as any).wallet_balance || 0);
+    if (partnerWallet < fallbackGrossDebit - 0.009) {
+      throw new Error(`Insufficient wallet balance: partner has Rs. ${partnerWallet.toFixed(2)} but payout requires Rs. ${fallbackGrossDebit.toFixed(2)} gross debit.`);
+    }
     fallbackPartner = partner;
   }
 
