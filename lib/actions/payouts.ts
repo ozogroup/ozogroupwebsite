@@ -44,9 +44,20 @@ async function generatePayoutId(supabase: any): Promise<string> {
   const { count } = await supabase
     .from("payouts" as any)
     .select("*", { count: "exact", head: true })
-    .eq("status", "paid");
+    .in("status", ["paid", "processing"]);
   const seq = String((count || 0) + 1).padStart(4, "0");
-  return `KIA-${year}-${seq}`;
+  const id = `KIA-${year}-${seq}`;
+  const { data: collision } = await supabase
+    .from("payouts" as any)
+    .select("id")
+    .eq("transaction_reference", id)
+    .limit(1)
+    .maybeSingle();
+  if (collision) {
+    const fallbackSeq = String((count || 0) + 2).padStart(4, "0");
+    return `KIA-${year}-${fallbackSeq}`;
+  }
+  return id;
 }
 
 function maskedPartner(partner: any) {
@@ -500,12 +511,13 @@ export async function updatePayoutStatus(id: string, status: string, _unused?: s
 
     if (partner) {
       const balanceBefore = Number(partner.wallet_balance || 0);
-      const balanceAfter = 0;
+      const netPaid = Number(payout.net_amount || payout.amount || 0);
+      const balanceAfter = roundMoney(Math.max(0, balanceBefore - grossDebit));
       const { error: partnerError } = await supabase
         .from("partners" as any)
         .update({
-          wallet_balance: 0,
-          paid_earnings: Number(partner.paid_earnings || 0) + Number(payout.amount || 0),
+          wallet_balance: balanceAfter,
+          paid_earnings: roundMoney(Number(partner.paid_earnings || 0) + netPaid),
           updated_at: now,
         })
         .eq("id", payout.partner_id);
@@ -514,9 +526,9 @@ export async function updatePayoutStatus(id: string, status: string, _unused?: s
       await supabase.from("wallet_transactions" as any).insert({
         partner_id: payout.partner_id,
         transaction_type: "payout_debit",
-        amount: balanceBefore,
+        amount: grossDebit,
         balance_before: balanceBefore,
-        balance_after: 0,
+        balance_after: balanceAfter,
         reference_type: "payout",
         reference_id: payout.id,
         notes: kiaPayoutId ? `Paid: ${kiaPayoutId}` : "Payout marked paid by admin",
@@ -662,29 +674,6 @@ export async function adminCreatePayoutForPartner(
   revalidatePath("/admin/payouts");
   revalidatePath("/partner/payouts");
   return { success: true, id: (insertedPayout as any)?.id };
-}
-
-export async function createPayout(payout: any) {
-  await requireAdmin();
-  const supabase = getSupabaseServiceClient();
-  
-  const { data, error } = await supabase
-    .from("payouts" as any)
-    .insert({
-      ...payout,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error("Error creating payout:", error);
-    throw error;
-  }
-  
-  revalidatePath("/admin/payouts");
-  return data;
 }
 
 export async function getPartnerPayoutContext() {

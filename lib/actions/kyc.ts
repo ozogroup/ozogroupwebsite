@@ -341,29 +341,38 @@ export async function submitPartnerKyc(formData: FormData): Promise<KycResult> {
       // These columns may not exist if migration hasn't been run — non-fatal
     }
 
-    // Auto-verify: if all required fields and documents are present, set verified
-    const allDocsPresent = hasPan && hasAadhaarFront && hasAadhaarBack && hasSelfie && (method === "upi" || hasCheque);
-    const allFieldsPresent = Boolean(
-      value(formData, "full_name") && mobileNumber && value(formData, "email") &&
-      (method === "bank" ? (accountNumber && bankIfsc && value(formData, "account_holder_name") && value(formData, "bank_name")) : (upiId && value(formData, "upi_holder_name")))
-    );
-    if (allDocsPresent && allFieldsPresent) {
-      await supabase.from("partners" as any).update({
-        kyc_status: "verified",
-        bank_verified: true,
-        kyc_reviewed_at: new Date().toISOString(),
-        payout_hold_reason: null,
-        updated_at: new Date().toISOString(),
-      }).eq("id", profile.id);
+    // Auto-verify: only if partner_kyc row was saved (paths are persisted) AND
+    // all required fields and documents are present. Without a saved KYC row the
+    // admin KYC Center would show "missing" documents even though files exist in
+    // storage, so we must not mark verified until the DB row is confirmed.
+    if (savedKycId) {
+      const { data: savedKyc } = await supabase
+        .from("partner_kyc" as any)
+        .select("pan_card_path, aadhaar_front_path, aadhaar_back_path, selfie_path, cheque_path")
+        .eq("partner_id", profile.id)
+        .maybeSingle();
+      const k = savedKyc as any;
+      const docsConfirmed = Boolean(k?.pan_card_path && k?.aadhaar_front_path && k?.aadhaar_back_path && k?.selfie_path && (method === "upi" || k?.cheque_path));
+      const allFieldsPresent = Boolean(
+        value(formData, "full_name") && mobileNumber && value(formData, "email") &&
+        (method === "bank" ? (accountNumber && bankIfsc && value(formData, "account_holder_name") && value(formData, "bank_name")) : (upiId && value(formData, "upi_holder_name")))
+      );
+      if (docsConfirmed && allFieldsPresent) {
+        await supabase.from("partners" as any).update({
+          kyc_status: "verified",
+          bank_verified: true,
+          kyc_reviewed_at: new Date().toISOString(),
+          payout_hold_reason: null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", profile.id);
 
-      try {
         await supabase.from("partner_kyc" as any).update({
           status: "verified",
           approved_at: new Date().toISOString(),
           reviewed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }).eq("partner_id", profile.id);
-      } catch {}
+      }
     }
 
     // Sync KYC details to Google Sheet (non-blocking)
@@ -544,6 +553,24 @@ export async function reviewKycSubmission(id: string, status: ReviewStatus, reas
   const cleanReason = reason?.trim() || "";
   if (needsReason && !cleanReason) {
     throw new Error("A reason is required for rejection or resubmission.");
+  }
+
+  if (status === "verified") {
+    let kycRow: any = null;
+    try {
+      const { data } = await supabase
+        .from("partner_kyc" as any)
+        .select("pan_card_path, aadhaar_front_path, aadhaar_back_path, selfie_path, cheque_path, payment_method")
+        .eq("partner_id", id)
+        .maybeSingle();
+      kycRow = data as any;
+    } catch {}
+    if (!kycRow?.pan_card_path || !kycRow?.aadhaar_front_path || !kycRow?.aadhaar_back_path || !kycRow?.selfie_path) {
+      throw new Error("Cannot verify KYC: one or more required documents (PAN, Aadhaar Front, Aadhaar Back, Selfie) are missing from the database. Ask the partner to re-upload.");
+    }
+    if (kycRow.payment_method === "bank" && !kycRow.cheque_path) {
+      throw new Error("Cannot verify KYC: cancelled cheque/passbook document is missing for bank payout method.");
+    }
   }
 
   const partnerStatus = status === "verified" ? "verified"
