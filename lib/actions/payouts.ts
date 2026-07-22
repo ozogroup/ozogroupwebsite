@@ -65,13 +65,9 @@ function maskedPartner(partner: any) {
   return {
     ...partner,
     profiles: profileFrom(partner),
-    bank_account_number_raw: partner.bank_account_number || null,
-    upi_id_raw: partner.upi_id || null,
-    bank_account_number: partner.bank_account_number ? maskAccount(partner.bank_account_number) : null,
-    upi_id: partner.upi_id ? maskUpi(partner.upi_id) : null,
     payment_destination_masked: partner.upi_id
-      ? `UPI: ${maskUpi(partner.upi_id)}`
-      : [partner.bank_account_holder, maskAccount(partner.bank_account_number), partner.bank_ifsc].filter(Boolean).join(" | "),
+      ? `UPI: ${partner.upi_id}`
+      : [partner.bank_account_holder, partner.bank_account_number, partner.bank_ifsc].filter(Boolean).join(" | "),
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { X, CheckCircle, AlertTriangle, Loader2, User, CreditCard, Wallet } from "lucide-react";
 
 interface PayoutConfirmModalProps {
   payout: any;
@@ -13,14 +13,14 @@ function money(v: number) {
   return `Rs. ${Number(v || 0).toLocaleString("en-IN")}`;
 }
 
-function profileName(value: any) {
-  const profile = Array.isArray(value) ? value[0] : value;
-  return profile?.full_name || "Unknown";
-}
-
-function fullAccount(input?: string | null) {
-  const clean = String(input || "").replace(/\s+/g, "");
-  return clean || null;
+function InfoRow({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100 last:border-0">
+      <span className="text-xs text-slate-500 shrink-0">{label}</span>
+      <span className={`text-sm text-right text-slate-900 font-medium ${mono ? "font-mono" : ""} break-all`}>{value}</span>
+    </div>
+  );
 }
 
 export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: PayoutConfirmModalProps) {
@@ -30,12 +30,22 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
 
   const partner = payout?.partner;
   const profile = Array.isArray(partner?.profiles) ? partner.profiles[0] : partner?.profiles;
-  const partnerName = profile?.full_name || "Unknown";
+  const partnerName = profile?.full_name || payout?.full_name || "Unknown";
   const partnerCode = partner?.partner_code || payout?.partner_code || "—";
+  const partnerEmail = profile?.email || payout?.email || "—";
+  const partnerPhone = profile?.phone || payout?.phone || "—";
   const paymentMethod = payout?.payment_method || (partner?.upi_id ? "upi" : "bank");
   const gross = Number(payout?.gross_amount || payout?.amount || 0);
   const deduction = Number(payout?.deduction_amount || 0);
   const net = Number(payout?.net_amount || payout?.amount || 0);
+
+  const bankName = partner?.bank_name || payout?.bank_name || null;
+  const bankBranch = partner?.bank_branch_name || payout?.bank_branch_name || null;
+  const bankHolder = partner?.bank_account_holder || payout?.bank_account_holder || null;
+  const bankAccount = partner?.bank_account_number || payout?.bank_account_number || null;
+  const bankIfsc = partner?.bank_ifsc || payout?.bank_ifsc || null;
+  const upiId = partner?.upi_id || payout?.upi_id || null;
+  const partnerId = payout?.partner_id || partner?.id || "—";
 
   async function handleConfirm() {
     setPhase("processing");
@@ -66,7 +76,7 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
             )}
           </div>
 
-          <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Success state */}
             {phase === "done" && (
               <div className="flex flex-col items-center py-4">
@@ -89,58 +99,68 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
             {/* Confirm / Failed state */}
             {(phase === "confirm" || phase === "failed") && (
               <>
-                {/* Partner Info */}
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase">Partner Name</p>
-                      <p className="font-semibold text-slate-900">{partnerName}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase">Partner ID</p>
-                      <p className="font-mono font-semibold text-brand-primaryDark">{partnerCode}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase">Payment Method</p>
-                      <p className="font-semibold text-slate-900">{paymentMethod === "upi" ? "UPI" : "Bank Transfer"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-500 uppercase">
-                        {paymentMethod === "upi" ? "UPI ID" : "Bank Account"}
-                      </p>
-                      {paymentMethod === "upi" ? (
-                        <p className="font-mono font-semibold text-slate-900">{partner?.upi_id || payout?.upi_id || "—"}</p>
-                      ) : (
-                        <>
-                          <p className="font-semibold text-slate-900">{partner?.bank_name || payout?.bank_name || "—"}</p>
-                          <p className="font-mono text-xs text-slate-700 mt-0.5">A/C: {fullAccount(partner?.bank_account_number || payout?.bank_account_number) || "—"}</p>
-                          {(partner?.bank_ifsc || payout?.bank_ifsc) && (
-                            <p className="font-mono text-xs text-slate-600">IFSC: {partner?.bank_ifsc || payout?.bank_ifsc}</p>
-                          )}
-                        </>
-                      )}
-                    </div>
+                {/* ── Partner Details ── */}
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+                    <User className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Partner Details</span>
+                  </div>
+                  <div className="px-4 py-1">
+                    <InfoRow label="Name" value={partnerName} />
+                    <InfoRow label="KIA ID" value={partnerCode} mono />
+                    <InfoRow label="Partner UUID" value={partnerId} mono />
+                    <InfoRow label="Phone" value={partnerPhone} mono />
+                    <InfoRow label="Email" value={partnerEmail} />
                   </div>
                 </div>
 
-                {/* Financial Breakdown */}
-                <div className="rounded-xl border border-slate-200 p-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Gross Income</span>
-                    <span className="font-semibold text-slate-900">{money(gross)}</span>
+                {/* ── Bank / Payment Details ── */}
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+                    <CreditCard className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                      {paymentMethod === "upi" ? "UPI Details" : "Bank Account Details"}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>15% Deduction</span>
-                    <span className="font-semibold">-{money(deduction)}</span>
+                  <div className="px-4 py-1">
+                    {paymentMethod === "upi" ? (
+                      <InfoRow label="UPI ID" value={upiId || "—"} mono />
+                    ) : (
+                      <>
+                        <InfoRow label="Account Holder" value={bankHolder} />
+                        <InfoRow label="Account Number" value={bankAccount || "—"} mono />
+                        <InfoRow label="IFSC Code" value={bankIfsc} mono />
+                        <InfoRow label="Bank Name" value={bankName} />
+                        <InfoRow label="Branch" value={bankBranch} />
+                      </>
+                    )}
                   </div>
-                  <div className="border-t border-slate-200 pt-2 flex justify-between text-sm">
-                    <span className="font-bold text-slate-900">Net Payout</span>
-                    <span className="font-bold text-emerald-700 text-lg">{money(net)}</span>
+                </div>
+
+                {/* ── Payout Breakdown ── */}
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+                    <Wallet className="h-4 w-4 text-slate-500" />
+                    <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Payout Breakdown</span>
+                  </div>
+                  <div className="px-4 py-2 space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Gross Income</span>
+                      <span className="font-semibold text-slate-900">{money(gross)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>15% Deduction</span>
+                      <span className="font-semibold">-{money(deduction)}</span>
+                    </div>
+                    <div className="border-t border-slate-200 pt-2 flex justify-between text-sm">
+                      <span className="font-bold text-slate-900">Net Payout</span>
+                      <span className="font-bold text-emerald-700 text-lg">{money(net)}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Payment Date */}
-                <div className="flex justify-between text-sm text-slate-600">
+                <div className="flex justify-between text-sm text-slate-600 px-1">
                   <span>Payment Date</span>
                   <span className="font-medium text-slate-900">{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
                 </div>
@@ -176,7 +196,7 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer — always visible */}
           <div className="border-t border-slate-200 px-6 py-4 flex justify-end gap-3 shrink-0 bg-white">
             {phase === "done" && (
               <button type="button" onClick={onCancel} className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
