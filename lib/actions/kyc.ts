@@ -93,6 +93,27 @@ async function createSignedUrl(path?: string | null) {
   return data?.signedUrl || null;
 }
 
+async function findDocInStorage(partnerId: string, storageDir: string): Promise<string | null> {
+  const supabase = getSupabaseServiceClient();
+  for (const bucket of [KYC_BUCKET, LEGACY_KYC_BUCKET]) {
+    try {
+      const { data: files } = await supabase.storage
+        .from(bucket)
+        .list(`partners/${partnerId}/${storageDir}`, { limit: 5, sortBy: { column: "created_at", order: "desc" } });
+      const valid = (files || []).filter((f: any) => f.name && !f.name.startsWith("."));
+      if (valid.length > 0) {
+        return `partners/${partnerId}/${storageDir}/${valid[0].name}`;
+      }
+    } catch {}
+  }
+  return null;
+}
+
+async function resolveDocPath(kycPath: string | null | undefined, partnerId: string, storageDir: string): Promise<string | null> {
+  if (kycPath) return kycPath;
+  return findDocInStorage(partnerId, storageDir);
+}
+
 async function upsertDocumentRow(input: {
   partnerId: string;
   kycId?: string | null;
@@ -499,9 +520,33 @@ export async function getKycSubmissions() {
     const profile = profileFrom(row);
     const kyc = Array.isArray(row.partner_kyc) ? row.partner_kyc[0] : row.partner_kyc;
     const paymentMethod = kyc?.payment_method || (row.upi_id ? "upi" : "bank");
+    const pid = row.id;
+
+    const [panPath, aadhaarFrontPath, aadhaarBackPath, selfiePath, chequePath] = await Promise.all([
+      resolveDocPath(kyc?.pan_card_path, pid, "pan-card"),
+      resolveDocPath(kyc?.aadhaar_front_path, pid, "aadhaar-front"),
+      resolveDocPath(kyc?.aadhaar_back_path, pid, "aadhaar-back"),
+      resolveDocPath(kyc?.selfie_path, pid, "selfie"),
+      resolveDocPath(kyc?.cheque_path, pid, "cheque-or-passbook"),
+    ]);
+
+    // If we recovered paths from storage that weren't in the DB, save them back
+    if (kyc) {
+      const patchFields: Record<string, string> = {};
+      if (!kyc.pan_card_path && panPath) patchFields.pan_card_path = panPath;
+      if (!kyc.aadhaar_front_path && aadhaarFrontPath) patchFields.aadhaar_front_path = aadhaarFrontPath;
+      if (!kyc.aadhaar_back_path && aadhaarBackPath) patchFields.aadhaar_back_path = aadhaarBackPath;
+      if (!kyc.selfie_path && selfiePath) patchFields.selfie_path = selfiePath;
+      if (!kyc.cheque_path && chequePath) patchFields.cheque_path = chequePath;
+      if (Object.keys(patchFields).length > 0) {
+        patchFields.updated_at = new Date().toISOString();
+        supabase.from("partner_kyc" as any).update(patchFields).eq("partner_id", pid).then(() => {});
+      }
+    }
+
     return {
-      id: row.id,
-      partner_id: row.id,
+      id: pid,
+      partner_id: pid,
       kyc_id: kyc?.id || null,
       full_name: profile?.full_name || kyc?.full_name,
       mobile_number: profile?.phone || kyc?.mobile_number,
@@ -523,17 +568,17 @@ export async function getKycSubmissions() {
       updated_at: row.updated_at,
       rejection_reason: kyc?.rejection_reason || row.payout_hold_reason,
       resubmission_reason: kyc?.resubmission_reason,
-      pan_card_url: await createSignedUrl(kyc?.pan_card_path),
-      aadhaar_front_url: await createSignedUrl(kyc?.aadhaar_front_path),
-      aadhaar_back_url: await createSignedUrl(kyc?.aadhaar_back_path),
-      selfie_url: await createSignedUrl(kyc?.selfie_path),
-      cheque_url: await createSignedUrl(kyc?.cheque_path),
+      pan_card_url: await createSignedUrl(panPath),
+      aadhaar_front_url: await createSignedUrl(aadhaarFrontPath),
+      aadhaar_back_url: await createSignedUrl(aadhaarBackPath),
+      selfie_url: await createSignedUrl(selfiePath),
+      cheque_url: await createSignedUrl(chequePath),
       documents: {
-        pan: Boolean(kyc?.pan_card_path),
-        aadhaar_front: Boolean(kyc?.aadhaar_front_path),
-        aadhaar_back: Boolean(kyc?.aadhaar_back_path),
-        selfie: Boolean(kyc?.selfie_path),
-        cheque_or_passbook: Boolean(kyc?.cheque_path),
+        pan: Boolean(panPath),
+        aadhaar_front: Boolean(aadhaarFrontPath),
+        aadhaar_back: Boolean(aadhaarBackPath),
+        selfie: Boolean(selfiePath),
+        cheque_or_passbook: Boolean(chequePath),
       },
       partner: {
         partner_code: row.partner_code,
@@ -565,11 +610,35 @@ export async function reviewKycSubmission(id: string, status: ReviewStatus, reas
         .maybeSingle();
       kycRow = data as any;
     } catch {}
-    if (!kycRow?.pan_card_path || !kycRow?.aadhaar_front_path || !kycRow?.aadhaar_back_path || !kycRow?.selfie_path) {
-      throw new Error("Cannot verify KYC: one or more required documents (PAN, Aadhaar Front, Aadhaar Back, Selfie) are missing from the database. Ask the partner to re-upload.");
+
+    const [panPath, aadhaarFrontPath, aadhaarBackPath, selfiePath, chequePath] = await Promise.all([
+      resolveDocPath(kycRow?.pan_card_path, id, "pan-card"),
+      resolveDocPath(kycRow?.aadhaar_front_path, id, "aadhaar-front"),
+      resolveDocPath(kycRow?.aadhaar_back_path, id, "aadhaar-back"),
+      resolveDocPath(kycRow?.selfie_path, id, "selfie"),
+      resolveDocPath(kycRow?.cheque_path, id, "cheque-or-passbook"),
+    ]);
+
+    if (!panPath || !aadhaarFrontPath || !aadhaarBackPath || !selfiePath) {
+      throw new Error("Cannot verify KYC: one or more required documents (PAN, Aadhaar Front, Aadhaar Back, Selfie) are missing from storage. Ask the partner to re-upload.");
     }
-    if (kycRow.payment_method === "bank" && !kycRow.cheque_path) {
+    const payMethod = kycRow?.payment_method || "bank";
+    if (payMethod === "bank" && !chequePath) {
       throw new Error("Cannot verify KYC: cancelled cheque/passbook document is missing for bank payout method.");
+    }
+
+    // Save recovered paths back to partner_kyc so they persist
+    if (kycRow) {
+      const patch: Record<string, string> = {};
+      if (!kycRow.pan_card_path && panPath) patch.pan_card_path = panPath;
+      if (!kycRow.aadhaar_front_path && aadhaarFrontPath) patch.aadhaar_front_path = aadhaarFrontPath;
+      if (!kycRow.aadhaar_back_path && aadhaarBackPath) patch.aadhaar_back_path = aadhaarBackPath;
+      if (!kycRow.selfie_path && selfiePath) patch.selfie_path = selfiePath;
+      if (!kycRow.cheque_path && chequePath) patch.cheque_path = chequePath;
+      if (Object.keys(patch).length > 0) {
+        patch.updated_at = new Date().toISOString();
+        await supabase.from("partner_kyc" as any).update(patch).eq("partner_id", id);
+      }
     }
   }
 

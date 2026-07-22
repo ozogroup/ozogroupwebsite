@@ -269,7 +269,26 @@ export async function recoverKycDocuments(): Promise<ReconciliationReport["kycRe
       // table may not exist
     }
 
-    if (!kycRow) continue;
+    if (!kycRow) {
+      try {
+        const { data: newRow } = await supabase
+          .from("partner_kyc" as any)
+          .upsert({
+            partner_id: pid,
+            full_name: pName,
+            status: partner.kyc_status || "pending",
+            submitted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "partner_id" })
+          .select("id, pan_card_path, aadhaar_front_path, aadhaar_back_path, selfie_path, cheque_path")
+          .single();
+        kycRow = newRow as any;
+      } catch {
+        // If we can't create the row, skip this partner
+        continue;
+      }
+      if (!kycRow) continue;
+    }
 
     for (const docType of docTypes) {
       const currentPath = kycRow[docType.dbColumn];
