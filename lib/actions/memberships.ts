@@ -631,7 +631,7 @@ export async function approveAndCreatePartner(membershipId: string) {
   let approved: any;
   if (error) {
     const message = `${error.message || ""} ${(error as any).details || ""}`;
-    if (!/kia_approve_paid_membership|function .* does not exist|schema cache/i.test(message)) {
+    if (!/kia_approve_paid_membership|function .* does not exist|schema cache|Admin access required/i.test(message)) {
       console.error("Error approving membership:", error);
       return { error: error.message || "Failed to approve membership." };
     }
