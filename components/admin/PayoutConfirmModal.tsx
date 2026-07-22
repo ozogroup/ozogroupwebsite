@@ -18,10 +18,9 @@ function profileName(value: any) {
   return profile?.full_name || "Unknown";
 }
 
-function maskAccount(input?: string | null) {
+function fullAccount(input?: string | null) {
   const clean = String(input || "").replace(/\s+/g, "");
-  if (!clean) return null;
-  return `XXXX${clean.slice(-4)}`;
+  return clean || null;
 }
 
 export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: PayoutConfirmModalProps) {
@@ -54,9 +53,9 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
     <>
       <div className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm" onClick={phase === "confirm" || phase === "failed" ? onCancel : undefined} />
       <div className="fixed inset-0 z-[56] flex items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 shrink-0">
             <h2 className="text-lg font-semibold text-slate-900">
               {phase === "done" ? "Payment Completed" : phase === "processing" ? "Processing Payment..." : "Confirm Payout"}
             </h2>
@@ -67,7 +66,7 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
             )}
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
             {/* Success state */}
             {phase === "done" && (
               <div className="flex flex-col items-center py-4">
@@ -109,11 +108,17 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
                       <p className="text-[10px] text-slate-500 uppercase">
                         {paymentMethod === "upi" ? "UPI ID" : "Bank Account"}
                       </p>
-                      <p className="font-mono font-semibold text-slate-900">
-                        {paymentMethod === "upi"
-                          ? (partner?.upi_id || payout?.upi_id || "—")
-                          : `${partner?.bank_name || payout?.bank_name || ""} ${maskAccount(partner?.bank_account_number || payout?.bank_account_number) || "—"}`}
-                      </p>
+                      {paymentMethod === "upi" ? (
+                        <p className="font-mono font-semibold text-slate-900">{partner?.upi_id || payout?.upi_id || "—"}</p>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-slate-900">{partner?.bank_name || payout?.bank_name || "—"}</p>
+                          <p className="font-mono text-xs text-slate-700 mt-0.5">A/C: {fullAccount(partner?.bank_account_number || payout?.bank_account_number) || "—"}</p>
+                          {(partner?.bank_ifsc || payout?.bank_ifsc) && (
+                            <p className="font-mono text-xs text-slate-600">IFSC: {partner?.bank_ifsc || payout?.bank_ifsc}</p>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -172,7 +177,7 @@ export default function PayoutConfirmModal({ payout, onConfirm, onCancel }: Payo
           </div>
 
           {/* Footer */}
-          <div className="border-t border-slate-200 px-6 py-4 flex justify-end gap-3">
+          <div className="border-t border-slate-200 px-6 py-4 flex justify-end gap-3 shrink-0 bg-white">
             {phase === "done" && (
               <button type="button" onClick={onCancel} className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
                 Close
