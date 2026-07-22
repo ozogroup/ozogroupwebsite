@@ -13,6 +13,7 @@ import {
   updateMembershipStatus,
   updatePaymentStatus,
 } from "@/lib/actions/memberships";
+import { adminLoginAsPartner, generateTempPassword } from "@/lib/actions/partners";
 
 function getActivationStatus(m: any): { label: string; variant: "danger" | "success" | "info" | "warning" } {
   if (m.membership_status === "rejected") return { label: "Rejected", variant: "danger" };
@@ -124,6 +125,46 @@ export default function AdminMembershipsPage() {
       } else if (result.data) {
         setMessage({ type: "success", text: result.data.message });
       }
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleLoginAsPartner(partnerId: string) {
+    setActionLoading(partnerId);
+    setMessage(null);
+    try {
+      const result = await adminLoginAsPartner(partnerId);
+      if (result.error) {
+        setMessage({ type: "error", text: result.error });
+      } else if (result.url) {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+        setMessage({ type: "success", text: "Partner portal opened in new tab. Impersonation logged." });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err?.message || "Failed to generate login link." });
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleGenerateTempPassword(partnerId: string) {
+    setActionLoading(partnerId);
+    setMessage(null);
+    try {
+      const result = await generateTempPassword(partnerId);
+      if (result.error) {
+        setMessage({ type: "error", text: result.error });
+      } else {
+        const pw = result.tempPassword || "";
+        await navigator.clipboard.writeText(pw).catch(() => {});
+        setMessage({
+          type: "success",
+          text: `Temporary password for ${result.name || result.email}: ${pw} (copied to clipboard). Partner can login with email ${result.email} and this password.`,
+        });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err?.message || "Failed to generate temp password." });
     } finally {
       setActionLoading(null);
     }
@@ -335,13 +376,29 @@ export default function AdminMembershipsPage() {
                       </button>
                     )}
                     {membership.partner_id && membership.membership_status === "active" && (
-                      <button
-                        onClick={() => handleRepairLogin(membership)}
-                        disabled={actionLoading === membership.id}
-                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        {actionLoading === membership.id ? "..." : "Repair Login"}
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleLoginAsPartner(membership.partner_id)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          Login as Partner
+                        </button>
+                        <button
+                          onClick={() => handleGenerateTempPassword(membership.partner_id)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-50"
+                        >
+                          Temp Password
+                        </button>
+                        <button
+                          onClick={() => handleRepairLogin(membership)}
+                          disabled={actionLoading === membership.id}
+                          className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          {actionLoading === membership.id ? "..." : "Repair Login"}
+                        </button>
+                      </>
                     )}
                     <button
                       type="button"

@@ -82,7 +82,14 @@ export async function getMembershipRequests() {
 
   const { data, error } = await supabase
     .from("memberships" as any)
-    .select("*, partners:partner_id(partner_code, referral_link, status), sponsor:partners!memberships_sponsor_id_fkey(partner_code, profiles(full_name))")
+    .select([
+      "id", "membership_id", "full_name", "mobile", "email", "city", "address", "pin_code",
+      "referral_code", "sponsor_id", "partner_id", "amount",
+      "payment_status", "membership_status", "payment_id",
+      "notes", "admin_notes", "is_active", "created_at", "updated_at",
+      "partners:partner_id(partner_code, referral_link, status)",
+      "sponsor:partners!memberships_sponsor_id_fkey(partner_code, profiles(full_name))",
+    ].join(", "))
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -616,7 +623,7 @@ async function approveAndCreatePartnerFallback(membershipId: string) {
 
 export async function approveAndCreatePartner(membershipId: string) {
   await requireAdmin();
-  const supabase = await getSupabaseServerClient();
+  const supabase = getSupabaseServiceClient();
   const { data, error } = await (supabase as any).rpc("kia_approve_paid_membership", {
     membership_uuid: membershipId,
   });
