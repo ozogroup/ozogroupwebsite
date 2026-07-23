@@ -126,7 +126,7 @@ export async function getSponsoredMembershipRequests(limit = 8) {
 
   const { data, error } = await serviceClient
     .from("memberships" as any)
-    .select("id, full_name, mobile, email, city, created_at, membership_status, payment_status, referral_code, partner_id, partners:partner_id(partner_code, status, created_at, membership_expires_at)")
+    .select("id, full_name, created_at, membership_status, payment_status, referral_code, partner_id, partners:partner_id(partner_code, status, created_at, membership_expires_at, kyc_status)")
     .eq("sponsor_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(safeLimit);
@@ -136,7 +136,24 @@ export async function getSponsoredMembershipRequests(limit = 8) {
     return [];
   }
 
-  return data || [];
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    full_name: row.full_name,
+    created_at: row.created_at,
+    membership_status: row.membership_status,
+    payment_status: row.payment_status,
+    referral_code: row.referral_code,
+    partner_id: row.partner_id,
+    partners: row.partners
+      ? {
+          partner_code: row.partners.partner_code,
+          status: row.partners.status,
+          created_at: row.partners.created_at,
+          membership_expires_at: row.partners.membership_expires_at,
+          kyc_status: row.partners.kyc_status,
+        }
+      : null,
+  }));
 }
 
 export async function getMembershipById(id: string) {

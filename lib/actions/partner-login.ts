@@ -1,6 +1,7 @@
 "use server";
 
-import { getSupabaseServiceClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { getSupabaseServerClient, getSupabaseServiceClient } from "@/lib/supabase/server";
 
 const GENERIC_LOGIN_ERROR = "Invalid email/mobile or password.";
 const LOGIN_MESSAGES = {
@@ -17,7 +18,7 @@ function normalizeMobile(input: string) {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
-export async function resolvePartnerLoginEmail(identifier: string) {
+async function resolvePartnerLoginEmail(identifier: string) {
   const login = identifier.trim();
 
   if (!login) {
@@ -113,4 +114,35 @@ export async function getPartnerLoginAccessStatus(email: string) {
   }
 
   return { allowed: true, message: "active" };
+}
+
+export async function loginPartnerWithIdentifier(identifier: string, password: string) {
+  const login = identifier.trim();
+  if (!login || !password) {
+    return { ok: false, message: GENERIC_LOGIN_ERROR };
+  }
+
+  const resolved = await resolvePartnerLoginEmail(login);
+  if (resolved.error || !resolved.email) {
+    return { ok: false, message: GENERIC_LOGIN_ERROR };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error: loginError } = await supabase.auth.signInWithPassword({
+    email: resolved.email,
+    password,
+  });
+
+  if (loginError) {
+    return { ok: false, message: GENERIC_LOGIN_ERROR };
+  }
+
+  const access = await getPartnerLoginAccessStatus(resolved.email);
+  if (!access.allowed) {
+    await supabase.auth.signOut();
+    return { ok: false, message: access.message || GENERIC_LOGIN_ERROR };
+  }
+
+  revalidatePath("/partner/dashboard");
+  return { ok: true, message: "Logged in" };
 }

@@ -3,16 +3,17 @@
 import { useState } from "react";
 import type React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, BadgeIndianRupee, LockKeyhole, Network, ShieldCheck, Sparkles, Users } from "lucide-react";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
-import { getPartnerLoginAccessStatus, resolvePartnerLoginEmail } from "@/lib/actions/partner-login";
+import { loginPartnerWithIdentifier } from "@/lib/actions/partner-login";
 
 const LOGIN_ERROR = "Invalid email/mobile or password.";
 
 export default function PartnerLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -27,32 +28,9 @@ export default function PartnerLoginPage() {
       setLoading(true);
       setError("");
 
-      const { getSupabaseBrowserClient } = await import("@/lib/supabase/client");
-      const supabase = getSupabaseBrowserClient();
-      const login = identifier.trim();
-      const resolved = login.includes("@")
-        ? { email: login.toLowerCase() }
-        : await resolvePartnerLoginEmail(identifier);
-
-      if (resolved.error || !resolved.email) {
-        setError(LOGIN_ERROR);
-        return;
-      }
-
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: resolved.email,
-        password,
-      });
-
-      if (loginError) {
-        setError(LOGIN_ERROR);
-        return;
-      }
-
-      const access = await getPartnerLoginAccessStatus(resolved.email);
-      if (!access.allowed) {
-        await supabase.auth.signOut();
-        setError(access.message || LOGIN_ERROR);
+      const result = await loginPartnerWithIdentifier(identifier, password);
+      if (!result.ok) {
+        setError(result.message || LOGIN_ERROR);
         return;
       }
 
@@ -158,6 +136,11 @@ export default function PartnerLoginPage() {
             {error && (
               <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                 {error}
+              </div>
+            )}
+            {searchParams.get("passwordReset") === "success" && !error && (
+              <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                Your password has been updated successfully. You can now log in with your Partner ID and new password.
               </div>
             )}
 

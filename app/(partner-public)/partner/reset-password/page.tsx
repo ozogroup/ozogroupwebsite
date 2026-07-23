@@ -3,11 +3,14 @@
 import { useState, useEffect } from "react";
 import type React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import Logo from "@/components/Logo";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { validateStrongPassword } from "@/lib/security/password";
 
 export default function PartnerResetPasswordPage() {
+  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,8 +59,10 @@ export default function PartnerResetPasswordPage() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    if (!password || password.length < 8) {
-      setMessage({ type: "error", text: "Password must be at least 8 characters" });
+    const passwordCheck = validateStrongPassword(password);
+    if (!passwordCheck.valid) {
+      const missing = passwordCheck.checks.filter((check) => !check.ok).map((check) => check.message).join(", ");
+      setMessage({ type: "error", text: `Password is too weak: ${missing}.` });
       setLoading(false);
       return;
     }
@@ -73,7 +78,8 @@ export default function PartnerResetPasswordPage() {
         setMessage({ type: "error", text: error.message });
       } else {
         await supabase.auth.signOut();
-        setMessage({ type: "success", text: "Password set successfully. You can now login." });
+        setMessage({ type: "success", text: "Your password has been updated successfully. You can now log in using your Partner ID and new password." });
+        window.setTimeout(() => router.push("/partner/login?passwordReset=success"), 1500);
       }
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Something went wrong" });
@@ -128,7 +134,14 @@ export default function PartnerResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">New Password</label>
-              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Min 8 characters" />
+              <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Strong password" />
+              <ul className="mt-3 grid gap-1 text-xs text-brand-muted sm:grid-cols-2">
+                {validateStrongPassword(password).checks.map((check) => (
+                  <li key={check.message} className={check.ok ? "text-green-700" : "text-brand-muted"}>
+                    {check.ok ? "✓" : "•"} {check.message}
+                  </li>
+                ))}
+              </ul>
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>

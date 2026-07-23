@@ -31,8 +31,6 @@ function toTeamMemberFromMembership(membership: any) {
   return {
     id: membership.partner_id || membership.id,
     name: membership.full_name,
-    phone: membership.mobile,
-    city: membership.city,
     partnerCode: membership.partners?.partner_code || "KIA ID pending",
     joinDate: membership.partners?.created_at || membership.created_at,
     status: getTeamStatus(membership),
@@ -59,7 +57,7 @@ export default async function PartnerDirectTeamPage() {
   if (descendantIds.length > 0) {
     const { data } = await supabase
       .from("partners" as any)
-      .select("id, partner_code, status, created_at, profiles:profiles!inner(full_name, phone), city")
+      .select("id, partner_code, status, created_at, profiles:profiles!inner(full_name)")
       .in("id", descendantIds);
     treeMembers = data || [];
   }
@@ -73,8 +71,6 @@ export default async function PartnerDirectTeamPage() {
       .map((member) => ({
         id: member.id,
         name: firstProfile(member.profiles)?.full_name || "-",
-        phone: firstProfile(member.profiles)?.phone || "-",
-        city: member.city || "-",
         partnerCode: member.partner_code,
         joinDate: member.created_at,
         status: member.status || "active",
@@ -129,15 +125,14 @@ export default async function PartnerDirectTeamPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-brand-ink">{membership.full_name}</p>
-                      <p className="mt-1 text-sm text-brand-muted">{membership.city || "-"}</p>
+                      <p className="mt-1 font-mono text-xs font-semibold text-brand-primaryDark">
+                        {membership.partners?.partner_code || "KIA ID pending"}
+                      </p>
                     </div>
                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${statusClass(status)}`}>
                       {status.replace("_", " ")}
                     </span>
                   </div>
-                  <p className="mt-3 font-mono text-xs font-semibold text-brand-primaryDark">
-                    {membership.partners?.partner_code || "KIA ID pending"}
-                  </p>
                 </div>
               );
             })}
@@ -147,12 +142,10 @@ export default async function PartnerDirectTeamPage() {
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px]">
+          <table className="w-full min-w-[680px]">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">City</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Partner Code</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Join Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
@@ -161,7 +154,7 @@ export default async function PartnerDirectTeamPage() {
             <tbody className="divide-y divide-slate-200 bg-white">
               {allDirectMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                     No direct team members found
                   </td>
                 </tr>
@@ -169,8 +162,6 @@ export default async function PartnerDirectTeamPage() {
                 allDirectMembers.map((member: any) => (
                   <tr key={member.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4 text-sm font-medium text-slate-900">{member.name || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{member.phone || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{member.city || "-"}</td>
                     <td className="px-6 py-4 font-mono text-sm text-brand-accent">{member.partnerCode}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
                       {member.joinDate ? new Date(member.joinDate).toLocaleDateString("en-IN") : "-"}

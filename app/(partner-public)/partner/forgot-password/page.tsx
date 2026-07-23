@@ -3,187 +3,108 @@
 import { useState } from "react";
 import type React from "react";
 import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { ArrowLeft, MailCheck } from "lucide-react";
 import Logo from "@/components/Logo";
-import PasswordInput from "@/components/ui/PasswordInput";
-import { resolvePartnerLoginEmail } from "@/lib/actions/partner-login";
-
-function toIndianAuthPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (digits.length === 10) return `+91${digits}`;
-  if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;
-  return value.trim().startsWith("+") ? value.trim() : "";
-}
+import { requestPartnerPasswordReset } from "@/lib/actions/partner-security";
 
 export default function PartnerForgotPasswordPage() {
   const [identifier, setIdentifier] = useState("");
-  const [otpPhone, setOtpPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: string; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string; maskedEmail?: string | null } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    const login = identifier.trim();
-    if (!login) {
-      setMessage({ type: "error", text: "Please enter your email or mobile number" });
-      setLoading(false);
-      return;
-    }
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    if (loading) return;
 
-      const resolved = await resolvePartnerLoginEmail(login);
-      if (resolved.error || !resolved.email) {
-        setMessage({ type: "error", text: "No active partner login was found for this email, mobile number, or Partner ID." });
-        return;
-      }
-
-      if (login.includes("@") || /^(KIA|OZO)\d+$/i.test(login)) {
-        const { error } = await supabase.auth.resetPasswordForEmail(resolved.email, {
-          redirectTo: baseUrl + "/partner/reset-password",
-        });
-        if (error) {
-          setMessage({ type: "error", text: error.message });
-        } else {
-          setMessage({ type: "success", text: "Password reset link sent. Check your email and click the link to set your password." });
-        }
-        return;
-      }
-
-      const phone = toIndianAuthPhone(login);
-      if (!phone) {
-        setMessage({ type: "error", text: "Please enter a valid mobile number" });
-        return;
-      }
-
-      const { error } = await supabase.auth.signInWithOtp({ phone });
-      if (error) {
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(resolved.email, {
-          redirectTo: baseUrl + "/partner/reset-password",
-        });
-        if (resetError) {
-          setMessage({ type: "error", text: resetError.message });
-        } else {
-          setMessage({ type: "success", text: "Password reset link sent to the email registered with this mobile number." });
-        }
-      } else {
-        setOtpPhone(phone);
-        setMessage({ type: "success", text: "OTP sent to your registered mobile number." });
-      }
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Something went wrong" });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleOtpSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    if (!otp.trim()) {
-      setMessage({ type: "error", text: "Please enter the OTP" });
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 8) {
-      setMessage({ type: "error", text: "Password must be at least 8 characters." });
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setMessage({ type: "error", text: "Password and Confirm Password do not match." });
-      setLoading(false);
-      return;
-    }
-
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        phone: otpPhone,
-        token: otp.trim(),
-        type: "sms",
+      const result = await requestPartnerPasswordReset(identifier);
+      setMessage({
+        type: result.ok ? "success" : "error",
+        text: result.message,
+        maskedEmail: result.maskedEmail,
       });
-
-      if (otpError) {
-        setMessage({ type: "error", text: otpError.message });
-        return;
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) {
-        setMessage({ type: "error", text: updateError.message });
-      } else {
-        setMessage({ type: "success", text: "Password reset successfully. You can now login." });
-        setOtp("");
-        setPassword("");
-        setConfirmPassword("");
-      }
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Something went wrong" });
+      if (result.ok) setIdentifier("");
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "success",
+        text: "If the provided details are registered, a password reset link has been sent to the registered email address.",
+      });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8"><Logo size="auth" /></div>
-        <div className="bg-brand-card rounded-2xl border border-brand-border shadow-premium p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-brand-ink mb-2">Reset Partner Password</h1>
-            <p className="text-brand-muted">Enter your partner email, mobile number, or Partner ID to reset your password</p>
+    <main className="min-h-screen bg-gradient-to-br from-brand-surface via-brand-light/45 to-brand-card px-4 py-8">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md flex-col justify-center">
+        <div className="mb-8 flex justify-center">
+          <Logo size="auth" />
+        </div>
+
+        <section className="rounded-[2rem] border border-brand-border bg-brand-card p-6 shadow-premium sm:p-8">
+          <div className="text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-surface text-brand-primaryDark">
+              <MailCheck className="h-6 w-6" />
+            </span>
+            <h1 className="mt-5 text-3xl font-semibold text-brand-ink">Forgot Password</h1>
+            <p className="mt-2 text-sm leading-6 text-brand-muted">
+              Enter your Partner ID or registered email. If it matches an active partner account, a secure reset link will be emailed.
+            </p>
           </div>
+
           {message && (
-            <div className={"mb-6 p-4 rounded-lg border " + (message.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700")}>
-              <p className="text-sm">{message.text}</p>
+            <div
+              className={`mt-6 rounded-2xl border px-4 py-3 text-sm ${
+                message.type === "success"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              <p>{message.text}</p>
+              {message.maskedEmail && (
+                <p className="mt-1 text-xs opacity-80">Registered email: {message.maskedEmail}</p>
+              )}
             </div>
           )}
-          {!otpPhone ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-brand-ink mb-2">Partner Email, Mobile Number, or Partner ID</label>
-                <input id="identifier" type="text" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="partner@example.com, 9876543210, or KIA1008" />
-              </div>
-              <button type="submit" disabled={loading} className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
-                {loading ? "Sending..." : "Continue"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="otp" className="block text-sm font-medium text-brand-ink mb-2">OTP</label>
-                <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" required value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Enter OTP" />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-brand-ink mb-2">New Password</label>
-                <PasswordInput id="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Minimum 8 characters" />
-              </div>
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-brand-ink mb-2">Confirm Password</label>
-                <PasswordInput id="confirmPassword" autoComplete="new-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-brand-border bg-brand-card text-brand-ink rounded-lg focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all" placeholder="Re-enter password" />
-              </div>
-              <button type="submit" disabled={loading} className="w-full bg-brand-ink text-white font-semibold py-3 px-4 rounded-lg hover:bg-brand-muted focus:ring-4 focus:ring-brand-primary/20 transition-all disabled:opacity-60">
-                {loading ? "Resetting..." : "Reset Password"}
-              </button>
-            </form>
-          )}
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <div>
+              <label htmlFor="identifier" className="mb-2 block text-sm font-semibold text-brand-ink">
+                Partner ID or Registered Email
+              </label>
+              <input
+                id="identifier"
+                type="text"
+                autoComplete="username"
+                required
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full rounded-2xl border border-brand-border bg-white px-4 py-3.5 text-brand-ink outline-none transition placeholder:text-slate-400 focus:border-brand-accent focus:ring-4 focus:ring-brand-accent/15"
+                placeholder="KIA1001 or partner@example.com"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-full bg-brand-ink px-6 py-3.5 text-sm font-semibold text-white shadow-card transition hover:bg-brand-muted disabled:opacity-60"
+            >
+              {loading ? "Sending reset link..." : "Send Reset Link"}
+            </button>
+          </form>
+
           <div className="mt-6 text-center">
-            <Link href="/partner/login" className="text-sm text-brand-primaryDark hover:text-brand-ink transition-colors">Back to Partner Login</Link>
+            <Link href="/partner/login" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-primary hover:text-brand-accent">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Partner Login
+            </Link>
           </div>
-        </div>
-        <div className="text-center mt-8 text-sm text-brand-muted">&copy; 2026 KIA Skin Care. All rights reserved.</div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

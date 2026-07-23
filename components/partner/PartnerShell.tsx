@@ -9,6 +9,7 @@ import {
   Headphones,
   LayoutDashboard,
   Link as LinkIcon,
+  LockKeyhole,
   LogOut,
   Menu,
   Network,
@@ -29,6 +30,7 @@ const navigation = [
   { name: "My Team", href: "/partner/team", icon: Network },
   { name: "My Income", href: "/partner/income", icon: BadgeIndianRupee },
   { name: "Payout Request", href: "/partner/payouts", icon: Wallet },
+  { name: "Account Security", href: "/partner/security", icon: LockKeyhole },
   { name: "Support", href: "/partner/support", icon: Headphones },
 ];
 

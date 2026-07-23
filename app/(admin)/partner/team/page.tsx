@@ -46,7 +46,7 @@ function buildHierarchyRows(treeRows: any[], partners: any[], memberships: any[]
       created_at: row.created_at,
       name: profile?.full_name || membership?.full_name || "-",
       partnerCode: partner?.partner_code || "KIA ID pending",
-      city: partner?.city || membership?.city || "-",
+      joinedAt: partner?.created_at || membership?.created_at || row.created_at,
       status: partner?.status || membership?.membership_status || "active",
     };
   });
@@ -81,11 +81,11 @@ export default async function PartnerTeamPage() {
     ? await Promise.all([
         supabase
           .from("partners" as any)
-          .select("id, partner_code, status, created_at, city, profiles(full_name, phone, email)")
+          .select("id, partner_code, status, created_at, profiles(full_name)")
           .in("id", descendantIds),
         supabase
           .from("memberships" as any)
-          .select("partner_id, full_name, mobile, city, membership_status, payment_status")
+          .select("partner_id, full_name, created_at, membership_status, payment_status")
           .in("partner_id", descendantIds),
       ])
     : [{ data: [] }, { data: [] }];
@@ -156,7 +156,7 @@ export default async function PartnerTeamPage() {
                   <div>
                     <p className="font-medium text-brand-ink">{membership.full_name}</p>
                     <p className="text-sm text-brand-muted">
-                      {membership.city || "-"} | {membership.partners?.partner_code || "KIA ID pending"}
+                      {membership.partners?.partner_code || "KIA ID pending"}
                     </p>
                   </div>
                   <span className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClass(status)}`}>
@@ -172,16 +172,16 @@ export default async function PartnerTeamPage() {
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Team Hierarchy</h2>
-          <p className="text-sm text-slate-600">Approved referral tree by level.</p>
+          <p className="text-sm text-slate-600">Approved referral tree by level. Contact details are private.</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px]">
+          <table className="w-full min-w-[720px]">
             <thead className="border-b border-slate-200 bg-white">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Level</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Partner Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">City</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Join Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
               </tr>
             </thead>
@@ -199,7 +199,9 @@ export default async function PartnerTeamPage() {
                       <td className="px-6 py-4 text-sm font-semibold text-brand-primaryDark">Level {row.level}</td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{row.name}</td>
                       <td className="px-6 py-4 font-mono text-sm text-brand-accent">{row.partnerCode}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.city}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        {row.joinedAt ? new Date(row.joinedAt).toLocaleDateString("en-IN") : "-"}
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${statusClass(row.status || "active")}`}>
                           {String(row.status || "active").replace("_", " ")}

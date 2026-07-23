@@ -437,7 +437,7 @@ export default async function PartnerDashboardPage({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-brand-ink">{membership.full_name}</p>
-                    <p className="mt-1 text-sm text-brand-muted">{membership.city || "City not provided"}</p>
+                    <p className="mt-1 text-sm text-brand-muted">Direct registration under your Partner ID</p>
                   </div>
                   <StatusBadge status={membership.membership_status || membership.payment_status} />
                 </div>
