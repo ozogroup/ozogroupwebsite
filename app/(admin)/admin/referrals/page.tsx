@@ -8,6 +8,7 @@ import {
   AlertCircle, Layers, Eye, BarChart3,
 } from "lucide-react";
 import { getAllPartnersDirectory, getReferralOverview, getReferralTree, getReferralNetworkSummary } from "@/lib/actions/referrals";
+import { updatePartnerName } from "@/lib/actions/partners";
 import { Badge, Card, PageHeader, StatCard, EmptyState } from "@/components/admin/ui";
 
 const PAGE_SIZE = 25;
@@ -141,6 +142,9 @@ export default function AdminReferralsPage() {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<string>("totalTeamCount");
   const [sortAsc, setSortAsc] = useState(false);
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
+  const [nameLoading, setNameLoading] = useState(false);
 
   const commissionLevels = overview?.commissionLevels;
 
@@ -200,6 +204,23 @@ export default function AdminReferralsPage() {
       window.clearInterval(interval);
     };
   }, [loadAll, refreshSelectedTree]);
+
+  async function handleSaveName(partnerId: string) {
+    if (!editNameValue.trim()) return;
+    setNameLoading(true);
+    try {
+      const result = await updatePartnerName(partnerId, editNameValue.trim());
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setEditingName(null);
+        await loadAll();
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to update name");
+    }
+    setNameLoading(false);
+  }
 
   async function handleViewTree(partner: any) {
     setSelectedPartner(partner);
@@ -615,15 +636,46 @@ export default function AdminReferralsPage() {
                   return (
                     <tr key={partner.id} className="transition-colors hover:bg-brand-surface/30">
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-[10px] font-semibold text-white">
-                            {partnerName(partner)[0]}
+                        {editingName === partner.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              value={editNameValue}
+                              onChange={(e) => setEditNameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveName(partner.id);
+                                if (e.key === "Escape") setEditingName(null);
+                              }}
+                              autoFocus
+                              className="w-28 rounded border border-brand-accent px-1.5 py-0.5 text-sm outline-none focus:ring-2 focus:ring-brand-accent"
+                            />
+                            <button onClick={() => handleSaveName(partner.id)} disabled={nameLoading} className="rounded bg-brand-ink px-1.5 py-0.5 text-[10px] text-white disabled:opacity-50">
+                              {nameLoading ? "..." : "OK"}
+                            </button>
+                            <button onClick={() => setEditingName(null)} className="text-[10px] text-brand-muted hover:text-brand-ink">
+                              Cancel
+                            </button>
                           </div>
-                          <div>
-                            <p className="font-medium text-brand-ink text-sm leading-tight">{partnerName(partner)}</p>
-                            <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{partner.partner_code || "---"}</p>
+                        ) : (
+                          <div className="group flex items-center gap-1.5">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent text-[10px] font-semibold text-white">
+                              {partnerName(partner)[0]}
+                            </div>
+                            <div>
+                              <p className="font-medium text-brand-ink text-sm leading-tight">{partnerName(partner)}</p>
+                              <p className="font-mono text-[10px] font-semibold text-brand-primaryDark">{partner.partner_code || "---"}</p>
+                            </div>
+                            <button
+                              onClick={() => { setEditingName(partner.id); setEditNameValue(partnerName(partner)); }}
+                              title="Edit name"
+                              className="rounded p-0.5 text-brand-muted opacity-0 transition-all hover:text-brand-accent group-hover:opacity-100"
+                            >
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
                           </div>
-                        </div>
+                        )}
                       </td>
                       <td className="px-3 py-3 text-[11px] text-brand-muted">
                         <p>{partnerPhone(partner)}</p>

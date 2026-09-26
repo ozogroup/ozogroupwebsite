@@ -726,6 +726,24 @@ export async function updatePaymentStatus(id: string, paymentStatus: string) {
   return data;
 }
 
+export async function updateMembershipName(id: string, newName: string) {
+  await requireAdmin();
+  const supabase = getSupabaseServiceClient();
+
+  const cleanName = String(newName || "").trim();
+  if (!cleanName || cleanName.length < 2) throw new Error("Name must be at least 2 characters.");
+
+  const { error } = await supabase
+    .from("memberships" as any)
+    .update({ full_name: cleanName, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message || "Failed to update membership name.");
+
+  revalidatePath("/admin/memberships");
+  return { success: true };
+}
+
 export async function updateMembershipAdminNotes(id: string, adminNotes: string) {
   await requireAdmin();
   const supabase = getSupabaseServiceClient();

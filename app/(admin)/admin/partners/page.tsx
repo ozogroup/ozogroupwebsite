@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPartners, updatePartnerStatus, createPartner } from "@/lib/actions/partners";
+import { getPartners, updatePartnerStatus, createPartner, updatePartnerName } from "@/lib/actions/partners";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import PartnerPasswordManager from "@/components/admin/PartnerPasswordManager";
 import { getReferralUrl } from "@/lib/referral-url";
@@ -32,6 +32,8 @@ export default function AdminPartnersPage() {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
 
   useEffect(() => {
     loadPartners();
@@ -52,6 +54,24 @@ export default function AdminPartnersPage() {
       console.error("Error updating partner status:", error);
       alert("Error updating partner status");
     }
+  }
+
+  async function handleSaveName(partnerId: string) {
+    if (!editNameValue.trim()) return;
+    setSaving(true);
+    try {
+      const result = await updatePartnerName(partnerId, editNameValue.trim());
+      if (result.error) {
+        alert(result.error);
+      } else {
+        setEditingName(null);
+        await loadPartners();
+      }
+    } catch (error) {
+      console.error("Error updating name:", error);
+      alert("Error updating name");
+    }
+    setSaving(false);
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -203,10 +223,53 @@ export default function AdminPartnersPage() {
               filteredPartners.map((partner) => (
                 <tr key={partner.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 sm:px-6 py-4">
-                    <div>
-                      <p className="font-semibold text-slate-900">{profileName(partner.profiles) || "—"}</p>
-                      <p className="text-xs text-slate-500">{profileField(partner.profiles, 'email') || profileField(partner.profiles, 'phone') || "—"}</p>
-                    </div>
+                    {editingName === partner.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={editNameValue}
+                          onChange={(e) => setEditNameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveName(partner.id);
+                            if (e.key === "Escape") setEditingName(null);
+                          }}
+                          autoFocus
+                          className="w-36 rounded border border-brand-accent px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-brand-accent"
+                        />
+                        <button
+                          onClick={() => handleSaveName(partner.id)}
+                          disabled={saving}
+                          className="rounded bg-brand-ink px-2 py-1 text-xs text-white hover:bg-brand-muted disabled:opacity-50"
+                        >
+                          {saving ? "..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setEditingName(null)}
+                          className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="group flex items-center gap-1.5">
+                        <div>
+                          <p className="font-semibold text-slate-900">{profileName(partner.profiles) || "—"}</p>
+                          <p className="text-xs text-slate-500">{profileField(partner.profiles, 'email') || profileField(partner.profiles, 'phone') || "—"}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setEditingName(partner.id);
+                            setEditNameValue(profileName(partner.profiles) || "");
+                          }}
+                          title="Edit name"
+                          className="rounded p-1 text-slate-400 opacity-0 transition-all hover:bg-slate-100 hover:text-brand-accent group-hover:opacity-100"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <div className="flex items-center gap-2">

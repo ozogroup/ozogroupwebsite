@@ -13,7 +13,7 @@ import {
   updateMembershipStatus,
   updatePaymentStatus,
 } from "@/lib/actions/memberships";
-import { adminLoginAsPartner, generateTempPassword } from "@/lib/actions/partners";
+import { adminLoginAsPartner, generateTempPassword, updatePartnerName } from "@/lib/actions/partners";
 
 function getActivationStatus(m: any): { label: string; variant: "danger" | "success" | "info" | "warning" } {
   if (m.membership_status === "rejected") return { label: "Rejected", variant: "danger" };
@@ -33,6 +33,9 @@ export default function AdminMembershipsPage() {
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
+  const [nameLoading, setNameLoading] = useState(false);
 
   useEffect(() => {
     loadMemberships();
@@ -62,6 +65,29 @@ export default function AdminMembershipsPage() {
     } finally {
       if (!options.background) setLoading(false);
     }
+  }
+
+  async function handleSaveName(membership: any) {
+    if (!editNameValue.trim()) return;
+    setNameLoading(true);
+    try {
+      if (membership.partner_id) {
+        const result = await updatePartnerName(membership.partner_id, editNameValue.trim());
+        if (result.error) {
+          setMessage({ type: "error", text: result.error });
+          setNameLoading(false);
+          return;
+        }
+      }
+      const { updateMembershipName } = await import("@/lib/actions/memberships");
+      await updateMembershipName(membership.id, editNameValue.trim());
+      setEditingName(null);
+      setMessage({ type: "success", text: "Name updated successfully" });
+      await loadMemberships();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err?.message || "Failed to update name" });
+    }
+    setNameLoading(false);
   }
 
   async function handleMarkPaymentContacted(id: string) {
@@ -288,7 +314,50 @@ export default function AdminMembershipsPage() {
                         {(membership.full_name || "?")[0]}
                       </div>
                       <div>
-                        <p className="font-display text-base font-semibold text-brand-ink">{membership.full_name}</p>
+                        {editingName === membership.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={editNameValue}
+                              onChange={(e) => setEditNameValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveName(membership);
+                                if (e.key === "Escape") setEditingName(null);
+                              }}
+                              autoFocus
+                              className="w-40 rounded border border-brand-accent px-2 py-1 text-sm font-semibold outline-none focus:ring-2 focus:ring-brand-accent"
+                            />
+                            <button
+                              onClick={() => handleSaveName(membership)}
+                              disabled={nameLoading}
+                              className="rounded bg-brand-ink px-2 py-1 text-xs text-white hover:bg-brand-muted disabled:opacity-50"
+                            >
+                              {nameLoading ? "..." : "Save"}
+                            </button>
+                            <button
+                              onClick={() => setEditingName(null)}
+                              className="rounded border border-brand-border px-2 py-1 text-xs text-brand-muted hover:bg-brand-surface"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="group flex items-center gap-1.5">
+                            <p className="font-display text-base font-semibold text-brand-ink">{membership.full_name}</p>
+                            <button
+                              onClick={() => {
+                                setEditingName(membership.id);
+                                setEditNameValue(membership.full_name || "");
+                              }}
+                              title="Edit name"
+                              className="rounded p-0.5 text-brand-muted opacity-0 transition-all hover:bg-brand-surface hover:text-brand-accent group-hover:opacity-100"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                         <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-brand-muted">
                           <span>Membership ID: <span className="font-mono">{membership.membership_id || "-"}</span></span>
                           {membership.partners?.partner_code && (

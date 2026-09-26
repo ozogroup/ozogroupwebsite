@@ -167,6 +167,53 @@ export async function adminLoginAsPartner(partnerId: string) {
   return { url: linkData.properties.action_link };
 }
 
+export async function updatePartnerName(partnerId: string, newName: string) {
+  await requireAdmin();
+
+  const cleanId = String(partnerId || "").trim();
+  const cleanName = String(newName || "").trim();
+
+  if (!cleanId) return { error: "Partner ID is required." };
+  if (!cleanName || cleanName.length < 2) return { error: "Name must be at least 2 characters." };
+
+  const serviceClient = getSupabaseServiceClient();
+
+  const { data: oldProfile } = await serviceClient
+    .from("profiles" as any)
+    .select("full_name")
+    .eq("id", cleanId)
+    .maybeSingle();
+
+  const { error: profileError } = await serviceClient
+    .from("profiles" as any)
+    .update({ full_name: cleanName, updated_at: new Date().toISOString() })
+    .eq("id", cleanId);
+
+  if (profileError) {
+    return { error: profileError.message || "Failed to update name." };
+  }
+
+  await serviceClient
+    .from("memberships" as any)
+    .update({ full_name: cleanName, updated_at: new Date().toISOString() })
+    .eq("partner_id", cleanId);
+
+  await serviceClient.from("activity_logs" as any).insert({
+    actor_id: null,
+    actor_role: "admin",
+    action: "partner_name_updated",
+    entity_type: "partner",
+    entity_id: cleanId,
+    old_value: { full_name: (oldProfile as any)?.full_name },
+    new_value: { full_name: cleanName },
+  });
+
+  revalidatePath("/admin/memberships");
+  revalidatePath("/admin/partners");
+  revalidatePath("/admin/referrals");
+  return { success: true };
+}
+
 export async function generateTempPassword(partnerId: string) {
   await requireAdmin();
 
